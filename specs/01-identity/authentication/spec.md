@@ -92,12 +92,14 @@ baseline and requires a human security decision before this specification can be
 - **ID-001-FR-015 — Session refresh:** A valid, unexpired, unrevoked BKPractice refresh token for an
   `ACTIVE` account MUST be able to obtain a replacement access-token/refresh-token pair.
 - **ID-001-FR-016 — Refresh-token rotation:** Successful refresh MUST revoke the submitted refresh
-  token before issuing its replacement. A consumed refresh token MUST NOT be accepted again.
+  token before issuing its replacement in the same session family. A consumed refresh token MUST
+  NOT be accepted again.
 - **ID-001-FR-017 — Invalid refresh rejection:** A malformed, expired, revoked, unknown, reused,
   incorrectly typed, or otherwise unverifiable refresh token MUST be rejected without issuing a
   token.
-- **ID-001-FR-018 — Current-session logout:** Logout MUST make at least the submitted refresh
-  session unusable. Repeating logout for that session MUST NOT restore or replace it.
+- **ID-001-FR-018 — Current-session logout:** Logout MUST revoke the refresh-token family for the
+  submitted current session without revoking independent sessions on other devices. Repeating
+  logout for that session MUST NOT restore or replace it.
 - **ID-001-FR-019 — Access token after logout:** ID-001 MUST NOT introduce a distributed
   access-token blacklist. An issued access token remains usable until its configured expiration
   unless a separately approved requirement changes this rule.
@@ -107,6 +109,20 @@ baseline and requires a human security decision before this specification can be
 - **ID-001-FR-021 — Authentication/authorization boundary:** Authentication MAY expose stored roles
   as time-bounded identity claims, but ID-001 MUST NOT create, grant, approve, or revoke roles or
   permissions.
+- **ID-001-FR-022 — Imported default password:** The provisioning contract MUST initialize each
+  imported student's local credential to `123456`, and Identity MUST persist only its Argon2 hash.
+  ID-001 MUST NOT force a password change during first login.
+- **ID-001-FR-023 — Independent concurrent sessions:** Each successful login MUST create an
+  independent refresh-token family so a user may remain signed in on multiple devices.
+- **ID-001-FR-024 — Microsoft session handoff:** A successful Microsoft callback MUST create a
+  single-use opaque login code that expires after 60 seconds. The frontend MUST exchange that code
+  for the BKPractice token pair; neither provider nor BKPractice bearer tokens may appear in the
+  redirect URL.
+- **ID-001-FR-025 — Current authenticated user:** ID-001 MUST provide an authenticated-user
+  operation that returns only `userId`, `studentId`, stored roles, and current account status.
+- **ID-001-FR-026 — Refresh replay containment:** Reuse of an already consumed refresh token MUST
+  revoke only its associated session family. Other independently created session families MUST
+  remain usable.
 
 ## Business Rules
 
@@ -124,14 +140,20 @@ baseline and requires a human security decision before this specification can be
   session model.
 - The existing account-status vocabulary remains `ACTIVE`, `LOCKED`, and `PENDING`. ID-001
   does not introduce `DISABLED`.
-- Only `ACTIVE` accounts receive new tokens. Existing access tokens follow ID-001-FR-019 pending
-  resolution of the related Open Question.
+- Only `ACTIVE` accounts receive new tokens. Existing access tokens follow ID-001-FR-019 and expire
+  naturally even if the account is later locked or made pending.
 - Refresh credentials are single-use session credentials with configurable lifetimes longer than
   access-token lifetimes.
+- Each successful login creates an independent refresh-token family. Refresh rotation stays in the
+  same family; logout and replay containment affect only that family.
+- The imported local credential starts as `123456`. Provisioning stores only its Argon2 hash, and
+  ID-001 does not require a first-login password change. Voluntary Change Password is a separate
+  feature.
 - Role claims are time-bounded snapshots. Role management belongs to ID-003 RBAC.
-- The Excel import may provide student identifiers, names, and university emails, but import
-  parsing, row validation, class enrollment, and administrative reporting are not Authentication
-  responsibilities.
+- The provisioning workbook contract is `stt`, `mssv`, `họ tên`, `lớp`, and `emailTruong`.
+  `stt` is presentation-only, while `lớp` belongs to Learning; Identity receives the unique MSSV,
+  name/profile input, and normalized university email. Import parsing, row validation, class
+  enrollment, and administrative reporting are not Authentication responsibilities.
 
 ## Authorization Rules
 
@@ -154,7 +176,7 @@ baseline and requires a human security decision before this specification can be
 
 | Field       | Required | Requirements                                                        |
 | ----------- | -------- | ------------------------------------------------------------------- |
-| `studentId` | Yes      | String satisfying the approved student-identifier format            |
+| `studentId` | Yes      | Existing MSSV imported from the administrator-controlled workbook   |
 | `password`  | Yes      | Non-empty credential string; it is not silently trimmed or modified |
 
 The request MUST NOT accept role, permission, account status, password hash, token configuration,
@@ -162,14 +184,22 @@ provider identifiers, or trusted identity metadata.
 
 ### Microsoft login initiation — proposed route `GET /api/auth/microsoft`
 
-The caller provides no trusted identity attributes. Any return location must satisfy an approved
-allowlist and must not be treated as proof of identity.
+The caller provides no trusted identity attributes or redirect URL. The system uses only its fixed
+configured callback and frontend return locations.
 
 ### Microsoft callback — proposed route `GET /api/auth/microsoft/callback`
 
 The callback accepts only the provider authorization response and correlation values required by
 the approved Microsoft authorization flow. Email, tenant, object ID, roles, and account status
 supplied directly by the browser are untrusted.
+
+### Microsoft login-code exchange — proposed route `POST /api/auth/microsoft/exchange`
+
+| Field       | Required | Requirements                                          |
+| ----------- | -------- | ----------------------------------------------------- |
+| `loginCode` | Yes      | Non-empty, opaque, single-use code issued by Identity |
+
+The code expires after 60 seconds and MUST NOT be accepted more than once.
 
 ### Refresh — `POST /api/auth/refresh`
 
@@ -184,18 +214,25 @@ supplied directly by the browser are untrusted.
 | BKPractice Bearer token | Yes      | Valid, unexpired access token under the current Gateway contract |
 | Body `refreshToken`     | Yes      | Refresh credential identifying the session to revoke             |
 
+### Current authenticated user — proposed route `GET /api/auth/me`
+
+The request requires a valid BKPractice Bearer access token and accepts no caller-supplied trusted
+identity fields.
+
 ## Outputs
 
 - Successful student-identifier login returns HTTP `200` with the BKPractice `userId`,
   `accessToken`, and `refreshToken`.
 - Microsoft login initiation redirects the user agent only to the configured Microsoft
   authorization endpoint.
-- Successful Microsoft callback authentication resolves the linked BKPractice `userId` and
-  establishes the same BKPractice token pair as student-identifier login. The final browser token
-  handoff remains an Open Question and MUST NOT expose tokens in a URL.
+- Successful Microsoft callback authentication resolves the linked BKPractice `userId`, creates a
+  single-use opaque login code, and redirects to the configured frontend with that code. Exchanging
+  the code within 60 seconds returns the same BKPractice token-pair shape as student login.
 - Successful refresh returns HTTP `200` with a replacement `accessToken` and `refreshToken`.
 - Successful or idempotently repeated logout returns HTTP `204` with no response body after the
-  submitted refresh session is unusable.
+  submitted refresh family is unusable; other login families remain usable.
+- The current-authenticated-user operation returns only `userId`, `studentId`, stored roles, and
+  current account status.
 - A BKPractice access token contains, at minimum, a subject user identifier, stored roles,
   access-token type, and expiration. It contains no password, password hash, Microsoft provider
   token, refresh credential, or unnecessary profile data.
@@ -226,9 +263,10 @@ with the existing Gateway, NestJS validation, and future approved provider-login
   resolve to the same user.
 - If multiple import records contain the same student identifier or university email,
   authentication rejects ambiguous matching; the provisioning workflow must resolve the data.
-- Concurrent login attempts may create separate refresh sessions only if multi-session support is
-  approved.
+- Concurrent login attempts create independent refresh-token families.
 - Concurrent use of one refresh token allows at most one successful rotation.
+- Reuse of a consumed refresh token revokes its session family without revoking independent
+  families.
 - The first Microsoft link is atomic: failure cannot leave a partial provider association or
   successful BKPractice session.
 - After linking, an approved change to the university email does not create another user; the
@@ -244,9 +282,10 @@ with the existing Gateway, NestJS validation, and future approved provider-login
   returned to clients, included in logs, or embedded in errors.
 - **ID-001-SR-002 — Password hashing:** Stored local credentials MUST use Argon2, the mechanism
   selected by the foundation, and password verification MUST use it safely.
-- **ID-001-SR-003 — Temporary credential safety:** A provisioning-time password MUST be treated as a
-  temporary secret. ID-001 cannot be Approved until the shared `123456` proposal and first-login
-  change policy are resolved.
+- **ID-001-SR-003 — Imported credential safety:** Provisioning MUST hash the approved shared
+  password `123456` with Argon2 before persistence. ID-001 MUST NOT log or return it and MUST apply
+  configurable abuse protection to password login. The owner explicitly accepts the residual risk
+  of not forcing a first-login password change.
 - **ID-001-SR-004 — Microsoft protocol validation:** Microsoft login MUST validate the provider
   signature, issuer, configured application audience, configured university tenant, expiration,
   token purpose, and authorization-flow correlation before trusting identity claims.
@@ -277,6 +316,12 @@ with the existing Gateway, NestJS validation, and future approved provider-login
 - **ID-001-SR-016 — Abuse resistance:** Public authentication initiation, callback, credential
   login, and refresh operations SHOULD use configurable Gateway rate limiting without adding risk
   scoring or enterprise identity infrastructure.
+- **ID-001-SR-017 — One-time login-code safety:** The Microsoft handoff code MUST be
+  cryptographically unpredictable, expire after 60 seconds, be consumed atomically once, and map
+  only to the minimum local identity state required to issue a BKPractice session.
+- **ID-001-SR-018 — Refresh replay containment:** Refresh-token family state MUST allow a detected
+  replay to revoke the affected family without revealing token/session details or revoking other
+  independent families.
 
 ## Acceptance Criteria
 
@@ -322,6 +367,23 @@ with the existing Gateway, NestJS validation, and future approved provider-login
   application credential, authorization code, provider token, or unintended BKPractice token.
 - **ID-001-AC-018:** Given a Microsoft login flow, when browser redirects are inspected, then no
   provider or BKPractice bearer token is exposed in a URL.
+- **ID-001-AC-019:** Given an imported student account, when credential persistence is inspected,
+  then the plaintext `123456` is absent and only its Argon2 hash is stored; first login can complete
+  without a mandatory password-change gate.
+- **ID-001-AC-020:** Given a successful Microsoft callback, when its opaque login code is exchanged
+  once within 60 seconds, then a BKPractice token pair is returned; a late or second exchange is
+  rejected without issuing another token.
+- **ID-001-AC-021:** Given two successful logins for one user, when one session logs out, then its
+  refresh family is unusable while the other session can still refresh.
+- **ID-001-AC-022:** Given a consumed refresh token is replayed, when replay handling completes,
+  then its family is revoked and a separate independently created family remains usable.
+- **ID-001-AC-023:** Given a valid BKPractice access token, when the current-user operation is
+  called, then it returns only `userId`, `studentId`, roles, and status; without a valid access token
+  it returns an authentication failure.
+- **ID-001-AC-024:** Given workbook data with `stt`, `mssv`, `họ tên`, `lớp`, and `emailTruong`,
+  when the separate provisioning boundary supplies Identity data, then Authentication uses MSSV
+  for local login and normalized `emailTruong` for first Microsoft matching without owning `stt`
+  or class enrollment.
 
 ## Out of Scope
 
@@ -333,8 +395,7 @@ with the existing Gateway, NestJS validation, and future approved provider-login
   implementation
 - Class enrollment or Learning Service updates from the imported workbook
 - Forgot Password and Reset Password
-- General Change Password behavior, except any minimal first-login requirement that may be approved
-  after resolving the temporary-password Open Question
+- General Change Password behavior and its user-facing page
 - Email Verification
 - MFA / 2FA
 - Complete Profile Management
@@ -357,37 +418,16 @@ with the existing Gateway, NestJS validation, and future approved provider-login
 - [Roles and permissions](../../00-system/roles-permissions.md)
 - [Database strategy](../../00-system/database-strategy.md)
 - [Definition of Done](../../00-system/definition-of-done.md)
-- A future administrator-controlled student-account provisioning specification must define the
-  import contract before ID-001 can be implemented end to end.
+- A future administrator-controlled provisioning specification must implement the approved workbook
+  contract (`stt`, `mssv`, `họ tên`, `lớp`, `emailTruong`) and guarantee unique MSSV/email identity
+  data before ID-001 can be exercised end to end.
 - ID-002 Profile and ID-003 RBAC remain separate specifications.
 
 ## Open Questions
 
-The specification MUST remain `Proposed` until every question that changes ID-001 behavior has an
-approved answer.
-
-1. The product proposal uses the same initial password `123456` for imported students, while the
-   current validator requires at least 10 characters and a shared six-digit password creates an
-   account-takeover risk. Must BKPractice instead generate a unique temporary password, or require
-   an immediate first-login password change before issuing a normal session?
-2. What is the exact student-identifier format, length, case rule, and canonicalization policy?
-3. Which columns are mandatory in the provisioning workbook, and how does provisioning resolve
-   duplicate student identifiers or university emails? This belongs to a separate provisioning
-   specification but blocks reliable authentication matching.
-4. What are the approved Microsoft university tenant identifier and application identifier?
-5. Which verified Microsoft claim is guaranteed to contain the university email used for first
-   linking: `email`, `preferred_username`, or another tenant-configured claim?
-6. After Microsoft callback succeeds, how should the browser receive the BKPractice session without
-   placing tokens in the redirect URL?
-7. May one user maintain multiple concurrent BKPractice refresh sessions?
-8. Is logout limited to the submitted refresh session, or must ID-001 include logout-all-sessions?
-9. Should ID-001 include `GET /api/auth/me`; if so, which minimal identity fields are required?
-10. When an account becomes `LOCKED` or `PENDING`, may issued short-lived access tokens expire
-    naturally, or is immediate invalidation required?
-11. Should BKPractice refresh tokens be returned in JSON or delivered to browser clients using a
-    Secure, HttpOnly cookie?
-12. On refresh-token replay, is rejecting the consumed token sufficient, or must the system revoke
-    an associated token family or every session?
+None. Product decisions were resolved and approved by the human owner on 2026-09-01. Deployment
+values such as Microsoft tenant ID and client ID remain required environment configuration, not
+open product requirements.
 
 ## Revision History
 
@@ -395,6 +435,7 @@ approved answer.
 | ---------- | -------- | --------------- | -------------------------------------------------------------------------------- |
 | 2026-09-01 | 0.1      | Codex / TBD     | Initial Proposed email/password registration specification                       |
 | 2026-09-01 | 0.2      | Codex / TBD     | Replaced registration with provisioned student ID and university Microsoft login |
+| 2026-09-01 | 1.0      | Product Owner   | Resolved authentication decisions and approved ID-001                            |
 
 > `spec.md` describes WHAT. Detailed folders, classes, repository implementations, Microsoft
 > libraries, TypeORM mappings, transactions, and execution order belong in a future `plan.md`

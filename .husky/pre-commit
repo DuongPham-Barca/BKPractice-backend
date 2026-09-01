@@ -1,1 +1,10 @@
+echo ""
+echo "🐶 Running pre-commit checks..."
+echo ""
+
+echo "🔍 Checking staged files..."
 pnpm exec lint-staged
+
+echo ""
+echo "✅ Pre-commit checks passed!"
+echo ""

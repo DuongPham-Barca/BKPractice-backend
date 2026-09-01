@@ -1,1 +1,9 @@
+echo ""
+echo "📝 Validating commit message..."
+echo ""
+
 pnpm exec commitlint --edit "$1"
+
+echo ""
+echo "✅ Commit message is valid!"
+echo ""
