@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": { "outDir": "../../dist/apps/submission-service" },
+  "include": ["src/**/*.ts", "../../libs/**/*.ts"]
+}

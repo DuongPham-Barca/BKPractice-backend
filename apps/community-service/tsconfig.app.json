@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": { "outDir": "../../dist/apps/community-service" },
+  "include": ["src/**/*.ts", "../../libs/**/*.ts"]
+}

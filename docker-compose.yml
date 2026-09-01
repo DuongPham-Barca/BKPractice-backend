@@ -1,0 +1,139 @@
+name: bkpractice
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+  profiles: [apps]
+  healthcheck:
+    test: [CMD-SHELL, 'wget -qO- http://localhost:$${HEALTH_PORT}/health >/dev/null']
+    interval: 10s
+    timeout: 5s
+    retries: 12
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bkpractice}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: postgres
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U $${POSTGRES_USER} -d postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: [redis-server, --appendonly, 'no', --save, '']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-bkpractice}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    ports:
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  api-gateway:
+    <<: *app
+    command: [pnpm, start:gateway]
+    environment:
+      IDENTITY_SERVICE_URL: http://identity-service:3001
+      LEARNING_SERVICE_URL: http://learning-service:3002
+      SUBMISSION_SERVICE_URL: http://submission-service:3003
+      COMMUNITY_SERVICE_URL: http://community-service:3005
+      REDIS_URL: redis://redis:6379
+      HEALTH_PORT: 3000
+    ports: ['3000:3000']
+
+  identity-service:
+    <<: *app
+    command: [pnpm, start:identity]
+    environment:
+      IDENTITY_DATABASE_URL: postgresql://${POSTGRES_USER:-bkpractice}:${POSTGRES_PASSWORD}@postgres:5432/bkpractice_identity
+      HEALTH_PORT: 3001
+    ports: ['3001:3001']
+
+  learning-service:
+    <<: *app
+    command: [pnpm, start:learning]
+    environment:
+      LEARNING_DATABASE_URL: postgresql://${POSTGRES_USER:-bkpractice}:${POSTGRES_PASSWORD}@postgres:5432/bkpractice_learning
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-bkpractice}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      HEALTH_PORT: 3002
+    ports: ['3002:3002']
+
+  submission-service:
+    <<: *app
+    command: [pnpm, start:submission]
+    environment:
+      SUBMISSION_DATABASE_URL: postgresql://${POSTGRES_USER:-bkpractice}:${POSTGRES_PASSWORD}@postgres:5432/bkpractice_submission
+      LEARNING_INTERNAL_URL: http://learning-service:3002
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-bkpractice}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+      HEALTH_PORT: 3003
+    ports: ['3003:3003']
+
+  community-service:
+    <<: *app
+    command: [pnpm, start:community]
+    environment:
+      COMMUNITY_DATABASE_URL: postgresql://${POSTGRES_USER:-bkpractice}:${POSTGRES_PASSWORD}@postgres:5432/bkpractice_community
+      HEALTH_PORT: 3005
+    ports: ['3005:3005']
+
+  judge-service:
+    <<: *app
+    build:
+      context: .
+      dockerfile: docker/judge/Dockerfile.worker
+    command: [pnpm, start:judge]
+    environment:
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-bkpractice}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      JUDGE_WORKSPACE_ROOT: /tmp/bkpractice-judge
+      JUDGE_DOCKER_WORKSPACE_ROOT: ${PWD}/.judge-workspaces
+      HEALTH_PORT: 3004
+    ports: ['3004:3004']
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./.judge-workspaces:/tmp/bkpractice-judge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
