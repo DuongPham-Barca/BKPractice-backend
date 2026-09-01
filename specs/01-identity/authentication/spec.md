@@ -45,9 +45,10 @@ Google login, Microsoft accounts outside the university tenant, automatic creati
 users, and access for people outside the university are deferred to a future specification.
 
 The existing foundation currently exposes email/password registration and login. That code is not
-the approved target behavior and must remain unchanged during this specification phase. The
-proposed shared initial password `123456` conflicts with the existing 10-character validation
-baseline and requires a human security decision before this specification can become Approved.
+the approved target behavior and will be replaced only during the implementation phase. Imported
+students receive the shared initial password `123456`; provisioning stores only its Argon2 hash,
+and ID-001 does not require a password change during first login. The human product owner has
+explicitly approved this behavior and accepted its documented residual security risk.
 
 ## Functional Requirements
 
