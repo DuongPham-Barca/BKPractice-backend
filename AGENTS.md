@@ -2,89 +2,97 @@
 
 These instructions apply to the entire `bkpractice-backend` repository.
 
-## Sources of truth
+Run the workflow below, in order, for every change. The full rules are in
+[`docs/agent/working-agreement.md`](docs/agent/working-agreement.md). Do not skip a step. Do not
+edit product code while an earlier step is still open. If this file and the working agreement
+disagree about a step, follow the working agreement.
 
-Before making changes, inspect the repository and read the documents relevant to the target
-service and feature.
+## Workflow
 
-Use this precedence when instructions conflict:
+### 1. Spec
+
+Read the feature `spec.md` and confirm `Status: Approved`. Read the architecture of the service
+that will change and the related ADRs. Stop if the spec is missing, not Approved, or conflicts
+with the architecture. A `Proposed` spec is not implemented.
+
+A documentation-only process change that the user explicitly requested does not need a new feature
+spec. Record that reason in the worked entry. That work still must not modify source, runtime
+configuration, dependencies, or migrations.
+
+### 2. Plan and tasks
+
+Read the reviewed `plan.md` and `tasks.md`. The plan must point at the Approved spec and must not
+add behavior the spec does not contain. `tasks.md` is a checklist, not a source of new
+requirements. Inspect `git status`, the existing code, and the service structure.
+
+File module plans under `docs/pm/plan/<service>/<module>/`. Do not put several modules in one
+shared plan, and do not create empty folders.
+
+### 3. Clarify open questions
+
+Before editing files, list every question that could change behavior, scope, architecture, a
+contract, or configuration. If the answer would change one of those, stop and ask the user. If the
+repository already settles it, cite the file and the rule. Do not fill a gap with an assumption.
+
+### 4. Implement
+
+Implement only behavior that traces to the Approved spec and the tasks. Follow the service
+architecture and dependency rules. Do not add Out-of-Scope behavior or change the architecture
+without approval. Work one task at a time, and mark a task complete only after it is implemented
+and verified. Preserve unrelated worktree changes.
+
+When writing TypeScript, avoid `any` unless the value cannot be typed safely. Prefer `unknown`.
+`@typescript-eslint/no-explicit-any` is an error. Keep the change small. Name functions with an
+active verb, not an unclear noun.
+
+### 5. Verify
+
+Run the relevant tests and the commands that exist in `package.json`. Do not invent commands. For
+a code change, apply `specs/00-system/definition-of-done.md`, including `pnpm lint`,
+`pnpm typecheck`, `pnpm test`, and `pnpm build` when those items apply. Compare the result with
+every requirement, security requirement, acceptance criterion, service boundary, and architecture
+rule. Update `tasks.md` honestly.
+
+A documentation-only change does not run migrations, does not install dependencies, and does not
+record those code commands as having been run.
+
+### 6. Write the worked entry
+
+When the work finishes, including a configuration-only change, write one file:
 
 ```text
-System architecture and ADRs + Approved spec.md
-    > plan.md
-    > tasks.md
-    > implementation assumptions
+docs/worked/<area>/YYYY-MM-DD-short-name.md
 ```
 
-- Architecture and service boundaries are authoritative under `docs/architecture/` and
-  `docs/adr/`.
-- The SDD workflow and system-level rules are defined by `specs/README.md` and
-  `specs/00-system/`.
-- An Approved `spec.md` defines WHAT. Do not modify it unless explicitly instructed.
-- `plan.md` defines HOW, and `tasks.md` is the implementation checklist. Neither may expand the
-  Approved specification.
+`<area>` is `agent` for this process, `<service>` for one service, or `<service>/<module>` for one
+feature module. A file list is not enough. Explain, so the repository owner can follow it without
+the diff or the conversation:
+
+- what was done, and what a caller or user can do now
+- why those modules, libraries, patterns, data shapes, messages, or configuration keys were used
+- how the feature flows, from the trigger, through the boundary and use case, to the saved or
+  returned result, and the failure path the spec requires
+
+If the work is not a product feature, say so and walk the process that changed instead. Do not
+record secrets, tokens, or passwords.
+
+## Rules on every step
+
+- For product behavior, precedence is architecture and ADRs plus an Approved `spec.md`, then
+  `plan.md`, then `tasks.md`, then implementation assumptions. This workflow does not add product
+  requirements.
+- Do not modify an Approved `spec.md` unless explicitly instructed.
 - If architecture, specification, plan, tasks, and code conflict, report the conflict instead of
   silently changing requirements or architecture.
-
-## Spec-Driven Development workflow
-
-Documentation-only tasks must not modify source or configuration, install dependencies, create or
-run migrations, or advance to another SDD phase unless explicitly requested.
-
-Before implementing a feature:
-
-1. Inspect `git status`, the existing code, and the target service structure.
-2. Read the relevant architecture and ADR documents.
-3. Read the feature `spec.md` and confirm `Status: Approved`.
-4. Read the reviewed `plan.md` and `tasks.md`.
-5. Stop and report any unresolved decision or material conflict.
-
-During implementation:
-
-- Follow the selected service architecture and dependency rules.
-- Implement only behavior traceable to the Approved specification and tasks.
-- Do not add Out-of-Scope functionality or introduce architecture changes without approval.
-- Work incrementally and mark a task complete only after it is implemented and verified.
-- Preserve unrelated user changes in the worktree.
-
-After implementation:
-
-- Run relevant tests and the applicable validation commands.
-- Verify implementation against every requirement, security requirement, acceptance criterion,
-  service boundary, and architecture rule.
-- Update `tasks.md` honestly and report deviations, unverified behavior, and remaining risks.
-
-## Architecture boundaries
-
-- Identity, Learning, Submission, and Community follow the Clean Architecture dependency rules in
-  `docs/architecture/dependency-rules.md`.
-- API Gateway follows Gateway Pattern + Layered Architecture and must not own business persistence.
-- Judge follows Worker + Pipeline + Adapter architecture and treats submitted code as untrusted.
-- A service must not access another service's database, repository, entity, migration, or source
-  internals.
-- Keep service-owned business entities and use cases out of generic shared libraries.
-- Controllers and message consumers handle transport concerns; business workflows belong in
-  application use cases.
-- Infrastructure implements real application/domain boundaries. Do not add abstractions solely for
-  appearance.
-
-## Repository tooling and safety
-
-- Use `pnpm` for repository dependencies and scripts. Do not use npm, Yarn, or Bun for project
-  dependency management, and do not create their lockfiles. External developer tools may use their
-  officially supported installer as long as repository manifests and lockfiles are not changed.
-- Use the scripts that actually exist in `package.json`; do not invent validation commands.
+- Use `pnpm` for repository dependencies and scripts. Do not create npm, Yarn, or Bun lockfiles.
 - Use TypeORM migrations for schema changes. Do not replace migrations with `synchronize=true`.
 - Never commit secrets, credentials, raw tokens, passwords, or sensitive user data.
 - Do not open, read, search, print, parse, or source `.env` files or secret-bearing `.env.*`
-  variants, including through CodeGraph or another indexing/search tool. Only documented templates
-  such as `.env.example` may be inspected.
+  variants. Only documented templates such as `.env.example` may be inspected.
 - Do not log Authorization headers, plaintext passwords, or raw refresh tokens.
-- Treat `.codegraph/` as a generated local index: do not manually edit its contents or commit it.
 - Do not run destructive Git, filesystem, database, or migration operations without explicit scope
   and authorization.
 - Do not create commits or push branches unless the user explicitly requests it.
-- Prefer `rg` and `rg --files` for exact text and filesystem searches.
 
 <!-- CODEGRAPH_START -->
 
@@ -101,10 +109,3 @@ it BEFORE grep/find or reading files when you need to understand or locate code:
 
 If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
 <!-- CODEGRAPH_END -->
-
-## Definition of Done
-
-Apply `specs/00-system/definition-of-done.md` proportionally. At minimum, applicable work must be
-architecture-compliant, traceable to the Approved specification, tested, documented when contracts
-change, and validated with the repository's `pnpm` scripts. Irrelevant checks may be marked N/A only
-with a concrete reason.

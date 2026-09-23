@@ -9,7 +9,8 @@ be marked N/A with a concrete reason; N/A is not a substitute for unfinished wor
 - [ ] `plan.md` exists and does not expand the Approved spec.
 - [ ] `tasks.md` exists and reflects the plan.
 - [ ] The required service architecture is selected from `docs/architecture/`.
-- [ ] Open questions that affect behavior are resolved.
+- [ ] Open questions that affect behavior, scope, architecture, a contract, or configuration are
+      resolved before implementation. Unresolved questions stop the work.
 
 ## Implementation
 
@@ -35,6 +36,10 @@ be marked N/A with a concrete reason; N/A is not a substitute for unfinished wor
 - [ ] Security was reviewed where applicable, especially authentication, authorization, hidden data
       and untrusted-code execution.
 - [ ] Deviations, unverified behavior and remaining risks are reported.
+- [ ] `docs/worked/` has an entry for this work. The entry explains what was done, why those
+      pieces were used, and how the feature flows. It also names the spec and plan used, the
+      questions that were clarified, every configuration change, and anything left unverified.
+      Secrets and raw tokens are not copied into the entry.
 
 After implementation verification, the authorized workflow may move the spec through `Implemented`
 to `Verified`. An implementation agent does not silently rewrite an Approved spec to make the

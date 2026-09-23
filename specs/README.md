@@ -58,31 +58,40 @@ approval.
 
 ## Agent workflow
 
+The step-by-step working agreement is [`docs/agent/working-agreement.md`](../docs/agent/working-agreement.md).
+An agent follows that order. The obligations below remain the SDD baseline.
+
 Before implementation, an agent MUST:
 
-1. Read the system and target-service documents under `docs/architecture/`.
-2. Read the feature `spec.md`.
-3. Confirm `Status = Approved`.
-4. Read `plan.md`.
-5. Read `tasks.md`.
-6. Inspect the existing source and current repository state.
+1. Read the working agreement and follow its step order.
+2. Read the system and target-service documents under `docs/architecture/`.
+3. Read the feature `spec.md`.
+4. Confirm `Status = Approved`.
+5. Read `plan.md`.
+6. Read `tasks.md`.
+7. Inspect the existing source and current repository state.
+8. Clarify every open question that could change behavior, scope, architecture, a contract, or
+   configuration. Stop and ask instead of guessing.
 
 During implementation, an agent MUST:
 
-7. Follow the selected service architecture and dependency rules.
-8. Work through `tasks.md` incrementally.
-9. Not change approved requirements.
-10. Not add Out-of-Scope functionality.
-11. Not introduce architecture changes without explicit approval.
-12. Keep `tasks.md` current, marking completed and applicable N/A items honestly.
+9. Follow the selected service architecture and dependency rules.
+10. Work through `tasks.md` incrementally.
+11. Not change approved requirements.
+12. Not add Out-of-Scope functionality.
+13. Not introduce architecture changes without explicit approval.
+14. Keep `tasks.md` current, marking completed and applicable N/A items honestly.
 
 After implementation, an agent MUST:
 
-13. Run relevant tests.
-14. Run the validation commands required by the feature.
-15. Compare the implementation with `spec.md`.
-16. Compare the implementation with the service architecture and dependency rules.
-17. Report deviations, unverified behavior and remaining risks.
+15. Run relevant tests.
+16. Run the validation commands required by the feature.
+17. Compare the implementation with `spec.md`.
+18. Compare the implementation with the service architecture and dependency rules.
+19. Report deviations, unverified behavior and remaining risks.
+20. Write a worked entry under `docs/worked/` that records the spec and plan used, the
+    questions that were clarified, the files and configuration that changed, and anything left
+    unverified. Do not copy secrets or raw tokens.
 
 If any required artifact is missing, contradictory or ambiguous in a way that changes behavior, the
 agent stops that implementation path and reports the issue instead of inventing a requirement.
