@@ -1,346 +1,368 @@
-# ID-002 Profile Implementation Tasks
+# ID-002 Công việc triển khai Profile
 
-## Status
+## Trạng thái
 
-Approved — Ready for Implementation
+Approved — Sẵn sàng triển khai
 
-Approved by the human product owner on `2026-09-01`.
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-01`.
 
-Related specification: [`./spec.md`](./spec.md) — Approved revision `0.4`  
-Related plan: [`./plan.md`](./plan.md) — Approved on `2026-09-01`
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản Approved `0.4`  
+Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved ngày `2026-09-01`
 
-All implementation tasks start incomplete. Mark a task `[x]` only after the implementation and
-its listed verification are complete. Tasks marked N/A are the only intentional checked items.
+Mọi công việc triển khai đều bắt đầu ở trạng thái chưa hoàn thành. Chỉ đánh dấu `[x]` sau khi cả phần
+triển khai lẫn phần kiểm chứng được liệt kê đều hoàn tất. Các mục N/A là những mục duy nhất được tích
+sẵn một cách có chủ đích.
 
-## Preparation / Reuse Analysis
+## Chuẩn bị / Phân tích tái sử dụng
 
-- [ ] **ID-002-T001 — Reconfirm the implementation baseline.** Inspect Git state, the Approved
-      Profile spec/plan, Identity architecture, dependency rules, current Identity entities,
-      datasource, migration, module composition, Gateway auth middleware/proxy and existing tests.
-      Confirm no source changes are made before implementation begins.  
-      **Depends on:** None.  
-      **Trace:** SDD workflow; Definition of Done.
+- [ ] **ID-002-T001 — Xác nhận lại nền tảng triển khai.** Khảo sát trạng thái Git, spec/plan Profile
+      đã Approved, kiến trúc Identity, các quy tắc phụ thuộc, các entity Identity hiện tại,
+      datasource, migration, phần composition của module, middleware auth/proxy của Gateway và các
+      test hiện có. Xác nhận không thay đổi mã nguồn nào trước khi bắt đầu triển khai.  
+      **Phụ thuộc:** Không có.  
+      **Truy vết:** Quy trình SDD; Định nghĩa Hoàn thành.
 
-- [ ] **ID-002-T002 — Confirm upstream Identity contracts.** Verify that ID-001 exposes the
-      authenticated User ID/account-status context and that the approved provisioning boundary can
-      supply the official imported `họ tên` needed for lazy initialization. Confirm the ID-003 RBAC
-      boundary for Admin operations. Report a blocker instead of inventing a fallback if any
-      contract is unavailable.  
-      **Depends on:** ID-002-T001.  
-      **Trace:** ID-002-FR-002, ID-002-FR-010–ID-002-FR-011; AC-002, AC-010–AC-011.
+- [ ] **ID-002-T002 — Xác nhận các contract thượng nguồn của Identity.** Kiểm chứng rằng ID-001 phơi
+      bày ngữ cảnh User ID/trạng thái tài khoản đã xác thực, và rằng ranh giới cấp tài khoản đã phê
+      duyệt có thể cung cấp `họ tên` chính thức đã import cần cho việc khởi tạo trễ. Xác nhận ranh
+      giới RBAC của ID-003 cho các thao tác của Admin. Hãy báo cáo điểm nghẽn thay vì bịa ra một
+      phương án dự phòng, nếu bất kỳ contract nào chưa sẵn sàng.  
+      **Phụ thuộc:** ID-002-T001.  
+      **Truy vết:** ID-002-FR-002, ID-002-FR-010–ID-002-FR-011; AC-002, AC-010–AC-011.
 
-- [ ] **ID-002-T003 — Confirm reusable persistence and transport foundation.** Reuse the existing
-      `Profile`/`User` relation, `profiles.user_id` uniqueness, Identity datasource/entity registry,
-      global validation/Swagger bootstrap, Gateway Identity route prefixes and ID-001 auth context.
-      Do not create a duplicate User/Profile entity, authentication system or repository hierarchy.
-      **Depends on:** ID-002-T001.  
-      **Trace:** Plan Existing Code Impact; ID-002-FR-001, ID-002-FR-014.
+- [ ] **ID-002-T003 — Xác nhận nền tảng lưu trữ và truyền tải có thể tái dùng.** Tái dùng quan hệ
+      `Profile`/`User` hiện có, tính duy nhất của `profiles.user_id`, datasource/registry entity của
+      Identity, bootstrap kiểm tra dữ liệu/Swagger toàn cục, các tiền tố route Identity của Gateway,
+      và ngữ cảnh auth của ID-001. Không tạo entity User/Profile trùng lặp, hệ thống xác thực khác,
+      hay một cây repository.  
+      **Phụ thuộc:** ID-002-T001.  
+      **Truy vết:** Mục Ảnh hưởng tới mã nguồn hiện có của kế hoạch; ID-002-FR-001, ID-002-FR-014.
 
-- [ ] **ID-002-T004 — Confirm service-boundary exclusions.** Record that MSSV/email, roles,
-      permissions, account status, class/faculty, Learning progress, Submission history and
-      Community content remain outside Profile state. Ensure no task introduces a cross-service
-      foreign key, database query or shared business entity.  
-      **Depends on:** ID-002-T001.  
-      **Trace:** ID-002-FR-006, ID-002-FR-014; ID-002-SR-003, ID-002-SR-008; AC-006, AC-014.
+- [ ] **ID-002-T004 — Xác nhận các loại trừ theo ranh giới service.** Ghi nhận rằng MSSV/email, vai
+      trò, quyền, trạng thái tài khoản, lớp/khoa, tiến độ Learning, lịch sử Submission và nội dung
+      Community đều nằm ngoài state của Profile. Đảm bảo không công việc nào đưa vào khoá ngoại, truy
+      vấn cơ sở dữ liệu hay thực thể nghiệp vụ dùng chung xuyên service.  
+      **Phụ thuộc:** ID-002-T001.  
+      **Truy vết:** ID-002-FR-006, ID-002-FR-014; ID-002-SR-003, ID-002-SR-008; AC-006, AC-014.
 
 ## Domain
 
-- [ ] **ID-002-T005 — Add the framework-independent Profile domain object.** Create the minimal
-      Profile domain model for `profileId`, `userId`, `displayName`, nullable avatar reference and
-      nullable `bio`; keep Profile behavior inside Identity and out of `libs/`.  
-      **Depends on:** ID-002-T001–ID-002-T004.  
-      **Trace:** Plan Domain Changes; ID-002-FR-001, ID-002-FR-005–ID-002-FR-006.
+- [ ] **ID-002-T005 — Thêm đối tượng domain Profile độc lập với framework.** Tạo model domain Profile
+      tối thiểu cho `profileId`, `userId`, `displayName`, tham chiếu avatar cho phép null và `bio`
+      cho phép null; giữ hành vi của Profile bên trong Identity và ngoài `libs/`.  
+      **Phụ thuộc:** ID-002-T001–ID-002-T004.  
+      **Truy vết:** Mục Thay đổi ở tầng domain của kế hoạch; ID-002-FR-001, ID-002-FR-005–ID-002-FR-006.
 
-- [ ] **ID-002-T006 — Implement Profile invariants and policies.** Enforce non-empty trimmed
-      `displayName` (maximum 100 characters), optional trimmed `bio` (maximum 1,000 characters),
-      Unicode preservation, explicit omitted-versus-null patch semantics, editable-field allowlist,
-      controlled-field rejection and generic public unavailability for `LOCKED`/`PENDING` accounts.
-      Keep the policy independent of NestJS, TypeORM and R2 SDK types.  
-      **Depends on:** ID-002-T005.  
-      **Trace:** ID-002-FR-005–ID-002-FR-009, ID-002-FR-016; ID-002-SR-002–ID-002-SR-006;
+- [ ] **ID-002-T006 — Hiện thực các bất biến và chính sách của Profile.** Thực thi `displayName` đã
+      cắt khoảng trắng và không rỗng (tối đa 100 ký tự), `bio` tuỳ chọn đã cắt khoảng trắng (tối đa
+      1.000 ký tự), việc bảo toàn Unicode, ngữ nghĩa patch tường minh giữa bỏ qua và null, danh sách
+      trường chỉnh sửa được, việc từ chối các trường bị kiểm soát, và kết quả không khả dụng chung ở
+      phần công khai cho các tài khoản `LOCKED`/`PENDING`. Giữ chính sách độc lập với NestJS, TypeORM
+      và các kiểu của R2 SDK.  
+      **Phụ thuộc:** ID-002-T005.  
+      **Truy vết:** ID-002-FR-005–ID-002-FR-009, ID-002-FR-016; ID-002-SR-002–ID-002-SR-006;
       AC-005–AC-009, AC-008a.
 
-- [ ] **ID-002-T007 — Test Profile domain behavior.** Add focused unit tests for text boundaries,
-      trimming/Unicode, nullable clears, omitted fields, protected-field rejection and locked/pending
-      public visibility.  
-      **Depends on:** ID-002-T006.  
-      **Trace:** ID-002-AC-004–ID-002-AC-009, ID-002-AC-008a; ID-002-SR-002–ID-002-SR-006.
+- [ ] **ID-002-T007 — Kiểm thử hành vi domain của Profile.** Thêm các unit test tập trung cho các
+      biên độ dài văn bản, việc cắt khoảng trắng/Unicode, việc xoá trống các trường cho phép null,
+      các trường bị bỏ qua, việc từ chối trường được bảo vệ, và khả năng hiển thị công khai của tài
+      khoản locked/pending.  
+      **Phụ thuộc:** ID-002-T006.  
+      **Truy vết:** ID-002-AC-004–ID-002-AC-009, ID-002-AC-008a; ID-002-SR-002–ID-002-SR-006.
 
-## Persistence
+## Lưu trữ
 
-- [ ] **ID-002-T008 — Align the existing Profile persistence model.** Reuse
-      `apps/identity-service/src/modules/users/entities/profile.entity.ts`; expose the stored
-      avatar value semantically as a stable R2 object reference/key while retaining the physical
-      `avatar_url` column for compatibility. Preserve the one-to-one User relation, cascade behavior,
-      `display_name varchar(100)` and nullable fields.  
-      **Depends on:** ID-002-T003, ID-002-T006.  
-      **Trace:** Plan Persistence/Database Changes; ID-002-FR-001, ID-002-FR-005, ID-002-FR-012;
-      AC-003, AC-013.
+- [ ] **ID-002-T008 — Căn chỉnh model lưu trữ Profile hiện có.** Tái dùng
+      `apps/identity-service/src/modules/users/entities/profile.entity.ts`; phơi bày giá trị avatar
+      đã lưu về mặt ngữ nghĩa như một tham chiếu/key đối tượng R2 ổn định, trong khi vẫn giữ cột vật
+      lý `avatar_url` để tương thích. Bảo toàn quan hệ một-một tới User, hành vi cascade,
+      `display_name varchar(100)` và các trường cho phép null.  
+      **Phụ thuộc:** ID-002-T003, ID-002-T006.  
+      **Truy vết:** Mục Lưu trữ/Thay đổi cơ sở dữ liệu của kế hoạch; ID-002-FR-001, ID-002-FR-005,
+      ID-002-FR-012; AC-003, AC-013.
 
-- [ ] **ID-002-T009 — Define Profile persistence boundaries.** Add only the planned
-      `ProfileRepository`, `IdentityProfileContext` and `AvatarStorage` ports in the Profile
-      application boundary. Reuse ID-001's account-read/authenticated context when compatible;
-      do not create a second unrestricted User repository or a generic base repository.  
-      **Depends on:** ID-002-T002, ID-002-T005.  
-      **Trace:** Plan Ports; ID-002-FR-002, ID-002-FR-010–ID-002-FR-011; ID-002-SR-001, ID-002-SR-008.
-
-- [ ] **ID-002-T010 — Implement the TypeORM Profile repository adapter.** Implement local Profile
-      lookup, atomic find-or-create from the official name, explicit allowed-field updates, domain/
-      persistence mapping and safe not-found/conflict handling. Use the existing Identity datasource
-      only; ensure concurrent initialization cannot create duplicate rows.  
-      **Depends on:** ID-002-T008–ID-002-T009.  
-      **Trace:** ID-002-FR-001–ID-002-FR-005, ID-002-FR-015–ID-002-FR-016; AC-001–AC-004, AC-012.
-
-- [ ] **ID-002-T011 — Wire Profile persistence into Identity composition.** Register the Profile
-      repository adapter and Profile entity through the Identity module/composition root without
-      changing Auth behavior or moving business entities into shared libraries.  
-      **Depends on:** ID-002-T008–ID-002-T010.  
-      **Trace:** Plan Infrastructure Adapters and Architecture Compliance.
-
-- [ ] **ID-002-T012 — Add Profile persistence/concurrency tests.** Verify one-to-one uniqueness,
-      nullable behavior, local User ownership, retry-safe lazy initialization, concurrent first
-      requests, explicit updates and absence of cross-service SQL access.  
-      **Depends on:** ID-002-T010–ID-002-T011.  
-      **Trace:** ID-002-AC-001–ID-002-AC-004, ID-002-AC-012, ID-002-AC-014;
+- [ ] **ID-002-T009 — Định nghĩa các ranh giới lưu trữ của Profile.** Chỉ thêm các port
+      `ProfileRepository`, `IdentityProfileContext` và `AvatarStorage` đã lập kế hoạch tại ranh giới
+      application của Profile. Tái dùng ngữ cảnh đọc tài khoản/đã xác thực của ID-001 khi tương
+      thích; không tạo một repository User thứ hai không giới hạn hay một base repository chung.  
+      **Phụ thuộc:** ID-002-T002, ID-002-T005.  
+      **Truy vết:** Mục Các port của kế hoạch; ID-002-FR-002, ID-002-FR-010–ID-002-FR-011;
       ID-002-SR-001, ID-002-SR-008.
 
-## Database / Migration
+- [ ] **ID-002-T010 — Hiện thực adapter repository Profile dùng TypeORM.** Hiện thực việc tra cứu
+      Profile cục bộ, tìm-hoặc-tạo nguyên tử từ tên chính thức, cập nhật tường minh các trường được
+      phép, ánh xạ giữa domain và lớp lưu trữ, và xử lý an toàn các trường hợp không tìm thấy/xung
+      đột. Chỉ dùng datasource Identity hiện có; đảm bảo việc khởi tạo đồng thời không thể tạo ra các
+      dòng trùng lặp.  
+      **Phụ thuộc:** ID-002-T008–ID-002-T009.  
+      **Truy vết:** ID-002-FR-001–ID-002-FR-005, ID-002-FR-015–ID-002-FR-016; AC-001–AC-004, AC-012.
 
-- [ ] **ID-002-T013 — Create the Profile validation migration.** Create an Identity-owned TypeORM
-      migration without editing `1700000000000-InitialIdentitySchema.ts`. Add preflight checks for
-      invalid existing display names and legacy non-approved avatar values, then add named checks
-      for non-blank `display_name` and `bio` length `<= 1,000`. Retain the existing User foreign key,
-      cascade and unique `user_id`; do not add academic, role or cross-service columns.  
-      **Depends on:** ID-002-T008.  
-      **Trace:** Plan Database Changes/Migration; ID-002-FR-001, ID-002-FR-005, ID-002-FR-012;
-      AC-012–AC-013.
+- [ ] **ID-002-T011 — Nối dây lớp lưu trữ Profile vào phần composition của Identity.** Đăng ký adapter
+      repository Profile và entity Profile qua module/composition root của Identity mà không thay đổi
+      hành vi của Auth và không chuyển thực thể nghiệp vụ nào vào thư viện dùng chung.  
+      **Phụ thuộc:** ID-002-T008–ID-002-T010.  
+      **Truy vết:** Mục Adapter hạ tầng và Tuân thủ kiến trúc của kế hoạch.
 
-- [ ] **ID-002-T014 — Verify migration lifecycle and compatibility.** Review generated SQL, verify
-      apply/revert/re-apply against an isolated Identity PostgreSQL database, confirm existing data
-      is not truncated, and keep `synchronize: false`. Stop and report actionable remediation when
-      preflight data is invalid.  
-      **Depends on:** ID-002-T013.  
-      **Trace:** Definition of Done migration requirements; ID-002-AC-013, ID-002-AC-014.
+- [ ] **ID-002-T012 — Thêm test lưu trữ/đồng thời cho Profile.** Kiểm chứng tính duy nhất một-một,
+      hành vi cho phép null, quyền sở hữu nội bộ của User, việc khởi tạo trễ an toàn khi thực hiện
+      lại, các request đầu tiên đồng thời, các cập nhật tường minh, và việc không có truy cập SQL
+      xuyên service.  
+      **Phụ thuộc:** ID-002-T010–ID-002-T011.  
+      **Truy vết:** ID-002-AC-001–ID-002-AC-004, ID-002-AC-012, ID-002-AC-014;
+      ID-002-SR-001, ID-002-SR-008.
 
-## Infrastructure / Avatar Storage
+## Cơ sở dữ liệu / Migration
 
-- [ ] **ID-002-T015 — Add validated R2 configuration.** Extend Identity environment validation and
-      `.env.example` with fail-fast Cloudflare R2 endpoint/bucket/credential placeholders, signed
-      URL TTL, upload limits, allowed content types and cleanup grace settings. Keep real credentials
-      outside source control.  
-      **Depends on:** ID-002-T001, ID-002-T002.  
-      **Trace:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005, ID-002-SR-007.
+- [ ] **ID-002-T013 — Tạo migration kiểm tra dữ liệu cho Profile.** Tạo một migration TypeORM thuộc
+      sở hữu của Identity mà không sửa `1700000000000-InitialIdentitySchema.ts`. Thêm các bước kiểm
+      tra trước cho tên hiển thị hiện có không hợp lệ và các giá trị avatar cũ chưa được phê duyệt,
+      rồi thêm các check có tên cho `display_name` không rỗng và độ dài `bio` `<= 1.000`. Giữ khoá
+      ngoại tới User, cascade và `user_id` duy nhất hiện có; không thêm cột học thuật, vai trò hay
+      xuyên service nào.  
+      **Phụ thuộc:** ID-002-T008.  
+      **Truy vết:** Mục Thay đổi cơ sở dữ liệu/Migration của kế hoạch; ID-002-FR-001, ID-002-FR-005,
+      ID-002-FR-012; AC-012–AC-013.
 
-- [ ] **ID-002-T016 — Select and add the minimal R2 SDK dependency if required.** Inspect existing
-      dependencies first; add only the approved S3-compatible R2 client/presigner through pnpm if no
-      existing adapter is suitable. Do not add a new storage provider or modify dependencies merely
-      for abstraction symmetry.  
-      **Depends on:** ID-002-T015.  
-      **Trace:** Plan Cloudflare R2 adapter; ID-002-FR-012, ID-002-SR-005.
+- [ ] **ID-002-T014 — Kiểm chứng vòng đời và tính tương thích của migration.** Rà soát SQL được sinh
+      ra, kiểm chứng việc áp dụng/hoàn tác/áp dụng lại trên một cơ sở dữ liệu PostgreSQL Identity
+      cách ly, xác nhận dữ liệu hiện có không bị cắt bớt, và giữ `synchronize: false`. Hãy dừng lại
+      và báo cáo phương án khắc phục hành động được khi dữ liệu không vượt qua bước kiểm tra trước.  
+      **Phụ thuộc:** ID-002-T013.  
+      **Truy vết:** Yêu cầu về migration của Định nghĩa Hoàn thành; ID-002-AC-013, ID-002-AC-014.
 
-- [ ] **ID-002-T017 — Implement the Cloudflare R2 AvatarStorage adapter.** Generate server-owned
-      per-user object keys, short-lived presigned upload URLs and short-lived signed read URLs;
-      validate approved references against the bucket/user prefix and reject external URLs, caller
-      buckets/keys, path traversal and untrusted credentials. Never persist signed URLs.  
-      **Depends on:** ID-002-T009, ID-002-T015–ID-002-T016.  
-      **Trace:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005–ID-002-SR-007;
+## Hạ tầng / Lưu trữ avatar
+
+- [ ] **ID-002-T015 — Thêm cấu hình R2 đã được kiểm chứng.** Mở rộng phần kiểm tra biến môi trường
+      của Identity và `.env.example` với các placeholder endpoint/bucket/thông tin xác thực
+      Cloudflare R2 theo kiểu thất bại sớm, cùng TTL của signed URL, giới hạn tải lên, các kiểu nội
+      dung được phép và thiết lập ân hạn khi dọn dẹp. Giữ thông tin xác thực thật nằm ngoài hệ thống
+      quản lý mã nguồn.  
+      **Phụ thuộc:** ID-002-T001, ID-002-T002.  
+      **Truy vết:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005, ID-002-SR-007.
+
+- [ ] **ID-002-T016 — Chọn và thêm phụ thuộc R2 SDK tối thiểu nếu cần.** Khảo sát các phụ thuộc hiện
+      có trước; chỉ thêm client/presigner R2 tương thích S3 đã phê duyệt qua pnpm nếu không adapter
+      nào sẵn có phù hợp. Không thêm một nhà cung cấp lưu trữ mới hay sửa phụ thuộc chỉ để cho cân
+      xứng về mặt trừu tượng hoá.  
+      **Phụ thuộc:** ID-002-T015.  
+      **Truy vết:** Mục adapter Cloudflare R2 của kế hoạch; ID-002-FR-012, ID-002-SR-005.
+
+- [ ] **ID-002-T017 — Hiện thực adapter AvatarStorage cho Cloudflare R2.** Sinh các object key theo
+      từng người dùng do server sở hữu, các presigned upload URL ngắn hạn và các signed read URL
+      ngắn hạn; kiểm chứng các tham chiếu đã phê duyệt theo bucket/tiền tố người dùng và từ chối các
+      URL bên ngoài, bucket/key do người gọi cung cấp, path traversal và thông tin xác thực không tin
+      cậy. Không bao giờ lưu signed URL.  
+      **Phụ thuộc:** ID-002-T009, ID-002-T015–ID-002-T016.  
+      **Truy vết:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005–ID-002-SR-007;
       AC-005, AC-013, AC-013a.
 
-- [ ] **ID-002-T018 — Implement post-commit avatar cleanup behavior.** Capture replaced/cleared
-      object references, update the Profile reference first, and schedule best-effort asynchronous
-      deletion after the configured grace period. Cleanup failure must not roll back a successful
-      Profile update and must not expose credentials or signed URLs in logs.  
-      **Depends on:** ID-002-T010, ID-002-T017.  
-      **Trace:** ID-002-FR-005, ID-002-FR-016; ID-002-SR-005, ID-002-SR-007;
+- [ ] **ID-002-T018 — Hiện thực hành vi dọn dẹp avatar sau khi commit.** Ghi nhận các tham chiếu đối
+      tượng bị thay thế/xoá trống, cập nhật tham chiếu Profile trước, và lên lịch xoá bất đồng bộ
+      best-effort sau khoảng ân hạn được cấu hình. Việc dọn dẹp thất bại không được làm hoàn tác một
+      lần cập nhật Profile đã thành công và không được để lộ thông tin xác thực hay signed URL trong
+      log.  
+      **Phụ thuộc:** ID-002-T010, ID-002-T017.  
+      **Truy vết:** ID-002-FR-005, ID-002-FR-016; ID-002-SR-005, ID-002-SR-007;
       AC-004, AC-013b.
 
-- [ ] **ID-002-T019 — Test the R2 adapter and cleanup boundary.** Verify upload-intent ownership,
-      content restrictions, approved-reference validation, signed-read URL generation, arbitrary URL
-      rejection, post-commit cleanup scheduling and dependency-failure behavior with no dangling
-      Profile reference.  
-      **Depends on:** ID-002-T017–ID-002-T018.  
-      **Trace:** ID-002-AC-005, ID-002-AC-013, ID-002-AC-013a–ID-002-AC-013b, ID-002-AC-015;
+- [ ] **ID-002-T019 — Kiểm thử adapter R2 và ranh giới dọn dẹp.** Kiểm chứng quyền sở hữu của ý định
+      tải lên, các hạn chế về nội dung, việc kiểm chứng tham chiếu đã phê duyệt, việc sinh signed
+      read URL, việc từ chối URL tuỳ ý, việc lên lịch dọn dẹp sau commit, và hành vi khi phụ thuộc
+      thất bại mà không để lại tham chiếu Profile treo lơ lửng.  
+      **Phụ thuộc:** ID-002-T017–ID-002-T018.  
+      **Truy vết:** ID-002-AC-005, ID-002-AC-013, ID-002-AC-013a–ID-002-AC-013b, ID-002-AC-015;
       ID-002-SR-005–ID-002-SR-007.
 
-## Application Use Cases
+## Use case của tầng application
 
-- [ ] **ID-002-T020 — Implement `GetMyProfile`.** Resolve the User ID from the verified ID-001
-      authenticated context, atomically lazy-create a missing Profile from the official provisioned
-      name, and return the safe own-profile representation. Do not accept a caller-supplied User ID
-      or return credentials/provider/session data.  
-      **Depends on:** ID-002-T002, ID-002-T006, ID-002-T010–ID-002-T011.  
-      **Trace:** ID-002-FR-002–ID-002-FR-003; ID-002-SR-001, ID-002-SR-003;
+- [ ] **ID-002-T020 — Hiện thực `GetMyProfile`.** Phân giải User ID từ ngữ cảnh đã xác thực của ID-001
+      đã được kiểm chứng, tạo trễ một cách nguyên tử một Profile còn thiếu từ tên chính thức đã được
+      cấp, và trả về biểu diễn an toàn của hồ sơ chính mình. Không nhận User ID do người gọi cung cấp
+      và không trả về dữ liệu thông tin đăng nhập/nhà cung cấp/phiên.  
+      **Phụ thuộc:** ID-002-T002, ID-002-T006, ID-002-T010–ID-002-T011.  
+      **Truy vết:** ID-002-FR-002–ID-002-FR-003; ID-002-SR-001, ID-002-SR-003;
       AC-001–AC-002, AC-007.
 
-- [ ] **ID-002-T021 — Implement `UpdateMyProfile`.** Coordinate explicit partial updates for the
-      owner, enforce the editable-field allowlist and domain validation, validate R2 references,
-      preserve omitted fields, support avatar/bio clears, lazy-initialize when needed and schedule
-      old-avatar cleanup only after commit.  
-      **Depends on:** ID-002-T006, ID-002-T010–ID-002-T011, ID-002-T017–ID-002-T018.  
-      **Trace:** ID-002-FR-002, ID-002-FR-004–ID-002-FR-006, ID-002-FR-016;
+- [ ] **ID-002-T021 — Hiện thực `UpdateMyProfile`.** Điều phối các cập nhật một phần tường minh cho
+      chủ sở hữu, thực thi danh sách trường chỉnh sửa được và việc kiểm tra ở tầng domain, kiểm chứng
+      các tham chiếu R2, giữ nguyên các trường bị bỏ qua, hỗ trợ xoá trống avatar/bio, khởi tạo trễ
+      khi cần, và chỉ lên lịch dọn dẹp avatar cũ sau khi commit.  
+      **Phụ thuộc:** ID-002-T006, ID-002-T010–ID-002-T011, ID-002-T017–ID-002-T018.  
+      **Truy vết:** ID-002-FR-002, ID-002-FR-004–ID-002-FR-006, ID-002-FR-016;
       ID-002-SR-001–ID-002-SR-003; AC-002–AC-006.
 
-- [ ] **ID-002-T022 — Implement `GetPublicProfile`.** Load the target Identity User/Profile without
-      creating a row for an unrelated user, return only the public allowlist, generate a signed
-      avatar URL when applicable and return the same generic unavailable/not-found result for missing,
-      `LOCKED` and `PENDING` targets.  
-      **Depends on:** ID-002-T006, ID-002-T010, ID-002-T017.  
-      **Trace:** ID-002-FR-007–ID-002-FR-009; ID-002-SR-004–ID-002-SR-005;
+- [ ] **ID-002-T022 — Hiện thực `GetPublicProfile`.** Nạp User/Profile đích của Identity mà không tạo
+      dòng nào cho một người dùng không liên quan, chỉ trả về danh sách cho phép công khai, sinh
+      signed URL avatar khi phù hợp, và trả về cùng một kết quả không khả dụng/không tìm thấy chung
+      cho các đích bị thiếu, `LOCKED` và `PENDING`.  
+      **Phụ thuộc:** ID-002-T006, ID-002-T010, ID-002-T017.  
+      **Truy vết:** ID-002-FR-007–ID-002-FR-009; ID-002-SR-004–ID-002-SR-005;
       AC-008–AC-009, AC-008a.
 
-- [ ] **ID-002-T023 — Implement Admin target Profile operations.** Add `AdminGetUserProfile` and
-      `AdminUpdateUserProfile` using the approved ID-003 Admin capability, the same safe response and
-      explicit field allowlist, with no account/authorization mutation and no new Admin lazy-lifecycle
-      rule.  
-      **Depends on:** ID-002-T002, ID-002-T006, ID-002-T010–ID-002-T011.  
-      **Trace:** ID-002-FR-010; ID-002-SR-001–ID-002-SR-003; AC-010.
+- [ ] **ID-002-T023 — Hiện thực các thao tác Profile trên đích của Admin.** Thêm
+      `AdminGetUserProfile` và `AdminUpdateUserProfile` dùng khả năng Admin đã phê duyệt của ID-003,
+      cùng phản hồi an toàn và danh sách trường cho phép tường minh, không thay đổi dữ liệu tài
+      khoản/phân quyền và không thêm quy tắc vòng đời tạo trễ mới cho Admin.  
+      **Phụ thuộc:** ID-002-T002, ID-002-T006, ID-002-T010–ID-002-T011.  
+      **Truy vết:** ID-002-FR-010; ID-002-SR-001–ID-002-SR-003; AC-010.
 
-- [ ] **ID-002-T024 — Implement `CreateAvatarUploadIntent`.** Expose the narrowly scoped owner-only
-      supporting operation that returns a server-generated R2 object reference and short-lived
-      presigned upload URL; accept no caller bucket, key, credential, redirect or external URL.  
-      **Depends on:** ID-002-T017.  
-      **Trace:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005–ID-002-SR-006;
+- [ ] **ID-002-T024 — Hiện thực `CreateAvatarUploadIntent`.** Phơi bày thao tác hỗ trợ có phạm vi hẹp
+      chỉ dành cho chủ sở hữu, trả về một tham chiếu đối tượng R2 do server sinh ra và một presigned
+      upload URL ngắn hạn; không nhận bucket, key, thông tin xác thực, redirect hay URL bên ngoài từ
+      người gọi.  
+      **Phụ thuộc:** ID-002-T017.  
+      **Truy vết:** ID-002-FR-012–ID-002-FR-013; ID-002-SR-005–ID-002-SR-006;
       AC-005, AC-013.
 
-## DTO / Mapping / Presentation
+## DTO / Ánh xạ / Presentation
 
-- [ ] **ID-002-T025 — Create Profile request DTOs and transport validation.** Add the planned own/
-      Admin patch and avatar-upload-intent DTOs with optional fields, nullable clear semantics,
-      display-name maximum 100, bio maximum 1,000, class-validator integration and rejection of
-      unknown/protected fields through the existing global validation pipe.  
-      **Depends on:** ID-002-T006, ID-002-T024.  
-      **Trace:** ID-002-FR-005–ID-002-FR-006, ID-002-FR-013, ID-002-FR-016;
+- [ ] **ID-002-T025 — Tạo các DTO request và phần kiểm tra ở tầng truyền tải của Profile.** Thêm các
+      DTO patch cho chủ sở hữu/Admin và DTO ý định tải avatar đã lập kế hoạch, với các trường tuỳ
+      chọn, ngữ nghĩa xoá trống bằng null, tên hiển thị tối đa 100, bio tối đa 1.000, tích hợp
+      class-validator và việc từ chối các trường lạ/bị bảo vệ qua pipe kiểm tra dữ liệu toàn cục hiện
+      có.  
+      **Phụ thuộc:** ID-002-T006, ID-002-T024.  
+      **Truy vết:** ID-002-FR-005–ID-002-FR-006, ID-002-FR-013, ID-002-FR-016;
       ID-002-SR-002, ID-002-SR-006; AC-003–AC-006.
 
-- [ ] **ID-002-T026 — Create response DTOs and explicit mappers.** Implement separate own/Admin and
-      public response allowlists. Include only the stable `userId` where approved plus Profile-owned
-      fields and generated signed avatar URL; exclude email, MSSV, roles, permissions, account
-      status, password/hash, refresh data, provider identities and internal R2 metadata.  
-      **Depends on:** ID-002-T020–ID-002-T023.  
-      **Trace:** ID-002-FR-007–ID-002-FR-009; ID-002-SR-003–ID-002-SR-004;
+- [ ] **ID-002-T026 — Tạo các DTO phản hồi và các mapper tường minh.** Hiện thực các danh sách cho
+      phép tách biệt cho phản hồi của chủ sở hữu/Admin và phản hồi công khai. Chỉ bao gồm `userId`
+      ổn định ở nơi đã phê duyệt, cộng với các trường thuộc sở hữu của Profile và signed URL avatar
+      được sinh ra; loại trừ email, MSSV, vai trò, quyền, trạng thái tài khoản, mật khẩu/bản băm, dữ
+      liệu refresh, định danh nhà cung cấp và metadata R2 nội bộ.  
+      **Phụ thuộc:** ID-002-T020–ID-002-T023.  
+      **Truy vết:** ID-002-FR-007–ID-002-FR-009; ID-002-SR-003–ID-002-SR-004;
       AC-001, AC-008–AC-009, AC-015.
 
-- [ ] **ID-002-T027 — Implement the Profile controller and module wiring.** Add the planned Profile
-      routes, invoke exactly one application operation per request, map existing Identity/Gateway
-      errors, apply the reused authenticated identity context and register the feature module in the
-      Identity composition root. Keep controllers free of business logic and direct database/R2 use.
-      **Depends on:** ID-002-T011, ID-002-T020–ID-002-T026.  
-      **Trace:** ID-002-FR-003–ID-002-FR-011; ID-002-SR-001–ID-002-SR-004;
+- [ ] **ID-002-T027 — Hiện thực controller Profile và phần nối dây module.** Thêm các route Profile
+      đã lập kế hoạch, gọi đúng một thao tác application cho mỗi request, ánh xạ các lỗi
+      Identity/Gateway hiện có, áp dụng ngữ cảnh định danh đã xác thực được tái dùng, và đăng ký
+      feature module trong composition root của Identity. Giữ controller không chứa logic nghiệp vụ
+      và không dùng trực tiếp cơ sở dữ liệu/R2.  
+      **Phụ thuộc:** ID-002-T011, ID-002-T020–ID-002-T026.  
+      **Truy vết:** ID-002-FR-003–ID-002-FR-011; ID-002-SR-001–ID-002-SR-004;
       AC-001, AC-007, AC-010–AC-011.
 
-- [ ] **ID-002-T028 — Update Swagger/OpenAPI documentation.** Document own/public/Admin Profile
-      operations and the supporting avatar upload intent, request limits/nullability, Bearer/Admin
-      requirements, signed-avatar responses and relevant 400/401/403/404/dependency errors without
-      exposing persistence or credential fields.  
-      **Depends on:** ID-002-T025–ID-002-T027.  
-      **Trace:** Definition of Done API documentation; ID-002-AC-001, AC-008–AC-011.
+- [ ] **ID-002-T028 — Cập nhật tài liệu Swagger/OpenAPI.** Mô tả các thao tác Profile của chủ sở
+      hữu/công khai/Admin và thao tác hỗ trợ ý định tải avatar, các giới hạn/khả năng nhận null của
+      request, các yêu cầu Bearer/Admin, các phản hồi có avatar đã ký, và các lỗi
+      400/401/403/404/phụ thuộc liên quan, mà không phơi bày các trường lưu trữ hay thông tin xác
+      thực.  
+      **Phụ thuộc:** ID-002-T025–ID-002-T027.  
+      **Truy vết:** Phần tài liệu API của Định nghĩa Hoàn thành; ID-002-AC-001, AC-008–AC-011.
 
-## API Gateway Integration
+## Tích hợp API Gateway
 
-- [ ] **ID-002-T029 — Align exact public Profile route authentication metadata.** Update Gateway auth
-      matching so only `GET /api/users/:userId/profile` has public access; keep `/api/profile/me`,
-      PATCH routes, Admin routes and avatar upload intent protected. Continue stripping spoofed
-      identity/role headers and deriving trusted context from the verified ID-001 access token.  
-      **Depends on:** ID-002-T027.  
-      **Trace:** ID-002-FR-003, ID-002-FR-007, ID-002-FR-010–ID-002-FR-011;
+- [ ] **ID-002-T029 — Căn chỉnh chính xác metadata xác thực cho route Profile công khai.** Cập nhật
+      phần so khớp auth của Gateway sao cho chỉ `GET /api/users/:userId/profile` là công khai; giữ
+      `/api/profile/me`, các route PATCH, các route của Admin và thao tác ý định tải avatar ở trạng
+      thái được bảo vệ. Tiếp tục loại bỏ các header định danh/vai trò giả mạo và suy ra ngữ cảnh tin
+      cậy từ access token ID-001 đã được xác minh.  
+      **Phụ thuộc:** ID-002-T027.  
+      **Truy vết:** ID-002-FR-003, ID-002-FR-007, ID-002-FR-010–ID-002-FR-011;
       ID-002-SR-001, ID-002-SR-004; AC-007–AC-011.
 
-- [ ] **ID-002-T030 — Verify Gateway proxy compatibility.** Confirm existing `/api/profile` and
-      `/api/users` forwarding reaches Identity, preserves the approved response/error headers and
-      does not broaden the public bypass. Modify proxy code only if the signed-avatar/API contract
-      requires it.  
-      **Depends on:** ID-002-T029.  
-      **Trace:** Plan API Gateway integration; ID-002-SR-001, ID-002-SR-008.
+- [ ] **ID-002-T030 — Kiểm chứng tính tương thích của proxy Gateway.** Xác nhận việc chuyển tiếp
+      `/api/profile` và `/api/users` hiện có tới được Identity, bảo toàn các header phản hồi/lỗi đã
+      phê duyệt, và không mở rộng phần bỏ qua xác thực công khai. Chỉ sửa mã proxy nếu contract
+      API/avatar đã ký thực sự đòi hỏi.  
+      **Phụ thuộc:** ID-002-T029.  
+      **Truy vết:** Mục tích hợp API Gateway của kế hoạch; ID-002-SR-001, ID-002-SR-008.
 
-## Authorization / Privacy / Error Handling
+## Phân quyền / Quyền riêng tư / Xử lý lỗi
 
-- [ ] **ID-002-T031 — Enforce actor and field authorization.** Verify owner-only Student/Lecturer
-      updates, Admin-only cross-user management through the ID-003 capability, public read scope and
-      generic unavailable behavior. Reject all attempts to mutate email, MSSV, roles, permissions,
-      account status, password or provider fields at the application boundary, not only in DTOs.  
-      **Depends on:** ID-002-T002, ID-002-T006, ID-002-T020–ID-002-T023.  
-      **Trace:** ID-002-FR-006, ID-002-FR-010–ID-002-FR-011; ID-002-SR-001–ID-002-SR-004;
+- [ ] **ID-002-T031 — Thực thi phân quyền theo tác nhân và theo trường.** Kiểm chứng việc cập nhật
+      chỉ dành cho chủ sở hữu với Sinh viên/Giảng viên, việc quản lý xuyên người dùng chỉ dành cho
+      Admin thông qua khả năng của ID-003, phạm vi đọc công khai, và hành vi không khả dụng chung. Từ
+      chối mọi nỗ lực thay đổi email, MSSV, vai trò, quyền, trạng thái tài khoản, mật khẩu hay các
+      trường nhà cung cấp tại ranh giới application, chứ không chỉ ở DTO.  
+      **Phụ thuộc:** ID-002-T002, ID-002-T006, ID-002-T020–ID-002-T023.  
+      **Truy vết:** ID-002-FR-006, ID-002-FR-010–ID-002-FR-011; ID-002-SR-001–ID-002-SR-004;
       AC-006, AC-008a, AC-010–AC-011.
 
-- [ ] **ID-002-T032 — Map Profile errors to the existing convention.** Implement 400 validation,
-      401 authentication, 403 ownership/field, 404 generic unavailable/not-found and normalized R2/
-      persistence dependency errors without creating a new error envelope or leaking account status.
-      **Depends on:** ID-002-T020–ID-002-T027.  
-      **Trace:** Plan Error Handling; ID-002-FR-007, ID-002-FR-013, ID-002-SR-004;
+- [ ] **ID-002-T032 — Ánh xạ lỗi của Profile về quy ước hiện có.** Hiện thực 400 cho kiểm tra dữ
+      liệu, 401 cho xác thực, 403 cho quyền sở hữu/trường, 404 cho kết quả không khả dụng/không tìm
+      thấy chung, và các lỗi phụ thuộc R2/lưu trữ đã chuẩn hoá, mà không tạo cấu trúc lỗi mới và
+      không rò rỉ trạng thái tài khoản.  
+      **Phụ thuộc:** ID-002-T020–ID-002-T027.  
+      **Truy vết:** Mục Xử lý lỗi của kế hoạch; ID-002-FR-007, ID-002-FR-013, ID-002-SR-004;
       AC-005, AC-007, AC-008a, AC-015.
 
-- [ ] **ID-002-T033 — Add safe logging and redaction controls.** Reuse correlation IDs and existing
-      logging while ensuring passwords, access/refresh tokens, authorization headers, R2 credentials,
-      signed URLs and sensitive account fields never appear in Profile logs or errors.  
-      **Depends on:** ID-002-T027, ID-002-T032.  
-      **Trace:** ID-002-SR-007; AC-015.
+- [ ] **ID-002-T033 — Thêm các biện pháp ghi log an toàn và che thông tin.** Tái dùng correlation ID
+      và phần ghi log hiện có, đồng thời đảm bảo mật khẩu, access/refresh token, header
+      Authorization, thông tin xác thực R2, signed URL và các trường tài khoản nhạy cảm không bao giờ
+      xuất hiện trong log hay lỗi của Profile.  
+      **Phụ thuộc:** ID-002-T027, ID-002-T032.  
+      **Truy vết:** ID-002-SR-007; AC-015.
 
 ## Messaging / Realtime
 
-- [x] **ID-002-T034 — N/A: Messaging.** ID-002 has no approved RabbitMQ business event or message
-      contract; avatar cleanup remains an infrastructure concern and does not create a new topology.
+- [x] **ID-002-T034 — N/A: Messaging.** ID-002 không có event nghiệp vụ RabbitMQ hay message contract
+      nào được phê duyệt; việc dọn dẹp avatar vẫn là mối quan tâm của hạ tầng và không tạo topology mới.
 
-- [x] **ID-002-T035 — N/A: Realtime.** Profile operations do not require Socket.IO/Redis fan-out;
-      Identity persistence remains the source of truth.
+- [x] **ID-002-T035 — N/A: Realtime.** Các thao tác Profile không cần fan-out qua Socket.IO/Redis;
+      lớp lưu trữ của Identity vẫn là nguồn chân lý.
 
-## Testing
+## Kiểm thử
 
-- [ ] **ID-002-T036 — Add application/use-case tests.** Cover GetMyProfile lazy initialization and
-      retry behavior; UpdateMyProfile allowed/omitted/null fields; missing official name; public
-      whitelist/status handling; Admin capability; Student/Lecturer cross-user denial; and User
-      account preservation.  
-      **Depends on:** ID-002-T020–ID-002-T023, ID-002-T031–ID-002-T032.  
-      **Trace:** ID-002-AC-001–ID-002-AC-012, ID-002-AC-014; FR-002–FR-011, FR-015–FR-016.
+- [ ] **ID-002-T036 — Thêm test cho tầng application/use case.** Bao phủ việc khởi tạo trễ và hành vi
+      khi thực hiện lại của GetMyProfile; các trường được phép/bị bỏ qua/null của UpdateMyProfile;
+      trường hợp thiếu tên chính thức; việc xử lý danh sách cho phép/trạng thái ở phần công khai; khả
+      năng của Admin; việc từ chối cập nhật xuyên người dùng của Sinh viên/Giảng viên; và việc bảo
+      toàn tài khoản User.  
+      **Phụ thuộc:** ID-002-T020–ID-002-T023, ID-002-T031–ID-002-T032.  
+      **Truy vết:** ID-002-AC-001–ID-002-AC-012, ID-002-AC-014; FR-002–FR-011, FR-015–FR-016.
 
-- [ ] **ID-002-T037 — Add API/Gateway contract tests.** Verify private Bearer requirements, the
-      exact public GET bypass, protected PATCH/upload/Admin routes, DTO whitelist behavior, response
-      allowlists, generic locked/pending responses and existing proxy routing.  
-      **Depends on:** ID-002-T025–ID-002-T030.  
-      **Trace:** ID-002-AC-005–ID-002-AC-011, ID-002-AC-015; ID-002-SR-001–ID-002-SR-004.
+- [ ] **ID-002-T037 — Thêm test contract cho API/Gateway.** Kiểm chứng yêu cầu Bearer ở các đường
+      riêng tư, đúng phần bỏ qua xác thực cho GET công khai, các route PATCH/tải lên/Admin được bảo
+      vệ, hành vi danh sách cho phép ở DTO, các danh sách cho phép ở phản hồi, các phản hồi chung cho
+      locked/pending, và việc định tuyến proxy hiện có.  
+      **Phụ thuộc:** ID-002-T025–ID-002-T030.  
+      **Truy vết:** ID-002-AC-005–ID-002-AC-011, ID-002-AC-015; ID-002-SR-001–ID-002-SR-004.
 
-- [ ] **ID-002-T038 — Add persistence, migration and R2 integration tests.** Verify Profile schema
-      constraints, migration run/revert/re-run, invalid-data preflight, one-to-one concurrency,
-      R2 reference/signed URL behavior, cleanup scheduling and dependency failure without dangling
-      references.  
-      **Depends on:** ID-002-T012, ID-002-T014, ID-002-T019.  
-      **Trace:** ID-002-AC-005, ID-002-AC-012–ID-002-AC-015; ID-002-SR-005–ID-002-SR-008.
+- [ ] **ID-002-T038 — Thêm test integration cho lưu trữ, migration và R2.** Kiểm chứng các ràng buộc
+      schema của Profile, việc chạy/hoàn tác/chạy lại migration, bước kiểm tra trước dữ liệu không
+      hợp lệ, tính đồng thời một-một, hành vi tham chiếu/signed URL của R2, việc lên lịch dọn dẹp, và
+      việc phụ thuộc thất bại mà không để lại tham chiếu treo lơ lửng.  
+      **Phụ thuộc:** ID-002-T012, ID-002-T014, ID-002-T019.  
+      **Truy vết:** ID-002-AC-005, ID-002-AC-012–ID-002-AC-015; ID-002-SR-005–ID-002-SR-008.
 
-- [ ] **ID-002-T039 — Review security and boundary tests.** Confirm mass-assignment rejection,
-      spoofed identity-header rejection, private-field non-disclosure, arbitrary R2 URL/key
-      rejection, no cross-service SQL, no shared business entity and no credential/signed-URL log
-      leakage.  
-      **Depends on:** ID-002-T031–ID-002-T033, ID-002-T037–ID-002-T038.  
-      **Trace:** ID-002-SR-001–ID-002-SR-008; AC-006, AC-009, AC-013, AC-014–AC-015.
+- [ ] **ID-002-T039 — Rà soát các test về bảo mật và ranh giới.** Xác nhận việc từ chối gán hàng
+      loạt, việc từ chối header định danh giả mạo, việc không tiết lộ trường riêng tư, việc từ chối
+      URL/key R2 tuỳ ý, việc không có SQL xuyên service, không có thực thể nghiệp vụ dùng chung, và
+      không rò rỉ thông tin xác thực/signed URL vào log.  
+      **Phụ thuộc:** ID-002-T031–ID-002-T033, ID-002-T037–ID-002-T038.  
+      **Truy vết:** ID-002-SR-001–ID-002-SR-008; AC-006, AC-009, AC-013, AC-014–AC-015.
 
-## Validation / Documentation
+## Kiểm chứng / Tài liệu
 
-- [ ] **ID-002-T040 — Run repository validation with pnpm.** After implementation, inspect the
-      actual scripts in `package.json` and run applicable commands using pnpm only:
-      `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build`. Record failures instead of
-      suppressing them with `any`, `@ts-ignore` or broad lint disables.  
-      **Depends on:** ID-002-T036–ID-002-T039.  
-      **Trace:** Definition of Done quality and validation requirements.
+- [ ] **ID-002-T040 — Chạy các lệnh kiểm chứng của repository bằng pnpm.** Sau khi triển khai, khảo
+      sát các script thật trong `package.json` và chạy các lệnh phù hợp, chỉ dùng pnpm:
+      `pnpm lint`, `pnpm typecheck`, `pnpm test` và `pnpm build`. Ghi lại các lỗi thay vì che chúng
+      bằng `any`, `@ts-ignore` hay việc tắt lint trên diện rộng.  
+      **Phụ thuộc:** ID-002-T036–ID-002-T039.  
+      **Truy vết:** Yêu cầu về chất lượng và kiểm chứng của Định nghĩa Hoàn thành.
 
-- [ ] **ID-002-T041 — Verify architecture compliance.** Review the implementation against Identity
-      Clean Architecture and the plan: presentation has no business logic, application coordinates
-      ports, domain is framework-independent, infrastructure owns TypeORM/R2, no cross-service DB
-      access exists, Authentication/RBAC are reused rather than duplicated, and no business entity
-      is moved into `libs/`.  
-      **Depends on:** ID-002-T027, ID-002-T030, ID-002-T039–ID-002-T040.  
-      **Trace:** Plan Architecture Compliance; ID-002-SR-008, AC-014.
+- [ ] **ID-002-T041 — Kiểm chứng tuân thủ kiến trúc.** Rà soát bản triển khai đối chiếu với Clean
+      Architecture của Identity và với kế hoạch: presentation không có logic nghiệp vụ, application
+      điều phối các port, domain độc lập với framework, infrastructure sở hữu TypeORM/R2, không có
+      truy cập cơ sở dữ liệu xuyên service, Authentication/RBAC được tái dùng chứ không bị nhân bản,
+      và không thực thể nghiệp vụ nào bị chuyển vào `libs/`.  
+      **Phụ thuộc:** ID-002-T027, ID-002-T030, ID-002-T039–ID-002-T040.  
+      **Truy vết:** Mục Tuân thủ kiến trúc của kế hoạch; ID-002-SR-008, AC-014.
 
-- [ ] **ID-002-T042 — Verify implementation against the Approved specification.** Check every
-      Functional Requirement, Security Requirement, Acceptance Criterion, privacy rule,
-      authorization rule, migration requirement and API documentation item. Confirm no Out-of-Scope
-      behavior (authentication changes, RBAC engine, Learning/Submission data, Community storage,
-      social graph or new service) was added. Update this checklist with the real completion state
-      and report any deviation or unverified provisioning/R2 dependency.  
-      **Depends on:** ID-002-T028, ID-002-T034–ID-002-T041.  
-      **Trace:** Final SDD verification; Definition of Done.
+- [ ] **ID-002-T042 — Đối chiếu bản triển khai với đặc tả đã Approved.** Kiểm tra từng Yêu cầu chức
+      năng, Yêu cầu bảo mật, Tiêu chí nghiệm thu, quy tắc riêng tư, quy tắc phân quyền, yêu cầu
+      migration và mục tài liệu API. Xác nhận không có hành vi Ngoài phạm vi nào (thay đổi xác thực,
+      RBAC engine, dữ liệu Learning/Submission, lưu trữ Community, đồ thị xã hội hay service mới)
+      được thêm vào. Cập nhật danh sách này theo trạng thái hoàn thành thực tế và báo cáo mọi sai
+      lệch hay phụ thuộc cấp tài khoản/R2 chưa kiểm chứng được.  
+      **Phụ thuộc:** ID-002-T028, ID-002-T034–ID-002-T041.  
+      **Truy vết:** Bước xác minh cuối cùng của SDD; Định nghĩa Hoàn thành.
 
-## Requirement Coverage Summary
+## Bảng tổng hợp độ phủ yêu cầu
 
-| Requirement group    | Task coverage                                          |
+| Nhóm yêu cầu         | Độ phủ công việc                                       |
 | -------------------- | ------------------------------------------------------ |
 | ID-002-FR-001–FR-006 | T005–T012, T020–T021, T025, T031                       |
 | ID-002-FR-007–FR-011 | T022–T023, T026–T032, T036–T037                        |
@@ -349,13 +371,13 @@ its listed verification are complete. Tasks marked N/A are the only intentional 
 | ID-002-SR-001–SR-008 | T006, T009, T017–T019, T025–T026, T029–T033, T037–T042 |
 | ID-002-AC-001–AC-015 | T007, T012, T014, T019, T028, T032, T036–T042          |
 
-## Definition of Done Reference
+## Tham chiếu Định nghĩa Hoàn thành
 
-ID-002 follows [`specs/00-system/definition-of-done.md`](../../00-system/definition-of-done.md).
-The feature is not Done until the Approved spec/plan/tasks are consistent, applicable code and
-migrations are implemented and verified, authorization/privacy/security tests pass, Swagger is
-updated, `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build` pass, and every requirement and
-acceptance criterion has been checked against the implementation.
+ID-002 tuân theo [`specs/00-system/definition-of-done.md`](../../00-system/definition-of-done.md).
+Tính năng chưa Hoàn thành cho tới khi spec/plan/tasks đã Approved nhất quán với nhau, phần code và
+migration liên quan đã được triển khai và kiểm chứng, các test về phân quyền/riêng tư/bảo mật đều
+pass, Swagger đã cập nhật, `pnpm lint`, `pnpm typecheck`, `pnpm test` và `pnpm build` đều pass, và
+mọi yêu cầu cùng tiêu chí nghiệm thu đã được đối chiếu với bản triển khai.
 
-> This file is an implementation checklist, not a specification. Do not add requirements or
-> silently change the Approved ID-002 spec/plan while executing these tasks.
+> File này là một danh sách kiểm tra triển khai, không phải một đặc tả. Không thêm yêu cầu và không
+> âm thầm thay đổi spec/plan ID-002 đã Approved trong lúc thực hiện các công việc này.

@@ -1,33 +1,37 @@
-# Judge Security Constraints
+# Ràng buộc bảo mật của Judge
 
-Judge executes untrusted student code. These constraints are system architecture requirements and
-override implementation convenience.
+Judge thực thi mã không tin cậy do sinh viên viết. Các ràng buộc dưới đây là yêu cầu kiến trúc hệ
+thống và có hiệu lực cao hơn sự tiện lợi khi triển khai.
 
-## Trust boundaries
+## Ranh giới tin cậy
 
-- Submission coordinates Run/Submit but never compiles or executes code.
-- Judge selects whitelisted language adapters and trusted commands.
-- Student source and stdin are data, never shell fragments.
-- Hidden test cases and runners remain server-side and never appear in public API responses.
-- Judge is initially stateless and owns no submission-history database.
+- Submission điều phối Run/Submit nhưng không bao giờ biên dịch hay thực thi mã.
+- Judge chỉ chọn các language adapter nằm trong whitelist và các lệnh đáng tin cậy.
+- Mã nguồn và stdin của sinh viên là dữ liệu, không bao giờ là mảnh lệnh shell.
+- Test case ẩn và các runner luôn ở phía server và không bao giờ xuất hiện trong phản hồi API công
+  khai.
+- Ban đầu Judge là stateless và không sở hữu cơ sở dữ liệu lịch sử nộp bài.
 
-## Sandbox requirements
+## Yêu cầu về sandbox
 
-Every execution plan MUST preserve:
+Mọi kế hoạch thực thi BẮT BUỘC phải giữ:
 
-- disabled network;
-- CPU, memory and execution-time limits;
-- process/PID and output limits;
-- minimal privileges, dropped capabilities and `no-new-privileges`;
-- controlled filenames and command arguments;
-- unique temporary workspace and reliable cleanup;
-- stdout, stderr and compiler diagnostics capture;
-- no privileged student-code container.
+- tắt mạng;
+- giới hạn CPU, bộ nhớ và thời gian thực thi;
+- giới hạn số tiến trình/PID và giới hạn output;
+- đặc quyền tối thiểu, loại bỏ capabilities và bật `no-new-privileges`;
+- tên file và tham số lệnh được kiểm soát;
+- workspace tạm thời duy nhất và cơ chế dọn dẹp đáng tin cậy;
+- thu thập stdout, stderr và thông tin chẩn đoán từ trình biên dịch;
+- không có container chạy mã sinh viên ở chế độ privileged.
 
-## SDD requirements
+## Yêu cầu của SDD
 
-Judge specs define observable execution/classification requirements, not client-controlled runtime
-commands. Judge plans use Worker + Pipeline + Adapter architecture and include abuse, timeout,
-resource exhaustion, malformed payload, duplicate delivery, worker crash and cleanup tests where
-applicable. Any relaxation of a sandbox control requires explicit security and architecture
-approval; it cannot be hidden in a feature task.
+Đặc tả của Judge định nghĩa các yêu cầu quan sát được về thực thi/phân loại, chứ không định nghĩa
+lệnh runtime do client điều khiển. Kế hoạch của Judge dùng kiến trúc Worker + Pipeline + Adapter và
+bao gồm kiểm thử cho các tình huống lạm dụng, timeout, cạn kiệt tài nguyên, payload sai định dạng,
+giao trùng message, worker sập và dọn dẹp, khi có liên quan. Bất kỳ nới lỏng nào đối với một biện
+pháp kiểm soát sandbox đều cần phê duyệt tường minh về bảo mật và kiến trúc; không được giấu nó
+trong một task tính năng.
+
+adanjdjđk

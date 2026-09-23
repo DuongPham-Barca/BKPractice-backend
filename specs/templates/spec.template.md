@@ -1,77 +1,77 @@
-# [FEATURE-ID] Feature Name
+# [FEATURE-ID] Tên tính năng
 
-## Status
+## Trạng thái
 
 Proposed
 
-Allowed values: `Proposed` | `Approved` | `Implemented` | `Verified`
+Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
-## Goal
+## Mục tiêu
 
-<!-- State the user or platform outcome. Describe WHAT must be achieved, not the code structure. -->
+<!-- Nêu kết quả mà người dùng hoặc nền tảng đạt được. Mô tả CÁI GÌ phải đạt được, không mô tả cấu trúc code. -->
 
-## Actors
+## Tác nhân
 
-<!-- List roles or systems that interact with the feature. -->
+<!-- Liệt kê các vai trò hoặc hệ thống tương tác với tính năng. -->
 
-## Context
+## Bối cảnh
 
-<!-- Explain why the feature is needed and relevant existing behavior. -->
+<!-- Giải thích vì sao cần tính năng này và hành vi hiện có có liên quan. -->
 
-## Functional Requirements
+## Yêu cầu chức năng
 
-- **FR-001 — [Requirement name]:** The system MUST ...
-- **FR-002 — [Requirement name]:** The system SHOULD ...
+- **FR-001 — [Tên yêu cầu]:** Hệ thống MUST ...
+- **FR-002 — [Tên yêu cầu]:** Hệ thống SHOULD ...
 
-Use `MUST` for mandatory behavior, `SHOULD` for expected behavior with a documented exception, and
-`MAY` for optional behavior. Requirement IDs remain stable after approval.
+Dùng `MUST` cho hành vi bắt buộc, `SHOULD` cho hành vi mong đợi kèm ngoại lệ đã ghi nhận, và `MAY`
+cho hành vi tuỳ chọn. Mã yêu cầu giữ nguyên sau khi được phê duyệt.
 
-## Business Rules
+## Quy tắc nghiệp vụ
 
-<!-- Document domain rules, invariants and state transitions. -->
+<!-- Ghi lại các quy tắc nghiệp vụ, bất biến và chuyển trạng thái. -->
 
-## Authorization Rules
+## Quy tắc phân quyền
 
-<!-- State what STUDENT, LECTURER, ADMIN or trusted systems may do. -->
+<!-- Nêu rõ STUDENT, LECTURER, ADMIN hoặc các hệ thống tin cậy được phép làm gì. -->
 
-## Inputs
+## Đầu vào
 
-<!-- Describe information accepted by the feature, constraints and source. -->
+<!-- Mô tả thông tin mà tính năng chấp nhận, các ràng buộc và nguồn gốc. -->
 
-## Outputs
+## Đầu ra
 
-<!-- Describe observable responses, state changes and events without prescribing implementation. -->
+<!-- Mô tả phản hồi quan sát được, thay đổi trạng thái và sự kiện, không quy định cách triển khai. -->
 
-## Error Cases
+## Tình huống lỗi
 
-<!-- Describe expected failures and externally observable behavior. -->
+<!-- Mô tả các thất bại dự kiến và hành vi quan sát được từ bên ngoài. -->
 
-## Edge Cases
+## Tình huống biên
 
-<!-- Describe boundary conditions, retries, duplicates, deadlines or empty states where relevant. -->
+<!-- Mô tả điều kiện biên, retry, trùng lặp, hạn chót hoặc trạng thái rỗng khi có liên quan. -->
 
-## Acceptance Criteria
+## Tiêu chí nghiệm thu
 
-- **AC-001:** Given ..., when ..., then ...
-- **AC-002:** Given ..., when ..., then ...
+- **AC-001:** Cho trước ..., khi ..., thì ...
+- **AC-002:** Cho trước ..., khi ..., thì ...
 
-## Out of Scope
+## Ngoài phạm vi
 
-<!-- Explicitly list behavior this feature must not implement. -->
+<!-- Liệt kê tường minh những hành vi mà tính năng này không được triển khai. -->
 
-## Dependencies
+## Phụ thuộc
 
-<!-- Link dependent specs, external systems and authoritative architecture documents. -->
+<!-- Liên kết tới các đặc tả phụ thuộc, hệ thống bên ngoài và tài liệu kiến trúc có thẩm quyền. -->
 
-## Open Questions
+## Câu hỏi mở
 
-<!-- A spec cannot become Approved while a question that changes required behavior remains open. -->
+<!-- Một đặc tả không thể đạt Approved khi còn câu hỏi làm thay đổi hành vi được yêu cầu. -->
 
-## Revision History
+## Lịch sử sửa đổi
 
-| Date       | Revision | Author/Reviewer | Summary          |
-| ---------- | -------- | --------------- | ---------------- |
-| YYYY-MM-DD | 0.1      | TBD             | Initial proposal |
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt         |
+| ---------- | --------- | -------------------- | --------------- |
+| YYYY-MM-DD | 0.1       | TBD                  | Đề xuất ban đầu |
 
-> `spec.md` describes WHAT. Detailed folders, classes, repository implementations and execution
-> order belong in `plan.md` unless an architecture constraint requires them here.
+> `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository và thứ tự thực thi
+> thuộc về `plan.md`, trừ khi một ràng buộc kiến trúc bắt buộc phải nêu ở đây.

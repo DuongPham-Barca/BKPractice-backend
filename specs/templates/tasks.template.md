@@ -1,89 +1,89 @@
-# [FEATURE-ID] Implementation Tasks
+# [FEATURE-ID] Công việc triển khai
 
-Related spec: `./spec.md`  
-Related plan: `./plan.md`
+Đặc tả liên quan: `./spec.md`  
+Kế hoạch liên quan: `./plan.md`
 
-Mark non-applicable items as `- [x] N/A — reason`. Keep this checklist synchronized with actual
-implementation; checking an item means it is complete and verified where applicable.
+Đánh dấu các mục không áp dụng là `- [x] N/A — lý do`. Giữ danh sách này đồng bộ với bản triển khai
+thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã được xác minh nếu có liên quan.
 
-## Preparation
+## Chuẩn bị
 
-- [ ] Inspect existing code and repository state.
-- [ ] Confirm `spec.md` exists and Status is `Approved`.
-- [ ] Confirm the target service architecture in `docs/architecture/`.
-- [ ] Confirm `plan.md` matches the Approved spec and does not expand scope.
-- [ ] Confirm open questions do not block implementation.
+- [ ] Khảo sát mã nguồn hiện có và trạng thái repository.
+- [ ] Xác nhận `spec.md` tồn tại và Status là `Approved`.
+- [ ] Xác nhận kiến trúc của service đích trong `docs/architecture/`.
+- [ ] Xác nhận `plan.md` khớp với đặc tả đã Approved và không mở rộng phạm vi.
+- [ ] Xác nhận các câu hỏi mở không chặn việc triển khai.
 
 ## Domain
 
-- [ ] Implement applicable domain rules, invariants and state transitions.
-- [ ] Add focused domain tests.
+- [ ] Triển khai các quy tắc nghiệp vụ, bất biến và chuyển trạng thái có liên quan.
+- [ ] Bổ sung các kiểm thử domain tập trung.
 
 ## Application
 
-- [ ] Implement planned use cases/workflows.
-- [ ] Implement only ports justified by the plan.
+- [ ] Triển khai các use case/luồng nghiệp vụ đã lập kế hoạch.
+- [ ] Chỉ triển khai các port được kế hoạch biện minh.
 
 ## Infrastructure
 
-- [ ] Implement planned technical adapters.
-- [ ] Wire adapters at the service composition root.
+- [ ] Triển khai các adapter kỹ thuật đã lập kế hoạch.
+- [ ] Gắn các adapter tại composition root của service.
 
-## Persistence
+## Lưu trữ
 
-- [ ] Implement repository/query behavior in the owning service.
-- [ ] Verify no cross-service database access or shared business entity was introduced.
+- [ ] Triển khai hành vi repository/truy vấn bên trong service sở hữu.
+- [ ] Xác minh không phát sinh truy cập cơ sở dữ liệu xuyên service hay thực thể nghiệp vụ dùng chung.
 
-## Database / Migration
+## Cơ sở dữ liệu / Migration
 
-- [ ] Add the planned TypeORM migration.
-- [ ] Verify migration apply/revert behavior and `synchronize` remains disabled.
+- [ ] Bổ sung migration TypeORM đã lập kế hoạch.
+- [ ] Xác minh hành vi áp dụng/hoàn tác migration và `synchronize` vẫn đang tắt.
 
 ## API
 
-- [ ] Implement planned routes/contracts only.
-- [ ] Add DTO validation/transformation.
-- [ ] Update Swagger when the public/internal API changes.
+- [ ] Chỉ triển khai các route/contract đã lập kế hoạch.
+- [ ] Bổ sung kiểm tra/biến đổi dữ liệu ở DTO.
+- [ ] Cập nhật Swagger khi API công khai/nội bộ thay đổi.
 
 ## Messaging
 
-- [ ] Implement planned message contracts and adapters.
-- [ ] Verify ACK/NACK, retry, idempotency and DLQ behavior where applicable.
+- [ ] Triển khai các message contract và adapter đã lập kế hoạch.
+- [ ] Xác minh hành vi ACK/NACK, retry, idempotent và DLQ nếu có liên quan.
 
 ## Realtime
 
-- [ ] Implement planned realtime publication/delivery.
-- [ ] Verify persistent state remains the source of truth.
+- [ ] Triển khai việc phát/gửi realtime đã lập kế hoạch.
+- [ ] Xác minh trạng thái lưu bền vẫn là nguồn chân lý.
 
-## Authorization
+## Phân quyền
 
-- [ ] Implement role, permission, ownership and trusted-service checks from the spec.
-- [ ] Test allowed and denied actors.
+- [ ] Triển khai các kiểm tra vai trò, quyền, quyền sở hữu và service tin cậy theo đặc tả.
+- [ ] Kiểm thử cả tác nhân được phép lẫn tác nhân bị từ chối.
 
-## Testing
+## Kiểm thử
 
-- [ ] Map tests to functional requirements and acceptance criteria.
-- [ ] Add applicable unit, integration, contract and end-to-end tests.
-- [ ] Run `pnpm lint`.
-- [ ] Run `pnpm typecheck`.
-- [ ] Run `pnpm test`.
-- [ ] Run `pnpm build`.
+- [ ] Ánh xạ các kiểm thử tới yêu cầu chức năng và tiêu chí nghiệm thu.
+- [ ] Bổ sung các kiểm thử unit, integration, contract và end-to-end có liên quan.
+- [ ] Chạy `pnpm lint`.
+- [ ] Chạy `pnpm typecheck`.
+- [ ] Chạy `pnpm test`.
+- [ ] Chạy `pnpm build`.
 
-## Documentation
+## Tài liệu
 
-- [ ] Update relevant API, event, operational and architecture documentation.
-- [ ] Record approved deviations and migration/rollout notes.
+- [ ] Cập nhật tài liệu API, sự kiện, vận hành và kiến trúc có liên quan.
+- [ ] Ghi lại các sai lệch đã được phê duyệt và ghi chú về migration/triển khai.
 
-## Verification
+## Xác minh
 
-- [ ] Verify implementation against every `FR-*` and `AC-*`.
-- [ ] Confirm no Out-of-Scope behavior was added.
-- [ ] Update spec status to `Implemented` only through the approved review workflow.
-- [ ] Record validation results and unverified behavior.
+- [ ] Đối chiếu bản triển khai với từng `FR-*` và `AC-*`.
+- [ ] Xác nhận không có hành vi Ngoài phạm vi nào được thêm vào.
+- [ ] Chỉ cập nhật trạng thái đặc tả sang `Implemented` thông qua quy trình review đã được phê duyệt.
+- [ ] Ghi lại kết quả kiểm chứng và các hành vi chưa được xác minh.
 
-## Architecture Compliance
+## Tuân thủ kiến trúc
 
-- [ ] Verify dependency direction for the selected service architecture.
-- [ ] Verify service and database ownership boundaries.
-- [ ] Verify shared libraries contain no service-owned business model.
-- [ ] Verify implementation matches the Architecture Compliance section of `plan.md`.
+- [ ] Xác minh chiều phụ thuộc theo kiến trúc đã chọn của service.
+- [ ] Xác minh các ranh giới sở hữu service và cơ sở dữ liệu.
+- [ ] Xác minh các thư viện dùng chung không chứa mô hình nghiệp vụ thuộc sở hữu của service.
+- [ ] Xác minh bản triển khai khớp với mục Tuân thủ kiến trúc của `plan.md`.
