@@ -2,11 +2,13 @@
 
 ## Trạng thái
 
-Proposed
+Approved
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-23`.
 
 Kế hoạch này bám theo phiên bản `1.1` (Approved) của đặc tả LRN-001 và là tài liệu thiết kế cho giai
-đoạn tasks/triển khai sau này. Nó không triển khai Quản lý Problem và không thay đổi đặc tả. Nó đang
-chờ con người review trước khi dẫn xuất ra `tasks.md`.
+đoạn tasks/triển khai. Nó không triển khai Quản lý Problem và không thay đổi đặc tả. Sau khi được
+phê duyệt, `tasks.md` được dẫn xuất từ kế hoạch này.
 
 ## Đặc tả liên quan
 
@@ -1027,5 +1029,5 @@ Không có.
   chung nào.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó KHÔNG ĐƯỢC thêm hành vi, tác nhân hay tiêu chí nghiệm thu vượt
-> ngoài `spec.md` đã Approved (phiên bản 1.1). Kế hoạch này đang chờ con người review trước khi tạo
-> `tasks.md`;
+> ngoài `spec.md` đã Approved (phiên bản 1.1). Danh sách công việc dẫn xuất từ kế hoạch này nằm ở
+> [`tasks.md`](./tasks.md).
