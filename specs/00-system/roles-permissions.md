@@ -1,34 +1,35 @@
-# Roles and Permissions
+# Vai trò và quyền
 
-## Platform roles
+## Vai trò nền tảng
 
-BKPractice has three platform roles:
+BKPractice có ba vai trò nền tảng:
 
 - `STUDENT`
 - `LECTURER`
 - `ADMIN`
 
-They are RBAC data and policy owned by Identity. They are not microservices, application folders or
-database boundaries.
+Chúng là dữ liệu và chính sách RBAC do Identity sở hữu. Chúng không phải microservice, không phải
+thư mục ứng dụng và không phải ranh giới cơ sở dữ liệu.
 
-## Responsibility split
+## Phân chia trách nhiệm
 
-- Identity authenticates users, manages roles/permissions/account status and issues token claims.
-- API Gateway verifies access tokens and may forward trusted identity/role metadata.
-- Each business service enforces domain authorization, ownership and resource-level policy for the
-  operation it owns.
-- Clients cannot grant themselves roles or supply trusted internal identity headers.
+- Identity xác thực người dùng, quản lý vai trò/quyền/trạng thái tài khoản và phát hành claim trong
+  token.
+- API Gateway xác minh access token và có thể chuyển tiếp metadata định danh/vai trò đã tin cậy.
+- Mỗi service nghiệp vụ tự thực thi việc phân quyền nghiệp vụ, kiểm tra quyền sở hữu và chính sách ở
+  mức tài nguyên cho thao tác mà nó sở hữu.
+- Client không thể tự cấp vai trò cho mình hoặc tự đặt header định danh nội bộ đáng tin cậy.
 
-## Requirements for feature specs
+## Yêu cầu đối với đặc tả tính năng
 
-Every applicable `spec.md` must state:
+Mọi `spec.md` có liên quan đều phải nêu rõ:
 
-- allowed actors and denied actors;
-- ownership rules, such as editing only one's own resource;
-- whether a permission is platform-wide, course/class-scoped or resource-scoped;
-- trusted service-to-service actors where relevant;
-- expected unauthorized and forbidden outcomes.
+- các tác nhân được phép và các tác nhân bị từ chối;
+- quy tắc sở hữu, chẳng hạn chỉ được sửa tài nguyên do chính mình tạo;
+- quyền đó có phạm vi toàn nền tảng, phạm vi khoá học/lớp, hay phạm vi tài nguyên;
+- các tác nhân service-to-service đáng tin cậy nếu có liên quan;
+- kết quả mong đợi khi chưa xác thực và khi bị từ chối.
 
-Every applicable plan maps these rules to the target service architecture and includes positive and
-negative authorization tests. A missing authorization decision that changes access is an open
-question and blocks spec approval.
+Mọi kế hoạch có liên quan phải ánh xạ các quy tắc này vào kiến trúc của service đích và bao gồm cả
+kiểm thử phân quyền theo hướng khẳng định lẫn phủ định. Một quyết định phân quyền còn thiếu mà làm
+thay đổi khả năng truy cập là một câu hỏi mở và chặn việc phê duyệt đặc tả.

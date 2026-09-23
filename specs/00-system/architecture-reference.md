@@ -1,41 +1,42 @@
-# Architecture Reference for SDD
+# Tham chiếu kiến trúc cho SDD
 
-## Authoritative source
+## Nguồn có thẩm quyền
 
-The authoritative decisions remain in:
+Các quyết định có thẩm quyền vẫn nằm tại:
 
 - [`system-architecture.md`](../../docs/architecture/system-architecture.md)
 - [`service-architectures.md`](../../docs/architecture/service-architectures.md)
 - [`dependency-rules.md`](../../docs/architecture/dependency-rules.md)
-- the relevant service-specific document under [`docs/architecture`](../../docs/architecture/)
-- accepted ADRs under [`docs/adr`](../../docs/adr/)
+- tài liệu riêng của service liên quan trong [`docs/architecture`](../../docs/architecture/)
+- các ADR đã được chấp nhận trong [`docs/adr`](../../docs/adr/)
 
-This file is a planning index and short compliance summary. If wording differs, the architecture
-documents and accepted ADRs take precedence.
+File này là chỉ mục lập kế hoạch và bản tóm tắt tuân thủ ngắn gọn. Nếu câu chữ có khác biệt, các tài
+liệu kiến trúc và ADR đã chấp nhận được ưu tiên.
 
-## Required architecture by target
+## Kiến trúc bắt buộc theo từng đích
 
-| Target      | Required architecture                                         | Required reading before plan.md                                                  |
+| Đích        | Kiến trúc bắt buộc                                            | Tài liệu phải đọc trước khi viết plan.md                                         |
 | ----------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| API Gateway | Gateway Pattern + lightweight Layered Architecture            | `api-gateway.md`, `dependency-rules.md`                                          |
-| Identity    | Clean Architecture + domain-oriented feature modules          | `identity-service.md`, `dependency-rules.md`                                     |
+| API Gateway | Gateway Pattern + Layered Architecture nhẹ                    | `api-gateway.md`, `dependency-rules.md`                                          |
+| Identity    | Clean Architecture + feature module hướng domain              | `identity-service.md`, `dependency-rules.md`                                     |
 | Learning    | Clean Architecture + Modular Domain Architecture              | `learning-service.md`, `dependency-rules.md`                                     |
 | Submission  | Clean Architecture + Event-Driven Architecture                | `submission-service.md`, `dependency-rules.md`                                   |
-| Judge       | Worker Architecture + Pipeline Architecture + Adapter Pattern | `judge-service.md`, `dependency-rules.md`, `judge-security.md` in this directory |
+| Judge       | Worker Architecture + Pipeline Architecture + Adapter Pattern | `judge-service.md`, `dependency-rules.md`, `judge-security.md` trong thư mục này |
 | Community   | Clean Architecture + Modular Domain Architecture              | `community-service.md`, `dependency-rules.md`                                    |
 
-Every `plan.md` must copy the applicable architecture into its **Required Service Architecture**
-section and explain compliance in its final **Architecture Compliance** section.
+Mọi `plan.md` phải chép kiến trúc áp dụng vào mục **Kiến trúc service bắt buộc** của nó và giải
+thích mức độ tuân thủ ở mục **Tuân thủ kiến trúc** cuối tài liệu.
 
-## Planning constraints
+## Ràng buộc khi lập kế hoạch
 
-- Use feature-first Clean Architecture layering only when real behavior justifies it.
-- Do not create empty ports, use cases or folders for diagram symmetry.
-- Keep business models inside their owning service; monorepo libraries are technical only.
-- Keep Gateway free of domain/repository/database layers.
-- Keep Judge worker/pipeline-oriented and initially stateless.
-- Preserve database ownership and communication boundaries.
-- Treat current `PARTIALLY ALIGNED` areas incrementally; a feature plan must not propose a broad
-  folder rewrite unless separately approved as architecture work.
+- Chỉ phân tầng Clean Architecture theo hướng feature-first khi thực sự có hành vi biện minh cho nó.
+- Không tạo port, use case hay thư mục rỗng chỉ để sơ đồ cho cân xứng.
+- Giữ mô hình nghiệp vụ bên trong service sở hữu nó; thư viện trong monorepo chỉ mang tính kỹ thuật.
+- Giữ Gateway không có tầng domain/repository/database.
+- Giữ Judge theo hướng worker/pipeline và ban đầu là stateless.
+- Bảo toàn quyền sở hữu cơ sở dữ liệu và các ranh giới giao tiếp.
+- Xử lý các vùng đang ở trạng thái `PARTIALLY ALIGNED` một cách tiệm tiến; một kế hoạch tính năng
+  không được đề xuất viết lại cấu trúc thư mục trên diện rộng trừ khi việc đó được phê duyệt riêng
+  như một hạng mục công việc kiến trúc.
 
-Architecture selection is not optional and cannot be changed inside a feature plan.
+Việc lựa chọn kiến trúc là bắt buộc và không thể thay đổi bên trong một kế hoạch tính năng.

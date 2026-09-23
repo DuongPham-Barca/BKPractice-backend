@@ -1,546 +1,565 @@
-# LRN-001 Problem Management
+# LRN-001 Quản lý Problem
 
-## Status
+## Trạng thái
 
 Proposed
 
-Allowed values: `Proposed` | `Approved` | `Implemented` | `Verified`
-
-## Goal
-
-Allow authorized teaching staff to create and manage programming problems and allow learners to
-discover and read published problems, while preserving Learning Service ownership, protecting
-hidden judge material, and providing stable problem metadata for future Assignment, Submission,
-Judge, Progress, and Recommendation features.
-
-## Actors
-
-- **STUDENT:** An authenticated learner who discovers and reads problems available under the
-  approved visibility policy.
-- **LECTURER:** An authenticated teaching user who may create and manage problems when the required
-  Learning permission and resource-ownership policy allow it.
-- **ADMIN:** An authenticated platform administrator. `ADMIN` has no implicit Problem content
-  authority; any Problem-management capability must be explicitly approved by this specification.
-- **Unauthenticated visitor:** A caller without trusted identity context. Whether this actor may
-  read the published problem catalog is an unresolved product decision.
-- **API Gateway:** The public entry point that verifies BKPractice access tokens, removes
-  caller-supplied trusted identity headers, and forwards verified identity/role context.
-- **Learning Service:** The owner of Problem state, policy, metadata, statements, Topic/Tag
-  associations, supported problem languages, starter code, execution limits, and Test Case
-  relationships.
-- **Submission Service:** A trusted consumer of a protected Learning-owned judge package. It stores
-  only the external Problem ID and never reads the Learning database directly.
-- **Judge Service:** A trusted compute worker that receives approved execution input through the
-  Submission workflow. It does not own Problem state.
-
-## Context
-
-Problem Management is the first Learning feature specification. Learning uses **Clean
-Architecture + Modular Domain Architecture** and owns Problems together with Test Cases, Topics,
-Tags, starter code, supported problem languages, Courses, Assignments, Progress, and
-Recommendation. LRN-001 defines the Problem lifecycle and public/management behavior without
-splitting a new Problem service or implementing adjacent Learning features.
-
-The existing foundation establishes the following vocabulary and model constraints, which LRN-001
-reuses rather than duplicating:
-
-- Problem types: `STANDARD`, `FUNCTION`, and `OOP`.
-- Difficulty values: `EASY`, `MEDIUM`, and `HARD`.
-- Lifecycle states: `DRAFT`, `PUBLISHED`, and `ARCHIVED`.
-- A stable UUID-like internal Problem identifier and a unique human-readable slug.
-- Learning-owned Topic and Tag associations.
-- A per-Problem subset of the approved Judge-supported language catalog.
-- Per-language starter code and an internal hidden-harness boundary.
-- Positive per-Problem time and memory limits supplied through the protected judge workflow.
-- An external `createdBy` Identity user identifier, with no cross-service database relation.
-
-The current source is foundation behavior, not an Approved LRN-001 specification. Existing routes
-or persistence shapes do not authorize unresolved product policy. They may require later
-alignment only after this specification is approved and a plan/tasks phase is completed.
-
-## Functional Requirements
-
-- **LRN-001-FR-001 — Learning ownership:** Learning MUST own every Problem and its Problem-side
-  policy. Submission and Judge MUST reference a Problem by stable external ID and MUST NOT own or
-  directly persist the Learning Problem entity.
-- **LRN-001-FR-002 — Stable identity:** Every Problem MUST have a unique, stable identifier that
-  remains usable by Assignment and Submission history. A title MUST NOT serve as Problem identity.
-- **LRN-001-FR-003 — Approved problem types:** A Problem MUST use exactly one approved type:
-  `STANDARD`, `FUNCTION`, or `OOP`. Unknown or caller-defined types MUST be rejected.
-- **LRN-001-FR-004 — Draft creation:** An authorized LECTURER MUST be able to create a Problem in
-  `DRAFT` state. Creation MUST derive the creator from trusted authentication context and MUST NOT
-  accept an authoritative creator ID from the client.
-- **LRN-001-FR-005 — Draft isolation:** A `DRAFT` Problem MUST NOT appear in learner-facing lists,
-  searches, filters, or detail responses. Management visibility remains subject to the approved
-  owner/Admin policy.
-- **LRN-001-FR-006 — Published discovery:** A STUDENT permitted by the approved catalog-visibility
-  policy MUST be able to list and retrieve `PUBLISHED` Problems.
-- **LRN-001-FR-007 — Search:** Published Problem discovery MUST support case-insensitive search by
-  title and exact lookup by stable identifier or slug without exposing non-published Problems.
-- **LRN-001-FR-008 — Filtering and pagination:** Published Problem listing MUST support pagination
-  and filtering by approved Problem type, difficulty, Topic, and Tag. Empty result sets MUST be
-  successful and MUST NOT reveal Draft/Archived counts.
-- **LRN-001-FR-009 — Management reads:** An authorized Problem manager MUST be able to retrieve the
-  management representation of Problems they are permitted to manage, including Draft content and
-  publish-readiness information but excluding raw hidden Test Case answers unless a later Test Case
-  specification authorizes that data.
-- **LRN-001-FR-010 — Authorized update:** An authorized Problem manager MUST be able to update only
-  Problem fields permitted by the approved lifecycle and ownership policy. Client input MUST NOT
-  change the creator or bypass a state transition.
-- **LRN-001-FR-011 — Publish transition:** An authorized Problem manager MUST be able to request the
-  `DRAFT` to `PUBLISHED` transition. Publication MUST be atomic and MUST fail without changing state
-  when any approved publish precondition is unmet.
-- **LRN-001-FR-012 — Publish validation:** Before publication, the system MUST validate a non-empty
-  title and statement, approved type and difficulty, a unique valid slug, positive execution
-  limits, at least one enabled approved language, and the required type-specific Problem contract.
-  The unresolved Test Case/starter-code readiness conditions are recorded in Open Questions.
-- **LRN-001-FR-013 — Archived discovery behavior:** An `ARCHIVED` Problem MUST be excluded from new
-  learner discovery while retaining its stable identity for historical references. Exact access
-  and transition policy is unresolved and MUST be approved before implementation.
-- **LRN-001-FR-014 — Problem statement:** A Problem MUST provide a title, main statement, visible
-  examples, constraints where applicable, and type-appropriate contract information. A
-  `STANDARD` Problem additionally MUST describe its input and output contract before publication.
-- **LRN-001-FR-015 — Visible examples:** Learner-facing examples MUST be distinguishable from Test
-  Cases and MUST contain only content intentionally visible to learners. Visible examples MUST NOT
-  expose hidden expected outputs, harnesses, or internal solutions.
-- **LRN-001-FR-016 — Difficulty:** Every Problem MUST use one of `EASY`, `MEDIUM`, or `HARD`.
-  Difficulty is Problem metadata for discovery and future Recommendation; it is not a Judge result.
-- **LRN-001-FR-017 — Topic and Tag associations:** A Problem MAY be associated with zero or more
-  Learning-owned Topics and Tags. Invalid or unknown references MUST NOT be silently created by a
-  Problem request.
-- **LRN-001-FR-018 — Supported languages:** A Problem MUST use only values from the approved shared
-  Judge-supported language catalog. A published Problem MUST enable at least one supported
-  language, and a caller MUST NOT provide compiler commands or runtime configuration as a language.
-- **LRN-001-FR-019 — Starter-code boundary:** A Problem MAY provide learner-visible starter code
-  for an enabled language. Starter code for a disabled language MUST NOT be advertised, and hidden
-  harness content MUST NOT be returned in learner-facing responses.
-- **LRN-001-FR-020 — Execution limits:** Each Problem MUST define positive time and memory limits
-  within approved platform safety bounds. Learning owns the Problem-specific values; Judge remains
-  responsible for enforcing sandbox limits and MAY apply stricter platform ceilings.
-- **LRN-001-FR-021 — Slug:** Every Problem MUST have a unique valid slug for human-readable lookup.
-  Slug generation/editability and published-slug stability require product approval.
-- **LRN-001-FR-022 — Creator reference:** Learning MUST store the creator as an external Identity
-  user ID without a cross-service foreign key or duplicated User/Profile data.
-- **LRN-001-FR-023 — Observable metadata:** A Problem management representation MUST expose its
-  current lifecycle state and basic creation/update timestamps. Public responses MUST expose only
-  metadata approved for learners.
-- **LRN-001-FR-024 — Preview:** An authorized Problem manager MUST be able to preview the
-  learner-visible representation of an authorized Draft without publishing it. Preview MUST NOT
-  execute code or make the Problem visible to learners.
-- **LRN-001-FR-025 — Public/internal separation:** Learner-facing Problem responses MUST use a
-  public allowlist and MUST NOT expose hidden Test Cases, expected hidden outputs, hidden harnesses,
-  internal solutions, compiler/Docker commands, or internal service credentials.
-- **LRN-001-FR-026 — Trusted judge-data boundary:** Any hidden Problem/Test Case material needed by
-  Submission/Judge MUST be available only through the approved protected internal workflow. Public
-  clients MUST NOT be able to obtain that material by changing routes, parameters, headers, or
-  requested language.
-- **LRN-001-FR-027 — Assignment compatibility:** Assignment MAY reference a Problem only through
-  its stable Learning-owned ID. LRN-001 MUST NOT own deadlines, class assignment, grading policy,
-  or Assignment progress.
-- **LRN-001-FR-028 — No execution or submission ownership:** Problem Management MUST NOT compile or
-  run code, create a Run/Submit record, classify execution results, store submission source/history,
-  or publish realtime results.
-- **LRN-001-FR-029 — Content safety:** User-authored Problem content MUST be returned in a form that
-  can be rendered without executing unsafe embedded content. The exact content format and
-  sanitization ownership must be resolved before approval.
-- **LRN-001-FR-030 — Deterministic retries:** A failed validation, authorization check, or state
-  transition MUST leave Problem state unchanged. Repeating a read MUST not mutate the Problem.
-
-## Business Rules
-
-### Lifecycle
-
-| State       | Learner discovery | Meaning                                                                  |
-| ----------- | ----------------- | ------------------------------------------------------------------------ |
-| `DRAFT`     | Never             | Work in progress; may be incomplete beyond the minimum creation fields   |
-| `PUBLISHED` | Yes               | Passed approved publish validation and is available under visibility     |
-| `ARCHIVED`  | No                | Removed from new discovery while its stable identity/history is retained |
-
-- A newly created Problem starts in `DRAFT`.
-- Publication is an explicit transition; saving a Draft never publishes it implicitly.
-- A failed publication attempt preserves the prior state and reports missing/invalid conditions.
-- State changes are business operations, not arbitrary editable request fields.
-- Unpublish, Archive, restoration, and hard-delete policies remain unresolved. No hard-delete
-  capability is required by this Proposed revision.
-
-### Minimum creation data
-
-To remain compatible with the current foundation, Draft creation requires:
-
-- a title of at most 200 characters;
-- a unique valid slug of at most 220 characters;
-- a non-empty main statement/description;
-- one approved Problem type;
-- one approved difficulty; and
-- trusted creator identity.
-
-A Draft may defer publish-only completeness such as enabled languages, final examples, type-specific
-contract details, starter code, execution-limit confirmation, and Test Case readiness according to
-the decisions recorded in this specification.
-
-### Common Problem data
-
-- The title is display metadata and need not be globally unique; the slug is unique.
-- The statement contains the learner-facing task. Input/output sections are mandatory for
-  `STANDARD` and may be not applicable to a `FUNCTION`/`OOP` contract.
-- Visible examples explain the task and are never treated as hidden Test Cases.
-- Constraints describe business/problem constraints, not Docker or compiler commands.
-- Topics represent Learning/syllabus taxonomy. Tags are flexible Learning metadata. Their
-  management lifecycle is separate from the Problem update payload.
-- The current approved language catalog is C, C++, Java, and Python as represented by the shared
-  technical values `c`, `cpp`, `java`, and `python`. LRN-001 does not redefine language runners.
-- Starter code is learner-visible source scaffolding. A hidden harness is internal judge material,
-  not starter code and never part of a public response.
-- Time and memory limits are Learning-owned Problem configuration passed through trusted contracts;
-  Judge owns enforcement and security ceilings.
-- Problem score/max points is not a common Problem field in LRN-001. Assignment-specific maximum
-  score belongs to Assignment, while Test Case weights belong to the future Test Case feature.
-
-### Type-specific behavior
-
-- **STANDARD:** The learner writes a complete program. A published Problem requires a statement,
-  input specification, output specification, type-appropriate visible examples, constraints where
-  applicable, execution limits, and at least one enabled language.
-- **FUNCTION:** The learner implements a function/method under an explicit callable contract. The
-  published statement MUST unambiguously describe the callable name, inputs/parameters, result,
-  and behavior for every enabled language. Contract representation and mandatory starter-code
-  policy remain Open Questions.
-- **OOP:** The learner implements required object-oriented structure. The published statement MUST
-  unambiguously describe required classes/interfaces, constructors where applicable, methods,
-  parameters, return behavior, and relevant visibility constraints for every enabled language.
-  Contract representation and mandatory starter-code policy remain Open Questions.
-
-### Historical integrity
-
-- Stable Problem IDs must remain valid for Assignment and Submission references.
-- Problem Management does not modify Submission history when content or lifecycle changes.
-- A title or display metadata change never changes Problem identity.
-- Policy for editing a published Problem with Test Cases, Assignments, or Submissions is unresolved;
-  implementation MUST NOT invent versioning or destructive behavior before approval.
-
-## Authorization Rules
-
-- Published catalog/detail access follows the approved visibility decision. At minimum, an
-  authenticated `STUDENT` with valid trusted context may read Problems available to them.
-- `STUDENT` MUST NOT create, update, preview, publish, archive, restore, or delete a Problem and
-  MUST NOT access Draft or hidden internal material.
-- An authenticated `LECTURER` with `problem:create` MAY create a Draft.
-- Management reads, updates, publication, and archive-like transitions require explicit
-  feature permissions using ID-003's `resource:action` convention plus the approved creator/resource
-  ownership policy. Proposed identifiers are `problem:read-managed`, `problem:update`,
-  `problem:publish`, and `problem:archive`.
-- Whether a Lecturer may manage only self-created Problems or all Problems remains unresolved.
-- `ADMIN` is not automatically a Problem editor/publisher. Admin capabilities require an explicit
-  decision and the same server-side validation as every other actor.
-- The Gateway may perform authentication and coarse route checks. Learning MUST enforce final
-  Problem authorization, ownership, lifecycle, and field policy at a trusted backend boundary.
-- Learning MUST derive actor identity and roles from verified Gateway/service context. Client body,
-  query, route, or headers cannot establish trusted creator, role, permission, or ownership.
-- Submission may obtain hidden judge material only as a trusted service actor under the approved
-  internal communication contract. This does not grant it Problem-management authority.
-- Missing or ambiguous Problem authorization defaults to deny under ID-003.
-
-## Inputs
-
-The routes below are conceptual operations, not a final controller design. Exact naming and DTO
-implementation belong in a future Approved plan.
-
-### Create Draft Problem
-
-Requires trusted authenticated Lecturer context with `problem:create` and accepts:
-
-- title;
-- slug or the data required by the approved slug-generation policy;
-- main statement/description;
-- one approved type;
-- one approved difficulty; and
-- optional initial public metadata allowed for a Draft.
-
-It MUST NOT accept authoritative `createdBy`, lifecycle timestamps, hidden Test Case answers,
-trusted service identity, compiler commands, Docker arguments, role, or permission fields.
-
-### Update authorized Problem
-
-Accepts an explicit allowlist drawn from:
-
-- title, slug subject to the approved slug policy, and statement sections;
-- type subject to the approved type-immutability policy;
-- difficulty;
-- visible examples and constraints;
-- Topic/Tag references;
-- enabled supported languages;
-- learner-visible starter code per enabled language; and
-- positive time/memory limits within platform bounds.
-
-Lifecycle transitions are separate actions and MUST NOT occur through mass assignment.
-
-### Publish Problem
-
-Accepts the stable Problem identifier and trusted actor context. The current stored Problem state,
-not caller assertions, determines publish readiness.
-
-### Problem discovery/detail
-
-Accepts only documented pagination, search, filter, identifier, or slug values. Caller-supplied
-publish state, creator, roles, hidden-data flags, or internal-service flags MUST NOT broaden the
-result.
-
-### Preview
-
-Accepts an authorized Problem identifier and returns the public-shaped rendering without changing
-state. It does not accept source code for execution.
-
-## Outputs
-
-- Draft creation returns the stable Problem identifier, current `DRAFT` state, safe management
-  metadata, and validation/readiness information without hidden Test Case answers.
-- Published listing returns a paginated collection of public summaries containing the stable ID,
-  slug, title, type, difficulty, approved Topic/Tag summaries, enabled languages, and approved
-  timestamps. It excludes Draft/Archived items and hidden/internal fields.
-- Published detail returns the learner-visible statement, type-specific contract, visible examples,
-  constraints, limits appropriate for display, enabled languages, and learner-visible starter code.
-- Management detail may include lifecycle state and publish-readiness failures but does not obtain
-  role/profile data from Identity storage and does not return raw hidden Test Case answers through
-  LRN-001.
-- Preview returns the same learner-facing shape that publication would expose without changing
-  lifecycle state or catalog visibility.
-- Successful publication returns the resulting `PUBLISHED` state and safe Problem representation.
-- Hidden judge material is never included in public/management responses merely because the caller
-  knows the Problem ID or enabled language.
-- LRN-001 emits no mandatory domain event in this revision. Future Assignment/Recommendation event
-  needs require their own approved specification.
-
-## Error Cases
-
-| Case                                                        | Observable behavior                                                                                |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Missing or invalid authentication on protected operation    | Existing Gateway/authentication convention returns `401`; no state changes                         |
-| Authenticated actor lacks permission/ownership              | Existing forbidden convention returns `403`; no state changes                                      |
-| Problem does not exist or is not visible to caller          | Existing not-found/visibility convention returns `404` without leaking non-public state            |
-| Unknown type, difficulty, language, Topic, or Tag           | Validation/business error; no Problem state changes                                                |
-| Duplicate or invalid slug                                   | Existing conflict/validation convention; no duplicate Problem is created                           |
-| Malformed pagination/search/filter input                    | Existing validation convention returns a client error; no hidden data is exposed                   |
-| Publication requested for a non-Draft or incomplete Problem | State-transition/publish-validation failure; prior state is preserved                              |
-| Unauthorized creator/state fields supplied                  | Fields are rejected or ignored by allowlist validation and cannot affect authorization/state       |
-| Disabled/unsupported language starter code is supplied      | Validation failure; no inconsistent starter-code state is persisted                                |
-| Non-positive or unsafe execution limit is supplied          | Validation failure; Problem state is unchanged                                                     |
-| Draft/Archived ID is requested through learner API          | Not-found/visibility response that does not reveal non-public content or state                     |
-| Hidden/internal material requested through public API       | Request is denied or the field is omitted; no hidden material is returned                          |
-| Concurrent update/state transition conflicts                | No partial state is exposed; behavior follows the approved concurrency policy once defined         |
-| Unexpected persistence or dependency failure                | Existing normalized error convention with no hidden content, credentials, or cross-service details |
-
-LRN-001 does not introduce a new error envelope. Transport serialization follows the existing
-Gateway/Learning/NestJS convention.
-
-## Edge Cases
-
-- Two concurrent Draft creations cannot produce the same slug; at most one succeeds for a unique
-  slug.
-- A Problem may have no Topics or Tags unless publish policy later requires one; empty filters
-  remain valid.
-- A Topic or Tag removed by its owning Learning workflow must not silently expose or corrupt a
-  Problem response.
-- Removing an enabled language must not leave learner-visible starter code advertised for that
-  language.
-- Changing type or language after Test Cases or Submissions exist may invalidate a contract; the
-  operation remains blocked by an Open Question rather than receiving invented behavior.
-- A Draft preview never changes timestamps/state beyond behavior explicitly associated with a read.
-- Search and filter never reveal that a matching Draft or Archived Problem exists.
-- Unicode Vietnamese titles/statements remain supported; slug normalization must preserve uniqueness
-  without using title as identity.
-- Archived/unpublished content remains excluded from new learner discovery even when referenced by
-  historical Assignment/Submission data.
-- A stricter Judge platform ceiling may reject a Problem limit that is positive but unsafe; a
-  Problem cannot weaken Judge security constraints.
-- Hidden harnesses and expected outputs remain hidden even if they are present in current
-  persistence or requested by an `ADMIN` through a public Problem operation.
-
-## Security Requirements
-
-- **LRN-001-SR-001 — Server-side authorization:** Learning MUST enforce Problem permissions,
-  ownership, field policy, and lifecycle transitions at a trusted backend boundary; frontend UI is
-  not a security control.
-- **LRN-001-SR-002 — Trusted actor context:** Creator and actor identity MUST come only from the
-  verified Gateway/service context. Client-supplied identity, role, permission, ownership, or
-  trusted internal headers MUST NOT influence authorization.
-- **LRN-001-SR-003 — Draft confidentiality:** Draft and management-only content MUST NOT be exposed
-  by public list, search, filter, detail, error, or count behavior.
-- **LRN-001-SR-004 — Hidden judge-data confidentiality:** Hidden Test Cases, expected outputs,
-  harnesses, internal solutions, and execution internals MUST NOT appear in public or ordinary
-  management responses, logs, errors, or Swagger examples.
-- **LRN-001-SR-005 — Internal endpoint protection:** Protected judge material MUST be returned only
-  to an authenticated trusted service through the approved internal contract; public callers and
-  spoofed internal headers MUST be rejected.
-- **LRN-001-SR-006 — Mass-assignment prevention:** Problem input MUST explicitly allowlist mutable
-  fields. Creator, timestamps, lifecycle state, hidden-data flags, role, and permission cannot be
-  changed through arbitrary request fields.
-- **LRN-001-SR-007 — Content safety:** Problem content MUST be validated and rendered so embedded
-  script, unsafe HTML, malicious links, or equivalent payloads cannot execute in a learner or
-  manager client.
-- **LRN-001-SR-008 — Runtime-command isolation:** Problem language/limit/starter-code input MUST NOT
-  become client-controlled compiler, shell, filename, Docker, network, or sandbox commands.
-- **LRN-001-SR-009 — Service/database isolation:** Learning MUST NOT query Identity, Submission, or
-  Judge databases or create cross-service foreign keys. Other services MUST NOT query
-  `bkpractice_learning` directly.
-- **LRN-001-SR-010 — Output allowlisting:** Public Problem responses MUST be explicitly mapped and
-  MUST NOT serialize persistence entities in a way that leaks select-hidden or newly added internal
-  fields.
-- **LRN-001-SR-011 — Safe logging:** Authentication headers, service secrets, hidden judge material,
-  full sensitive request bodies, and untrusted rendered content MUST NOT be written to logs/errors.
-- **LRN-001-SR-012 — Safe failure/default deny:** Missing, stale, malformed, or ambiguous
-  authorization/visibility context MUST fail closed and preserve prior Problem state.
-
-## Acceptance Criteria
-
-- **LRN-001-AC-001:** Given an authorized Lecturer, when they create valid minimum Problem data,
-  then one Problem is created in `DRAFT` with a stable ID and trusted creator reference.
-- **LRN-001-AC-002:** Given a Student or public catalog caller, when Problems are listed or searched,
-  then only Problems visible under the approved policy and in `PUBLISHED` state are returned.
-- **LRN-001-AC-003:** Given a Draft or Archived Problem matching a search/filter, when learner
-  discovery runs, then its content and existence are not revealed in results or counts.
-- **LRN-001-AC-004:** Given a published Problem, when an authorized learner retrieves it by stable
-  ID or slug, then the approved public statement, metadata, languages, limits, examples, and starter
-  code are returned.
-- **LRN-001-AC-005:** Given an unauthenticated or unauthorized actor, when a protected Problem
-  management action is requested, then it receives `401` or `403` as applicable and no state changes.
-- **LRN-001-AC-006:** Given a Student, when create/update/preview/publish/archive/delete is attempted,
-  then the operation is denied and the Problem remains unchanged.
-- **LRN-001-AC-007:** Given a Problem update containing creator, lifecycle, role, permission,
-  hidden-data, or unknown fields, when validation runs, then those fields cannot change Problem
-  state.
-- **LRN-001-AC-008:** Given a Draft missing any approved publish prerequisite, when publication is
-  requested, then publication fails atomically and the Problem remains `DRAFT`.
-- **LRN-001-AC-009:** Given a complete Draft satisfying all approved prerequisites, when an
-  authorized manager publishes it, then its state becomes `PUBLISHED` and it becomes discoverable
-  under the approved visibility policy.
-- **LRN-001-AC-010:** Given a Problem type outside `STANDARD`, `FUNCTION`, or `OOP`, when creation or
-  update is attempted, then validation rejects it without changing state.
-- **LRN-001-AC-011:** Given a difficulty outside `EASY`, `MEDIUM`, or `HARD`, when creation or update
-  is attempted, then validation rejects it without changing state.
-- **LRN-001-AC-012:** Given a language outside the approved shared catalog or a Problem with no
-  enabled language, when publication is attempted, then it is rejected without changing state.
-- **LRN-001-AC-013:** Given a `STANDARD` Problem without a complete input/output contract, when
-  publication is requested, then it is rejected without changing state.
-- **LRN-001-AC-014:** Given a `FUNCTION` or `OOP` Problem, when publication is requested, then its
-  type-specific callable/structural contract is validated for every enabled language under the
-  approved representation policy.
-- **LRN-001-AC-015:** Given learner-visible examples, when public Problem detail is returned, then
-  the examples are present but hidden Test Cases, hidden expected outputs, harnesses, and internal
-  solutions are absent.
-- **LRN-001-AC-016:** Given starter code for a disabled or unsupported language, when update or
-  publication validation runs, then inconsistent configuration is rejected or made non-public
-  without leaking hidden harness data.
-- **LRN-001-AC-017:** Given non-positive or platform-unsafe time/memory limits, when validation runs,
-  then the request is rejected and existing values remain unchanged.
-- **LRN-001-AC-018:** Given a duplicate slug, when a concurrent create/update attempts to persist it,
-  then at most one Problem owns the slug and the conflicting operation fails safely.
-- **LRN-001-AC-019:** Given an authorized Draft preview, when it is requested, then the learner-facing
-  representation is returned without publication, execution, or public discovery.
-- **LRN-001-AC-020:** Given a public Problem response, error, log, or Swagger example, when inspected,
-  then it contains no hidden Test Case, expected hidden output, harness, internal solution,
-  credential, or runtime command.
-- **LRN-001-AC-021:** Given a trusted Submission request for judge data, when the approved internal
-  authentication is absent or spoofed, then Learning returns no hidden Problem/Test Case material.
-- **LRN-001-AC-022:** Given an Assignment or Submission reference, when Problem identity is used,
-  then it remains an external stable ID and no cross-service database relation/query is introduced.
-- **LRN-001-AC-023:** Given Problem Management behavior, when service ownership is inspected, then
-  Learning owns Problem persistence and no Problem/Judge/Recommendation microservice is added.
-- **LRN-001-AC-024:** Given malicious statement content, when it is validated and rendered through
-  the approved content contract, then it cannot execute unsafe embedded content.
-- **LRN-001-AC-025:** Given a failed validation, authorization check, or state transition, when the
-  operation completes, then no partial Problem mutation is committed.
-
-## Out of Scope
-
-- Test Case CRUD, hidden Test management, expected-output editing, Test Case weights, custom
-  checkers, and Test Case import/export
-- Judge compilation, execution, sandboxing, runner selection, harness generation, comparison, and
-  result classification
-- Run Code, Submit Code, submission lifecycle/history, source-code persistence, and realtime results
-- Course, Chapter, Class, Enrollment, Assignment, deadline, grading, and Assignment progress
-  management
-- Solved status, Learning progress, score aggregation, and Recommendation behavior
-- Problem version history, collaborative editing, optimistic-lock UI, review committees, and
-  multi-stage content approval
-- Editorials, official solutions, plagiarism detection, AI authoring/solution generation, and
-  problem marketplace
-- Elasticsearch or another external full-text search engine
-- Import from online judges or external Problem catalogs
-- Runtime Topic/Tag administration beyond associating existing Learning-owned values
-- Human-readable numbering systems separate from the existing stable ID and slug
-- Problem-level maximum score; Assignment and Test Case scoring remain separate
-- Hard-delete behavior until historical-integrity policy is explicitly approved
-- New Problem, Topic, Recommendation, or content-management microservices
-
-## Dependencies
-
-- [BKPractice system architecture](../../../docs/architecture/system-architecture.md)
-- [Learning Service architecture](../../../docs/architecture/learning-service.md)
-- [Service architecture matrix](../../../docs/architecture/service-architectures.md)
-- [Dependency rules](../../../docs/architecture/dependency-rules.md)
-- [ADR 0001: Service-specific Internal Architectures](../../../docs/adr/0001-service-specific-internal-architectures.md)
-- [SDD workflow](../../README.md)
-- [Architecture reference](../../00-system/architecture-reference.md)
-- [Service boundaries](../../00-system/service-boundaries.md)
-- [Roles and permissions](../../00-system/roles-permissions.md)
-- [Database strategy](../../00-system/database-strategy.md)
-- [Communication strategy](../../00-system/communication.md)
-- [Judge security](../../00-system/judge-security.md)
-- [Definition of Done](../../00-system/definition-of-done.md)
-- [ID-001 Authentication](../../01-identity/authentication/spec.md) for authenticated identity,
-  trusted Gateway context, account-status behavior, and role claims.
-- [ID-003 RBAC](../../01-identity/rbac/spec.md) for default-deny, `resource:action` permission naming,
-  role semantics, and service-owned resource authorization.
-- Future Learning Test Case specification for hidden Test Case lifecycle, readiness, weights,
-  harnesses, expected outputs, and publish dependency.
-- Future Assignment specification for Problem references, availability rules, and scoring.
-- Future Submission/Judge specifications for protected judge packages and execution behavior.
-
-## Open Questions
-
-The following product decisions are not resolved by Architecture, System SDD, Approved Identity
-specifications, or the current foundation. They block approval where they affect required behavior:
-
-1. **Lecturer ownership:** May a Lecturer update/publish/archive only Problems they created, all
-   Problems, or Problems shared through a future Course ownership policy?
-2. **Admin content authority:** May `ADMIN` view/manage all Problems, or does Admin remain outside
-   normal Problem authoring unless separately granted a Learning permission?
-3. **Catalog audience:** Are `PUBLISHED` Problems readable only by authenticated users, or is the
-   published catalog/detail public to unauthenticated visitors?
-4. **Lifecycle transitions:** Is `PUBLISHED -> DRAFT` unpublish allowed? Who may archive/restore,
-   and may an Archived Problem remain readable through an existing Assignment/history link?
-5. **Draft assignment:** May a Draft Problem be attached to an unpublished/future Assignment, or
-   may Assignment reference only Published Problems?
-6. **Published edits and type immutability:** Which fields may change after publication? Must type,
-   language contract, slug, limits, and statement become immutable after Test Cases, Assignments,
-   or Submissions exist?
-7. **Historical changes:** If material published content may change after Submissions exist, is
-   simple in-place editing acceptable or is Problem versioning required? Versioning is currently
-   Out of Scope unless explicitly approved.
-8. **Deletion:** Is Archive the only removal mechanism, or is hard delete allowed for an unused
-   Draft with no Test Cases/Assignment/Submission references?
-9. **Content format:** Is the statement authored as Markdown, plain text, or restricted rich text,
-   and which layer owns sanitization for safe rendering?
-10. **Publish/Test Case readiness:** Must a Problem have at least one approved Test Case before
-    publication, and do the required counts/visibility differ by Problem type?
-11. **Starter code:** Is starter code mandatory for `FUNCTION` and `OOP`, and must it exist for every
-    enabled language? Is it optional for `STANDARD`?
-12. **FUNCTION/OOP contract representation:** Is each contract language-neutral with per-language
-    adapters/starter code, or is the complete callable/class contract defined separately per
-    enabled language?
-13. **Slug policy:** Is slug supplied by the Lecturer or generated from title? Can it change while
-    Draft, and is it immutable after publication?
-14. **Topic/Tag policy:** Are both Topic and Tag required in v1, who manages their catalogs, and is
-    at least one Topic required for publication?
-15. **Visibility model:** Are all Published Problems globally visible in v1, or is `COURSE_ONLY`
-    visibility required now rather than deferred to Course/Assignment specifications?
-
-## Revision History
-
-| Date       | Revision | Author/Reviewer | Summary                                           |
-| ---------- | -------- | --------------- | ------------------------------------------------- |
-| 2026-09-02 | 0.1      | Codex / TBD     | Initial Proposed Problem Management specification |
-
-> `spec.md` describes WHAT. Controllers, DTOs, entities, repositories, migrations, query strategy,
-> storage shape, sanitization libraries, service contracts, and execution order belong in a future
-> `plan.md` after human approval.
+Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
+
+## Mục tiêu
+
+Cho phép đội ngũ giảng dạy có thẩm quyền tạo và quản lý các bài tập lập trình, đồng thời cho phép
+người học khám phá và đọc các problem đã xuất bản, trong khi vẫn bảo toàn quyền sở hữu của Learning
+Service, bảo vệ dữ liệu judge ẩn, và cung cấp metadata problem ổn định cho các tính năng Assignment,
+Submission, Judge, Progress và Recommendation trong tương lai.
+
+## Tác nhân
+
+- **STUDENT:** Người học đã xác thực, khám phá và đọc các problem khả dụng theo chính sách hiển thị
+  đã được phê duyệt.
+- **LECTURER:** Người dùng giảng dạy đã xác thực, có thể tạo và quản lý problem khi quyền Learning
+  cần thiết và chính sách sở hữu tài nguyên cho phép.
+- **ADMIN:** Quản trị viên nền tảng đã xác thực. `ADMIN` không mặc nhiên có thẩm quyền đối với nội
+  dung Problem; mọi khả năng quản lý Problem phải được đặc tả này phê duyệt tường minh.
+- **Khách chưa xác thực:** Người gọi không có ngữ cảnh định danh tin cậy. Việc tác nhân này có được
+  đọc danh mục problem đã xuất bản hay không là một quyết định sản phẩm chưa được giải quyết.
+- **API Gateway:** Cổng vào công khai, xác minh access token BKPractice, loại bỏ các header định danh
+  tin cậy do client gửi, và chuyển tiếp ngữ cảnh định danh/vai trò đã được xác minh.
+- **Learning Service:** Chủ sở hữu state của Problem, policy, metadata, đề bài, liên kết Topic/Tag,
+  các ngôn ngữ được hỗ trợ cho problem, starter code, giới hạn thực thi và quan hệ với Test Case.
+- **Submission Service:** Bên tiêu thụ tin cậy của gói dữ liệu judge được bảo vệ do Learning sở hữu.
+  Nó chỉ lưu ID Problem bên ngoài và không bao giờ đọc trực tiếp cơ sở dữ liệu của Learning.
+- **Judge Service:** Worker tính toán tin cậy, nhận đầu vào thực thi đã được phê duyệt thông qua
+  luồng Submission. Nó không sở hữu state của Problem.
+
+## Bối cảnh
+
+Quản lý Problem là đặc tả tính năng Learning đầu tiên. Learning dùng **Clean Architecture + Modular
+Domain Architecture** và sở hữu Problem cùng với Test Case, Topic, Tag, starter code, các ngôn ngữ
+được hỗ trợ cho problem, Course, Assignment, Progress và Recommendation. LRN-001 định nghĩa vòng đời
+Problem cùng hành vi công khai/quản lý mà không tách ra một service Problem mới và không triển khai
+các tính năng Learning lân cận.
+
+Nền tảng hiện có thiết lập các từ vựng và ràng buộc mô hình sau, mà LRN-001 tái sử dụng thay vì
+định nghĩa lại:
+
+- Loại problem: `STANDARD`, `FUNCTION` và `OOP`.
+- Giá trị độ khó: `EASY`, `MEDIUM` và `HARD`.
+- Trạng thái vòng đời: `DRAFT`, `PUBLISHED` và `ARCHIVED`.
+- Một định danh Problem nội bộ dạng UUID ổn định và một slug duy nhất dễ đọc cho người.
+- Các liên kết Topic và Tag do Learning sở hữu.
+- Một tập con các ngôn ngữ trong danh mục ngôn ngữ được Judge hỗ trợ đã phê duyệt, theo từng Problem.
+- Starter code theo từng ngôn ngữ và một ranh giới harness ẩn nội bộ.
+- Giới hạn thời gian và bộ nhớ dương theo từng Problem, được cung cấp qua luồng judge được bảo vệ.
+- Một định danh người dùng Identity bên ngoài `createdBy`, không có quan hệ cơ sở dữ liệu xuyên
+  service.
+
+Mã nguồn hiện tại là hành vi nền tảng, không phải một đặc tả LRN-001 đã Approved. Các route hoặc hình
+dạng lưu trữ hiện có không cấu thành thẩm quyền cho các chính sách sản phẩm còn bỏ ngỏ. Chúng có thể
+cần được căn chỉnh về sau, chỉ sau khi đặc tả này được phê duyệt và các giai đoạn plan/tasks hoàn tất.
+
+## Yêu cầu chức năng
+
+- **LRN-001-FR-001 — Quyền sở hữu của Learning:** Learning MUST sở hữu mọi Problem và chính sách
+  phía Problem của nó. Submission và Judge MUST tham chiếu Problem bằng ID ngoài ổn định và MUST NOT
+  sở hữu hay lưu trữ trực tiếp thực thể Problem của Learning.
+- **LRN-001-FR-002 — Định danh ổn định:** Mọi Problem MUST có một định danh duy nhất, ổn định, vẫn
+  dùng được bởi Assignment và lịch sử Submission. Tiêu đề MUST NOT đóng vai trò định danh Problem.
+- **LRN-001-FR-003 — Các loại problem được phê duyệt:** Một Problem MUST dùng đúng một loại được
+  phê duyệt: `STANDARD`, `FUNCTION`, hoặc `OOP`. Các loại không xác định hoặc do client tự định
+  nghĩa MUST bị từ chối.
+- **LRN-001-FR-004 — Tạo bản nháp:** Một LECTURER có thẩm quyền MUST có thể tạo một Problem ở trạng
+  thái `DRAFT`. Việc tạo MUST suy ra người tạo từ ngữ cảnh xác thực tin cậy và MUST NOT chấp nhận ID
+  người tạo có tính thẩm quyền từ client.
+- **LRN-001-FR-005 — Cách ly bản nháp:** Một Problem `DRAFT` MUST NOT xuất hiện trong danh sách, tìm
+  kiếm, bộ lọc hay phản hồi chi tiết hướng tới người học. Khả năng hiển thị ở phía quản lý vẫn tuân
+  theo chính sách chủ sở hữu/Admin đã được phê duyệt.
+- **LRN-001-FR-006 — Khám phá nội dung đã xuất bản:** Một STUDENT được chính sách hiển thị danh mục
+  đã phê duyệt cho phép MUST có thể liệt kê và truy xuất các Problem ở trạng thái `PUBLISHED`.
+- **LRN-001-FR-007 — Tìm kiếm:** Việc khám phá Problem đã xuất bản MUST hỗ trợ tìm kiếm theo tiêu đề
+  không phân biệt hoa thường và tra cứu chính xác theo định danh ổn định hoặc slug, mà không để lộ
+  các Problem chưa xuất bản.
+- **LRN-001-FR-008 — Lọc và phân trang:** Việc liệt kê Problem đã xuất bản MUST hỗ trợ phân trang và
+  lọc theo loại Problem, độ khó, Topic và Tag đã được phê duyệt. Tập kết quả rỗng MUST là thành công
+  và MUST NOT tiết lộ số lượng bản nháp/đã lưu trữ.
+- **LRN-001-FR-009 — Đọc ở phía quản lý:** Một người quản lý Problem có thẩm quyền MUST có thể truy
+  xuất biểu diễn quản lý của các Problem mà họ được phép quản lý, bao gồm nội dung bản nháp và thông
+  tin về mức độ sẵn sàng xuất bản, nhưng loại trừ đáp án Test Case ẩn ở dạng thô, trừ khi một đặc tả
+  Test Case sau này cho phép dữ liệu đó.
+- **LRN-001-FR-010 — Cập nhật có thẩm quyền:** Một người quản lý Problem có thẩm quyền MUST chỉ có
+  thể cập nhật các trường Problem được vòng đời và chính sách sở hữu đã phê duyệt cho phép. Dữ liệu
+  từ client MUST NOT thay đổi người tạo hay bỏ qua một bước chuyển trạng thái.
+- **LRN-001-FR-011 — Chuyển trạng thái xuất bản:** Một người quản lý Problem có thẩm quyền MUST có
+  thể yêu cầu chuyển từ `DRAFT` sang `PUBLISHED`. Việc xuất bản MUST có tính nguyên tử và MUST thất
+  bại mà không thay đổi trạng thái khi bất kỳ điều kiện tiên quyết xuất bản nào chưa thoả mãn.
+- **LRN-001-FR-012 — Kiểm tra trước khi xuất bản:** Trước khi xuất bản, hệ thống MUST kiểm tra tiêu
+  đề và đề bài không rỗng, loại và độ khó hợp lệ, slug duy nhất và hợp lệ, giới hạn thực thi dương,
+  ít nhất một ngôn ngữ được phê duyệt đang bật, và contract đặc thù theo loại Problem. Các điều kiện
+  chưa được giải quyết về mức độ sẵn sàng của Test Case/starter code được ghi trong mục Câu hỏi mở.
+- **LRN-001-FR-013 — Hành vi khám phá với nội dung đã lưu trữ:** Một Problem `ARCHIVED` MUST bị loại
+  khỏi việc khám phá mới của người học, đồng thời giữ lại định danh ổn định cho các tham chiếu lịch
+  sử. Chính sách truy cập và chuyển trạng thái chính xác vẫn chưa được giải quyết và MUST được phê
+  duyệt trước khi triển khai.
+- **LRN-001-FR-014 — Đề bài của Problem:** Một Problem MUST cung cấp tiêu đề, đề bài chính, các ví
+  dụ hiển thị, các ràng buộc khi có liên quan, và thông tin contract phù hợp với loại. Một Problem
+  `STANDARD` còn MUST mô tả contract đầu vào và đầu ra của nó trước khi xuất bản.
+- **LRN-001-FR-015 — Ví dụ hiển thị:** Các ví dụ hướng tới người học MUST phân biệt được với Test
+  Case và MUST chỉ chứa nội dung được chủ ý hiển thị cho người học. Ví dụ hiển thị MUST NOT để lộ
+  kết quả mong đợi ẩn, harness hay lời giải nội bộ.
+- **LRN-001-FR-016 — Độ khó:** Mọi Problem MUST dùng một trong các giá trị `EASY`, `MEDIUM` hoặc
+  `HARD`. Độ khó là metadata của Problem phục vụ khám phá và Recommendation trong tương lai; nó
+  không phải là kết quả từ Judge.
+- **LRN-001-FR-017 — Liên kết Topic và Tag:** Một Problem MAY được liên kết với không hoặc nhiều
+  Topic và Tag do Learning sở hữu. Các tham chiếu không hợp lệ hoặc không tồn tại MUST NOT được một
+  request Problem âm thầm tạo ra.
+- **LRN-001-FR-018 — Các ngôn ngữ được hỗ trợ:** Một Problem MUST chỉ dùng các giá trị từ danh mục
+  ngôn ngữ được Judge hỗ trợ dùng chung đã phê duyệt. Một Problem đã xuất bản MUST bật ít nhất một
+  ngôn ngữ được hỗ trợ, và người gọi MUST NOT cung cấp lệnh biên dịch hay cấu hình runtime dưới danh
+  nghĩa một ngôn ngữ.
+- **LRN-001-FR-019 — Ranh giới starter code:** Một Problem MAY cung cấp starter code hiển thị cho
+  người học đối với một ngôn ngữ đang bật. Starter code của một ngôn ngữ đang tắt MUST NOT được quảng
+  bá, và nội dung harness ẩn MUST NOT được trả về trong các phản hồi hướng tới người học.
+- **LRN-001-FR-020 — Giới hạn thực thi:** Mỗi Problem MUST định nghĩa giới hạn thời gian và bộ nhớ
+  dương, nằm trong biên an toàn đã phê duyệt của nền tảng. Learning sở hữu các giá trị riêng của
+  Problem; Judge vẫn chịu trách nhiệm thực thi các giới hạn sandbox và MAY áp dụng trần nền tảng
+  chặt hơn.
+- **LRN-001-FR-021 — Slug:** Mọi Problem MUST có một slug duy nhất và hợp lệ để tra cứu dễ đọc cho
+  người. Cách sinh/khả năng chỉnh sửa slug và tính ổn định của slug sau khi xuất bản cần được sản
+  phẩm phê duyệt.
+- **LRN-001-FR-022 — Tham chiếu người tạo:** Learning MUST lưu người tạo dưới dạng ID người dùng
+  Identity bên ngoài, không có khoá ngoại xuyên service và không nhân bản dữ liệu User/Profile.
+- **LRN-001-FR-023 — Metadata quan sát được:** Biểu diễn quản lý của một Problem MUST thể hiện trạng
+  thái vòng đời hiện tại và các mốc thời gian tạo/cập nhật cơ bản. Phản hồi công khai MUST chỉ thể
+  hiện metadata đã được phê duyệt cho người học.
+- **LRN-001-FR-024 — Xem trước:** Một người quản lý Problem có thẩm quyền MUST có thể xem trước biểu
+  diễn hướng người học của một bản nháp mà họ có quyền, mà không cần xuất bản. Việc xem trước MUST
+  NOT thực thi mã hay làm Problem hiển thị với người học.
+- **LRN-001-FR-025 — Tách bạch công khai/nội bộ:** Phản hồi Problem hướng tới người học MUST dùng
+  danh sách trường cho phép tường minh và MUST NOT để lộ Test Case ẩn, kết quả ẩn mong đợi, harness
+  ẩn, lời giải nội bộ, lệnh biên dịch/Docker hay thông tin xác thực nội bộ của service.
+- **LRN-001-FR-026 — Ranh giới dữ liệu judge tin cậy:** Mọi tài liệu Problem/Test Case ẩn mà
+  Submission/Judge cần MUST chỉ khả dụng qua luồng nội bộ được bảo vệ đã phê duyệt. Client công khai
+  MUST NOT có khả năng lấy được tài liệu đó bằng cách đổi route, tham số, header hay ngôn ngữ yêu cầu.
+- **LRN-001-FR-027 — Tương thích với Assignment:** Assignment MAY tham chiếu một Problem chỉ thông
+  qua ID ổn định do Learning sở hữu. LRN-001 MUST NOT sở hữu hạn chót, việc giao bài cho lớp, chính
+  sách chấm điểm hay tiến độ Assignment.
+- **LRN-001-FR-028 — Không sở hữu việc thực thi hay nộp bài:** Quản lý Problem MUST NOT biên dịch
+  hay chạy mã, tạo bản ghi Run/Submit, phân loại kết quả thực thi, lưu mã nguồn/lịch sử nộp bài, hay
+  phát kết quả realtime.
+- **LRN-001-FR-029 — An toàn nội dung:** Nội dung Problem do người dùng soạn MUST được trả về ở dạng
+  có thể render mà không thực thi nội dung nhúng không an toàn. Định dạng nội dung chính xác và việc
+  ai sở hữu khâu làm sạch phải được giải quyết trước khi phê duyệt.
+- **LRN-001-FR-030 — Retry xác định:** Một lần kiểm tra dữ liệu, kiểm tra phân quyền hoặc chuyển
+  trạng thái thất bại MUST để nguyên state của Problem. Lặp lại một thao tác đọc MUST NOT làm thay
+  đổi Problem.
+
+## Quy tắc nghiệp vụ
+
+### Vòng đời
+
+| Trạng thái  | Người học khám phá | Ý nghĩa                                                                 |
+| ----------- | ------------------ | ----------------------------------------------------------------------- |
+| `DRAFT`     | Không bao giờ      | Đang soạn; có thể chưa đầy đủ ngoài các trường tối thiểu khi tạo        |
+| `PUBLISHED` | Có                 | Đã qua kiểm tra xuất bản và khả dụng theo chính sách hiển thị           |
+| `ARCHIVED`  | Không              | Bị gỡ khỏi việc khám phá mới nhưng vẫn giữ định danh ổn định và lịch sử |
+
+- Một Problem mới tạo bắt đầu ở `DRAFT`.
+- Xuất bản là một bước chuyển tường minh; lưu bản nháp không bao giờ ngầm xuất bản nó.
+- Một lần xuất bản thất bại sẽ giữ nguyên trạng thái trước đó và báo cáo các điều kiện còn
+  thiếu/không hợp lệ.
+- Thay đổi trạng thái là thao tác nghiệp vụ, không phải trường tuỳ ý chỉnh sửa được trong request.
+- Các chính sách về gỡ xuất bản, lưu trữ, khôi phục và xoá cứng vẫn chưa được giải quyết. Phiên bản
+  Proposed này không yêu cầu khả năng xoá cứng nào.
+
+### Dữ liệu tối thiểu khi tạo
+
+Để tương thích với nền tảng hiện tại, việc tạo bản nháp yêu cầu:
+
+- tiêu đề tối đa 200 ký tự;
+- slug duy nhất, hợp lệ, tối đa 220 ký tự;
+- đề bài/mô tả chính không rỗng;
+- một loại Problem được phê duyệt;
+- một độ khó được phê duyệt; và
+- định danh người tạo tin cậy.
+
+Một bản nháp có thể hoãn các yêu cầu chỉ cần khi xuất bản, như các ngôn ngữ đang bật, ví dụ hoàn
+chỉnh, chi tiết contract theo loại, starter code, xác nhận giới hạn thực thi và mức độ sẵn sàng của
+Test Case, theo các quyết định đã ghi trong đặc tả này.
+
+### Dữ liệu Problem dùng chung
+
+- Tiêu đề là metadata hiển thị và không cần duy nhất toàn cục; slug mới là duy nhất.
+- Đề bài chứa nhiệm vụ hướng tới người học. Phần đầu vào/đầu ra là bắt buộc với `STANDARD` và có thể
+  không áp dụng với contract `FUNCTION`/`OOP`.
+- Ví dụ hiển thị dùng để giải thích nhiệm vụ và không bao giờ được coi là Test Case ẩn.
+- Ràng buộc mô tả ràng buộc nghiệp vụ/bài toán, không phải lệnh Docker hay lệnh biên dịch.
+- Topic biểu diễn phân loại theo chương trình học của Learning. Tag là metadata linh hoạt của
+  Learning. Vòng đời quản lý của chúng tách biệt khỏi payload cập nhật Problem.
+- Danh mục ngôn ngữ được phê duyệt hiện tại là C, C++, Java và Python, biểu diễn bằng các giá trị kỹ
+  thuật dùng chung `c`, `cpp`, `java` và `python`. LRN-001 không định nghĩa lại các language runner.
+- Starter code là khung mã nguồn hiển thị cho người học. Harness ẩn là tài liệu judge nội bộ, không
+  phải starter code và không bao giờ là một phần của phản hồi công khai.
+- Giới hạn thời gian và bộ nhớ là cấu hình Problem do Learning sở hữu, được truyền qua các contract
+  tin cậy; Judge sở hữu việc thực thi và các trần bảo mật.
+- Điểm số/điểm tối đa của Problem không phải là trường Problem dùng chung trong LRN-001. Điểm tối đa
+  riêng của Assignment thuộc về Assignment, còn trọng số Test Case thuộc về tính năng Test Case
+  trong tương lai.
+
+### Hành vi theo từng loại
+
+- **STANDARD:** Người học viết một chương trình hoàn chỉnh. Một Problem đã xuất bản cần đề bài, đặc
+  tả đầu vào, đặc tả đầu ra, các ví dụ hiển thị phù hợp với loại, ràng buộc khi có liên quan, giới
+  hạn thực thi, và ít nhất một ngôn ngữ đang bật.
+- **FUNCTION:** Người học hiện thực một hàm/phương thức theo một contract khả gọi tường minh. Đề bài
+  đã xuất bản MUST mô tả không mơ hồ tên hàm được gọi, đầu vào/tham số, kết quả và hành vi cho mọi
+  ngôn ngữ đang bật. Cách biểu diễn contract và chính sách bắt buộc về starter code vẫn là Câu hỏi mở.
+- **OOP:** Người học hiện thực cấu trúc hướng đối tượng theo yêu cầu. Đề bài đã xuất bản MUST mô tả
+  không mơ hồ các class/interface bắt buộc, constructor khi có liên quan, phương thức, tham số, hành
+  vi trả về, và các ràng buộc về mức truy cập cho mọi ngôn ngữ đang bật. Cách biểu diễn contract và
+  chính sách bắt buộc về starter code vẫn là Câu hỏi mở.
+
+### Toàn vẹn lịch sử
+
+- ID Problem ổn định phải luôn hợp lệ đối với các tham chiếu từ Assignment và Submission.
+- Quản lý Problem không sửa đổi lịch sử Submission khi nội dung hoặc vòng đời thay đổi.
+- Thay đổi tiêu đề hay metadata hiển thị không bao giờ làm thay đổi định danh Problem.
+- Chính sách chỉnh sửa một Problem đã xuất bản khi đã có Test Case, Assignment hay Submission vẫn
+  chưa được giải quyết; việc triển khai MUST NOT tự bịa ra cơ chế versioning hay hành vi phá huỷ dữ
+  liệu trước khi được phê duyệt.
+
+## Quy tắc phân quyền
+
+- Việc truy cập danh mục/chi tiết đã xuất bản tuân theo quyết định hiển thị đã phê duyệt. Tối thiểu,
+  một `STUDENT` đã xác thực với ngữ cảnh tin cậy hợp lệ có thể đọc các Problem khả dụng với họ.
+- `STUDENT` MUST NOT tạo, cập nhật, xem trước, xuất bản, lưu trữ, khôi phục hay xoá một Problem, và
+  MUST NOT truy cập bản nháp hay tài liệu nội bộ ẩn.
+- Một `LECTURER` đã xác thực có quyền `problem:create` MAY tạo một bản nháp.
+- Các thao tác đọc ở phía quản lý, cập nhật, xuất bản và các bước chuyển kiểu lưu trữ đòi hỏi quyền
+  tính năng tường minh theo quy ước `resource:action` của ID-003, cộng với chính sách sở hữu người
+  tạo/tài nguyên đã phê duyệt. Các mã đề xuất là `problem:read-managed`, `problem:update`,
+  `problem:publish` và `problem:archive`.
+- Việc một Giảng viên chỉ được quản lý các Problem do chính mình tạo hay được quản lý mọi Problem vẫn
+  chưa được giải quyết.
+- `ADMIN` không mặc nhiên là người chỉnh sửa/xuất bản Problem. Các khả năng của Admin đòi hỏi một
+  quyết định tường minh và cùng việc kiểm tra phía server như mọi tác nhân khác.
+- Gateway có thể thực hiện xác thực và kiểm tra route ở mức thô. Learning MUST thực thi khâu phân
+  quyền, sở hữu, vòng đời và chính sách trường cuối cùng tại một ranh giới backend tin cậy.
+- Learning MUST suy ra định danh và vai trò của tác nhân từ ngữ cảnh Gateway/service đã được xác
+  minh. Body, query, route hay header từ client không thể thiết lập người tạo, vai trò, quyền hay
+  quyền sở hữu tin cậy.
+- Submission chỉ có thể lấy tài liệu judge ẩn với tư cách một tác nhân service tin cậy, theo contract
+  giao tiếp nội bộ đã phê duyệt. Điều này không cấp cho nó thẩm quyền quản lý Problem.
+- Phân quyền Problem bị thiếu hoặc mơ hồ sẽ mặc định là từ chối, theo ID-003.
+
+## Đầu vào
+
+Các route dưới đây là thao tác ở mức khái niệm, không phải thiết kế controller cuối cùng. Cách đặt
+tên chính xác và cách hiện thực DTO thuộc về một kế hoạch đã được phê duyệt sau này.
+
+### Tạo Problem bản nháp
+
+Yêu cầu ngữ cảnh Giảng viên đã xác thực và tin cậy, có quyền `problem:create`, và chấp nhận:
+
+- tiêu đề;
+- slug hoặc dữ liệu cần thiết theo chính sách sinh slug đã phê duyệt;
+- đề bài/mô tả chính;
+- một loại được phê duyệt;
+- một độ khó được phê duyệt; và
+- metadata công khai ban đầu tuỳ chọn được phép cho một bản nháp.
+
+Nó MUST NOT chấp nhận `createdBy` có tính thẩm quyền, mốc thời gian vòng đời, đáp án Test Case ẩn,
+định danh service tin cậy, lệnh biên dịch, tham số Docker, vai trò hay các trường quyền.
+
+### Cập nhật Problem có thẩm quyền
+
+Chấp nhận một danh sách cho phép tường minh, lấy từ:
+
+- tiêu đề, slug tuân theo chính sách slug đã phê duyệt, và các phần của đề bài;
+- loại, tuân theo chính sách bất biến về loại đã phê duyệt;
+- độ khó;
+- ví dụ hiển thị và ràng buộc;
+- các tham chiếu Topic/Tag;
+- các ngôn ngữ được hỗ trợ đang bật;
+- starter code hiển thị cho người học theo từng ngôn ngữ đang bật; và
+- giới hạn thời gian/bộ nhớ dương nằm trong biên nền tảng.
+
+Các bước chuyển vòng đời là những hành động riêng biệt và MUST NOT xảy ra thông qua gán hàng loạt.
+
+### Xuất bản Problem
+
+Chấp nhận định danh Problem ổn định và ngữ cảnh tác nhân tin cậy. State hiện đang lưu của Problem,
+chứ không phải khẳng định của người gọi, quyết định mức độ sẵn sàng xuất bản.
+
+### Khám phá/chi tiết Problem
+
+Chỉ chấp nhận các giá trị phân trang, tìm kiếm, lọc, định danh hoặc slug đã được tài liệu hoá. Trạng
+thái xuất bản, người tạo, vai trò, cờ dữ liệu ẩn hay cờ service nội bộ do client gửi MUST NOT làm
+mở rộng kết quả.
+
+### Xem trước
+
+Chấp nhận một định danh Problem có thẩm quyền và trả về bản render theo hình dạng công khai mà không
+thay đổi state. Nó không nhận mã nguồn để thực thi.
+
+## Đầu ra
+
+- Việc tạo bản nháp trả về định danh Problem ổn định, trạng thái `DRAFT` hiện tại, metadata quản lý
+  an toàn, và thông tin kiểm tra/mức độ sẵn sàng, không kèm đáp án Test Case ẩn.
+- Việc liệt kê nội dung đã xuất bản trả về một tập phân trang các bản tóm tắt công khai gồm ID ổn
+  định, slug, tiêu đề, loại, độ khó, tóm tắt Topic/Tag đã phê duyệt, các ngôn ngữ đang bật và các mốc
+  thời gian đã phê duyệt. Nó loại trừ các mục bản nháp/đã lưu trữ và các trường ẩn/nội bộ.
+- Chi tiết nội dung đã xuất bản trả về đề bài hiển thị cho người học, contract theo loại, ví dụ hiển
+  thị, ràng buộc, các giới hạn phù hợp để hiển thị, các ngôn ngữ đang bật, và starter code hiển thị
+  cho người học.
+- Chi tiết ở phía quản lý có thể bao gồm trạng thái vòng đời và các lỗi về mức độ sẵn sàng xuất bản,
+  nhưng không lấy dữ liệu vai trò/hồ sơ từ kho lưu trữ của Identity và không trả về đáp án Test Case
+  ẩn ở dạng thô thông qua LRN-001.
+- Xem trước trả về đúng hình dạng hướng người học mà việc xuất bản sẽ phơi bày, nhưng không thay đổi
+  trạng thái vòng đời hay khả năng hiển thị trong danh mục.
+- Xuất bản thành công trả về trạng thái `PUBLISHED` kết quả và biểu diễn Problem an toàn.
+- Tài liệu judge ẩn không bao giờ được đưa vào phản hồi công khai/quản lý chỉ vì người gọi biết ID
+  Problem hay ngôn ngữ đang bật.
+- LRN-001 không phát ra domain event bắt buộc nào ở phiên bản này. Nhu cầu event cho
+  Assignment/Recommendation trong tương lai cần đặc tả được phê duyệt riêng.
+
+## Tình huống lỗi
+
+| Trường hợp                                                    | Hành vi quan sát được                                                                                 |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Thiếu hoặc sai xác thực ở thao tác được bảo vệ                | Quy ước Gateway/xác thực hiện có trả về `401`; không thay đổi state                                   |
+| Tác nhân đã xác thực nhưng thiếu quyền/quyền sở hữu           | Quy ước từ chối hiện có trả về `403`; không thay đổi state                                            |
+| Problem không tồn tại hoặc không hiển thị với người gọi       | Quy ước không tìm thấy/hiển thị hiện có trả về `404` mà không lộ state chưa công khai                 |
+| Loại, độ khó, ngôn ngữ, Topic hoặc Tag không xác định         | Lỗi kiểm tra dữ liệu/nghiệp vụ; không thay đổi state Problem                                          |
+| Slug trùng hoặc không hợp lệ                                  | Quy ước xung đột/kiểm tra dữ liệu hiện có; không tạo Problem trùng                                    |
+| Đầu vào phân trang/tìm kiếm/lọc sai định dạng                 | Quy ước kiểm tra dữ liệu hiện có trả về lỗi phía client; không lộ dữ liệu ẩn                          |
+| Yêu cầu xuất bản một Problem không phải bản nháp hoặc chưa đủ | Lỗi chuyển trạng thái/kiểm tra xuất bản; trạng thái trước đó được giữ nguyên                          |
+| Cung cấp các trường người tạo/trạng thái không được phép      | Các trường bị từ chối hoặc bỏ qua bởi kiểm tra danh sách cho phép và không ảnh hưởng phân quyền/state |
+| Cung cấp starter code cho ngôn ngữ đang tắt/không được hỗ trợ | Lỗi kiểm tra dữ liệu; không lưu trạng thái starter code không nhất quán                               |
+| Cung cấp giới hạn thực thi không dương hoặc không an toàn     | Lỗi kiểm tra dữ liệu; state của Problem không đổi                                                     |
+| Yêu cầu ID bản nháp/đã lưu trữ qua API người học              | Phản hồi không tìm thấy/hiển thị mà không tiết lộ nội dung hay trạng thái chưa công khai              |
+| Yêu cầu tài liệu ẩn/nội bộ qua API công khai                  | Request bị từ chối hoặc trường bị bỏ qua; không trả về tài liệu ẩn                                    |
+| Xung đột cập nhật/chuyển trạng thái đồng thời                 | Không lộ state dở dang; hành vi tuân theo chính sách đồng thời đã phê duyệt khi được định nghĩa       |
+| Lỗi lưu trữ hoặc lỗi phụ thuộc ngoài dự kiến                  | Quy ước lỗi chuẩn hoá hiện có, không kèm nội dung ẩn, thông tin xác thực hay chi tiết xuyên service   |
+
+LRN-001 không đưa ra cấu trúc lỗi mới. Việc tuần tự hoá ở tầng truyền tải tuân theo quy ước
+Gateway/Learning/NestJS hiện có.
+
+## Tình huống biên
+
+- Hai lần tạo bản nháp đồng thời không thể tạo ra cùng một slug; nhiều nhất một lần thành công cho
+  một slug duy nhất.
+- Một Problem có thể không có Topic hay Tag nào, trừ khi chính sách xuất bản về sau yêu cầu; bộ lọc
+  rỗng vẫn hợp lệ.
+- Một Topic hoặc Tag bị gỡ bởi luồng Learning sở hữu nó không được âm thầm để lộ hay làm hỏng một
+  phản hồi Problem.
+- Việc gỡ một ngôn ngữ đang bật không được để lại starter code hiển thị cho người học của ngôn ngữ đó.
+- Việc đổi loại hay ngôn ngữ sau khi đã có Test Case hoặc Submission có thể làm một contract trở nên
+  không hợp lệ; thao tác này vẫn bị chặn bởi một Câu hỏi mở thay vì nhận một hành vi tự bịa.
+- Việc xem trước một bản nháp không bao giờ làm thay đổi mốc thời gian/trạng thái ngoài hành vi gắn
+  liền với một thao tác đọc.
+- Tìm kiếm và lọc không bao giờ tiết lộ rằng có một Problem bản nháp hay đã lưu trữ khớp điều kiện.
+- Tiêu đề/đề bài tiếng Việt có dấu vẫn được hỗ trợ; việc chuẩn hoá slug phải bảo toàn tính duy nhất
+  mà không dùng tiêu đề làm định danh.
+- Nội dung đã lưu trữ/chưa xuất bản vẫn bị loại khỏi việc khám phá mới của người học, kể cả khi được
+  dữ liệu Assignment/Submission lịch sử tham chiếu tới.
+- Một trần nền tảng chặt hơn của Judge có thể từ chối một giới hạn Problem tuy dương nhưng không an
+  toàn; một Problem không thể làm suy yếu các ràng buộc bảo mật của Judge.
+- Harness ẩn và kết quả mong đợi vẫn ẩn, kể cả khi chúng đang tồn tại trong lớp lưu trữ hiện tại
+  hoặc được một `ADMIN` yêu cầu thông qua một thao tác Problem công khai.
+
+## Yêu cầu bảo mật
+
+- **LRN-001-SR-001 — Phân quyền phía server:** Learning MUST thực thi quyền Problem, quyền sở hữu,
+  chính sách trường và các bước chuyển vòng đời tại một ranh giới backend tin cậy; giao diện frontend
+  không phải là biện pháp kiểm soát bảo mật.
+- **LRN-001-SR-002 — Ngữ cảnh tác nhân tin cậy:** Định danh người tạo và tác nhân MUST chỉ đến từ
+  ngữ cảnh Gateway/service đã được xác minh. Định danh, vai trò, quyền, quyền sở hữu hay header nội
+  bộ tin cậy do client gửi MUST NOT ảnh hưởng tới phân quyền.
+- **LRN-001-SR-003 — Bảo mật nội dung bản nháp:** Nội dung bản nháp và nội dung chỉ dành cho quản lý
+  MUST NOT bị lộ qua hành vi liệt kê, tìm kiếm, lọc, chi tiết, lỗi hay đếm ở phía công khai.
+- **LRN-001-SR-004 — Bảo mật dữ liệu judge ẩn:** Test Case ẩn, kết quả mong đợi, harness, lời giải
+  nội bộ và chi tiết thực thi MUST NOT xuất hiện trong phản hồi công khai hay quản lý thông thường,
+  trong log, lỗi hay ví dụ Swagger.
+- **LRN-001-SR-005 — Bảo vệ endpoint nội bộ:** Tài liệu judge được bảo vệ MUST chỉ được trả về cho
+  một service tin cậy đã xác thực qua contract nội bộ đã phê duyệt; người gọi công khai và các header
+  nội bộ giả mạo MUST bị từ chối.
+- **LRN-001-SR-006 — Chống gán hàng loạt:** Đầu vào của Problem MUST liệt kê tường minh các trường
+  được phép thay đổi. Người tạo, mốc thời gian, trạng thái vòng đời, cờ dữ liệu ẩn, vai trò và quyền
+  không thể bị thay đổi thông qua các trường request tuỳ ý.
+- **LRN-001-SR-007 — An toàn nội dung:** Nội dung Problem MUST được kiểm tra và render sao cho
+  script nhúng, HTML không an toàn, liên kết độc hại hay các payload tương đương không thể thực thi
+  trên client của người học hay người quản lý.
+- **LRN-001-SR-008 — Cách ly lệnh runtime:** Đầu vào về ngôn ngữ/giới hạn/starter code của Problem
+  MUST NOT trở thành lệnh biên dịch, shell, tên file, Docker, mạng hay sandbox do client điều khiển.
+- **LRN-001-SR-009 — Cách ly service/cơ sở dữ liệu:** Learning MUST NOT truy vấn cơ sở dữ liệu của
+  Identity, Submission hay Judge, và MUST NOT tạo khoá ngoại xuyên service. Các service khác MUST
+  NOT truy vấn trực tiếp `bkpractice_learning`.
+- **LRN-001-SR-010 — Danh sách cho phép ở đầu ra:** Phản hồi Problem công khai MUST được ánh xạ
+  tường minh và MUST NOT tuần tự hoá thực thể lưu trữ theo cách làm rò rỉ các trường bị ẩn khỏi
+  select hoặc các trường nội bộ mới thêm.
+- **LRN-001-SR-011 — Ghi log an toàn:** Header xác thực, bí mật của service, tài liệu judge ẩn, toàn
+  bộ body request nhạy cảm và nội dung render không tin cậy MUST NOT được ghi vào log/lỗi.
+- **LRN-001-SR-012 — Thất bại an toàn/mặc định từ chối:** Ngữ cảnh phân quyền/hiển thị bị thiếu, lỗi
+  thời, sai định dạng hay mơ hồ MUST thất bại theo hướng đóng và giữ nguyên state trước đó của Problem.
+
+## Tiêu chí nghiệm thu
+
+- **LRN-001-AC-001:** Cho trước một Giảng viên có thẩm quyền, khi họ tạo dữ liệu Problem tối thiểu
+  hợp lệ, thì một Problem được tạo ở `DRAFT` với ID ổn định và tham chiếu người tạo tin cậy.
+- **LRN-001-AC-002:** Cho trước một Học viên hoặc người gọi danh mục công khai, khi Problem được
+  liệt kê hoặc tìm kiếm, thì chỉ các Problem hiển thị theo chính sách đã phê duyệt và ở trạng thái
+  `PUBLISHED` được trả về.
+- **LRN-001-AC-003:** Cho trước một Problem bản nháp hoặc đã lưu trữ khớp với tìm kiếm/bộ lọc, khi
+  việc khám phá của người học chạy, thì nội dung và sự tồn tại của nó không bị lộ trong kết quả hay
+  số đếm.
+- **LRN-001-AC-004:** Cho trước một Problem đã xuất bản, khi một người học có thẩm quyền truy xuất
+  nó theo ID ổn định hoặc slug, thì đề bài công khai, metadata, ngôn ngữ, giới hạn, ví dụ và starter
+  code đã phê duyệt được trả về.
+- **LRN-001-AC-005:** Cho trước một tác nhân chưa xác thực hoặc không có thẩm quyền, khi một thao tác
+  quản lý Problem được bảo vệ được yêu cầu, thì nó nhận `401` hoặc `403` tuỳ trường hợp và không có
+  thay đổi state.
+- **LRN-001-AC-006:** Cho trước một Học viên, khi thử tạo/cập nhật/xem trước/xuất bản/lưu trữ/xoá,
+  thì thao tác bị từ chối và Problem không đổi.
+- **LRN-001-AC-007:** Cho trước một yêu cầu cập nhật Problem chứa trường người tạo, vòng đời, vai
+  trò, quyền, dữ liệu ẩn hoặc trường không xác định, khi việc kiểm tra dữ liệu chạy, thì các trường
+  đó không thể làm thay đổi state của Problem.
+- **LRN-001-AC-008:** Cho trước một bản nháp thiếu bất kỳ điều kiện tiên quyết xuất bản đã phê duyệt
+  nào, khi yêu cầu xuất bản, thì việc xuất bản thất bại một cách nguyên tử và Problem vẫn ở `DRAFT`.
+- **LRN-001-AC-009:** Cho trước một bản nháp hoàn chỉnh thoả mãn mọi điều kiện tiên quyết đã phê
+  duyệt, khi một người quản lý có thẩm quyền xuất bản nó, thì trạng thái trở thành `PUBLISHED` và nó
+  trở nên khám phá được theo chính sách hiển thị đã phê duyệt.
+- **LRN-001-AC-010:** Cho trước một loại Problem nằm ngoài `STANDARD`, `FUNCTION` hoặc `OOP`, khi
+  thử tạo hoặc cập nhật, thì việc kiểm tra dữ liệu từ chối nó mà không thay đổi state.
+- **LRN-001-AC-011:** Cho trước một độ khó nằm ngoài `EASY`, `MEDIUM` hoặc `HARD`, khi thử tạo hoặc
+  cập nhật, thì việc kiểm tra dữ liệu từ chối nó mà không thay đổi state.
+- **LRN-001-AC-012:** Cho trước một ngôn ngữ nằm ngoài danh mục dùng chung đã phê duyệt, hoặc một
+  Problem không có ngôn ngữ nào đang bật, khi thử xuất bản, thì nó bị từ chối mà không thay đổi state.
+- **LRN-001-AC-013:** Cho trước một Problem `STANDARD` không có contract đầu vào/đầu ra đầy đủ, khi
+  yêu cầu xuất bản, thì nó bị từ chối mà không thay đổi state.
+- **LRN-001-AC-014:** Cho trước một Problem `FUNCTION` hoặc `OOP`, khi yêu cầu xuất bản, thì contract
+  khả gọi/cấu trúc theo loại của nó được kiểm tra cho mọi ngôn ngữ đang bật theo chính sách biểu diễn
+  đã phê duyệt.
+- **LRN-001-AC-015:** Cho trước các ví dụ hiển thị cho người học, khi chi tiết Problem công khai được
+  trả về, thì các ví dụ có mặt nhưng Test Case ẩn, kết quả ẩn mong đợi, harness và lời giải nội bộ
+  đều vắng mặt.
+- **LRN-001-AC-016:** Cho trước starter code cho một ngôn ngữ đang tắt hoặc không được hỗ trợ, khi
+  việc kiểm tra cập nhật hoặc xuất bản chạy, thì cấu hình không nhất quán bị từ chối hoặc được chuyển
+  thành không công khai mà không làm rò rỉ dữ liệu harness ẩn.
+- **LRN-001-AC-017:** Cho trước giới hạn thời gian/bộ nhớ không dương hoặc không an toàn với nền
+  tảng, khi việc kiểm tra dữ liệu chạy, thì request bị từ chối và các giá trị hiện có không đổi.
+- **LRN-001-AC-018:** Cho trước một slug trùng, khi một thao tác tạo/cập nhật đồng thời cố lưu nó,
+  thì nhiều nhất một Problem sở hữu slug đó và thao tác xung đột thất bại một cách an toàn.
+- **LRN-001-AC-019:** Cho trước một lần xem trước bản nháp có thẩm quyền, khi nó được yêu cầu, thì
+  biểu diễn hướng người học được trả về mà không xuất bản, không thực thi và không khám phá công khai.
+- **LRN-001-AC-020:** Cho trước một phản hồi, lỗi, log hay ví dụ Swagger công khai của Problem, khi
+  kiểm tra, thì nó không chứa Test Case ẩn, kết quả ẩn mong đợi, harness, lời giải nội bộ, thông tin
+  xác thực hay lệnh runtime nào.
+- **LRN-001-AC-021:** Cho trước một request tin cậy từ Submission để lấy dữ liệu judge, khi việc xác
+  thực nội bộ đã phê duyệt vắng mặt hoặc bị giả mạo, thì Learning không trả về tài liệu Problem/Test
+  Case ẩn nào.
+- **LRN-001-AC-022:** Cho trước một tham chiếu từ Assignment hoặc Submission, khi định danh Problem
+  được sử dụng, thì nó vẫn là một ID ngoài ổn định và không có quan hệ/truy vấn cơ sở dữ liệu xuyên
+  service nào được đưa vào.
+- **LRN-001-AC-023:** Cho trước hành vi Quản lý Problem, khi quyền sở hữu service được kiểm tra, thì
+  Learning sở hữu việc lưu trữ Problem và không có microservice Problem/Judge/Recommendation nào
+  được thêm vào.
+- **LRN-001-AC-024:** Cho trước nội dung đề bài độc hại, khi nó được kiểm tra và render qua contract
+  nội dung đã phê duyệt, thì nó không thể thực thi nội dung nhúng không an toàn.
+- **LRN-001-AC-025:** Cho trước một lần kiểm tra dữ liệu, kiểm tra phân quyền hoặc chuyển trạng thái
+  thất bại, khi thao tác kết thúc, thì không có thay đổi Problem dở dang nào được commit.
+
+## Ngoài phạm vi
+
+- CRUD Test Case, quản lý test ẩn, chỉnh sửa kết quả mong đợi, trọng số Test Case, checker tuỳ chỉnh,
+  và import/export Test Case
+- Việc biên dịch, thực thi, sandbox, chọn runner, sinh harness, so sánh và phân loại kết quả của Judge
+- Run Code, Submit Code, vòng đời/lịch sử nộp bài, lưu mã nguồn, và kết quả realtime
+- Quản lý Course, Chapter, Class, Enrollment, Assignment, hạn chót, chấm điểm và tiến độ Assignment
+- Trạng thái đã giải, tiến độ Learning, tổng hợp điểm và hành vi Recommendation
+- Lịch sử phiên bản Problem, soạn thảo cộng tác, giao diện khoá lạc quan, hội đồng duyệt, và phê
+  duyệt nội dung nhiều giai đoạn
+- Lời giải biên tập, lời giải chính thức, phát hiện đạo văn, sinh đề/lời giải bằng AI, và chợ bài tập
+- Elasticsearch hoặc công cụ tìm kiếm toàn văn bên ngoài khác
+- Nhập từ các online judge hoặc danh mục Problem bên ngoài
+- Quản trị Topic/Tag lúc chạy, ngoài việc liên kết với các giá trị sẵn có do Learning sở hữu
+- Hệ thống đánh số dễ đọc cho người tách biệt với ID ổn định và slug hiện có
+- Điểm tối đa ở mức Problem; việc chấm điểm của Assignment và Test Case vẫn tách biệt
+- Hành vi xoá cứng, cho tới khi chính sách toàn vẹn lịch sử được phê duyệt tường minh
+- Các microservice mới cho Problem, Topic, Recommendation hay quản lý nội dung
+
+## Phụ thuộc
+
+- [Kiến trúc hệ thống BKPractice](../../../docs/architecture/system-architecture.md)
+- [Kiến trúc Learning Service](../../../docs/architecture/learning-service.md)
+- [Ma trận kiến trúc service](../../../docs/architecture/service-architectures.md)
+- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
+- [ADR 0001: Kiến trúc nội bộ riêng theo từng service](../../../docs/adr/0001-service-specific-internal-architectures.md)
+- [Quy trình SDD](../../README.md)
+- [Tham chiếu kiến trúc](../../00-system/architecture-reference.md)
+- [Ranh giới service](../../00-system/service-boundaries.md)
+- [Vai trò và quyền](../../00-system/roles-permissions.md)
+- [Chiến lược cơ sở dữ liệu](../../00-system/database-strategy.md)
+- [Chiến lược giao tiếp](../../00-system/communication.md)
+- [Bảo mật Judge](../../00-system/judge-security.md)
+- [Định nghĩa Hoàn thành](../../00-system/definition-of-done.md)
+- [ID-001 Authentication](../../01-identity/authentication/spec.md) cho định danh đã xác thực, ngữ
+  cảnh Gateway tin cậy, hành vi theo trạng thái tài khoản, và các claim vai trò.
+- [ID-003 RBAC](../../01-identity/rbac/spec.md) cho mặc-định-từ-chối, quy ước đặt tên quyền
+  `resource:action`, ngữ nghĩa vai trò, và phân quyền tài nguyên do service sở hữu.
+- Đặc tả Test Case của Learning trong tương lai, cho vòng đời Test Case ẩn, mức độ sẵn sàng, trọng
+  số, harness, kết quả mong đợi, và phụ thuộc khi xuất bản.
+- Đặc tả Assignment trong tương lai, cho các tham chiếu Problem, quy tắc khả dụng, và chấm điểm.
+- Các đặc tả Submission/Judge trong tương lai, cho gói dữ liệu judge được bảo vệ và hành vi thực thi.
+
+## Câu hỏi mở
+
+Các quyết định sản phẩm sau chưa được giải quyết bởi Kiến trúc, SDD hệ thống, các đặc tả Identity đã
+Approved, hay nền tảng hiện tại. Chúng chặn việc phê duyệt ở những chỗ chúng ảnh hưởng tới hành vi
+được yêu cầu:
+
+1. **Quyền sở hữu của Giảng viên:** Một Giảng viên được cập nhật/xuất bản/lưu trữ chỉ các Problem do
+   chính mình tạo, hay mọi Problem, hay các Problem được chia sẻ qua một chính sách sở hữu Course
+   trong tương lai?
+2. **Thẩm quyền nội dung của Admin:** `ADMIN` được xem/quản lý mọi Problem, hay Admin vẫn nằm ngoài
+   việc soạn Problem thông thường trừ khi được cấp riêng một quyền Learning?
+3. **Đối tượng của danh mục:** Các Problem `PUBLISHED` chỉ đọc được bởi người dùng đã xác thực, hay
+   danh mục/chi tiết đã xuất bản là công khai với cả khách chưa xác thực?
+4. **Các bước chuyển vòng đời:** Có cho phép gỡ xuất bản `PUBLISHED -> DRAFT` không? Ai được lưu
+   trữ/khôi phục, và một Problem đã lưu trữ có còn đọc được qua một liên kết Assignment/lịch sử hiện
+   có không?
+5. **Giao bài từ bản nháp:** Một Problem bản nháp có được gắn vào một Assignment chưa xuất bản/trong
+   tương lai không, hay Assignment chỉ được tham chiếu các Problem đã xuất bản?
+6. **Chỉnh sửa sau xuất bản và tính bất biến của loại:** Những trường nào được thay đổi sau khi xuất
+   bản? Loại, contract ngôn ngữ, slug, giới hạn và đề bài có phải trở thành bất biến sau khi đã có
+   Test Case, Assignment hay Submission không?
+7. **Thay đổi lịch sử:** Nếu nội dung đã xuất bản quan trọng có thể thay đổi sau khi đã có Submission,
+   thì việc chỉnh sửa tại chỗ đơn giản có chấp nhận được không, hay cần versioning cho Problem?
+   Versioning hiện là Ngoài phạm vi trừ khi được phê duyệt tường minh.
+8. **Xoá:** Lưu trữ (archive) có phải cơ chế gỡ bỏ duy nhất không, hay được phép xoá cứng một bản
+   nháp chưa dùng, không có tham chiếu Test Case/Assignment/Submission nào?
+9. **Định dạng nội dung:** Đề bài được soạn dưới dạng Markdown, văn bản thuần, hay rich text hạn chế,
+   và tầng nào sở hữu khâu làm sạch để render an toàn?
+10. **Mức độ sẵn sàng khi xuất bản/Test Case:** Một Problem có bắt buộc phải có ít nhất một Test Case
+    đã phê duyệt trước khi xuất bản không, và số lượng/khả năng hiển thị yêu cầu có khác nhau theo
+    loại Problem không?
+11. **Starter code:** Starter code có bắt buộc với `FUNCTION` và `OOP` không, và có phải tồn tại cho
+    mọi ngôn ngữ đang bật không? Nó có tuỳ chọn với `STANDARD` không?
+12. **Biểu diễn contract FUNCTION/OOP:** Mỗi contract là trung lập với ngôn ngữ kèm adapter/starter
+    code theo từng ngôn ngữ, hay toàn bộ contract khả gọi/lớp được định nghĩa riêng cho từng ngôn ngữ
+    đang bật?
+13. **Chính sách slug:** Slug do Giảng viên cung cấp hay được sinh từ tiêu đề? Nó có thể thay đổi khi
+    còn ở bản nháp không, và có bất biến sau khi xuất bản không?
+14. **Chính sách Topic/Tag:** Cả Topic và Tag có bắt buộc ở v1 không, ai quản lý danh mục của chúng,
+    và có bắt buộc ít nhất một Topic khi xuất bản không?
+15. **Mô hình hiển thị:** Mọi Problem đã xuất bản đều hiển thị toàn cục ở v1, hay cần hiển thị dạng
+    `COURSE_ONLY` ngay bây giờ thay vì hoãn sang các đặc tả Course/Assignment?
+
+## Lịch sử sửa đổi
+
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                              |
+| ---------- | --------- | -------------------- | ---------------------------------------------------- |
+| 2026-09-02 | 0.1       | Codex / TBD          | Đặc tả Quản lý Problem ban đầu ở trạng thái Proposed |
+
+> `spec.md` mô tả CÁI GÌ. Controller, DTO, entity, repository, migration, chiến lược truy vấn, hình
+> dạng lưu trữ, thư viện làm sạch nội dung, contract service và thứ tự thực thi thuộc về một
+> `plan.md` sau này, sau khi có phê duyệt của con người.

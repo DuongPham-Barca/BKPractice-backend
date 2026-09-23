@@ -1,319 +1,336 @@
 # ID-002 Profile
 
-## Status
+## Trạng thái
 
 Approved
 
-Allowed values: `Proposed` | `Approved` | `Implemented` | `Verified`
+Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
-## Goal
+## Mục tiêu
 
-Allow an authenticated BKPractice user to view and maintain the small set of personal profile
-information needed by the learning platform and Community, while preserving the ownership of
-authentication, authorization, learning and submission data in their respective domains.
+Cho phép một người dùng BKPractice đã xác thực xem và duy trì tập nhỏ thông tin hồ sơ cá nhân mà nền
+tảng học tập và Community cần, trong khi vẫn bảo toàn quyền sở hữu dữ liệu xác thực, phân quyền, học
+tập và nộp bài ở các miền tương ứng của chúng.
 
-## Actors
+## Tác nhân
 
-- **STUDENT:** Owns and maintains their profile.
-- **LECTURER:** Owns and maintains their profile; does not manage another user's profile through
-  ID-002.
-- **ADMIN:** May view and update profile-owned fields for another user for platform administration.
-- **Unauthenticated visitor:** May view only the public portion of an existing user's profile.
-- **Identity Service:** Owns profile state and profile access policy.
-- **Cloudflare R2:** External image-storage boundary for avatar objects; it does not own Profile
-  records or Identity account data.
+- **STUDENT:** Sở hữu và duy trì hồ sơ của chính mình.
+- **LECTURER:** Sở hữu và duy trì hồ sơ của chính mình; không quản lý hồ sơ của người dùng khác
+  thông qua ID-002.
+- **ADMIN:** Có thể xem và cập nhật các trường thuộc sở hữu của hồ sơ cho một người dùng khác, phục
+  vụ việc quản trị nền tảng.
+- **Khách chưa xác thực:** Chỉ có thể xem phần công khai trong hồ sơ của một người dùng đang tồn tại.
+- **Identity Service:** Sở hữu state của hồ sơ và chính sách truy cập hồ sơ.
+- **Cloudflare R2:** Ranh giới lưu trữ ảnh bên ngoài cho các đối tượng avatar; nó không sở hữu bản
+  ghi Profile hay dữ liệu tài khoản của Identity.
 
-## Context
+## Bối cảnh
 
-Authentication answers **“Who are you?”** and is defined by [ID-001 Authentication](../authentication/spec.md).
-Profile answers **“What personal profile information does this user present?”**. Role and
-permission management remains an RBAC responsibility, while courses, classes, progress,
-submissions and Community posts remain owned by their respective services.
+Xác thực trả lời câu hỏi **“Bạn là ai?”** và được định nghĩa bởi
+[ID-001 Authentication](../authentication/spec.md). Profile trả lời câu hỏi **“Người dùng này trình
+bày thông tin hồ sơ cá nhân nào?”**. Việc quản lý vai trò và quyền vẫn thuộc trách nhiệm của RBAC,
+còn khoá học, lớp, tiến độ, bài nộp và bài viết Community vẫn thuộc sở hữu của các service tương ứng.
 
-The Identity foundation already has one Profile relation per User with `displayName`, `avatarUrl`
-and `bio`. ID-002 defines the behavior around those fields and adds no social-network graph.
-Profiles are lazy-created because older or newly provisioned accounts may not yet have a Profile
-row. When a profile is first requested or updated, its initial display name comes from the official
-name supplied by the approved provisioning boundary.
+Nền tảng Identity đã có sẵn một quan hệ Profile trên mỗi User, với `displayName`, `avatarUrl` và
+`bio`. ID-002 định nghĩa hành vi xoay quanh các trường đó và không thêm đồ thị mạng xã hội nào. Hồ sơ
+được tạo trễ (lazy) vì các tài khoản cũ hoặc mới được cấp có thể chưa có dòng Profile. Khi một hồ sơ
+lần đầu được yêu cầu hoặc cập nhật, tên hiển thị ban đầu của nó lấy từ tên chính thức do ranh giới
+cấp tài khoản đã phê duyệt cung cấp.
 
-Avatar images are stored in Cloudflare R2. ID-002 treats the avatar as an approved R2 object
-reference and does not define a new object-storage provider. The exact bucket, object-key and
-credential implementation belongs in a future `plan.md`.
+Ảnh avatar được lưu trên Cloudflare R2. ID-002 coi avatar là một tham chiếu tới đối tượng R2 đã phê
+duyệt và không định nghĩa một nhà cung cấp lưu trữ đối tượng mới. Chi tiết về bucket, object key và
+cách hiện thực thông tin xác thực thuộc về một `plan.md` sau này.
 
-## Functional Requirements
+## Yêu cầu chức năng
 
-- **ID-002-FR-001 — Profile ownership:** Each BKPractice User MUST have at most one Identity-owned
-  Profile associated with that User.
-- **ID-002-FR-002 — Lazy profile initialization:** When an existing User without a Profile first
-  retrieves or updates their own Profile, Identity MUST create the Profile using the official
-  provisioned name as the initial `displayName`.
-- **ID-002-FR-003 — View own profile:** An authenticated user MUST be able to retrieve their own
+- **ID-002-FR-001 — Quyền sở hữu hồ sơ:** Mỗi User của BKPractice MUST có nhiều nhất một Profile
+  thuộc sở hữu của Identity gắn với User đó.
+- **ID-002-FR-002 — Khởi tạo hồ sơ trễ:** Khi một User đang tồn tại nhưng chưa có Profile lần đầu
+  truy xuất hoặc cập nhật Profile của chính mình, Identity MUST tạo Profile với tên chính thức đã
+  được cấp làm `displayName` ban đầu.
+- **ID-002-FR-003 — Xem hồ sơ của mình:** Một người dùng đã xác thực MUST có thể truy xuất Profile
+  của chính mình.
+- **ID-002-FR-004 — Cập nhật hồ sơ của mình:** Một người dùng đã xác thực MUST có thể cập nhật một
+  phần các trường Profile chỉnh sửa được của chính mình.
+- **ID-002-FR-005 — Các trường chỉnh sửa được:** Trong v1, chủ sở hữu MAY chỉ cập nhật
+  `displayName`, tham chiếu avatar và `bio`; một lần cập nhật một phần MUST để nguyên các trường bị
+  bỏ qua.
+- **ID-002-FR-006 — Các trường bị kiểm soát:** Việc cập nhật Profile MUST NOT thay đổi email,
+  MSSV/mã số sinh viên, vai trò, quyền, trạng thái tài khoản, mật khẩu hay bất kỳ trường xác
+  thực/tài khoản nào khác.
+- **ID-002-FR-007 — Hồ sơ công khai:** Hệ thống MUST cung cấp một thao tác đọc hồ sơ công khai cho
+  một người dùng đang tồn tại, chỉ phơi bày các trường Profile công khai đã phê duyệt.
+- **ID-002-FR-008 — Các trường công khai:** Biểu diễn Profile công khai MUST chỉ chứa `displayName`,
+  tham chiếu/URL avatar và `bio`.
+- **ID-002-FR-009 — Bảo mật riêng tư của hồ sơ:** Email, MSSV/mã số sinh viên, dữ liệu mật khẩu, vai
+  trò, quyền, trạng thái tài khoản, dữ liệu phiên refresh và các định danh nhà cung cấp MUST NOT bị
+  phơi bày bởi thao tác Profile công khai.
+- **ID-002-FR-010 — Quản lý hồ sơ của Admin:** ADMIN MUST có thể xem và cập nhật các trường thuộc sở
+  hữu của Profile của một người dùng khác, tuân theo cùng các hạn chế về trường bị kiểm soát.
+- **ID-002-FR-011 — Ranh giới của Giảng viên:** LECTURER MUST có thể quản lý Profile của chính mình
+  nhưng MUST NOT cập nhật Profile của người dùng khác thông qua ID-002.
+- **ID-002-FR-012 — Ranh giới lưu trữ avatar:** Avatar của một Profile MUST tham chiếu tới một đối
+  tượng đã phê duyệt được lưu qua Cloudflare R2. ID-002 MUST NOT lưu các URL ảnh bên ngoài tuỳ ý do
+  client cung cấp như thể chúng là avatar do BKPractice quản lý.
+- **ID-002-FR-013 — Kiểm tra dữ liệu đầu vào:** Dữ liệu đầu vào của Profile MUST được kiểm tra về
+  hình dạng trường, khả năng nhận null được hỗ trợ, và định dạng tham chiếu avatar đã phê duyệt,
+  trước khi state của Profile thay đổi.
+- **ID-002-FR-014 — Ranh giới miền của Profile:** Profile của Identity MUST NOT sở hữu hay lưu trữ
+  dữ liệu về lớp, khoá học, tiến độ học tập, bài đã giải, điểm, lịch sử nộp bài hay bài viết
+  Community.
+- **ID-002-FR-015 — Vòng đời hồ sơ ổn định:** Việc truy xuất và cập nhật Profile MUST an toàn khi
+  thực hiện lại; việc khởi tạo đồng thời MUST dẫn tới nhiều nhất một Profile cho một User.
+- **ID-002-FR-016 — Không xoá tài khoản:** ID-002 MUST NOT xoá tài khoản User khi một trường Profile
+  bị xoá trống; các giá trị avatar và bio cho phép null MAY được xoá trống theo contract cập nhật.
+
+## Quy tắc nghiệp vụ
+
+- `displayName`, tham chiếu avatar và `bio` là các trường v1 duy nhất thuộc sở hữu của Profile.
+- `displayName` được khởi tạo từ giá trị `họ tên` đã import khi việc tạo trễ diễn ra. Chủ sở hữu sau
+  đó có thể cá nhân hoá `displayName`; nó MUST dài tối đa 100 ký tự.
+- `bio` là tuỳ chọn và MUST dài tối đa 1.000 ký tự khi được cung cấp. Văn bản trong Profile được cắt
+  khoảng trắng ở đầu và cuối, bảo toàn ký tự Unicode (bao gồm tiếng Việt), và không chuyển tự hay đổi
+  hoa thường nội dung của người dùng.
+- `studentId/MSSV` vẫn là định danh tài khoản do Authentication sử dụng và không bị nhân bản thành
+  một giá trị thuộc sở hữu của Profile. `email` vẫn là định danh tài khoản và không chỉnh sửa được
+  qua Profile.
+- `lớp/className` vẫn thuộc sở hữu của Learning. Khoa, bộ môn, mã giảng viên và các trường học thuật
+  khác không thuộc ID-002 v1.
+- Một hồ sơ công khai chỉ chứa ba trường Profile không nhạy cảm. Dữ liệu tài khoản và phân quyền
+  không trở thành công khai chỉ vì người dùng có một Profile.
+- Việc tạo Profile là trễ, nhưng việc khởi tạo là idempotent và dùng tên chính thức đã được cấp làm
+  giá trị khởi đầu. Không đưa vào bước onboarding bắt buộc hay cổng chặn yêu cầu hoàn thiện Profile.
+- Việc thay hoặc xoá avatar sẽ thay đổi tham chiếu R2 đã phê duyệt của Profile. Việc phân phối avatar
+  công khai dùng một signed URL ngắn hạn cho đối tượng R2 đã phê duyệt; các URL R2 trực tiếp tuỳ ý
+  không được phơi bày như contract công khai.
+- Việc thay hoặc xoá avatar MUST xoá/cập nhật tham chiếu trong Profile trước. Đối tượng R2 cũ đủ điều
+  kiện để dọn dẹp bất đồng bộ sau một khoảng ân hạn được cấu hình; việc dọn dẹp thất bại MUST NOT làm
+  hoàn tác một lần cập nhật Profile đã thành công.
+- Hồ sơ công khai của một tài khoản `LOCKED` hoặc `PENDING` trả về một kết quả không khả dụng chung
+  chung và không tiết lộ trạng thái tài khoản. Các lượt đọc có thẩm quyền của chủ sở hữu/Admin tiếp
+  tục tuân theo các quy tắc phân quyền của Profile riêng tư.
+- Một thao tác Profile không bao giờ cấp quyền truy cập khoá học, lớp, tiến độ, bài nộp hay khả năng
+  kiểm duyệt của Community.
+
+## Quy tắc phân quyền
+
+- Cần một access token BKPractice hợp lệ để xem hoặc cập nhật Profile riêng tư của chính mình.
+- STUDENT và LECTURER chỉ được đọc và cập nhật các trường thuộc sở hữu Profile của chính mình.
+- ADMIN có thể đọc và cập nhật các trường thuộc sở hữu Profile của người dùng khác, nhưng các API
+  Profile không thể thay đổi trạng thái tài khoản, vai trò, quyền, thông tin đăng nhập hay định danh.
+- Khách chưa xác thực chỉ được đọc biểu diễn công khai trong Profile của một người dùng đang tồn tại.
+- LECTURER không có quyền ID-002 nào để cập nhật Profile của một Sinh viên hay của một Giảng viên
+  khác.
+- Community service có thể tham chiếu `authorId`, nhưng nó không có quyền truy cập trực tiếp vào cơ
+  sở dữ liệu của Identity; việc ghép dữ liệu hồ sơ cho Community vẫn là một tích hợp xuyên service
+  trong tương lai.
+- Các quyết định về xác thực và RBAC vẫn nằm ở ID-001/ID-003 và không được Profile hiện thực lại.
+
+## Đầu vào
+
+### Đọc hồ sơ của mình — theo ý niệm `GET /api/profile/me`
+
+Yêu cầu một access token Bearer BKPractice hợp lệ và không nhận user ID nào do người gọi cung cấp để
+xác định chủ sở hữu.
+
+### Cập nhật hồ sơ của mình — theo ý niệm `PATCH /api/profile/me`
+
+Chấp nhận một đối tượng một phần chỉ chứa:
+
+| Trường        | Yêu cầu                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `displayName` | Tuỳ chọn trong cập nhật một phần; khi có mặt, phải là tên hiển thị không rỗng, tối đa 100 ký tự |
+| `avatar`      | Tham chiếu tới đối tượng R2 đã phê duyệt, tuỳ chọn, hoặc một thao tác xoá trống tường minh      |
+| `bio`         | Chuỗi tuỳ chọn tối đa 1.000 ký tự, hoặc null tường minh để xoá trống                            |
+
+Request MUST từ chối email, MSSV/mã số sinh viên, vai trò, quyền, trạng thái tài khoản, mật khẩu,
+định danh nhà cung cấp, URL chuyển hướng tuỳ ý và các trường không xác định.
+
+### Đọc hồ sơ công khai — theo ý niệm `GET /api/users/:userId/profile`
+
+Nhận ID Identity ổn định của người dùng đích và chỉ trả về biểu diễn Profile công khai. Nó không chấp
+nhận một yêu cầu tiết lộ các trường tài khoản riêng tư.
+
+### Quản lý hồ sơ của Admin — theo ý niệm `GET/PATCH /api/users/:userId/profile`
+
+Cùng thao tác trên hồ sơ đích MAY được ADMIN sử dụng. Dữ liệu cập nhật vẫn giới hạn trong ba trường
+thuộc sở hữu của Profile; một request của ADMIN không thể sửa đổi dữ liệu tài khoản hay phân quyền
+thông qua Profile.
+
+Cách đặt tên route chính xác, hình dạng DTO và việc phân quyền tải lên R2 thuộc về một kế hoạch triển
+khai sau này và MUST tuân theo quy ước Gateway/API hiện có.
+
+## Đầu ra
+
+- Các lượt đọc hồ sơ của chính mình trả về các trường thuộc sở hữu của Profile và mối liên hệ ổn định
+  với người dùng cục bộ mà contract API đã phê duyệt yêu cầu; chúng không trả về mật khẩu/bản băm,
+  phiên refresh hay dữ liệu nhà cung cấp.
+- Các lượt đọc hồ sơ công khai trả về đúng `displayName`, tham chiếu/URL avatar và `bio`.
+- Giá trị avatar công khai trong các phản hồi hồ sơ công khai là các signed URL ngắn hạn cho những
+  đối tượng R2 đã phê duyệt; phản hồi không phơi bày các URL lưu trữ trực tiếp tuỳ ý.
+- Lượt đọc/cập nhật hồ sơ của chính mình lần đầu có thể tạo ra Profile còn thiếu và trả về kết quả đã
+  khởi tạo trong cùng thao tác đó.
+- Các lần cập nhật một phần thành công trả về biểu diễn Profile kết quả mà không thay đổi các trường
+  bị bỏ qua.
+- Việc xoá trống avatar hoặc bio trả về một hồ sơ thành công với trường cho phép null tương ứng để
+  trống; nó không bao giờ xoá tài khoản User.
+- Các thay đổi trong Profile không phát hành, thu hồi hay xoay vòng token của Authentication, và
+  không cập nhật state nghiệp vụ của Learning, Submission hay Community.
+
+## Tình huống lỗi
+
+| Trường hợp                                                                                 | Hành vi quan sát được                                                                                  |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Thiếu/sai access token ở thao tác riêng tư                                                 | Quy ước Gateway/xác thực hiện có trả về 401                                                            |
+| Người dùng đích hoặc hồ sơ công khai không tồn tại                                         | Quy ước không tìm thấy hiện có của Identity trả về 404 mà không phơi bày dữ liệu không liên quan       |
+| Hồ sơ công khai thuộc một tài khoản `LOCKED` hoặc `PENDING`                                | Kết quả không khả dụng/không tìm thấy chung chung, không tiết lộ trạng thái tài khoản                  |
+| Hình dạng trường không hợp lệ, giá trị không được hỗ trợ, trường lạ hoặc tham chiếu R2 sai | Lỗi kiểm tra dữ liệu (400) và không thay đổi state của Profile                                         |
+| Thử cập nhật email, MSSV, vai trò, quyền, trạng thái, mật khẩu hay dữ liệu nhà cung cấp    | Bị từ chối như trường bị cấm/không hợp lệ (403 hoặc quy ước kiểm tra dữ liệu hiện có), không đổi state |
+| LECTURER thử cập nhật Profile của người dùng khác                                          | 403 và không thay đổi state                                                                            |
+| Người không phải ADMIN thử quản lý Profile của người dùng khác                             | 403 và không thay đổi state                                                                            |
+| Khởi tạo Profile lần đầu đồng thời                                                         | Chỉ còn lại một Profile; các lần thử lại trả về cùng một Profile về mặt logic                          |
+| Phụ thuộc R2 không khả dụng trong một thao tác avatar đã phê duyệt                         | Lỗi phụ thuộc chuẩn hoá hiện có; không commit tham chiếu Profile treo lơ lửng nào                      |
+| Lỗi lưu trữ ngoài dự kiến                                                                  | Cấu trúc lỗi chuẩn hoá hiện có kèm request/correlation ID                                              |
+
+ID-002 không đưa ra cấu trúc lỗi mới. Việc tuần tự hoá HTTP tuân theo quy ước Identity/Gateway mà nền
+tảng đã thiết lập.
+
+## Tình huống biên
+
+- Một tài khoản đã import có thể bị tạo Profile trễ nhiều lần đồng thời; tính duy nhất và tính
+  idempotent phải ngăn việc tạo Profile trùng lặp.
+- Một User cũ không có tên chính thức đã được cấp và dùng được thì không thể khởi tạo bằng một giá trị
+  định danh bịa ra; thao tác báo lỗi dữ liệu hiện có và không tạo ra một Profile rỗng.
+- Một trường bị bỏ qua trong PATCH thì giữ nguyên; việc xoá trống tường minh avatar/bio cho phép null
+  là có chủ đích.
+- Việc thay avatar không được phơi bày các URL bên ngoài tuỳ ý như thể là nội dung R2 tin cậy.
+- Các lượt đọc công khai không bao giờ trở thành cách để dò tìm email, MSSV, vai trò, trạng thái tài
+  khoản hay state xác thực.
+- Một đối tượng R2 đã bị xoá hoặc không truy cập được có thể dẫn tới một tham chiếu avatar hỏng; việc
+  dọn dẹp bất đồng bộ dùng một khoảng ân hạn được cấu hình và độc lập với việc xoá tài khoản.
+- Việc khoá hoặc đổi vai trò của một User không cho phép thao tác Cập nhật hồ sơ đi vòng qua
+  Authentication hay RBAC.
+- Dữ liệu Profile vẫn khả dụng độc lập với tiến độ Learning, lịch sử Submission và nội dung Community.
+
+## Yêu cầu bảo mật
+
+- **ID-002-SR-001 — Thực thi quyền sở hữu:** Các lượt đọc/cập nhật Profile riêng tư MUST kiểm chứng
+  định danh đã xác thực của người gọi, và các lần cập nhật xuyên người dùng MUST đòi hỏi vai trò
+  ADMIN đã phê duyệt.
+- **ID-002-SR-002 — Chống gán hàng loạt:** Dữ liệu đầu vào của Profile MUST liệt kê tường minh các
+  trường chỉnh sửa được và từ chối các trường lạ hoặc thuộc về tài khoản/phân quyền.
+- **ID-002-SR-003 — Dữ liệu tài khoản bị kiểm soát:** Các API Profile MUST không bao giờ thay đổi hay
+  phơi bày bản băm mật khẩu, refresh token, thông tin xác thực nhà cung cấp, email, MSSV, vai trò,
+  quyền hay trạng thái tài khoản ngoài phạm vi hiển thị đã phê duyệt của chúng.
+- **ID-002-SR-004 — Riêng tư ở phần công khai:** Các phản hồi Profile công khai MUST chỉ chứa các
+  trường không nhạy cảm đã phê duyệt và MUST NOT làm rò rỉ chi tiết về sự tồn tại của tài khoản riêng
+  tư vượt ra ngoài kết quả hồ sơ được yêu cầu.
+- **ID-002-SR-005 — Toàn vẹn của avatar:** Các tham chiếu avatar MUST bị giới hạn trong những đối
+  tượng R2 đã phê duyệt; các URL tuỳ ý từ client hay thông tin xác thực lưu trữ không tin cậy MUST
+  NOT được lưu.
+- **ID-002-SR-006 — An toàn dữ liệu đầu vào:** Các giá trị của Profile MUST đi qua các quy ước kiểm
+  tra dữ liệu và tuần tự hoá đầu ra dùng chung trước khi được lưu hoặc trả về.
+- **ID-002-SR-007 — Ghi log an toàn:** Mật khẩu, token, header Authorization, thông tin xác thực R2
+  và các trường tài khoản nhạy cảm MUST NOT xuất hiện trong log hay lỗi của Profile.
+- **ID-002-SR-008 — Cách ly service:** Profile MUST NOT truy vấn cơ sở dữ liệu của service khác hay
+  nhân bản các thực thể nghiệp vụ của Learning, Submission, Community hay RBAC.
+
+## Tiêu chí nghiệm thu
+
+- **ID-002-AC-001:** Cho trước một người dùng đã xác thực, khi họ yêu cầu Profile của chính mình, thì
+  Identity trả về dữ liệu thuộc sở hữu của Profile mà không kèm trường mật khẩu, token hay bí mật của
+  nhà cung cấp.
+- **ID-002-AC-002:** Cho trước một User đang tồn tại nhưng chưa có Profile và có tên chính thức đã
+  được cấp, khi người dùng lần đầu đọc hoặc cập nhật Profile của mình, thì một Profile được tạo với
+  tên đó làm `displayName` ban đầu.
+- **ID-002-AC-003:** Cho trước một người dùng đã xác thực, khi họ cập nhật `displayName`, tham chiếu
+  avatar hoặc `bio`, thì chỉ các trường chỉnh sửa được đã cung cấp thay đổi và Profile kết quả được
+  trả về.
+- **ID-002-AC-004:** Cho trước một lần cập nhật xoá trống tường minh avatar hoặc bio cho phép null,
+  khi việc kiểm tra dữ liệu thành công, thì trường đó được xoá trống mà không xoá tài khoản User.
+- **ID-002-AC-005:** Cho trước các giá trị sai định dạng, trường không được hỗ trợ hoặc tham chiếu
+  avatar không hợp lệ, khi việc kiểm tra dữ liệu của Profile chạy, thì request bị từ chối và state của
+  Profile không đổi.
+- **ID-002-AC-005a:** Cho trước một `displayName` dài hơn 100 ký tự, khi việc kiểm tra dữ liệu của
+  Profile chạy, thì request bị từ chối và state của Profile không đổi.
+- **ID-002-AC-005b:** Cho trước một `bio` dài hơn 1.000 ký tự, khi việc kiểm tra dữ liệu của Profile
+  chạy, thì request bị từ chối và state của Profile không đổi; nội dung Unicode hợp lệ được bảo toàn
+  sau khi cắt khoảng trắng bên ngoài.
+- **ID-002-AC-006:** Cho trước một request chứa các trường email, MSSV, vai trò, quyền, trạng thái
+  tài khoản, mật khẩu hay nhà cung cấp, khi thử cập nhật Profile, thì request không thể thay đổi các
+  trường đó.
+- **ID-002-AC-007:** Cho trước một người gọi chưa xác thực, khi thử đọc/cập nhật hồ sơ riêng tư của
+  chính mình, thì ranh giới xác thực hiện có từ chối request.
+- **ID-002-AC-008:** Cho trước một người dùng đang tồn tại, khi một hồ sơ công khai được yêu cầu, thì
+  phản hồi chỉ chứa `displayName`, tham chiếu/URL avatar và `bio`.
+- **ID-002-AC-008a:** Cho trước một tài khoản `LOCKED` hoặc `PENDING`, khi một hồ sơ công khai được
+  yêu cầu bởi người chưa xác thực, thì phản hồi là kết quả không khả dụng/không tìm thấy chung chung
+  và không tiết lộ trạng thái tài khoản.
+- **ID-002-AC-009:** Cho trước một request hồ sơ công khai, khi kiểm tra phản hồi, thì email, MSSV,
+  mật khẩu/bản băm, vai trò, quyền, trạng thái tài khoản, dữ liệu refresh và định danh nhà cung cấp
+  đều vắng mặt.
+- **ID-002-AC-010:** Cho trước một ADMIN và Profile của một người dùng khác, khi ADMIN đọc hoặc cập
+  nhật nó, thì chỉ các trường thuộc sở hữu của Profile là quản lý được.
+- **ID-002-AC-011:** Cho trước một LECTURER hoặc STUDENT và Profile của một người dùng khác, khi họ
+  thử cập nhật nó, thì thao tác bị cấm và không state nào thay đổi.
+- **ID-002-AC-012:** Cho trước hai request Profile lần đầu đồng thời cho cùng một User, khi cả hai
+  hoàn tất, thì tồn tại nhiều nhất một Profile và cả hai phản hồi thành công đều biểu diễn cùng một
   Profile.
-- **ID-002-FR-004 — Update own profile:** An authenticated user MUST be able to partially update
-  their own editable Profile fields.
-- **ID-002-FR-005 — Editable fields:** In v1, the owner MAY update only `displayName`, avatar
-  reference and `bio`; a partial update MUST leave omitted fields unchanged.
-- **ID-002-FR-006 — Controlled fields:** Profile update MUST NOT change email, MSSV/student ID,
-  roles, permissions, account status, password or any other authentication/account field.
-- **ID-002-FR-007 — Public profile:** The system MUST provide a public-profile read operation for
-  an existing user that exposes only the approved public Profile fields.
-- **ID-002-FR-008 — Public fields:** The public Profile representation MUST contain only
-  `displayName`, avatar reference/URL and `bio`.
-- **ID-002-FR-009 — Profile privacy:** Email, MSSV/student ID, password data, roles, permissions,
-  account status, refresh-session data and provider identities MUST NOT be exposed by the public
-  Profile operation.
-- **ID-002-FR-010 — Admin profile management:** ADMIN MUST be able to view and update the
-  Profile-owned fields of another user, subject to the same controlled-field restrictions.
-- **ID-002-FR-011 — Lecturer boundary:** LECTURER MUST be able to manage their own Profile but MUST
-  NOT update another user's Profile through ID-002.
-- **ID-002-FR-012 — Avatar storage boundary:** A Profile avatar MUST reference an approved object
-  stored through Cloudflare R2. ID-002 MUST NOT persist arbitrary client-provided external image
-  URLs as if they were BKPractice-managed avatars.
-- **ID-002-FR-013 — Input validation:** Profile input MUST be validated for field shape, supported
-  nullability and approved avatar-reference format before Profile state changes.
-- **ID-002-FR-014 — Profile-domain boundary:** Identity Profile MUST NOT own or persist class,
-  course, learning-progress, solved-problem, score, submission-history or Community-post data.
-- **ID-002-FR-015 — Stable profile lifecycle:** Profile retrieval and update MUST be safe to retry;
-  concurrent initialization MUST result in at most one Profile for a User.
-- **ID-002-FR-016 — No account deletion:** ID-002 MUST NOT delete the User account when a Profile
-  field is cleared; nullable avatar and bio values MAY be cleared according to the update contract.
+- **ID-002-AC-013:** Cho trước một lần cập nhật avatar hợp lệ, khi kiểm tra tham chiếu đã lưu, thì nó
+  trỏ tới một đối tượng Cloudflare R2 đã phê duyệt chứ không phải một URL bên ngoài tuỳ ý.
+- **ID-002-AC-013a:** Cho trước một hồ sơ công khai có avatar, khi kiểm tra phản hồi, thì giá trị
+  avatar là một signed URL ngắn hạn cho đối tượng R2 đã phê duyệt.
+- **ID-002-AC-013b:** Cho trước một thao tác thay hoặc xoá avatar, khi việc cập nhật Profile thành
+  công, thì tham chiếu Profile mới/rỗng được commit ngay lập tức và việc dọn dẹp đối tượng cũ là bất
+  đồng bộ và không làm thất bại lần cập nhật Profile.
+- **ID-002-AC-014:** Cho trước các thao tác Profile, khi kiểm tra lớp lưu trữ của Identity, thì không
+  có dữ liệu về lớp, khoá học, tiến độ, bài đã giải, điểm, lịch sử nộp bài hay bài viết Community nào
+  được tạo hoặc truy vấn.
+- **ID-002-AC-015:** Cho trước một lần cập nhật hoặc đọc Profile, khi rà soát log và lỗi, thì không
+  mật khẩu, token, thông tin xác thực R2 hay trường tài khoản nhạy cảm nào bị ghi log hoặc trả về.
 
-## Business Rules
+## Ngoài phạm vi
 
-- `displayName`, avatar reference and `bio` are the only Profile-owned v1 fields.
-- `displayName` is initialized from the imported `họ tên` value when lazy creation occurs. The
-  owner may subsequently personalize `displayName`; it MUST be at most 100 characters.
-- `bio` is optional and MUST be at most 1,000 characters when supplied. Profile text trims leading
-  and trailing whitespace, preserves Unicode characters (including Vietnamese text), and does not
-  transliterate or case-fold user content.
-- `studentId/MSSV` remains account identity used by Authentication and is not duplicated as a
-  Profile-owned value. `email` remains account identity and is not editable through Profile.
-- `lớp/className` remains Learning-owned. Faculty, department, lecturer code and other academic
-  fields are not part of ID-002 v1.
-- A public profile contains the three non-sensitive Profile fields only. Account and authorization
-  data are not made public by having a Profile.
-- Profile creation is lazy, but initialization is idempotent and uses the official provisioned name
-  as its seed. No mandatory onboarding or Profile-completion gate is introduced.
-- Replacing or clearing an avatar changes the Profile's approved R2 reference. Public avatar
-  delivery uses a short-lived signed URL for the approved R2 object; arbitrary direct R2 URLs are
-  not exposed as the public contract.
-- Replacing or clearing an avatar MUST clear/update the Profile reference first. The previous R2
-  object is eligible for asynchronous cleanup after a configured grace period; cleanup failure
-  MUST NOT roll back a successful Profile update.
-- A public profile for a `LOCKED` or `PENDING` account returns a generic unavailable result and
-  does not reveal the account status. Authorized owner/Admin reads continue to follow the private
-  Profile authorization rules.
-- A Profile operation never grants access to courses, classes, progress, submissions or Community
-  moderation capabilities.
+- Xác thực, đăng nhập, đăng xuất, refresh token và hành vi định danh của `/auth/me`
+- Đổi mật khẩu và Đổi email
+- Quên/Đặt lại mật khẩu
+- Quản lý vai trò, quyền và RBAC
+- Khoá/mở khoá tài khoản, xoá tài khoản và phê duyệt giảng viên
+- Phân tích Excel, cấp tài khoản sinh viên và báo cáo import
+- Ghi danh vào lớp, quyền sở hữu khoa/lớp và tiến độ Learning
+- Lịch sử nộp bài, điểm số, thành tích và huy hiệu
+- Bài viết, bình luận, phản ứng, người theo dõi, bạn bè, dòng thời gian hay nhắn tin của Community
+- Hạ tầng lưu trữ avatar khác ngoài ranh giới Cloudflare R2 đã chọn
+- Xác minh hồ sơ, phân tích số liệu, cổng chặn hoàn thiện/onboarding và uy tín xã hội
+- Các thay đổi về OAuth Google/Microsoft, MFA, SSO, Keycloak và các nhà cung cấp định danh bên ngoài
 
-## Authorization Rules
-
-- A valid BKPractice access token is required to view or update one's own private Profile.
-- STUDENT and LECTURER may read and update only their own Profile-owned fields.
-- ADMIN may read and update another user's Profile-owned fields, but Profile APIs cannot mutate
-  account status, roles, permissions, credentials or identifiers.
-- An unauthenticated visitor may read only the public representation of an existing user's Profile.
-- LECTURER has no ID-002 permission to update a Student's or another Lecturer's Profile.
-- A Community service may reference `authorId`, but it does not gain direct access to the Identity
-  database; Community profile composition remains a future cross-service integration.
-- Authentication and RBAC decisions remain in ID-001/ID-003 and are not reimplemented by Profile.
-
-## Inputs
-
-### Own profile read — conceptual `GET /api/profile/me`
-
-Requires a valid BKPractice Bearer access token and accepts no caller-supplied user ID for the
-owner identity.
-
-### Own profile update — conceptual `PATCH /api/profile/me`
-
-Accepts a partial object containing only:
-
-| Field         | Requirement                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------------- |
-| `displayName` | Optional in a partial update; when present, a valid non-empty display name of at most 100 characters |
-| `avatar`      | Optional approved R2 object reference, or an explicit clear operation                                |
-| `bio`         | Optional string of at most 1,000 characters, or explicit null to clear                               |
-
-The request MUST reject email, MSSV/student ID, roles, permissions, account status, password,
-provider identifiers, arbitrary redirect URLs and unknown fields.
-
-### Public profile read — conceptual `GET /api/users/:userId/profile`
-
-Accepts the target user's stable Identity ID and returns only the public Profile representation.
-It does not accept a request to reveal private account fields.
-
-### Admin profile management — conceptual `GET/PATCH /api/users/:userId/profile`
-
-The same target-profile operation MAY be used by ADMIN. Update input remains limited to the three
-Profile-owned fields; an ADMIN request cannot modify account or authorization data through Profile.
-
-Exact route naming, DTO shape and R2 upload authorization belong in a future implementation plan
-and MUST follow the existing Gateway/API convention.
-
-## Outputs
-
-- Own-profile reads return the Profile-owned fields and the stable local user association required
-  by the approved API contract; they do not return password/hash, refresh session or provider data.
-- Public-profile reads return exactly `displayName`, avatar reference/URL and `bio`.
-- Public avatar values in public-profile responses are short-lived signed URLs for approved R2
-  objects; the response does not expose arbitrary direct storage URLs.
-- The first own-profile read/update may create the missing Profile and returns the initialized
-  result in the same operation.
-- Successful partial updates return the resulting Profile representation without changing omitted
-  fields.
-- Clearing avatar or bio returns a successful profile with the corresponding nullable field empty;
-  it never deletes the User account.
-- Profile changes do not issue, revoke or rotate Authentication tokens and do not update Learning,
-  Submission or Community business state.
-
-## Error Cases
-
-| Case                                                                               | Observable behavior                                                                             |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Missing/invalid access token for private operation                                 | Existing Gateway/authentication convention returns 401                                          |
-| Target user or public profile does not exist                                       | Existing Identity not-found convention returns 404 without exposing unrelated data              |
-| Public profile belongs to a `LOCKED` or `PENDING` account                          | Generic unavailable/not-found result without revealing the account status                       |
-| Invalid field shape, unsupported value, unknown field or invalid R2 reference      | Validation failure (400) and no Profile state change                                            |
-| Attempt to update email, MSSV, role, permission, status, password or provider data | Rejected as forbidden/invalid field (403 or existing validation convention) and no state change |
-| LECTURER attempts to update another user's Profile                                 | 403 and no state change                                                                         |
-| Non-ADMIN attempts to manage another user's Profile                                | 403 and no state change                                                                         |
-| Concurrent first Profile initialization                                            | One Profile remains; retries return the same logical Profile                                    |
-| R2 dependency unavailable during approved avatar operation                         | Existing normalized dependency error; no dangling Profile reference is committed                |
-| Unexpected persistence failure                                                     | Existing normalized error envelope with request/correlation ID                                  |
-
-ID-002 does not introduce a new error envelope. HTTP serialization follows the Identity/Gateway
-convention established by the foundation.
-
-## Edge Cases
-
-- An imported account may have a Profile created lazily more than once concurrently; uniqueness and
-  idempotency must prevent duplicate Profiles.
-- A legacy User without a usable provisioned official name cannot be initialized with a fabricated
-  identity value; the operation reports the existing data error and does not create an empty
-  Profile.
-- An omitted PATCH field is unchanged; an explicit nullable avatar/bio clear is intentional.
-- Replacing an avatar must not expose arbitrary external URLs as trusted R2 content.
-- Public reads never become a way to enumerate email, MSSV, roles, account status or authentication
-  state.
-- A deleted or inaccessible R2 object may result in a broken avatar reference; asynchronous cleanup
-  uses a configured grace period and is independent from account deletion.
-- Locking or changing a User's role does not allow Profile Update to bypass Authentication or RBAC.
-- Profile data remains available independently of Learning progress, Submission history and
-  Community content.
-
-## Security Requirements
-
-- **ID-002-SR-001 — Ownership enforcement:** Private Profile reads/updates MUST verify the caller's
-  authenticated identity, and cross-user updates MUST require the approved ADMIN role.
-- **ID-002-SR-002 — Mass-assignment protection:** Profile input MUST allowlist editable fields and
-  reject unknown or account/authorization fields.
-- **ID-002-SR-003 — Controlled account data:** Profile APIs MUST never change or expose password
-  hashes, refresh tokens, provider credentials, email, MSSV, roles, permissions or account status
-  outside their approved visibility.
-- **ID-002-SR-004 — Public privacy:** Public Profile responses MUST contain only the approved
-  non-sensitive fields and MUST NOT leak private account existence details beyond the requested
-  profile result.
-- **ID-002-SR-005 — Avatar integrity:** Avatar references MUST be restricted to approved R2 objects;
-  arbitrary client URLs or untrusted storage credentials MUST NOT be persisted.
-- **ID-002-SR-006 — Input safety:** Profile values MUST pass the shared validation and output
-  serialization conventions before persistence or response.
-- **ID-002-SR-007 — Safe logging:** Passwords, tokens, authorization headers, R2 credentials and
-  sensitive account fields MUST NOT appear in Profile logs or errors.
-- **ID-002-SR-008 — Service isolation:** Profile MUST not query another service's database or
-  duplicate Learning, Submission, Community or RBAC business entities.
-
-## Acceptance Criteria
-
-- **ID-002-AC-001:** Given an authenticated user, when they request their own Profile, then Identity
-  returns the Profile-owned data without password, token or provider-secret fields.
-- **ID-002-AC-002:** Given an existing User without a Profile and an official provisioned name,
-  when the user first reads or updates their Profile, then one Profile is created with that name as
-  its initial `displayName`.
-- **ID-002-AC-003:** Given an authenticated user, when they update `displayName`, avatar reference
-  or `bio`, then only the supplied editable fields change and the resulting Profile is returned.
-- **ID-002-AC-004:** Given an update that explicitly clears nullable avatar or bio, when validation
-  succeeds, then the field is cleared without deleting the User account.
-- **ID-002-AC-005:** Given malformed values, unsupported fields or an invalid avatar reference,
-  when Profile validation runs, then the request is rejected and Profile state is unchanged.
-- **ID-002-AC-005a:** Given a `displayName` longer than 100 characters, when Profile validation
-  runs, then the request is rejected and Profile state is unchanged.
-- **ID-002-AC-005b:** Given a `bio` longer than 1,000 characters, when Profile validation runs,
-  then the request is rejected and Profile state is unchanged; valid Unicode content is preserved
-  after trimming outer whitespace.
-- **ID-002-AC-006:** Given a request containing email, MSSV, role, permission, account status,
-  password or provider fields, when Profile update is attempted, then the request cannot mutate
-  those fields.
-- **ID-002-AC-007:** Given an unauthenticated caller, when a private own-profile read/update is
-  attempted, then the existing authentication boundary rejects the request.
-- **ID-002-AC-008:** Given an existing user, when a public profile is requested, then the response
-  contains only `displayName`, avatar reference/URL and `bio`.
-- **ID-002-AC-008a:** Given a `LOCKED` or `PENDING` account, when an unauthenticated public
-  profile is requested, then the response is a generic unavailable/not-found result and does not
-  reveal the account status.
-- **ID-002-AC-009:** Given a public profile request, when the response is inspected, then email,
-  MSSV, password/hash, roles, permissions, account status, refresh data and provider identity are
-  absent.
-- **ID-002-AC-010:** Given an ADMIN and another user's Profile, when ADMIN reads or updates it,
-  then only Profile-owned fields can be managed.
-- **ID-002-AC-011:** Given a LECTURER or STUDENT and another user's Profile, when they attempt to
-  update it, then the operation is forbidden and no state changes.
-- **ID-002-AC-012:** Given two concurrent first Profile requests for one User, when both complete,
-  then at most one Profile exists and both successful responses represent the same Profile.
-- **ID-002-AC-013:** Given a valid avatar update, when the stored reference is inspected, then it
-  points to an approved Cloudflare R2 object and not an arbitrary external URL.
-- **ID-002-AC-013a:** Given a public profile with an avatar, when the response is inspected, then
-  the avatar value is a short-lived signed URL for the approved R2 object.
-- **ID-002-AC-013b:** Given an avatar replacement or clear operation, when the Profile update
-  succeeds, then the new/empty Profile reference is committed immediately and old-object cleanup
-  is asynchronous and does not fail the Profile update.
-- **ID-002-AC-014:** Given Profile operations, when Identity persistence is inspected, then no
-  class, course, progress, solved-problem, score, submission-history or Community-post data is
-  created or queried.
-- **ID-002-AC-015:** Given a Profile update or read, when logs and errors are reviewed, then no
-  password, token, R2 credential or sensitive account field is logged or returned.
-
-## Out of Scope
-
-- Authentication, login, logout, refresh tokens and `/auth/me` identity behavior
-- Change Password and Change Email
-- Forgot/Reset Password
-- Role, permission and RBAC management
-- Account lock/unlock, account deletion and lecturer approval
-- Excel parsing, student provisioning and import reporting
-- Class enrollment, faculty/class ownership and Learning progress
-- Submission history, scores, achievements and badges
-- Community posts, comments, reactions, followers, friends, timeline or messaging
-- Avatar storage infrastructure other than the selected Cloudflare R2 boundary
-- Profile verification, analytics, completion/onboarding gate and social reputation
-- Google/Microsoft OAuth changes, MFA, SSO, Keycloak and external identity providers
-
-## Dependencies
+## Phụ thuộc
 
 - [ID-001 Authentication](../authentication/spec.md)
-- [Identity Service architecture](../../../docs/architecture/identity-service.md)
-- [Service boundaries](../../../specs/00-system/service-boundaries.md)
-- [Roles and permissions](../../../specs/00-system/roles-permissions.md)
-- [Dependency rules](../../../docs/architecture/dependency-rules.md)
-- [System architecture](../../../docs/architecture/system-architecture.md)
-- [SDD workflow](../../README.md)
-- The approved administrator provisioning contract supplies the initial `họ tên` value; ID-002
-  does not implement that import workflow.
-- Cloudflare R2 is the selected avatar storage boundary. Credentials, bucket policy, upload limits,
-  object lifecycle and exact client/server flow remain implementation-plan concerns.
+- [Kiến trúc Identity Service](../../../docs/architecture/identity-service.md)
+- [Ranh giới service](../../../specs/00-system/service-boundaries.md)
+- [Vai trò và quyền](../../../specs/00-system/roles-permissions.md)
+- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
+- [Kiến trúc hệ thống](../../../docs/architecture/system-architecture.md)
+- [Quy trình SDD](../../README.md)
+- Contract cấp tài khoản của quản trị viên đã phê duyệt cung cấp giá trị `họ tên` ban đầu; ID-002
+  không hiện thực luồng import đó.
+- Cloudflare R2 là ranh giới lưu trữ avatar đã chọn. Thông tin xác thực, chính sách bucket, giới hạn
+  tải lên, vòng đời đối tượng và luồng client/server chính xác vẫn là các vấn đề của kế hoạch triển
+  khai.
 
-## Open Questions
+## Câu hỏi mở
 
-None. Product decisions recorded in this specification are sufficient for the next SDD phase.
+Không còn. Các quyết định sản phẩm đã ghi trong đặc tả này là đủ cho giai đoạn SDD tiếp theo.
 
-## Revision History
+## Lịch sử sửa đổi
 
-| Date       | Revision | Author/Reviewer  | Summary                                                                                      |
-| ---------- | -------- | ---------------- | -------------------------------------------------------------------------------------------- |
-| 2026-09-01 | 0.1      | Codex / TBD      | Initial Proposed Profile specification                                                       |
-| 2026-09-01 | 0.2      | Product decision | Chốt displayName 100 ký tự, signed URL R2, async avatar cleanup và ẩn profile LOCKED/PENDING |
-| 2026-09-01 | 0.3      | Product owner    | Approved ID-002 Profile specification                                                        |
-| 2026-09-01 | 0.4      | Product owner    | Chốt bio tối đa 1.000 ký tự và quy tắc xử lý Unicode                                         |
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                      |
+| ---------- | --------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| 2026-09-01 | 0.1       | Codex / TBD          | Đặc tả Profile ban đầu ở trạng thái Proposed                                                 |
+| 2026-09-01 | 0.2       | Quyết định sản phẩm  | Chốt displayName 100 ký tự, signed URL R2, async avatar cleanup và ẩn profile LOCKED/PENDING |
+| 2026-09-01 | 0.3       | Chủ sở hữu sản phẩm  | Phê duyệt đặc tả ID-002 Profile                                                              |
+| 2026-09-01 | 0.4       | Chủ sở hữu sản phẩm  | Chốt bio tối đa 1.000 ký tự và quy tắc xử lý Unicode                                         |
 
-> `spec.md` describes WHAT. Detailed folders, classes, DTO implementations, R2 adapters, database
-> mappings and execution order belong in a future `plan.md` after human approval.
+> `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực DTO, adapter R2, ánh xạ cơ sở dữ
+> liệu và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của con người.

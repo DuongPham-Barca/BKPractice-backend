@@ -1,369 +1,386 @@
-# ID-003 Role-Based Access Control (RBAC)
+# ID-003 Kiểm soát truy cập theo vai trò (RBAC)
 
-## Status
+## Trạng thái
 
 Approved
 
-Allowed values: `Proposed` | `Approved` | `Implemented` | `Verified`
+Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
-## Goal
+## Mục tiêu
 
-Define the Identity-owned authorization model that determines whether an authenticated BKPractice
-user may perform an action, while keeping authentication, Profile ownership and feature-specific
-business authorization in their existing bounded contexts.
+Định nghĩa mô hình phân quyền do Identity sở hữu, dùng để xác định một người dùng BKPractice đã xác
+thực có được phép thực hiện một hành động hay không, trong khi vẫn giữ việc xác thực, quyền sở hữu
+Profile và phân quyền nghiệp vụ theo từng tính năng ở đúng các bounded context hiện có của chúng.
 
-## Actors
+## Tác nhân
 
-- **STUDENT:** A platform role for learners. A Student receives only the permissions explicitly
-  assigned to the role and remains subject to resource ownership and feature policy.
-- **LECTURER:** A platform role for teaching staff. A Lecturer receives only explicitly assigned
-  permissions and is not an implicit Administrator.
-- **ADMIN:** A platform role for platform administration. Admin access is still subject to the
-  business rules of the operation's owning service unless an approved policy grants the operation.
-- **Authenticated user:** A user identified by the verified ID-001 Authentication context. A valid
-  access token alone does not imply authorization for every operation.
-- **API Gateway:** Verifies BKPractice access tokens and may forward trusted identity/role metadata;
-  it does not own role assignments or domain authorization state.
-- **Learning, Submission and Community services:** Trusted consuming services that enforce the
-  authorization decision at their own business boundary. They do not own roles or permissions.
-- **Identity Service:** Owns platform roles, permissions, assignments and authorization policy.
-- **Unauthenticated caller:** Has no authorization context and cannot perform protected actions.
+- **STUDENT:** Vai trò nền tảng cho người học. Một Sinh viên chỉ nhận các quyền được gán tường minh
+  cho vai trò và vẫn chịu ràng buộc về quyền sở hữu tài nguyên cùng chính sách của tính năng.
+- **LECTURER:** Vai trò nền tảng cho đội ngũ giảng dạy. Một Giảng viên chỉ nhận các quyền được gán
+  tường minh và không mặc nhiên là Quản trị viên.
+- **ADMIN:** Vai trò nền tảng cho việc quản trị nền tảng. Quyền truy cập của Admin vẫn chịu ràng buộc
+  bởi các quy tắc nghiệp vụ của service sở hữu thao tác, trừ khi một chính sách đã phê duyệt cấp
+  thao tác đó.
+- **Người dùng đã xác thực:** Người dùng được xác định bởi ngữ cảnh ID-001 Authentication đã được
+  kiểm chứng. Chỉ riêng một access token hợp lệ không hàm ý được phép thực hiện mọi thao tác.
+- **API Gateway:** Xác minh access token BKPractice và có thể chuyển tiếp metadata định danh/vai trò
+  tin cậy; nó không sở hữu việc gán vai trò hay state phân quyền nghiệp vụ.
+- **Learning, Submission và Community Service:** Các service tiêu thụ đáng tin cậy, tự thực thi quyết
+  định phân quyền tại ranh giới nghiệp vụ của mình. Chúng không sở hữu vai trò hay quyền.
+- **Identity Service:** Sở hữu các vai trò nền tảng, quyền, các phép gán và chính sách phân quyền.
+- **Người gọi chưa xác thực:** Không có ngữ cảnh phân quyền và không thể thực hiện các hành động được
+  bảo vệ.
 
-## Context
+## Bối cảnh
 
-Authentication answers **“Who are you?”** and is defined by [ID-001 Authentication](../authentication/spec.md).
-Profile answers **“What personal profile information does this user present?”** and is defined by
-[ID-002 Profile](../profile/spec.md). RBAC answers **“What is this authenticated user allowed to
-do?”**.
+Xác thực trả lời câu hỏi **“Bạn là ai?”** và được định nghĩa bởi
+[ID-001 Authentication](../authentication/spec.md). Profile trả lời câu hỏi **“Người dùng này trình
+bày thông tin hồ sơ cá nhân nào?”** và được định nghĩa bởi [ID-002 Profile](../profile/spec.md).
+RBAC trả lời câu hỏi **“Người dùng đã xác thực này được phép làm gì?”**.
 
-The authoritative system documents define `STUDENT`, `LECTURER` and `ADMIN` as Identity-owned RBAC
-roles, not services. The current Identity foundation contains a role enum with these three values,
-a unique permission-code model, a User-to-Role many-to-many relation and a Role-to-Permission
-many-to-many relation. ID-003 defines the behavior and boundaries of that model without prescribing
-tables or a new authorization technology.
+Các tài liệu hệ thống có thẩm quyền định nghĩa `STUDENT`, `LECTURER` và `ADMIN` là các vai trò RBAC
+do Identity sở hữu, không phải service. Nền tảng Identity hiện tại có một enum vai trò với ba giá trị
+này, một model quyền với mã duy nhất, một quan hệ nhiều-nhiều giữa User và Role, và một quan hệ
+nhiều-nhiều giữa Role và Permission. ID-003 định nghĩa hành vi và ranh giới của model đó mà không quy
+định bảng hay một công nghệ phân quyền mới.
 
-ID-001 supplies the authenticated subject, account status and time-bounded role snapshot. ID-002
-explicitly forbids Profile operations from changing roles, permissions or account status. Feature
-specifications for Learning, Submission and Community will define the detailed action/resource
-policies that consume this common RBAC foundation.
+ID-001 cung cấp chủ thể đã xác thực, trạng thái tài khoản và ảnh chụp vai trò có giới hạn thời gian.
+ID-002 cấm tường minh việc các thao tác Profile thay đổi vai trò, quyền hay trạng thái tài khoản. Các
+đặc tả tính năng của Learning, Submission và Community sẽ định nghĩa các chính sách hành động/tài
+nguyên chi tiết, tiêu thụ nền tảng RBAC dùng chung này.
 
-## Functional Requirements
+## Yêu cầu chức năng
 
-- **ID-003-FR-001 — Identity ownership:** Identity MUST own the platform role catalog, permission
-  definitions and User-role/role-permission assignments. Other services MUST NOT create duplicate
-  role tables or assign platform roles in their own databases.
-- **ID-003-FR-002 — Approved role vocabulary:** The ID-003 v1 role vocabulary MUST contain only
-  `STUDENT`, `LECTURER` and `ADMIN`. A caller MUST NOT create or self-introduce another platform
-  role through an authorization request.
-- **ID-003-FR-003 — Multiple roles:** A User MAY hold more than one approved role. Having multiple
-  roles combines the permissions explicitly granted by those roles; it does not grant permissions
-  outside the role-permission assignments.
-- **ID-003-FR-004 — Role-permission authorization:** An authorization decision MUST evaluate the
-  authenticated User's currently recognized roles and the permissions assigned to those roles,
-  together with the action/resource policy supplied by the owning feature service.
-- **ID-003-FR-005 — Authentication boundary:** A valid ID-001 access-token identity MUST be
-  distinguished from authorization. An authenticated user without the required role/permission
-  MUST be denied the protected action.
-- **ID-003-FR-006 — Server-side enforcement:** Protected business actions MUST enforce authorization
-  at a trusted backend boundary. Client-side role checks, hidden UI controls and browser-supplied
-  role/permission fields MUST NOT be security decisions.
-- **ID-003-FR-007 — Default deny:** When no applicable role/permission policy explicitly allows an
-  action, the authorization decision MUST deny it.
-- **ID-003-FR-008 — Least privilege:** A role or permission MUST grant only the capabilities
-  explicitly associated with it. `LECTURER` MUST NOT be treated as `ADMIN`, and `ADMIN` MUST NOT
-  bypass unrelated resource ownership or validation rules by default.
-- **ID-003-FR-009 — Protected role changes:** Role assignments MUST change only through an
-  authorized Identity-owned role-management workflow. Only an `ADMIN` MAY grant or revoke
-  predefined roles, and a User MUST NOT grant, revoke or elevate their own roles or permissions
-  through Profile, Authentication or arbitrary request data. An `ADMIN` self-revocation is allowed
-  only through that workflow when another `ADMIN` remains. Role-permission mappings remain static
-  seeded definitions in ID-003 v1.
-- **ID-003-FR-010 — Cross-user role protection:** An `ADMIN` MAY assign or revoke only the
-  predefined `STUDENT` and `LECTURER` roles for another User. No actor, including an `ADMIN`, MAY
-  grant the `ADMIN` role to another User through the ID-003 role-management workflow.
-- **ID-003-FR-010a — Protected administrator continuity:** The role-management workflow MUST NOT
-  remove the `ADMIN` role from the last remaining administrator. An administrator MAY relinquish
-  their own `ADMIN` role only when at least one other administrator remains.
-- **ID-003-FR-011 — Trusted authorization context:** Services consuming RBAC MUST receive identity
-  and role context only from the approved authentication/Gateway boundary or a trusted service
-  contract. Caller-supplied role headers, body fields or query parameters MUST NOT override it.
-- **ID-003-FR-012 — Feature ownership:** Learning, Submission, Community and Profile specifications
-  remain responsible for their own action-level rules, resource ownership and scope checks. ID-003
-  supplies the common role/permission policy but MUST NOT hard-code every future feature action.
-- **ID-003-FR-013 — Account-status interaction:** RBAC MUST NOT override ID-001 account-status
-  enforcement. `LOCKED` and `PENDING` accounts cannot obtain new tokens; existing token behavior
-  follows ID-001's expiration policy, and RBAC does not reactivate an account.
-- **ID-003-FR-014 — Role-change token semantics:** Role changes MUST follow ID-001's approved token
-  policy: they affect newly issued identity claims, while already issued access tokens are not
-  mutated and expire according to their configured lifetime.
-- **ID-003-FR-015 — Profile boundary:** Profile operations MUST NOT mutate role, permission or
-  account-status state. A role displayed by a future profile/community representation is read-only.
-- **ID-003-FR-016 — No role-service split:** RBAC MUST remain inside Identity. `STUDENT`,
-  `LECTURER` and `ADMIN` MUST NOT become separate applications, microservices or databases.
+- **ID-003-FR-001 — Quyền sở hữu của Identity:** Identity MUST sở hữu danh mục vai trò nền tảng, các
+  định nghĩa quyền và các phép gán User-vai trò/vai trò-quyền. Các service khác MUST NOT tạo bảng vai
+  trò trùng lặp hay gán vai trò nền tảng trong cơ sở dữ liệu của chính chúng.
+- **ID-003-FR-002 — Từ vựng vai trò đã phê duyệt:** Từ vựng vai trò của ID-003 v1 MUST chỉ chứa
+  `STUDENT`, `LECTURER` và `ADMIN`. Một người gọi MUST NOT tạo hay tự đưa vào một vai trò nền tảng
+  khác thông qua một request phân quyền.
+- **ID-003-FR-003 — Nhiều vai trò:** Một User MAY giữ nhiều hơn một vai trò đã phê duyệt. Việc có
+  nhiều vai trò sẽ hợp nhất các quyền được các vai trò đó cấp tường minh; nó không cấp các quyền nằm
+  ngoài các phép gán vai trò-quyền.
+- **ID-003-FR-004 — Phân quyền theo vai trò-quyền:** Một quyết định phân quyền MUST đánh giá các vai
+  trò hiện được công nhận của User đã xác thực và các quyền được gán cho những vai trò đó, cùng với
+  chính sách hành động/tài nguyên do service tính năng sở hữu cung cấp.
+- **ID-003-FR-005 — Ranh giới xác thực:** Một định danh từ access token ID-001 hợp lệ MUST được phân
+  biệt với việc phân quyền. Một người dùng đã xác thực nhưng thiếu vai trò/quyền cần thiết MUST bị từ
+  chối hành động được bảo vệ.
+- **ID-003-FR-006 — Thực thi phía server:** Các hành động nghiệp vụ được bảo vệ MUST được thực thi
+  phân quyền tại một ranh giới backend tin cậy. Các kiểm tra vai trò phía client, việc ẩn nút trên
+  giao diện, và các trường vai trò/quyền do trình duyệt gửi lên MUST NOT là quyết định bảo mật.
+- **ID-003-FR-007 — Mặc định từ chối:** Khi không có chính sách vai trò/quyền nào cho phép tường minh
+  một hành động, quyết định phân quyền MUST từ chối nó.
+- **ID-003-FR-008 — Đặc quyền tối thiểu:** Một vai trò hay quyền MUST chỉ cấp những khả năng được gắn
+  với nó một cách tường minh. `LECTURER` MUST NOT bị coi là `ADMIN`, và `ADMIN` MUST NOT mặc định đi
+  vòng qua các quy tắc về quyền sở hữu tài nguyên hay kiểm tra dữ liệu không liên quan.
+- **ID-003-FR-009 — Thay đổi vai trò được bảo vệ:** Các phép gán vai trò MUST chỉ thay đổi thông qua
+  một luồng quản lý vai trò có thẩm quyền do Identity sở hữu. Chỉ một `ADMIN` MAY cấp hay thu hồi các
+  vai trò định sẵn, và một User MUST NOT tự cấp, tự thu hồi hay tự nâng vai trò/quyền của mình thông
+  qua Profile, Authentication hay dữ liệu request tuỳ ý. Một `ADMIN` chỉ được tự thu hồi vai trò qua
+  luồng đó khi vẫn còn một `ADMIN` khác. Các ánh xạ vai trò-quyền vẫn là các định nghĩa tĩnh được
+  seed sẵn trong ID-003 v1.
+- **ID-003-FR-010 — Bảo vệ vai trò xuyên người dùng:** Một `ADMIN` MAY gán hoặc thu hồi chỉ các vai
+  trò định sẵn `STUDENT` và `LECTURER` cho một User khác. Không tác nhân nào, kể cả một `ADMIN`, MAY
+  cấp vai trò `ADMIN` cho một User khác thông qua luồng quản lý vai trò của ID-003.
+- **ID-003-FR-010a — Duy trì liên tục quản trị viên:** Luồng quản lý vai trò MUST NOT gỡ vai trò
+  `ADMIN` khỏi quản trị viên cuối cùng còn lại. Một quản trị viên MAY từ bỏ vai trò `ADMIN` của chính
+  mình chỉ khi vẫn còn ít nhất một quản trị viên khác.
+- **ID-003-FR-011 — Ngữ cảnh phân quyền tin cậy:** Các service tiêu thụ RBAC MUST chỉ nhận ngữ cảnh
+  định danh và vai trò từ ranh giới xác thực/Gateway đã phê duyệt hoặc từ một contract service tin
+  cậy. Các header vai trò, trường body hay tham số query do người gọi cung cấp MUST NOT ghi đè lên nó.
+- **ID-003-FR-012 — Quyền sở hữu của tính năng:** Các đặc tả Learning, Submission, Community và
+  Profile vẫn chịu trách nhiệm cho các quy tắc ở mức hành động, quyền sở hữu tài nguyên và kiểm tra
+  phạm vi của riêng chúng. ID-003 cung cấp chính sách vai trò/quyền dùng chung nhưng MUST NOT mã hoá
+  cứng mọi hành động của mọi tính năng trong tương lai.
+- **ID-003-FR-013 — Tương tác với trạng thái tài khoản:** RBAC MUST NOT ghi đè việc thực thi trạng
+  thái tài khoản của ID-001. Tài khoản `LOCKED` và `PENDING` không thể lấy token mới; hành vi của
+  token hiện có tuân theo chính sách hết hạn của ID-001, và RBAC không kích hoạt lại một tài khoản.
+- **ID-003-FR-014 — Ngữ nghĩa token khi đổi vai trò:** Các thay đổi vai trò MUST tuân theo chính sách
+  token đã phê duyệt của ID-001: chúng ảnh hưởng tới các claim định danh mới được phát hành, còn các
+  access token đã phát hành thì không bị thay đổi và hết hạn theo vòng đời đã cấu hình của chúng.
+- **ID-003-FR-015 — Ranh giới của Profile:** Các thao tác Profile MUST NOT thay đổi state của vai
+  trò, quyền hay trạng thái tài khoản. Một vai trò được hiển thị bởi một biểu diễn profile/community
+  trong tương lai là chỉ đọc.
+- **ID-003-FR-016 — Không tách service vai trò:** RBAC MUST vẫn nằm trong Identity. `STUDENT`,
+  `LECTURER` và `ADMIN` MUST NOT trở thành các ứng dụng, microservice hay cơ sở dữ liệu riêng.
 
-## Business Rules
+## Quy tắc nghiệp vụ
 
-- The platform role set is the existing `STUDENT`, `LECTURER`, `ADMIN` vocabulary. ID-003 does not
-  introduce `SUPER_ADMIN`, `MODERATOR`, `TEACHER`, `INSTRUCTOR` or custom user-created roles.
-- A User can have multiple approved roles, as established by the existing Identity role relation.
-  A role is not inferred from email, Profile data, class membership or client input.
-- Permissions are Identity-owned capabilities associated with roles. Feature specs define which
-  capability an action requires; ID-003 does not invent a complete Learning/Submission/Community
-  permission catalog.
-- Authorization is the intersection of authenticated identity, current account-status policy,
-  assigned roles/permissions and the owning service's action/resource/ownership rules.
-- A valid token proves identity, not permission. Missing or ambiguous policy is denied.
-- Resource ownership is not replaced by a broad role. For example, a feature may require the owner
-  relation in addition to a role/permission; that feature owns the detailed check.
-- Role assignment and role revocation are Identity operations. ID-003 v1 supports inspecting a
-  User's roles, assigning `STUDENT` or `LECTURER`, and revoking `STUDENT` or `LECTURER`. Only an
-  `ADMIN` may invoke these operations; role definitions and permission definitions are static
-  seeded data and are not runtime CRUD in this feature.
-- Assignment of `ADMIN` to another User is prohibited. The system MUST preserve at least one
-  administrator by rejecting an operation that would remove the final `ADMIN` role.
-- Repeating an assignment that already exists and revoking a role that is absent are idempotent
-  successful operations; they MUST NOT create duplicate assignments or broaden access.
-- Permission identifiers use a stable `resource:action` naming convention. Feature specifications
-  define the concrete permission catalog for their own actions.
-- A trusted imported student account receives the `STUDENT` role during provisioning. ID-003 does
-  not create users or implement the import workflow.
-- ID-001's imported-student provisioning and default-password workflow remains the source of
-  account creation. ID-003 does not create users, parse Excel files or change credentials.
-- ID-002's Profile update cannot be used to change roles, permissions or account status.
-- Role changes do not rewrite existing access tokens. New authentication/refresh issuance uses the
-  current role state according to ID-001.
-- An Admin is not automatically exempt from a target service's validation, ownership or moderation
-  rules unless that feature specification explicitly grants the capability.
+- Tập vai trò nền tảng là từ vựng `STUDENT`, `LECTURER`, `ADMIN` hiện có. ID-003 không đưa vào
+  `SUPER_ADMIN`, `MODERATOR`, `TEACHER`, `INSTRUCTOR` hay các vai trò tuỳ biến do người dùng tạo.
+- Một User có thể có nhiều vai trò đã phê duyệt, theo quan hệ vai trò hiện có của Identity. Một vai
+  trò không được suy ra từ email, dữ liệu Profile, việc thuộc lớp hay dữ liệu từ client.
+- Quyền là các khả năng do Identity sở hữu, gắn với các vai trò. Đặc tả tính năng định nghĩa khả năng
+  nào mà một hành động đòi hỏi; ID-003 không bịa ra một danh mục quyền đầy đủ cho
+  Learning/Submission/Community.
+- Phân quyền là giao của: định danh đã xác thực, chính sách trạng thái tài khoản hiện tại, các vai
+  trò/quyền đã gán, và các quy tắc hành động/tài nguyên/sở hữu của service sở hữu.
+- Một token hợp lệ chứng minh định danh, không chứng minh quyền. Chính sách bị thiếu hoặc mơ hồ thì
+  bị từ chối.
+- Quyền sở hữu tài nguyên không bị thay thế bởi một vai trò rộng. Ví dụ, một tính năng có thể đòi hỏi
+  quan hệ sở hữu bên cạnh một vai trò/quyền; tính năng đó sở hữu phần kiểm tra chi tiết.
+- Việc gán và thu hồi vai trò là các thao tác của Identity. ID-003 v1 hỗ trợ xem các vai trò của một
+  User, gán `STUDENT` hoặc `LECTURER`, và thu hồi `STUDENT` hoặc `LECTURER`. Chỉ một `ADMIN` mới được
+  gọi các thao tác này; các định nghĩa vai trò và định nghĩa quyền là dữ liệu tĩnh được seed sẵn và
+  không phải CRUD lúc chạy trong tính năng này.
+- Việc gán `ADMIN` cho một User khác là bị cấm. Hệ thống MUST bảo toàn ít nhất một quản trị viên bằng
+  cách từ chối thao tác nào sẽ gỡ vai trò `ADMIN` cuối cùng.
+- Việc lặp lại một phép gán đã tồn tại và việc thu hồi một vai trò vốn không có đều là các thao tác
+  thành công idempotent; chúng MUST NOT tạo các phép gán trùng lặp hay mở rộng quyền truy cập.
+- Định danh quyền dùng quy ước đặt tên ổn định `resource:action`. Đặc tả tính năng định nghĩa danh
+  mục quyền cụ thể cho các hành động của riêng chúng.
+- Một tài khoản sinh viên đã import đáng tin cậy nhận vai trò `STUDENT` trong quá trình cấp tài
+  khoản. ID-003 không tạo người dùng và không hiện thực luồng import.
+- Luồng cấp tài khoản sinh viên đã import và mật khẩu mặc định của ID-001 vẫn là nguồn tạo tài khoản.
+  ID-003 không tạo người dùng, không phân tích file Excel và không thay đổi thông tin đăng nhập.
+- Thao tác cập nhật Profile của ID-002 không thể dùng để thay đổi vai trò, quyền hay trạng thái tài
+  khoản.
+- Các thay đổi vai trò không viết lại các access token đang tồn tại. Việc phát hành
+  authentication/refresh mới dùng state vai trò hiện tại theo ID-001.
+- Một Admin không mặc nhiên được miễn trừ khỏi các quy tắc kiểm tra dữ liệu, quyền sở hữu hay kiểm
+  duyệt của service đích, trừ khi đặc tả tính năng đó cấp khả năng này một cách tường minh.
 
-## Authorization Rules
+## Quy tắc phân quyền
 
-- An unauthenticated caller is never authorized for a protected business action.
-- An authenticated caller with no matching role/permission is denied by default.
-- `STUDENT` has no role-management capability by default.
-- `LECTURER` has no system-role-management capability by default and is not promoted implicitly to
-  `ADMIN`.
-- `ADMIN` may inspect User roles and assign or revoke predefined `STUDENT` and `LECTURER` roles.
-  `ADMIN` cannot grant `ADMIN` to another User, and the last remaining `ADMIN` cannot be removed.
-- A role-management actor cannot use a Profile or Authentication payload to grant/revoke roles,
-  permissions or account status.
-- The Gateway may authenticate the request and forward trusted context, but the service owning the
-  action performs the final business authorization check.
-- Learning, Submission and Community consume Identity-owned role/permission context and enforce
-  resource-level rules locally. They do not query the Identity database directly.
-- Cross-service requests use approved service identity/transport contracts; arbitrary client-supplied
-  trusted identity headers are never accepted.
+- Một người gọi chưa xác thực không bao giờ được phép thực hiện một hành động nghiệp vụ được bảo vệ.
+- Một người gọi đã xác thực nhưng không có vai trò/quyền khớp thì bị từ chối theo mặc định.
+- `STUDENT` mặc định không có khả năng quản lý vai trò nào.
+- `LECTURER` mặc định không có khả năng quản lý vai trò hệ thống và không được ngầm nâng lên `ADMIN`.
+- `ADMIN` có thể xem các vai trò của User và gán hoặc thu hồi các vai trò định sẵn `STUDENT` và
+  `LECTURER`. `ADMIN` không thể cấp `ADMIN` cho một User khác, và `ADMIN` cuối cùng còn lại không thể
+  bị gỡ bỏ.
+- Một tác nhân quản lý vai trò không thể dùng payload của Profile hay Authentication để cấp/thu hồi
+  vai trò, quyền hay trạng thái tài khoản.
+- Gateway có thể xác thực request và chuyển tiếp ngữ cảnh tin cậy, nhưng service sở hữu hành động mới
+  thực hiện khâu kiểm tra phân quyền nghiệp vụ cuối cùng.
+- Learning, Submission và Community tiêu thụ ngữ cảnh vai trò/quyền do Identity sở hữu và tự thực thi
+  các quy tắc ở mức tài nguyên. Chúng không truy vấn trực tiếp cơ sở dữ liệu của Identity.
+- Các request xuyên service dùng các contract định danh/truyền tải của service đã phê duyệt; các
+  header định danh tin cậy tuỳ ý do client cung cấp không bao giờ được chấp nhận.
 
-## Inputs
+## Đầu vào
 
-### Authorization decision — conceptual operation
+### Quyết định phân quyền — thao tác ở mức khái niệm
 
-The owning service supplies:
+Service sở hữu cung cấp:
 
-- the verified authenticated User ID and trusted role context from ID-001/Gateway;
-- the action/capability being requested;
-- the target resource and ownership context, when applicable;
-- the current account-status context required by the approved authentication boundary.
+- User ID đã xác thực và ngữ cảnh vai trò tin cậy từ ID-001/Gateway;
+- hành động/khả năng đang được yêu cầu;
+- tài nguyên đích và ngữ cảnh sở hữu, khi có liên quan;
+- ngữ cảnh trạng thái tài khoản hiện tại mà ranh giới xác thực đã phê duyệt đòi hỏi.
 
-The caller MUST NOT supply authoritative roles, permissions, account status, policy decisions or
-another User's identity in request data.
+Người gọi MUST NOT cung cấp vai trò, quyền, trạng thái tài khoản, quyết định chính sách hay định danh
+của một User khác mang tính thẩm quyền trong dữ liệu request.
 
-### Role-management input
+### Đầu vào của việc quản lý vai trò
 
-An Identity-owned role-management operation may accept a target User ID, one of the predefined
-`STUDENT` or `LECTURER` role values and the requested inspect/assign/revoke action. The actor MUST
-be an `ADMIN`; `ADMIN` is not an assignable target role. Assigning an existing role or revoking an
-absent role is idempotent success. The operation returns only the resulting safe assignment state.
+Một thao tác quản lý vai trò do Identity sở hữu có thể nhận một User ID đích, một trong các giá trị
+vai trò định sẵn `STUDENT` hoặc `LECTURER`, và hành động xem/gán/thu hồi được yêu cầu. Tác nhân MUST
+là một `ADMIN`; `ADMIN` không phải là vai trò đích gán được. Việc gán một vai trò đã có hoặc thu hồi
+một vai trò vốn không có là thành công idempotent. Thao tác chỉ trả về state gán kết quả ở dạng an
+toàn.
 
-## Outputs
+## Đầu ra
 
-- An authorization decision is either **allow** or **deny** with a reason category safe for the
-  owning service's error convention. It does not expose password, refresh token, provider secret or
-  internal policy data.
-- An unauthenticated request follows the existing authentication convention (`401`).
-- An authenticated request lacking the required role/permission or ownership receives the existing
-  forbidden convention (`403`).
-- Trusted downstream context contains only the identity/role information required by the approved
-  contract; clients cannot replace it.
-- A role-management operation returns only the resulting safe assignment state and never credentials
-  or internal secrets.
-- A role change does not retroactively mutate already issued ID-001 access tokens.
+- Một quyết định phân quyền là **cho phép** hoặc **từ chối**, kèm một phân loại lý do an toàn cho quy
+  ước lỗi của service sở hữu. Nó không phơi bày mật khẩu, refresh token, bí mật của nhà cung cấp hay
+  dữ liệu chính sách nội bộ.
+- Một request chưa xác thực tuân theo quy ước xác thực hiện có (`401`).
+- Một request đã xác thực nhưng thiếu vai trò/quyền hoặc quyền sở hữu cần thiết nhận quy ước từ chối
+  hiện có (`403`).
+- Ngữ cảnh tin cậy gửi xuống phía sau chỉ chứa thông tin định danh/vai trò mà contract đã phê duyệt
+  yêu cầu; client không thể thay thế nó.
+- Một thao tác quản lý vai trò chỉ trả về state gán kết quả ở dạng an toàn và không bao giờ trả về
+  thông tin đăng nhập hay bí mật nội bộ.
+- Một thay đổi vai trò không hồi tố làm thay đổi các access token ID-001 đã phát hành.
 
-## Error Cases
+## Tình huống lỗi
 
-| Case                                                          | Observable behavior                                                                                    |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Missing, malformed or expired access token                    | Existing authentication boundary returns `401`; no authorization decision is trusted                   |
-| Authenticated user lacks required role/permission             | Existing forbidden convention returns `403`                                                            |
-| No policy explicitly allows the action                        | Default-deny `403`                                                                                     |
-| Client supplies role/permission/trusted identity fields       | Fields are ignored or rejected by the existing validation convention; they cannot affect authorization |
-| Student or Lecturer attempts self-escalation                  | `403` and no assignment state changes                                                                  |
-| Unauthorized actor attempts cross-user role change            | `403` and no assignment state changes                                                                  |
-| Unknown role value is supplied to a role-management operation | Validation/business error and no state changes                                                         |
-| Target User does not exist in a role-management operation     | Existing Identity `404` convention and no assignment state changes                                     |
-| Role already assigned or role absent during revoke            | Operation succeeds idempotently; no duplicate assignment is created and no unrelated state changes     |
-| Non-`ADMIN` actor attempts role management                    | `403` and no assignment state changes                                                                  |
-| Any actor attempts to grant `ADMIN` to another User           | `403` or the existing validation/business error convention; no assignment state changes                |
-| Operation would remove the last remaining `ADMIN`             | Existing conflict/business-rule error convention; assignment state remains unchanged                   |
-| `LOCKED` or `PENDING` account presents a role                 | ID-001 status enforcement remains authoritative; RBAC does not issue or restore tokens                 |
-| Gateway metadata is missing or spoofed                        | Trusted service boundary rejects the request; caller metadata is never treated as authoritative        |
+| Trường hợp                                                    | Hành vi quan sát được                                                                                       |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Access token bị thiếu, sai định dạng hoặc hết hạn             | Ranh giới xác thực hiện có trả về `401`; không quyết định phân quyền nào được tin cậy                       |
+| Người dùng đã xác thực thiếu vai trò/quyền cần thiết          | Quy ước từ chối hiện có trả về `403`                                                                        |
+| Không chính sách nào cho phép tường minh hành động            | Mặc định từ chối `403`                                                                                      |
+| Client cung cấp các trường vai trò/quyền/định danh tin cậy    | Các trường bị bỏ qua hoặc bị quy ước kiểm tra dữ liệu hiện có từ chối; chúng không thể ảnh hưởng phân quyền |
+| Sinh viên hoặc Giảng viên thử tự nâng quyền                   | `403` và không state gán nào thay đổi                                                                       |
+| Tác nhân không có thẩm quyền thử đổi vai trò xuyên người dùng | `403` và không state gán nào thay đổi                                                                       |
+| Giá trị vai trò không xác định được đưa vào thao tác quản lý  | Lỗi kiểm tra dữ liệu/nghiệp vụ và không thay đổi state                                                      |
+| User đích không tồn tại trong một thao tác quản lý vai trò    | Quy ước `404` hiện có của Identity và không state gán nào thay đổi                                          |
+| Vai trò đã được gán hoặc vai trò vắng mặt khi thu hồi         | Thao tác thành công idempotent; không tạo phép gán trùng lặp và không state không liên quan nào thay đổi    |
+| Tác nhân không phải `ADMIN` thử quản lý vai trò               | `403` và không state gán nào thay đổi                                                                       |
+| Bất kỳ tác nhân nào thử cấp `ADMIN` cho một User khác         | `403` hoặc quy ước lỗi kiểm tra dữ liệu/nghiệp vụ hiện có; không state gán nào thay đổi                     |
+| Thao tác sẽ gỡ bỏ `ADMIN` cuối cùng còn lại                   | Quy ước lỗi xung đột/quy tắc nghiệp vụ hiện có; state gán giữ nguyên                                        |
+| Tài khoản `LOCKED` hoặc `PENDING` xuất trình một vai trò      | Việc thực thi trạng thái của ID-001 vẫn là quyết định; RBAC không phát hành hay khôi phục token             |
+| Metadata của Gateway bị thiếu hoặc bị giả mạo                 | Ranh giới service tin cậy từ chối request; metadata của người gọi không bao giờ được coi là có thẩm quyền   |
 
-ID-003 does not introduce a new error envelope. HTTP serialization follows the Identity/Gateway
-convention and the owning service's existing authorization error mapping.
+ID-003 không đưa ra cấu trúc lỗi mới. Việc tuần tự hoá HTTP tuân theo quy ước Identity/Gateway và
+việc ánh xạ lỗi phân quyền hiện có của service sở hữu.
 
-## Edge Cases
+## Tình huống biên
 
-- A User with both `STUDENT` and `LECTURER` receives the union of explicitly assigned permissions;
-  no role has implicit precedence over another.
-- A User with `ADMIN` and another role still remains subject to account status and target-service
-  policy.
-- Removing one role must not remove permissions supplied by another remaining role.
-- A role change while an access token is active does not mutate that token; ID-001 controls its
-  natural expiration and future token issuance.
-- A permission assigned to no role cannot authorize a User by itself.
-- A role with no permission grants no protected action unless a feature explicitly defines a safe
-  role-only check.
-- A resource owner without the required feature permission remains denied; ownership alone is not
-  an implicit system-wide grant.
-- A permission-bearing role does not permit access to another service's database or repositories.
-- Repeating an assignment that already exists or revoking an absent role is idempotent success; no
-  duplicate rows or unrelated state changes are created.
-- The last remaining `ADMIN` is protected. An Admin may self-revoke only if another Admin remains.
-- Public Profile and Authentication responses never become a channel for changing or exposing the
-  complete RBAC model.
+- Một User có cả `STUDENT` và `LECTURER` nhận hợp của các quyền được gán tường minh; không vai trò
+  nào có độ ưu tiên ngầm so với vai trò khác.
+- Một User có `ADMIN` và một vai trò khác vẫn chịu ràng buộc bởi trạng thái tài khoản và chính sách
+  của service đích.
+- Việc gỡ một vai trò không được gỡ các quyền do một vai trò còn lại khác cung cấp.
+- Một thay đổi vai trò trong lúc một access token đang hoạt động thì không làm thay đổi token đó;
+  ID-001 kiểm soát việc nó hết hạn tự nhiên và việc phát hành token trong tương lai.
+- Một quyền không được gán cho vai trò nào thì tự nó không thể phân quyền cho một User.
+- Một vai trò không có quyền nào thì không cấp hành động được bảo vệ nào, trừ khi một tính năng định
+  nghĩa tường minh một phép kiểm tra chỉ theo vai trò và an toàn.
+- Một chủ sở hữu tài nguyên nhưng thiếu quyền tính năng cần thiết thì vẫn bị từ chối; chỉ riêng quyền
+  sở hữu không phải là một sự cấp quyền ngầm trên toàn hệ thống.
+- Một vai trò có quyền không cho phép truy cập cơ sở dữ liệu hay repository của service khác.
+- Việc lặp lại một phép gán đã tồn tại hoặc thu hồi một vai trò vắng mặt là thành công idempotent;
+  không tạo ra dòng trùng lặp hay thay đổi state không liên quan nào.
+- `ADMIN` cuối cùng còn lại được bảo vệ. Một Admin chỉ được tự thu hồi nếu vẫn còn một Admin khác.
+- Các phản hồi của Profile công khai và Authentication không bao giờ trở thành một kênh để thay đổi
+  hay phơi bày toàn bộ mô hình RBAC.
 
-## Security Requirements
+## Yêu cầu bảo mật
 
-- **ID-003-SR-001 — No privilege escalation:** A caller MUST NOT self-assign or self-grant
-  privileged roles/permissions, or self-revoke them outside the authorized Admin role-management
-  workflow, through any public request, Profile operation or Authentication input. An Admin
-  self-revocation is permitted only when another Admin remains.
-- **ID-003-SR-002 — Client input is untrusted:** Client-supplied role, permission, account-status
-  and trusted-identity fields MUST NOT influence an authorization decision.
-- **ID-003-SR-003 — Server-side enforcement:** Each protected business action MUST be checked at a
-  trusted backend boundary; frontend visibility is never a security control.
-- **ID-003-SR-004 — Least privilege/default deny:** Missing, unknown or ambiguous authorization
-  policy MUST deny access, and roles MUST grant only explicitly assigned capabilities.
-- **ID-003-SR-005 — Protected assignment boundary:** Only the Identity-owned role-management
-  workflow may change role assignments, and only an `ADMIN` may invoke it. Other services and
-  Profile APIs MUST NOT write roles/permissions; role-permission mappings remain static seeded data
-  in ID-003 v1.
-- **ID-003-SR-005a — Administrator protection:** The workflow MUST reject granting `ADMIN` to
-  another User and MUST reject removing the last remaining `ADMIN` role.
-- **ID-003-SR-006 — Role separation:** `LECTURER` MUST NOT be treated as `ADMIN`, and no role may
-  bypass account status, resource ownership or feature validation by implication.
-- **ID-003-SR-007 — Token consistency:** Authorization MUST respect ID-001 token-purpose, account
-  status and role-snapshot rules. A Microsoft provider token or refresh token is never an RBAC
-  credential.
-- **ID-003-SR-008 — Service isolation:** Role/permission ownership remains in Identity; consumers
-  MUST NOT query `bkpractice_identity` directly or create cross-service role foreign keys.
-- **ID-003-SR-009 — Sensitive-data minimization:** Authorization responses, logs and errors MUST
-  not expose passwords, token material, provider credentials or unnecessary internal policy data.
-- **ID-003-SR-010 — Safe failure:** Invalid or unavailable authorization context MUST fail closed and
-  must not fall back to client-supplied roles or an implicit Admin decision.
+- **ID-003-SR-001 — Không leo thang đặc quyền:** Một người gọi MUST NOT tự gán hay tự cấp các vai
+  trò/quyền có đặc quyền, hoặc tự thu hồi chúng ngoài luồng quản lý vai trò có thẩm quyền của Admin,
+  thông qua bất kỳ request công khai, thao tác Profile hay đầu vào của Authentication nào. Một Admin
+  chỉ được tự thu hồi khi vẫn còn một Admin khác.
+- **ID-003-SR-002 — Dữ liệu từ client là không tin cậy:** Các trường vai trò, quyền, trạng thái tài
+  khoản và định danh tin cậy do client cung cấp MUST NOT ảnh hưởng tới một quyết định phân quyền.
+- **ID-003-SR-003 — Thực thi phía server:** Mỗi hành động nghiệp vụ được bảo vệ MUST được kiểm tra
+  tại một ranh giới backend tin cậy; khả năng hiển thị ở frontend không bao giờ là biện pháp kiểm
+  soát bảo mật.
+- **ID-003-SR-004 — Đặc quyền tối thiểu/mặc định từ chối:** Chính sách phân quyền bị thiếu, không xác
+  định hay mơ hồ MUST từ chối truy cập, và các vai trò MUST chỉ cấp những khả năng được gán tường
+  minh.
+- **ID-003-SR-005 — Ranh giới gán được bảo vệ:** Chỉ luồng quản lý vai trò do Identity sở hữu mới có
+  thể thay đổi các phép gán vai trò, và chỉ một `ADMIN` mới được gọi nó. Các service khác và các API
+  Profile MUST NOT ghi vai trò/quyền; các ánh xạ vai trò-quyền vẫn là dữ liệu tĩnh được seed sẵn
+  trong ID-003 v1.
+- **ID-003-SR-005a — Bảo vệ quản trị viên:** Luồng này MUST từ chối việc cấp `ADMIN` cho một User
+  khác và MUST từ chối việc gỡ vai trò `ADMIN` cuối cùng còn lại.
+- **ID-003-SR-006 — Tách bạch vai trò:** `LECTURER` MUST NOT bị coi là `ADMIN`, và không vai trò nào
+  được ngầm đi vòng qua trạng thái tài khoản, quyền sở hữu tài nguyên hay việc kiểm tra dữ liệu của
+  tính năng.
+- **ID-003-SR-007 — Nhất quán về token:** Việc phân quyền MUST tôn trọng các quy tắc về mục đích
+  token, trạng thái tài khoản và ảnh chụp vai trò của ID-001. Một token của nhà cung cấp Microsoft
+  hay một refresh token không bao giờ là một thông tin xác thực cho RBAC.
+- **ID-003-SR-008 — Cách ly service:** Quyền sở hữu vai trò/quyền vẫn nằm ở Identity; các bên tiêu
+  thụ MUST NOT truy vấn trực tiếp `bkpractice_identity` hay tạo khoá ngoại vai trò xuyên service.
+- **ID-003-SR-009 — Tối thiểu hoá dữ liệu nhạy cảm:** Các phản hồi, log và lỗi về phân quyền MUST
+  không phơi bày mật khẩu, dữ liệu token, thông tin xác thực của nhà cung cấp hay dữ liệu chính sách
+  nội bộ không cần thiết.
+- **ID-003-SR-010 — Thất bại an toàn:** Ngữ cảnh phân quyền không hợp lệ hoặc không khả dụng MUST
+  thất bại theo hướng đóng và không được rơi về các vai trò do client cung cấp hay một quyết định
+  Admin ngầm.
 
-## Acceptance Criteria
+## Tiêu chí nghiệm thu
 
-- **ID-003-AC-001:** Given a valid ID-001 authenticated context and an action with a matching
-  assigned role/permission, when the owning service evaluates authorization, then the decision is
-  allowed subject to that service's resource/ownership rules.
-- **ID-003-AC-002:** Given an authenticated user without the required role/permission, when a
-  protected action is requested, then the request receives `403` and the action does not execute.
-- **ID-003-AC-003:** Given an unauthenticated or invalid-token caller, when a protected action is
-  requested, then the existing authentication boundary returns `401`.
-- **ID-003-AC-004:** Given an action with no explicit allow policy, when authorization is evaluated,
-  then default deny returns `403`.
-- **ID-003-AC-005:** Given a request containing a caller-supplied role, permission or trusted
-  identity header, when authorization is evaluated, then those values cannot change the decision.
-- **ID-003-AC-006:** Given a User assigned multiple approved roles, when permissions are evaluated,
-  then the resulting capabilities are the union of explicitly assigned role permissions and no
-  unassigned capability is granted.
-- **ID-003-AC-007:** Given a Student, when they attempt to assign themselves `LECTURER` or `ADMIN`,
-  then the operation is denied and no assignment changes.
-- **ID-003-AC-008:** Given a Lecturer, when they attempt to assign themselves `ADMIN`, then the
-  operation is denied and no assignment changes.
-- **ID-003-AC-008a:** Given an `ADMIN`, when they attempt to assign `ADMIN` to another User, then
-  the operation is denied and no assignment changes.
-- **ID-003-AC-008b:** Given the last remaining `ADMIN`, when any operation would remove that final
-  `ADMIN` role, then the operation is denied and administrator continuity is preserved.
-- **ID-003-AC-008c:** Given an `ADMIN`, when they inspect, assign `STUDENT`/`LECTURER`, or revoke
-  `STUDENT`/`LECTURER` for a target User, then the operation succeeds subject to target and policy
-  validation.
-- **ID-003-AC-008d:** Given an assignment that already exists or a role that is absent during
-  revoke, when an authorized `ADMIN` repeats the operation, then it succeeds idempotently without
-  duplicate assignments or unrelated changes.
-- **ID-003-AC-009:** Given a Profile or Authentication request containing role, permission or
-  account-status fields, when it is processed, then those fields cannot mutate RBAC state.
-- **ID-003-AC-010:** Given a role change, when a new ID-001 token is issued, then it reflects the
-  current approved role state; an already issued access token is not mutated.
-- **ID-003-AC-011:** Given a `LOCKED` or `PENDING` account, when authentication/token issuance is
-  attempted, then ID-001 rejects issuance and RBAC does not grant an alternate path.
-- **ID-003-AC-012:** Given a Lecturer request for a system-role-management action, when no approved
-  permission grants it, then the action is denied and the Lecturer is not treated as Admin.
-- **ID-003-AC-013:** Given a downstream Learning, Submission or Community action, when its service
-  evaluates authorization, then it uses trusted Identity context and its own resource/ownership
-  policy rather than querying the Identity database.
-- **ID-003-AC-014:** Given an unknown role value or malformed authorization context, when it reaches
-  a trusted authorization boundary, then it fails closed without changing assignments.
-- **ID-003-AC-015:** Given an RBAC decision or failure, when the response/logs are inspected, then no
-  password, token, provider secret or unnecessary internal policy data is exposed.
-- **ID-003-AC-016:** Given the Identity schema and service boundaries, when role ownership is
-  inspected, then roles/permissions remain in Identity and no role service, duplicate consumer
-  tables or cross-service foreign keys exist.
+- **ID-003-AC-001:** Cho trước một ngữ cảnh đã xác thực ID-001 hợp lệ và một hành động có vai
+  trò/quyền đã gán khớp, khi service sở hữu đánh giá phân quyền, thì quyết định là cho phép, với
+  điều kiện thoả mãn các quy tắc tài nguyên/sở hữu của service đó.
+- **ID-003-AC-002:** Cho trước một người dùng đã xác thực nhưng thiếu vai trò/quyền cần thiết, khi
+  một hành động được bảo vệ được yêu cầu, thì request nhận `403` và hành động không được thực thi.
+- **ID-003-AC-003:** Cho trước một người gọi chưa xác thực hoặc có token không hợp lệ, khi một hành
+  động được bảo vệ được yêu cầu, thì ranh giới xác thực hiện có trả về `401`.
+- **ID-003-AC-004:** Cho trước một hành động không có chính sách cho phép tường minh, khi việc phân
+  quyền được đánh giá, thì mặc định từ chối trả về `403`.
+- **ID-003-AC-005:** Cho trước một request chứa vai trò, quyền hay header định danh tin cậy do người
+  gọi cung cấp, khi việc phân quyền được đánh giá, thì các giá trị đó không thể thay đổi quyết định.
+- **ID-003-AC-006:** Cho trước một User được gán nhiều vai trò đã phê duyệt, khi các quyền được đánh
+  giá, thì khả năng kết quả là hợp của các quyền vai trò được gán tường minh và không khả năng chưa
+  được gán nào được cấp.
+- **ID-003-AC-007:** Cho trước một Sinh viên, khi họ thử tự gán `LECTURER` hoặc `ADMIN`, thì thao tác
+  bị từ chối và không phép gán nào thay đổi.
+- **ID-003-AC-008:** Cho trước một Giảng viên, khi họ thử tự gán `ADMIN`, thì thao tác bị từ chối và
+  không phép gán nào thay đổi.
+- **ID-003-AC-008a:** Cho trước một `ADMIN`, khi họ thử gán `ADMIN` cho một User khác, thì thao tác
+  bị từ chối và không phép gán nào thay đổi.
+- **ID-003-AC-008b:** Cho trước `ADMIN` cuối cùng còn lại, khi bất kỳ thao tác nào sẽ gỡ vai trò
+  `ADMIN` cuối cùng đó, thì thao tác bị từ chối và tính liên tục của quản trị viên được bảo toàn.
+- **ID-003-AC-008c:** Cho trước một `ADMIN`, khi họ xem, gán `STUDENT`/`LECTURER`, hoặc thu hồi
+  `STUDENT`/`LECTURER` cho một User đích, thì thao tác thành công với điều kiện thoả mãn việc kiểm
+  tra đích và chính sách.
+- **ID-003-AC-008d:** Cho trước một phép gán đã tồn tại hoặc một vai trò vắng mặt khi thu hồi, khi
+  một `ADMIN` có thẩm quyền lặp lại thao tác, thì nó thành công idempotent mà không tạo phép gán
+  trùng lặp hay thay đổi không liên quan.
+- **ID-003-AC-009:** Cho trước một request Profile hoặc Authentication chứa các trường vai trò,
+  quyền hay trạng thái tài khoản, khi nó được xử lý, thì các trường đó không thể thay đổi state của
+  RBAC.
+- **ID-003-AC-010:** Cho trước một thay đổi vai trò, khi một token ID-001 mới được phát hành, thì nó
+  phản ánh state vai trò đã phê duyệt hiện tại; một access token đã phát hành thì không bị thay đổi.
+- **ID-003-AC-011:** Cho trước một tài khoản `LOCKED` hoặc `PENDING`, khi việc xác thực/phát hành
+  token được thử, thì ID-001 từ chối phát hành và RBAC không cấp một đường đi thay thế nào.
+- **ID-003-AC-012:** Cho trước một request của Giảng viên cho một hành động quản lý vai trò hệ thống,
+  khi không quyền nào đã phê duyệt cấp nó, thì hành động bị từ chối và Giảng viên không bị coi là
+  Admin.
+- **ID-003-AC-013:** Cho trước một hành động ở phía sau của Learning, Submission hay Community, khi
+  service của nó đánh giá phân quyền, thì nó dùng ngữ cảnh Identity tin cậy và chính sách tài
+  nguyên/sở hữu của riêng mình, thay vì truy vấn cơ sở dữ liệu của Identity.
+- **ID-003-AC-014:** Cho trước một giá trị vai trò không xác định hoặc một ngữ cảnh phân quyền sai
+  định dạng, khi nó tới một ranh giới phân quyền tin cậy, thì nó thất bại theo hướng đóng mà không
+  thay đổi các phép gán.
+- **ID-003-AC-015:** Cho trước một quyết định hoặc một thất bại của RBAC, khi kiểm tra phản hồi/log,
+  thì không mật khẩu, token, bí mật của nhà cung cấp hay dữ liệu chính sách nội bộ không cần thiết
+  nào bị phơi bày.
+- **ID-003-AC-016:** Cho trước schema và các ranh giới service của Identity, khi kiểm tra quyền sở
+  hữu vai trò, thì các vai trò/quyền vẫn nằm trong Identity và không tồn tại service vai trò, bảng
+  trùng lặp ở bên tiêu thụ, hay khoá ngoại xuyên service nào.
 
-## Out of Scope
+## Ngoài phạm vi
 
-- Authentication, login, logout, refresh tokens, Microsoft identity and `/auth/me` behavior
-- Profile reads/updates, avatar storage and profile privacy implementation
-- Learning-specific problem/course/assignment permissions and resource policies
-- Submission execution/submit authorization details
-- Community moderation action catalog
-- OAuth, MFA, SSO, LDAP, Active Directory and external identity providers
-- ABAC, PBAC, ReBAC, OPA, Casbin or a dynamic policy engine
-- User-created/custom roles, tenant-specific roles, temporary roles or delegated administration
-- Runtime role/permission definition CRUD and full role/permission CRUD UI unless separately
-  approved; ID-003 v1 uses static seeded definitions
-- Audit Service, analytics, notifications and role-history reporting unless separately approved
-- Device/session management, token blacklist and token revocation redesign
-- Excel parsing, student import, account creation and default-password provisioning
-- Automatic role inference from email, Profile, faculty, class or Community activity
-- A separate Role Service, Permission Service or Admin Service
+- Xác thực, đăng nhập, đăng xuất, refresh token, định danh Microsoft và hành vi `/auth/me`
+- Việc đọc/cập nhật Profile, lưu trữ avatar và cách hiện thực quyền riêng tư của hồ sơ
+- Các quyền và chính sách tài nguyên riêng của Learning cho problem/khoá học/bài tập
+- Chi tiết phân quyền cho việc thực thi/nộp bài của Submission
+- Danh mục hành động kiểm duyệt của Community
+- OAuth, MFA, SSO, LDAP, Active Directory và các nhà cung cấp định danh bên ngoài
+- ABAC, PBAC, ReBAC, OPA, Casbin hay một policy engine động
+- Các vai trò do người dùng tạo/tuỳ biến, vai trò theo tenant, vai trò tạm thời hay việc uỷ quyền
+  quản trị
+- CRUD định nghĩa vai trò/quyền lúc chạy và giao diện CRUD đầy đủ cho vai trò/quyền, trừ khi được phê
+  duyệt riêng; ID-003 v1 dùng các định nghĩa tĩnh được seed sẵn
+- Audit Service, phân tích số liệu, thông báo và báo cáo lịch sử vai trò, trừ khi được phê duyệt riêng
+- Quản lý thiết bị/phiên, danh sách đen token và việc thiết kế lại cơ chế thu hồi token
+- Phân tích Excel, import sinh viên, tạo tài khoản và cấp mật khẩu mặc định
+- Việc tự động suy ra vai trò từ email, Profile, khoa, lớp hay hoạt động trên Community
+- Một Role Service, Permission Service hay Admin Service riêng
 
-## Dependencies
+## Phụ thuộc
 
-- [ID-001 Authentication](../authentication/spec.md) for verified identity, account status, trusted
-  role snapshots and token semantics.
-- [ID-002 Profile](../profile/spec.md) for the explicit prohibition on role/permission/status
-  mutation through Profile.
-- [Identity Service architecture](../../../docs/architecture/identity-service.md)
-- [Service boundaries](../../../specs/00-system/service-boundaries.md)
-- [Roles and permissions system rules](../../../specs/00-system/roles-permissions.md)
-- [Dependency rules](../../../docs/architecture/dependency-rules.md)
-- [System architecture](../../../docs/architecture/system-architecture.md)
-- [API Gateway architecture](../../../docs/architecture/api-gateway.md)
-- [SDD workflow](../../README.md)
+- [ID-001 Authentication](../authentication/spec.md) cho định danh đã xác minh, trạng thái tài khoản,
+  các ảnh chụp vai trò tin cậy và ngữ nghĩa của token.
+- [ID-002 Profile](../profile/spec.md) cho lệnh cấm tường minh việc thay đổi vai trò/quyền/trạng thái
+  thông qua Profile.
+- [Kiến trúc Identity Service](../../../docs/architecture/identity-service.md)
+- [Ranh giới service](../../../specs/00-system/service-boundaries.md)
+- [Quy tắc hệ thống về vai trò và quyền](../../../specs/00-system/roles-permissions.md)
+- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
+- [Kiến trúc hệ thống](../../../docs/architecture/system-architecture.md)
+- [Kiến trúc API Gateway](../../../docs/architecture/api-gateway.md)
+- [Quy trình SDD](../../README.md)
 
-## Open Questions
+## Câu hỏi mở
 
-None. The v1 role-management policy is approved for specification purposes:
+Không còn. Chính sách quản lý vai trò v1 đã được phê duyệt cho mục đích đặc tả:
 
-- only `ADMIN` may inspect, assign and revoke roles;
-- only predefined `STUDENT` and `LECTURER` roles may be assigned or revoked through that workflow;
-- `ADMIN` cannot be granted to another User;
-- the last remaining `ADMIN` is protected;
-- role and permission definitions are static seeded data;
-- permission identifiers use `resource:action` naming;
-- imported student accounts receive `STUDENT` during trusted provisioning; and
-- repeated assignment/revocation is idempotent.
+- chỉ `ADMIN` được xem, gán và thu hồi vai trò;
+- chỉ các vai trò định sẵn `STUDENT` và `LECTURER` được gán hoặc thu hồi qua luồng đó;
+- `ADMIN` không thể được cấp cho một User khác;
+- `ADMIN` cuối cùng còn lại được bảo vệ;
+- định nghĩa vai trò và quyền là dữ liệu tĩnh được seed sẵn;
+- định danh quyền dùng cách đặt tên `resource:action`;
+- các tài khoản sinh viên đã import nhận `STUDENT` trong quá trình cấp tài khoản tin cậy; và
+- việc gán/thu hồi lặp lại là idempotent.
 
-Audit history remains outside ID-003 v1 and is not required for implementation.
+Lịch sử audit vẫn nằm ngoài ID-003 v1 và không bắt buộc để triển khai.
 
-## Revision History
+## Lịch sử sửa đổi
 
-| Date       | Revision | Author/Reviewer       | Summary                                                            |
-| ---------- | -------- | --------------------- | ------------------------------------------------------------------ |
-| 2026-09-01 | 0.1      | Codex / TBD           | Initial Proposed RBAC specification                                |
-| 2026-09-01 | 0.2      | Product owner / Codex | Approved v1 role-management and administrator-protection decisions |
-| 2026-09-01 | 0.3      | Product owner         | Approved ID-003 RBAC specification                                 |
+| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                                                |
+| ---------- | --------- | --------------------------- | ---------------------------------------------------------------------- |
+| 2026-09-01 | 0.1       | Codex / TBD                 | Đặc tả RBAC ban đầu ở trạng thái Proposed                              |
+| 2026-09-01 | 0.2       | Chủ sở hữu sản phẩm / Codex | Phê duyệt các quyết định v1 về quản lý vai trò và bảo vệ quản trị viên |
+| 2026-09-01 | 0.3       | Chủ sở hữu sản phẩm         | Phê duyệt đặc tả ID-003 RBAC                                           |
 
-> `spec.md` describes WHAT. Detailed guards, decorators, permission resolvers, repositories,
-> controllers, migrations and execution order belong in a future `plan.md` after human approval.
+> `spec.md` mô tả CÁI GÌ. Chi tiết về guard, decorator, permission resolver, repository, controller,
+> migration và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của con người.
