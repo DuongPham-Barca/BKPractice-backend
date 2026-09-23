@@ -122,8 +122,9 @@ vi. Sau đó tạo `tasks.md`; việc triển khai chỉ được bắt đầu k
 
 Quy tắc tương tự áp dụng cho các tiền tố khác:
 
+- `LRN-*`: DDD + Hexagonal Architecture.
 - `SUB-*`: Clean Architecture + Event-Driven Architecture.
-- `JDG-*`: Worker Architecture + Pipeline Architecture + Adapter Pattern.
-- `COM-*`: Clean Architecture + Modular Domain Architecture.
+- `JDG-*`: Hexagonal Architecture (Ports & Adapters) + Pipeline.
+- `COM-*`: Clean Architecture.
 
 Ma trận service đầy đủ nằm trong [`00-system/architecture-reference.md`](./00-system/architecture-reference.md).

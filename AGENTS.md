@@ -56,10 +56,15 @@ After implementation:
 
 ## Architecture boundaries
 
-- Identity, Learning, Submission, and Community follow the Clean Architecture dependency rules in
-  `docs/architecture/dependency-rules.md`.
-- API Gateway follows Gateway Pattern + Layered Architecture and must not own business persistence.
-- Judge follows Worker + Pipeline + Adapter architecture and treats submitted code as untrusted.
+- The authoritative per-service architecture selection is
+  `docs/adr/0002-revised-service-internal-architectures.md`, which supersedes ADR 0001.
+- Identity, Submission, and Community (Clean Architecture) and Learning (DDD + Hexagonal) follow the
+  shared dependency direction in `docs/architecture/dependency-rules.md`.
+- Learning uses tactical DDD only — aggregate, value object, domain service, repository — inside one
+  bounded context. An aggregate requires an invariant; do not create one per table.
+- API Gateway follows Layered Architecture and must not own business persistence or a domain layer.
+- Judge follows Hexagonal Architecture (Ports & Adapters) + Pipeline, stays stateless, and treats
+  submitted code as untrusted. Judge has no aggregate, repository, or business database.
 - A service must not access another service's database, repository, entity, migration, or source
   internals.
 - Keep service-owned business entities and use cases out of generic shared libraries.

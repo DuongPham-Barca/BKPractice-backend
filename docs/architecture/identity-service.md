@@ -2,8 +2,9 @@
 
 ## Selected style
 
-Identity uses **Clean Architecture** with **domain-oriented feature modules**. The chosen growth
-model is feature-first:
+Identity uses **Clean Architecture**, as decided in
+[ADR 0002](../adr/0002-revised-service-internal-architectures.md). The chosen growth model is
+feature-first:
 
 ```text
 modules/auth/
