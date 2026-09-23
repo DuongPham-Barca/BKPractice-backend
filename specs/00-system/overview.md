@@ -1,41 +1,41 @@
-# BKPractice SDD System Overview
+# Tổng quan hệ thống SDD BKPractice
 
-## Purpose
+## Mục đích
 
-This section records system-wide constraints that every BKPractice feature specification, plan and
-task list must follow. It is SDD governance, not a replacement for the authoritative architecture
-under [`docs/architecture`](../../docs/architecture/system-architecture.md).
+Phần này ghi lại các ràng buộc ở cấp hệ thống mà mọi đặc tả tính năng, kế hoạch và danh sách công
+việc của BKPractice đều phải tuân theo. Đây là phần quản trị SDD, không thay thế tài liệu kiến trúc
+có thẩm quyền nằm tại [`docs/architecture`](../../docs/architecture/system-architecture.md).
 
-## Required development flow
+## Quy trình phát triển bắt buộc
 
 ```text
-Requirement -> spec.md -> Review -> Approved -> plan.md -> tasks.md
-            -> Implementation -> Tests -> Spec and architecture verification
+Yêu cầu -> spec.md -> Review -> Approved -> plan.md -> tasks.md
+        -> Triển khai -> Kiểm thử -> Đối chiếu đặc tả và kiến trúc
 ```
 
-The three feature artifacts have distinct responsibilities:
+Ba tài liệu của một tính năng có trách nhiệm tách bạch:
 
-- `spec.md`: WHAT behavior is required and excluded.
-- `plan.md`: HOW the Approved behavior fits the owning service and its architecture.
-- `tasks.md`: the implementation and verification checklist derived from the plan.
+- `spec.md`: hành vi nào được YÊU CẦU và hành vi nào bị loại trừ.
+- `plan.md`: hành vi đã Approved sẽ được lắp vào service sở hữu và kiến trúc của nó NHƯ THẾ NÀO.
+- `tasks.md`: danh sách kiểm tra triển khai và xác minh, dẫn xuất từ kế hoạch.
 
-Implementation is blocked until the spec is Approved and all three artifacts agree. Approved
-requirements are not edited as an implementation convenience.
+Việc triển khai bị chặn cho tới khi đặc tả đạt trạng thái Approved và cả ba tài liệu nhất quán với
+nhau. Không được sửa các yêu cầu đã Approved chỉ vì tiện cho việc triển khai.
 
-## Authority
+## Thẩm quyền
 
-System architecture constraints and an Approved feature spec are binding. A plan cannot broaden a
-spec; tasks cannot broaden a plan; code assumptions cannot override any artifact. When a spec and
-architecture appear incompatible, report the conflict for an explicit decision rather than
-changing a boundary silently.
+Ràng buộc kiến trúc hệ thống và một đặc tả tính năng đã Approved là bắt buộc. Kế hoạch không được
+mở rộng đặc tả; công việc không được mở rộng kế hoạch; giả định khi viết code không được phủ quyết
+bất kỳ tài liệu nào. Khi đặc tả và kiến trúc có vẻ mâu thuẫn, hãy báo cáo xung đột để có quyết định
+tường minh, thay vì âm thầm thay đổi một ranh giới.
 
-## System references
+## Tài liệu tham chiếu hệ thống
 
-- [Architecture reference](./architecture-reference.md)
-- [Service boundaries](./service-boundaries.md)
-- [Roles and permissions](./roles-permissions.md)
-- [Database strategy](./database-strategy.md)
-- [Communication](./communication.md)
-- [Judge security](./judge-security.md)
-- [Definition of Done](./definition-of-done.md)
-- [Agent workflow and feature IDs](../README.md)
+- [Tham chiếu kiến trúc](./architecture-reference.md)
+- [Ranh giới service](./service-boundaries.md)
+- [Vai trò và quyền](./roles-permissions.md)
+- [Chiến lược cơ sở dữ liệu](./database-strategy.md)
+- [Giao tiếp](./communication.md)
+- [Bảo mật Judge](./judge-security.md)
+- [Định nghĩa Hoàn thành](./definition-of-done.md)
+- [Quy trình agent và mã tính năng](../README.md)

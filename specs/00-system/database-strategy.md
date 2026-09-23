@@ -1,32 +1,33 @@
-# Database Strategy
+# Chiến lược cơ sở dữ liệu
 
-## Ownership
+## Quyền sở hữu
 
-| Service    | Owned database                            |
-| ---------- | ----------------------------------------- |
-| Identity   | `bkpractice_identity`                     |
-| Learning   | `bkpractice_learning`                     |
-| Submission | `bkpractice_submission`                   |
-| Community  | `bkpractice_community`                    |
-| Judge      | No persistent business database initially |
+| Service    | Cơ sở dữ liệu sở hữu                     |
+| ---------- | ---------------------------------------- |
+| Identity   | `bkpractice_identity`                    |
+| Learning   | `bkpractice_learning`                    |
+| Submission | `bkpractice_submission`                  |
+| Community  | `bkpractice_community`                   |
+| Judge      | Ban đầu không có cơ sở dữ liệu nghiệp vụ |
 
-Development may use one PostgreSQL server/container, but database ownership remains independent.
+Môi trường phát triển có thể dùng chung một server/container PostgreSQL, nhưng quyền sở hữu cơ sở
+dữ liệu vẫn độc lập.
 
-## Mandatory rules
+## Quy tắc bắt buộc
 
-- No cross-service SQL or direct database access.
-- No cross-service foreign key or TypeORM relationship.
-- No service-owned business TypeORM entity in `libs/`.
-- External relationships are stored as IDs and resolved through REST/events only when needed.
-- Schema changes use a migration in the owning service.
-- `synchronize: true` is not an accepted schema strategy.
-- Redis is not a persistent business database.
-- Judge receives no database merely for symmetry; persistence requires a separately justified and
-  approved requirement.
+- Không có câu SQL hay truy cập cơ sở dữ liệu trực tiếp xuyên service.
+- Không có khoá ngoại hay quan hệ TypeORM xuyên service.
+- Không đặt thực thể TypeORM nghiệp vụ thuộc sở hữu của service nào trong `libs/`.
+- Quan hệ với dữ liệu bên ngoài được lưu dưới dạng ID và chỉ được phân giải qua REST/event khi cần.
+- Thay đổi schema phải dùng migration trong chính service sở hữu.
+- `synchronize: true` không phải là một chiến lược schema được chấp nhận.
+- Redis không phải là cơ sở dữ liệu nghiệp vụ lâu dài.
+- Judge không được cấp cơ sở dữ liệu chỉ để cho cân xứng; việc lưu trữ đòi hỏi một yêu cầu được
+  biện minh và phê duyệt riêng.
 
-## SDD requirements
+## Yêu cầu của SDD
 
-A spec describes required persistent behavior without prescribing tables unless schema shape is a
-business/compatibility constraint. Its plan identifies the owning database, entity/repository
-impact, indexes/constraints, TypeORM migration, compatibility and revert strategy. Tasks include
-migration verification only when database changes apply.
+Đặc tả mô tả hành vi lưu trữ được yêu cầu mà không quy định bảng, trừ khi hình dạng schema là một
+ràng buộc nghiệp vụ hoặc ràng buộc tương thích. Kế hoạch tương ứng phải xác định cơ sở dữ liệu sở
+hữu, ảnh hưởng tới entity/repository, index/ràng buộc, migration TypeORM, tính tương thích và chiến
+lược hoàn tác. Công việc chỉ bao gồm bước xác minh migration khi thực sự có thay đổi cơ sở dữ liệu.

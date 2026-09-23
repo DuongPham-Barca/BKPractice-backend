@@ -1,62 +1,63 @@
-# BKPractice Spec-Driven Development
+# Phát triển hướng đặc tả (SDD) cho BKPractice
 
-This directory defines the Spec-Driven Development (SDD) workflow for future BKPractice work. It
-does not replace the authoritative architecture documentation in [`docs/architecture`](../docs/architecture/system-architecture.md).
+Thư mục này định nghĩa quy trình Phát triển hướng đặc tả (Spec-Driven Development — SDD) cho các
+công việc tiếp theo của BKPractice. Nó không thay thế tài liệu kiến trúc có thẩm quyền trong
+[`docs/architecture`](../docs/architecture/system-architecture.md).
 
-## Artifact responsibilities
+## Trách nhiệm của từng tài liệu
 
 ```text
-Requirement
+Yêu cầu
     |
     v
-spec.md (WHAT)
+spec.md (CÁI GÌ)
     |
     v
 Review -> Approved
     |
     v
-plan.md (HOW)
+plan.md (NHƯ THẾ NÀO)
     |
     v
-tasks.md (implementation checklist)
+tasks.md (danh sách kiểm tra triển khai)
     |
     v
-Implementation -> Tests -> Verification against spec.md and architecture
+Triển khai -> Kiểm thử -> Đối chiếu với spec.md và kiến trúc
 ```
 
-- `spec.md` defines required behavior, rules, inputs, outputs, failures, acceptance criteria and
-  explicit exclusions. An Approved spec is the feature source of truth.
-- `plan.md` explains how the Approved spec will be implemented inside the target service's selected
-  architecture. It cannot add requirements or broaden scope.
-- `tasks.md` is the ordered, updateable execution checklist derived from the plan. It cannot change
-  the plan or spec.
+- `spec.md` định nghĩa hành vi được yêu cầu, các quy tắc, đầu vào, đầu ra, tình huống lỗi, tiêu chí
+  nghiệm thu và những loại trừ tường minh. Một đặc tả đã Approved là nguồn chân lý của tính năng.
+- `plan.md` giải thích đặc tả đã Approved sẽ được triển khai như thế nào bên trong kiến trúc đã chọn
+  của service đích. Nó không được thêm yêu cầu hay mở rộng phạm vi.
+- `tasks.md` là danh sách công việc có thứ tự, cập nhật được, dẫn xuất từ kế hoạch. Nó không được
+  thay đổi kế hoạch hay đặc tả.
 
-When instructions conflict, use this precedence:
+Khi các chỉ dẫn mâu thuẫn, áp dụng thứ tự ưu tiên sau:
 
 ```text
-System architecture constraints + Approved spec.md
+Ràng buộc kiến trúc hệ thống + spec.md đã Approved
     > plan.md
     > tasks.md
-    > implementation assumptions
+    > giả định khi triển khai
 ```
 
-An architecture-conflicting spec must not be approved or implemented silently. Report the conflict
-and obtain an explicit architecture/spec decision. An implementation agent must not edit an
-Approved spec unless explicitly instructed to revise the specification.
+Một đặc tả mâu thuẫn với kiến trúc không được phê duyệt hay triển khai một cách âm thầm. Hãy báo cáo
+xung đột và có được quyết định tường minh về kiến trúc/đặc tả. Agent triển khai không được sửa một
+đặc tả đã Approved trừ khi được chỉ đạo tường minh là phải sửa đổi đặc tả.
 
-## Status lifecycle
+## Vòng đời trạng thái
 
-Allowed spec statuses are `Proposed`, `Approved`, `Implemented`, and `Verified`.
+Các trạng thái hợp lệ của đặc tả là `Proposed`, `Approved`, `Implemented` và `Verified`.
 
-1. `Proposed`: open to requirement review and revision; implementation is blocked.
-2. `Approved`: reviewed source of truth; planning and implementation may proceed.
-3. `Implemented`: applicable tasks and tests are complete, pending final verification.
-4. `Verified`: implementation has been checked against acceptance criteria and architecture.
+1. `Proposed`: đang mở để rà soát và chỉnh sửa yêu cầu; việc triển khai bị chặn.
+2. `Approved`: đã được rà soát, là nguồn chân lý; có thể tiến hành lập kế hoạch và triển khai.
+3. `Implemented`: các công việc và kiểm thử liên quan đã hoàn tất, đang chờ xác minh cuối cùng.
+4. `Verified`: bản triển khai đã được đối chiếu với tiêu chí nghiệm thu và kiến trúc.
 
-Only an authorized reviewer may approve or revise requirements. Implementation work does not imply
-approval.
+Chỉ người rà soát có thẩm quyền mới được phê duyệt hoặc sửa đổi yêu cầu. Việc đã triển khai không
+đồng nghĩa với việc đã được phê duyệt.
 
-## Agent workflow
+## Quy trình cho agent
 
 The step-by-step working agreement is [`docs/agent/working-agreement.md`](../docs/agent/working-agreement.md).
 An agent follows that order. The obligations below remain the SDD baseline.
@@ -73,7 +74,7 @@ Before implementation, an agent MUST:
 8. Clarify every open question that could change behavior, scope, architecture, a contract, or
    configuration. Stop and ask instead of guessing.
 
-During implementation, an agent MUST:
+Trong khi triển khai, agent BẮT BUỘC phải:
 
 9. Follow the selected service architecture and dependency rules.
 10. Work through `tasks.md` incrementally.
@@ -82,7 +83,7 @@ During implementation, an agent MUST:
 13. Not introduce architecture changes without explicit approval.
 14. Keep `tasks.md` current, marking completed and applicable N/A items honestly.
 
-After implementation, an agent MUST:
+Sau khi triển khai, agent BẮT BUỘC phải:
 
 15. Run relevant tests.
 16. Run the validation commands required by the feature.
@@ -93,12 +94,12 @@ After implementation, an agent MUST:
     questions that were clarified, the files and configuration that changed, and anything left
     unverified. Do not copy secrets or raw tokens.
 
-If any required artifact is missing, contradictory or ambiguous in a way that changes behavior, the
-agent stops that implementation path and reports the issue instead of inventing a requirement.
+Nếu bất kỳ tài liệu bắt buộc nào bị thiếu, mâu thuẫn, hoặc mơ hồ theo cách làm thay đổi hành vi,
+agent phải dừng hướng triển khai đó và báo cáo vấn đề thay vì tự bịa ra một yêu cầu.
 
-## Feature placement and identifiers
+## Vị trí đặt tính năng và mã định danh
 
-Each feature lives in the predefined service/domain folder and eventually contains:
+Mỗi tính năng nằm trong thư mục service/domain đã định sẵn và cuối cùng sẽ chứa:
 
 ```text
 <feature>/
@@ -107,7 +108,7 @@ Each feature lives in the predefined service/domain folder and eventually contai
 └── tasks.md
 ```
 
-| Prefix  | Owning service | Examples                                                                                                               |
+| Tiền tố | Service sở hữu | Ví dụ                                                                                                                  |
 | ------- | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `ID-*`  | Identity       | `ID-001 Authentication`, `ID-002 Profile`, `ID-003 RBAC`                                                               |
 | `LRN-*` | Learning       | `LRN-001 Problem Management`, `LRN-002 Course Management`, `LRN-003 Assignment Management`, `LRN-004 Progress`         |
@@ -115,24 +116,24 @@ Each feature lives in the predefined service/domain folder and eventually contai
 | `JDG-*` | Judge          | `JDG-001 Standard Judge`, `JDG-002 Language Runners`, `JDG-003 Function Judge`, `JDG-004 OOP Judge`, `JDG-005 Sandbox` |
 | `COM-*` | Community      | `COM-001 Posts`, `COM-002 Comments`, `COM-003 Reactions`, `COM-004 Bookmarks`, `COM-005 Moderation`                    |
 
-Identifiers are stable after approval and are not reused. The examples reserve naming conventions;
-they do not constitute implemented or Approved feature specifications.
+Mã định danh là cố định sau khi được phê duyệt và không được tái sử dụng. Các ví dụ trên chỉ giữ chỗ
+cho quy ước đặt tên; chúng không phải là các đặc tả tính năng đã được triển khai hay đã Approved.
 
-## Example: ID-001 Authentication
+## Ví dụ: ID-001 Authentication
 
-Start by copying [`spec.template.md`](./templates/spec.template.md) to
-`01-identity/authentication/spec.md`, set the feature ID to `ID-001`, and describe authentication
-requirements only. Its required architecture is **Identity Service: Clean Architecture**.
+Bắt đầu bằng cách chép [`spec.template.md`](./templates/spec.template.md) sang
+`01-identity/authentication/spec.md`, đặt mã tính năng là `ID-001`, và chỉ mô tả các yêu cầu về xác
+thực. Kiến trúc bắt buộc của nó là **Identity Service: Clean Architecture**.
 
-After review changes the spec status to `Approved`, create `plan.md` from the plan template. The
-plan maps the requirements to Identity domain/application ports and infrastructure adapters without
-expanding scope. Then create `tasks.md`; implementation may begin only after all three artifacts are
-consistent.
+Sau khi review chuyển trạng thái đặc tả sang `Approved`, tạo `plan.md` từ mẫu plan. Kế hoạch ánh xạ
+các yêu cầu vào domain/application port và infrastructure adapter của Identity mà không mở rộng phạm
+vi. Sau đó tạo `tasks.md`; việc triển khai chỉ được bắt đầu khi cả ba tài liệu nhất quán với nhau.
 
-The same rule applies to other prefixes:
+Quy tắc tương tự áp dụng cho các tiền tố khác:
 
+- `LRN-*`: DDD + Hexagonal Architecture.
 - `SUB-*`: Clean Architecture + Event-Driven Architecture.
-- `JDG-*`: Worker Architecture + Pipeline Architecture + Adapter Pattern.
-- `COM-*`: Clean Architecture + Modular Domain Architecture.
+- `JDG-*`: Hexagonal Architecture (Ports & Adapters) + Pipeline.
+- `COM-*`: Clean Architecture.
 
-The complete service matrix is in [`00-system/architecture-reference.md`](./00-system/architecture-reference.md).
+Ma trận service đầy đủ nằm trong [`00-system/architecture-reference.md`](./00-system/architecture-reference.md).

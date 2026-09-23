@@ -1,99 +1,100 @@
-# [FEATURE-ID] Implementation Plan
+# [FEATURE-ID] Kế hoạch triển khai
 
-## Related Specification
+## Đặc tả liên quan
 
-<!-- Link the Approved spec.md and record its revision/date. Do not plan against Proposed status. -->
+<!-- Liên kết tới spec.md đã Approved và ghi lại phiên bản/ngày của nó. Không lập kế hoạch dựa trên trạng thái Proposed. -->
 
-## Target Service
+## Service đích
 
 Service: [API Gateway | Identity | Learning | Submission | Judge | Community]
 
-## Required Service Architecture
+## Kiến trúc service bắt buộc
 
-Architecture: [Copy the exact architecture from architecture-reference.md]
+Kiến trúc: [Chép chính xác kiến trúc từ architecture-reference.md]
 
-This section is mandatory. Read the target-service architecture and dependency rules before
-planning.
+Mục này là bắt buộc. Hãy đọc tài liệu kiến trúc của service đích và các quy tắc phụ thuộc trước khi
+lập kế hoạch.
 
-## Existing Code Impact
+## Ảnh hưởng tới mã nguồn hiện có
 
-<!-- Identify current modules/flows affected and behavior that must remain compatible. -->
+<!-- Xác định các module/luồng hiện tại bị ảnh hưởng và hành vi phải giữ tương thích. -->
 
-## Domain Changes
+## Thay đổi ở tầng domain
 
-<!-- Domain rules, entities/value objects or state transitions. Use N/A when not applicable. -->
+<!-- Quy tắc nghiệp vụ, entity/value object hoặc chuyển trạng thái. Ghi N/A nếu không áp dụng. -->
 
-## Application / Use Cases
+## Tầng application / Use case
 
-<!-- Application operations and ports needed to implement only the Approved requirements. -->
+<!-- Các thao tác application và port cần thiết để triển khai đúng các yêu cầu đã Approved. -->
 
-## Persistence
+## Lưu trữ
 
-<!-- Repository/adaptor behavior and database ownership. Do not introduce cross-service access. -->
+<!-- Hành vi của repository/adapter và quyền sở hữu cơ sở dữ liệu. Không đưa vào truy cập xuyên service. -->
 
-## Database Changes
+## Thay đổi cơ sở dữ liệu
 
-<!-- Tables, columns, indexes and compatibility effects, or N/A. -->
+<!-- Bảng, cột, index và ảnh hưởng tương thích, hoặc N/A. -->
 
 ## Migration
 
-<!-- TypeORM migration and rollout/revert approach, or N/A. -->
+<!-- Migration TypeORM và phương án triển khai/hoàn tác, hoặc N/A. -->
 
 ## API
 
-<!-- Routes, methods, request/response contracts and compatibility, or N/A. -->
+<!-- Route, method, contract request/response và tính tương thích, hoặc N/A. -->
 
-## DTO / Validation
+## DTO / Kiểm tra dữ liệu
 
-<!-- Input validation, transformation and output exposure rules. -->
+<!-- Quy tắc kiểm tra đầu vào, biến đổi dữ liệu và phơi bày dữ liệu đầu ra. -->
 
-## Authorization
+## Phân quyền
 
-<!-- Required roles, permissions, ownership and trusted service checks. -->
+<!-- Vai trò, quyền, quyền sở hữu và các kiểm tra service tin cậy được yêu cầu. -->
 
-## Messaging / Events
+## Messaging / Sự kiện
 
-<!-- Exchanges, queues, routing keys, contracts, delivery/idempotency behavior, or N/A. -->
+<!-- Exchange, queue, routing key, contract, hành vi phân phối/idempotent, hoặc N/A. -->
 
 ## Realtime
 
-<!-- Socket.IO/Redis behavior and persistent fallback, or N/A. -->
+<!-- Hành vi Socket.IO/Redis và phương án dự phòng lưu trữ bền, hoặc N/A. -->
 
-## Infrastructure Adapters
+## Adapter hạ tầng
 
-<!-- Concrete persistence, HTTP, messaging, cache, sandbox or runtime adapters. -->
+<!-- Các adapter cụ thể cho lưu trữ, HTTP, messaging, cache, sandbox hoặc runtime. -->
 
-## Error Handling
+## Xử lý lỗi
 
-<!-- Domain/application errors, transport mapping, retries and failure recovery. -->
+<!-- Lỗi domain/application, ánh xạ sang tầng truyền tải, retry và khôi phục sau thất bại. -->
 
-## Security
+## Bảo mật
 
-<!-- Threats and controls relevant to authentication, hidden data, untrusted code or sensitive data. -->
+<!-- Mối đe doạ và biện pháp kiểm soát liên quan tới xác thực, dữ liệu ẩn, mã không tin cậy hoặc dữ liệu nhạy cảm. -->
 
-## Testing Strategy
+## Chiến lược kiểm thử
 
-<!-- Unit, integration, contract and end-to-end scenarios mapped to FR/AC IDs. -->
+<!-- Các kịch bản unit, integration, contract và end-to-end, ánh xạ tới mã FR/AC. -->
 
-## Observability
+## Khả năng quan sát
 
-<!-- Correlation IDs, safe logs, metrics and operational signals. -->
+<!-- Correlation ID, log an toàn, metric và tín hiệu vận hành. -->
 
-## Implementation Order
+## Thứ tự triển khai
 
 1. ...
 2. ...
 
-## Risks
+## Rủi ro
 
-<!-- Technical, data, compatibility and operational risks with mitigations. -->
+<!-- Rủi ro kỹ thuật, dữ liệu, tương thích và vận hành, kèm biện pháp giảm thiểu. -->
 
-## Architecture Compliance
+## Tuân thủ kiến trúc
 
 <!--
-Mandatory: explain how dependency direction, service/database ownership, adapters and module
-boundaries comply with docs/architecture for this target service. Identify any approved exception.
+Bắt buộc: giải thích chiều phụ thuộc, quyền sở hữu service/cơ sở dữ liệu, các adapter và ranh giới
+module tuân thủ docs/architecture cho service đích này như thế nào. Nêu rõ mọi ngoại lệ đã được
+phê duyệt.
 -->
 
-> `plan.md` describes HOW. It MUST NOT add behavior, actors or acceptance criteria beyond the
-> Approved `spec.md`.
+> `plan.md` mô tả NHƯ THẾ NÀO. Nó KHÔNG ĐƯỢC thêm hành vi, tác nhân hay tiêu chí nghiệm thu vượt
+> ngoài `spec.md` đã Approved.

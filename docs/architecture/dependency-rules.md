@@ -2,14 +2,19 @@
 
 These rules are the architectural contract for new code and incremental refactors.
 
-## Clean Architecture services
+## Layered business services
 
-Identity, Learning, Submission and Community follow:
+Identity, Submission and Community (Clean Architecture) and Learning (Hexagonal Architecture) share
+one dependency direction:
 
 ```text
 presentation -> application -> domain
 infrastructure ----implements----^ application/domain ports
 ```
+
+Clean and Hexagonal differ in emphasis, not in this rule. Hexagonal names the boundary explicitly:
+presentation adapters _drive_ the core, and infrastructure adapters are _driven_ by it through
+ports. Every rule in the table below applies identically to both.
 
 | Layer            | May depend on                                           | Must not depend on                                                                        |
 | ---------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -40,12 +45,26 @@ is a documented transitional state, not a pattern to spread into complex new wor
 - A service may bind a concrete adapter in its Nest module/composition root.
 - No service imports another service's source code, entity, repository, datasource or migration.
 
+## Learning DDD rules
+
+Learning additionally uses tactical DDD building blocks. They are subject to the same dependency
+direction and to these limits:
+
+- An aggregate is a consistency boundary justified by an invariant, not a wrapper per table.
+- Value objects validate on construction and are immutable; they import no framework code.
+- A domain service holds a rule belonging to no single aggregate, such as publish readiness.
+- A repository port is expressed in domain terms and implemented by a TypeORM adapter; the TypeORM
+  entity stays the persistence model and is mapped at the infrastructure boundary.
+- Strategic DDD is out of scope: Learning is one bounded context, with no context map and no
+  anti-corruption layer.
+- Neither the aggregate nor the persistence entity may move into `libs/`.
+
 ## Judge rules
 
-Judge follows a worker dependency flow:
+Judge follows a hexagonal dependency flow with a pipeline inside the core:
 
 ```text
-consumer -> orchestrator -> pipeline -> ports <- adapters
+driving adapter (consumer) -> orchestrator -> pipeline -> driven ports <- adapters
 ```
 
 - The consumer remains thin and knows RabbitMQ delivery concerns.
@@ -54,6 +73,8 @@ consumer -> orchestrator -> pipeline -> ports <- adapters
 - Language and Docker adapters own trusted commands and runtime integration.
 - Judge core must not accept arbitrary compiler, filename, Docker or shell arguments from clients.
 - Judge remains stateless unless a separately approved requirement justifies persistence.
+- Judge has no aggregate, entity, repository or business database. Do not add DDD building blocks
+  to a stateless transformation.
 
 ## Gateway rules
 

@@ -1,46 +1,42 @@
-# Definition of Done
+# Định nghĩa Hoàn thành
 
-A feature is Done only when every applicable condition below is satisfied. An irrelevant item may
-be marked N/A with a concrete reason; N/A is not a substitute for unfinished work.
+Một tính năng chỉ được coi là Hoàn thành khi mọi điều kiện có liên quan dưới đây đều được thoả mãn.
+Một mục không liên quan có thể được đánh dấu N/A kèm lý do cụ thể; N/A không phải cách thay thế cho
+công việc còn dang dở.
 
-## Specification and planning
+## Đặc tả và lập kế hoạch
 
-- [ ] `spec.md` exists and has Status `Approved` before implementation starts.
-- [ ] `plan.md` exists and does not expand the Approved spec.
-- [ ] `tasks.md` exists and reflects the plan.
-- [ ] The required service architecture is selected from `docs/architecture/`.
-- [ ] Open questions that affect behavior, scope, architecture, a contract, or configuration are
-      resolved before implementation. Unresolved questions stop the work.
+- [ ] `spec.md` tồn tại và có Status `Approved` trước khi bắt đầu triển khai.
+- [ ] `plan.md` tồn tại và không mở rộng đặc tả đã Approved.
+- [ ] `tasks.md` tồn tại và phản ánh đúng kế hoạch.
+- [ ] Kiến trúc bắt buộc của service đã được chọn từ `docs/architecture/`.
+- [ ] Các câu hỏi mở làm ảnh hưởng đến hành vi đã được giải quyết.
 
-## Implementation
+## Triển khai
 
-- [ ] All functional requirements are implemented.
-- [ ] All acceptance criteria are satisfied.
-- [ ] Authorization and ownership rules are implemented where applicable.
-- [ ] Input validation and error behavior are implemented where applicable.
-- [ ] Required TypeORM migrations are created and verified.
-- [ ] Swagger is updated when API contracts change.
-- [ ] Messaging/realtime contracts and delivery behavior are implemented where applicable.
-- [ ] No unapproved Out-of-Scope functionality was added.
+- [ ] Toàn bộ yêu cầu chức năng đã được triển khai.
+- [ ] Toàn bộ tiêu chí nghiệm thu đã được thoả mãn.
+- [ ] Các quy tắc phân quyền và sở hữu đã được triển khai nếu có liên quan.
+- [ ] Việc kiểm tra dữ liệu đầu vào và hành vi lỗi đã được triển khai nếu có liên quan.
+- [ ] Các migration TypeORM cần thiết đã được tạo và xác minh.
+- [ ] Swagger đã được cập nhật khi contract của API thay đổi.
+- [ ] Contract messaging/realtime và hành vi phân phối đã được triển khai nếu có liên quan.
+- [ ] Không có chức năng Ngoài phạm vi nào được thêm vào mà chưa được phê duyệt.
 
-## Quality and verification
+## Chất lượng và xác minh
 
-- [ ] Required tests were added and relevant tests pass.
-- [ ] `pnpm lint` passes.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm test` passes.
-- [ ] `pnpm build` passes.
-- [ ] `tasks.md` reflects completed work and justified N/A items.
-- [ ] Implementation was verified against every requirement and acceptance criterion in `spec.md`.
-- [ ] Implementation was verified against the target service architecture and dependency rules.
-- [ ] Security was reviewed where applicable, especially authentication, authorization, hidden data
-      and untrusted-code execution.
-- [ ] Deviations, unverified behavior and remaining risks are reported.
-- [ ] `docs/worked/` has an entry for this work. The entry explains what was done, why those
-      pieces were used, and how the feature flows. It also names the spec and plan used, the
-      questions that were clarified, every configuration change, and anything left unverified.
-      Secrets and raw tokens are not copied into the entry.
+- [ ] Các kiểm thử cần thiết đã được bổ sung và các kiểm thử liên quan đều pass.
+- [ ] `pnpm lint` pass.
+- [ ] `pnpm typecheck` pass.
+- [ ] `pnpm test` pass.
+- [ ] `pnpm build` pass.
+- [ ] `tasks.md` phản ánh đúng công việc đã hoàn thành và các mục N/A đã được biện minh.
+- [ ] Bản triển khai đã được đối chiếu với mọi yêu cầu và tiêu chí nghiệm thu trong `spec.md`.
+- [ ] Bản triển khai đã được đối chiếu với kiến trúc của service đích và các quy tắc phụ thuộc.
+- [ ] Đã rà soát bảo mật nếu có liên quan, đặc biệt là xác thực, phân quyền, dữ liệu ẩn và việc thực
+      thi mã không tin cậy.
+- [ ] Các sai lệch, hành vi chưa được xác minh và rủi ro còn lại đã được báo cáo.
 
-After implementation verification, the authorized workflow may move the spec through `Implemented`
-to `Verified`. An implementation agent does not silently rewrite an Approved spec to make the
-result appear compliant.
+Sau bước xác minh triển khai, quy trình có thẩm quyền có thể chuyển đặc tả qua `Implemented` rồi tới
+`Verified`. Agent triển khai không được âm thầm viết lại một đặc tả đã Approved để kết quả trông có
+vẻ tuân thủ.

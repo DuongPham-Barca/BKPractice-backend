@@ -30,14 +30,38 @@ Start at step 1 of the working agreement. Do not implement from this map alone.
 
 ## CodeGraph
 
-In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for
-it BEFORE grep/find or reading files when you need to understand or locate code:
+In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repository root), use
+CodeGraph before grep/find or broad file reading when locating symbols or understanding code
+relationships.
 
-- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the
-  relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch
-  hops grep can't follow. Name a file or symbol in the query to read its current line-numbered
-  source. If it's listed but deferred, load it by name via tool search.
-- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
+Choose the smallest suitable command:
 
-If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+1. Use `codegraph node <file-or-symbol>` when the file or symbol is already known.
+2. Use `codegraph query "<keyword>"` for narrow symbol discovery.
+3. Use `codegraph explore "<specific symbols or question>"` for multi-symbol behavior, dependencies,
+   call paths, or dynamic dispatch.
+4. Use `rg` directly for exact text, configuration, documentation, environment templates, generated
+   files, or when CodeGraph returns no relevant result. Environment-file safety rules still apply.
+
+When using `codegraph explore`, keep the query narrow and name relevant services, files, or symbols
+whenever possible.
+
+- **MCP tool** (when available): `codegraph_explore` returns relevant symbols' current source and
+  call paths, including dynamic-dispatch relationships that text search may miss.
+- **Shell fallback**: `codegraph explore "<specific symbols or question>"`.
+
+After creating, deleting, moving, or changing source code, run:
+
+```bash
+codegraph sync .
+```
+
+Use `codegraph index .` only when a complete rebuild is required, such as after a corrupted or
+materially stale index. Use `codegraph status .` to verify index health.
+
+Treat `.codegraph/` as generated local data. Do not manually edit or commit its database, daemon
+files, sockets, or logs. Only `.codegraph/.gitignore` may be committed.
+
+If there is no `.codegraph/` directory, skip CodeGraph entirely. Index initialization is the user's
+decision.
 <!-- CODEGRAPH_END -->
