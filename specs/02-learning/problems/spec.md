@@ -34,8 +34,8 @@ Submission, Judge, Progress và Recommendation trong tương lai.
 
 ## Bối cảnh
 
-Quản lý Problem là đặc tả tính năng Learning đầu tiên. Learning dùng **Clean Architecture + Modular
-Domain Architecture** và sở hữu Problem cùng với Test Case, Topic, Tag, starter code, các ngôn ngữ
+Quản lý Problem là đặc tả tính năng Learning đầu tiên. Learning dùng **DDD + Hexagonal
+Architecture** và sở hữu Problem cùng với Test Case, Topic, Tag, starter code, các ngôn ngữ
 được hỗ trợ cho problem, Course, Assignment, Progress và Recommendation. LRN-001 định nghĩa vòng đời
 Problem cùng hành vi công khai/quản lý mà không tách ra một service Problem mới và không triển khai
 các tính năng Learning lân cận.

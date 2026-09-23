@@ -36,7 +36,8 @@ và không đụng tới lớp lưu trữ của Identity, Submission hay Judge.
 
 ## Kiến trúc service bắt buộc
 
-Kiến trúc: **Clean Architecture + Modular Domain Architecture**.
+Kiến trúc: **DDD + Hexagonal Architecture** (theo
+[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
 
 Learning giữ Quản lý Problem bên trong module `problems` của một bounded context Learning duy nhất,
 theo đúng chiều phụ thuộc đã được tài liệu hoá:
@@ -46,6 +47,16 @@ presentation -> application -> domain
 infrastructure ----implements----^ các port của application/domain
 ```
 
+Theo cách diễn đạt hexagonal: các controller REST là **driving adapter** gọi vào use case, còn
+repository TypeORM, provider principal và transaction runner là các **driven adapter** được lõi gọi
+ra thông qua port. Chiều phụ thuộc không đổi so với cách diễn đạt trước đó; điều được nhấn mạnh thêm
+là ranh giới port/adapter và việc mô hình hoá bằng các khối DDD tactical.
+
+- DDD chỉ dùng ở mức **tactical**: aggregate root `Problem`, các value object (slug, giới hạn thực
+  thi, ví dụ hiển thị, contract theo ngôn ngữ), một domain service cho việc kiểm tra mức độ sẵn sàng
+  xuất bản, và repository dưới dạng port. Một aggregate được biện minh bởi bất biến, không tạo cho
+  mỗi bảng. DDD strategic (context map, anti-corruption layer, nhiều bounded context) nằm ngoài
+  phạm vi — Learning là một bounded context duy nhất.
 - Module được tổ chức theo hướng feature-first trong khu vực
   `apps/learning-service/src/modules/problems/` hiện có. Các thư mục tầng (`domain`, `application`,
   `infrastructure`, `presentation`) được đưa vào vì vòng đời Problem, kiểm tra xuất bản, kiểm tra
@@ -983,10 +994,14 @@ Không có.
 
 ## Tuân thủ kiến trúc
 
-- **Clean Architecture + Modular Domain:** tầng Presentation phân tích DTO và ánh xạ phản hồi; các
+- **DDD + Hexagonal:** tầng Presentation là driving adapter, phân tích DTO và ánh xạ phản hồi; các
   use case ở tầng application điều phối transaction, port, quyền sở hữu và kiểm tra xuất bản; tầng
-  domain sở hữu aggregate, các bước chuyển vòng đời, bất biến theo loại và quy tắc định dạng nội
-  dung; tầng infrastructure hiện thực các adapter TypeORM, principal và quyền.
+  domain sở hữu aggregate, các value object, các bước chuyển vòng đời, bất biến theo loại và quy tắc
+  định dạng nội dung; tầng infrastructure là driven adapter, hiện thực TypeORM, principal và quyền
+  phía sau các port.
+- **Phạm vi DDD:** chỉ dùng các khối tactical (aggregate root, value object, domain service,
+  repository) trong một bounded context duy nhất. Không đưa vào context map, anti-corruption layer
+  hay bounded context thứ hai.
 - **Chiều phụ thuộc:** domain không import code NestJS/TypeORM/JWT/HTTP; application chỉ phụ thuộc
   các kiểu domain và các port; infrastructure được gắn tại composition root của module Problems.
 - **Quyền sở hữu của Learning:** lớp lưu trữ và policy của Problem vẫn nằm trong

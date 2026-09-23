@@ -28,8 +28,9 @@ Mọi kế hoạch thực thi BẮT BUỘC phải giữ:
 ## Yêu cầu của SDD
 
 Đặc tả của Judge định nghĩa các yêu cầu quan sát được về thực thi/phân loại, chứ không định nghĩa
-lệnh runtime do client điều khiển. Kế hoạch của Judge dùng kiến trúc Worker + Pipeline + Adapter và
-bao gồm kiểm thử cho các tình huống lạm dụng, timeout, cạn kiệt tài nguyên, payload sai định dạng,
+lệnh runtime do client điều khiển. Kế hoạch của Judge dùng kiến trúc Hexagonal (Ports & Adapters) +
+Pipeline và bao gồm kiểm thử cho các tình huống lạm dụng, timeout, cạn kiệt tài nguyên, payload sai
+định dạng,
 giao trùng message, worker sập và dọn dẹp, khi có liên quan. Bất kỳ nới lỏng nào đối với một biện
 pháp kiểm soát sandbox đều cần phê duyệt tường minh về bảo mật và kiến trúc; không được giấu nó
 trong một task tính năng.

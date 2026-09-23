@@ -29,7 +29,8 @@ cập cơ sở dữ liệu của Learning, Submission hay Community.
 
 ## Kiến trúc service bắt buộc
 
-Kiến trúc: **Clean Architecture + feature module hướng domain**.
+Kiến trúc: **Clean Architecture** (theo
+[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
 
 Bản triển khai tuân theo chiều phụ thuộc đã phê duyệt của Identity:
 
@@ -588,7 +589,7 @@ DTO của Authentication.
 
 ## Tuân thủ kiến trúc
 
-- Profile được triển khai bên trong feature module hướng domain của Identity; không tạo Profile
+- Profile được triển khai bên trong một feature module của Identity theo Clean Architecture; không tạo Profile
   Service nào và không chuyển entity User/Profile nào vào `libs/`.
 - Tầng Presentation chỉ xử lý mối quan tâm HTTP/DTO/Swagger và gọi đúng một thao tác application cho
   mỗi request. Nó không chứa TypeORM, R2 SDK hay quy tắc nghiệp vụ về tài khoản.

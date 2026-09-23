@@ -2,8 +2,16 @@
 
 ## Selected style
 
-Submission uses **Clean Architecture** plus **Event-Driven Architecture**. It owns the durable
-business lifecycle of Run and Submit, but never compiles or executes student code.
+Submission uses **Clean Architecture + Event-Driven Architecture**, as decided in
+[ADR 0002](../adr/0002-revised-service-internal-architectures.md). This selection is unchanged from
+ADR 0001. It owns the durable business lifecycle of Run and Submit, but never compiles or executes
+student code.
+
+The two halves of the label answer different questions. Event-Driven describes how Submission
+communicates: judging takes seconds, so the work is handed over asynchronously and results arrive
+back over RabbitMQ. Clean Architecture describes where Submission's own rules live — status
+transitions, stable accepted-event identity and the definition of an officially accepted submission
+belong in the domain and its use cases, not inside a message consumer.
 
 ```text
 REST controller

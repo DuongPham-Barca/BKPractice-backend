@@ -2,8 +2,13 @@
 
 ## Selected style
 
-The API Gateway uses the **Gateway Pattern** with a **lightweight layered architecture**. It is the
-public backend entry point, not a business service.
+The API Gateway uses **Layered Architecture**, as decided in
+[ADR 0002](../adr/0002-revised-service-internal-architectures.md). It is the public backend entry
+point, not a business service.
+
+Layers here are transport layers, not business layers: middleware and guards, then proxy and
+realtime adapters, then the upstream services. The Gateway has no domain layer and no repository
+layer, and adding one would be an architecture violation rather than an improvement.
 
 ```text
 HTTP / Socket.IO client

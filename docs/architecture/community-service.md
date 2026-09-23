@@ -2,8 +2,9 @@
 
 ## Selected style
 
-Community uses **Clean Architecture** with a **Modular Domain Architecture**. Its feature areas are
-Posts, Comments/Replies, Reactions, Bookmarks and Moderation/Reports.
+Community uses **Clean Architecture**, as decided in
+[ADR 0002](../adr/0002-revised-service-internal-architectures.md). Its feature areas are Posts,
+Comments/Replies, Reactions, Bookmarks and Moderation/Reports.
 
 ```text
 modules/

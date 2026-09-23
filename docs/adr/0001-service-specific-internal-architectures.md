@@ -1,7 +1,11 @@
 # ADR 0001: Service-specific Internal Architectures
 
-- Status: Accepted
+- Status: Superseded by [ADR 0002](./0002-revised-service-internal-architectures.md)
 - Date: 2026-09-01
+
+> The principle of this ADR — each application may use a different internal architecture according
+> to its workload — remains in force. ADR 0002 revises the naming and emphasis of four selections
+> and is the authoritative list. Read the architecture list below as historical.
 
 ## Context
 

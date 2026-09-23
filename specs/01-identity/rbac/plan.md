@@ -35,7 +35,8 @@ cậy mà thiết kế xác thực đã phê duyệt đòi hỏi.
 
 ## Kiến trúc service bắt buộc
 
-Kiến trúc: **Clean Architecture + feature module hướng domain**.
+Kiến trúc: **Clean Architecture** (theo
+[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
 
 RBAC tuân theo chiều phụ thuộc của Identity:
 
