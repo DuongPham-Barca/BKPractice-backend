@@ -10,7 +10,9 @@ Detailed system, service and dependency decisions are documented in
 [`docs/architecture`](./docs/architecture/system-architecture.md), with accepted decisions in
 [`docs/adr`](./docs/adr/0001-service-specific-internal-architectures.md).
 Future features follow the [Spec-Driven Development workflow](./specs/README.md) before
-implementation begins.
+implementation begins. The required step order is the
+[working agreement](./docs/agent/working-agreement.md): spec, plan, clarify open questions, then
+record finished work under `docs/worked/`.
 
 ```text
 Web / Mobile -> API Gateway -> Identity

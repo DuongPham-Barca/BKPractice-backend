@@ -59,31 +59,40 @@ Chỉ người rà soát có thẩm quyền mới được phê duyệt hoặc s
 
 ## Quy trình cho agent
 
-Trước khi triển khai, agent BẮT BUỘC phải:
+The step-by-step working agreement is [`docs/agent/working-agreement.md`](../docs/agent/working-agreement.md).
+An agent follows that order. The obligations below remain the SDD baseline.
 
-1. Đọc các tài liệu hệ thống và tài liệu của service đích trong `docs/architecture/`.
-2. Đọc `spec.md` của tính năng.
-3. Xác nhận `Status = Approved`.
-4. Đọc `plan.md`.
-5. Đọc `tasks.md`.
-6. Khảo sát mã nguồn hiện có và trạng thái hiện tại của repository.
+Before implementation, an agent MUST:
+
+1. Read the working agreement and follow its step order.
+2. Read the system and target-service documents under `docs/architecture/`.
+3. Read the feature `spec.md`.
+4. Confirm `Status = Approved`.
+5. Read `plan.md`.
+6. Read `tasks.md`.
+7. Inspect the existing source and current repository state.
+8. Clarify every open question that could change behavior, scope, architecture, a contract, or
+   configuration. Stop and ask instead of guessing.
 
 Trong khi triển khai, agent BẮT BUỘC phải:
 
-7. Tuân theo kiến trúc đã chọn của service và các quy tắc phụ thuộc.
-8. Làm việc tuần tự theo `tasks.md`.
-9. Không thay đổi các yêu cầu đã được phê duyệt.
-10. Không thêm chức năng Ngoài phạm vi.
-11. Không đưa ra thay đổi kiến trúc khi chưa có phê duyệt tường minh.
-12. Giữ `tasks.md` luôn cập nhật, đánh dấu các mục đã hoàn thành và các mục N/A một cách trung thực.
+9. Follow the selected service architecture and dependency rules.
+10. Work through `tasks.md` incrementally.
+11. Not change approved requirements.
+12. Not add Out-of-Scope functionality.
+13. Not introduce architecture changes without explicit approval.
+14. Keep `tasks.md` current, marking completed and applicable N/A items honestly.
 
 Sau khi triển khai, agent BẮT BUỘC phải:
 
-13. Chạy các kiểm thử liên quan.
-14. Chạy các lệnh kiểm chứng mà tính năng yêu cầu.
-15. So sánh bản triển khai với `spec.md`.
-16. So sánh bản triển khai với kiến trúc của service và các quy tắc phụ thuộc.
-17. Báo cáo các sai lệch, hành vi chưa được xác minh và rủi ro còn lại.
+15. Run relevant tests.
+16. Run the validation commands required by the feature.
+17. Compare the implementation with `spec.md`.
+18. Compare the implementation with the service architecture and dependency rules.
+19. Report deviations, unverified behavior and remaining risks.
+20. Write a worked entry under `docs/worked/` that records the spec and plan used, the
+    questions that were clarified, the files and configuration that changed, and anything left
+    unverified. Do not copy secrets or raw tokens.
 
 Nếu bất kỳ tài liệu bắt buộc nào bị thiếu, mâu thuẫn, hoặc mơ hồ theo cách làm thay đổi hành vi,
 agent phải dừng hướng triển khai đó và báo cáo vấn đề thay vì tự bịa ra một yêu cầu.
