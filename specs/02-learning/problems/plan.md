@@ -2,11 +2,13 @@
 
 ## Trạng thái
 
-Proposed
+Approved
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-23`.
 
 Kế hoạch này bám theo phiên bản `1.1` (Approved) của đặc tả LRN-001 và là tài liệu thiết kế cho giai
-đoạn tasks/triển khai sau này. Nó không triển khai Quản lý Problem và không thay đổi đặc tả. Nó đang
-chờ con người review trước khi dẫn xuất ra `tasks.md`.
+đoạn tasks/triển khai. Nó không triển khai Quản lý Problem và không thay đổi đặc tả. Sau khi được
+phê duyệt, `tasks.md` được dẫn xuất từ kế hoạch này.
 
 ## Đặc tả liên quan
 
@@ -319,13 +321,16 @@ tuân theo quy ước của repository khi triển khai.
 - **Đầu vào:** danh sách cho phép một phần gồm các trường thay đổi được (`title`, các phần đề bài,
   đặc tả `input`/`output` khi có liên quan, `difficulty`, `examples` hiển thị, `constraints`, tham
   chiếu Topic/Tag, tập ngôn ngữ đang bật, starter code theo từng ngôn ngữ, giới hạn dương, và cấu
-  hình contract theo từng ngôn ngữ (`type_config`) cho `FUNCTION`/`OOP`), theo ngữ nghĩa cập nhật
-  tường minh.
+  hình contract theo từng ngôn ngữ (`type_config`) cho `FUNCTION`/`OOP`), và `problemType` chỉ khi
+  Problem còn ở `DRAFT`, theo ngữ nghĩa cập nhật tường minh.
 - **Luồng:** phân quyền theo quyền sở hữu và trạng thái (`DRAFT` hoặc `PUBLISHED` chỉnh sửa được tại
   chỗ; Problem `ON_HOLD` và đã xoá mềm thì không); chỉ áp dụng các trường trong danh sách cho phép
-  (xem mục DTO/kiểm tra dữ liệu); chạy kiểm tra theo loại; lưu. Không trường nào có thể thay đổi
-  `id`, `slug`, `problemType`, `createdBy`, `createdAt`, `publishStatus`, `deletedAt` (dấu xoá), các
-  trường ẩn/nội bộ, hay bỏ qua một bước chuyển trạng thái. Việc cập nhật một Problem `PUBLISHED` phải
+  (xem mục DTO/kiểm tra dữ liệu); chạy kiểm tra theo loại; lưu. `problemType` chỉ đổi được khi
+  Problem đang ở `DRAFT` (loại bất biến sau khi xuất bản, theo mục Toàn vẹn lịch sử của đặc tả); đổi
+  loại khi không phải `DRAFT` là lỗi `InvalidProblemState`, và sau khi đổi loại thì `type_config`
+  cùng phần đề bài theo loại phải khớp loại mới, nếu không là lỗi kiểm tra dữ liệu `400`. Không
+  trường nào có thể thay đổi `id`, `slug`, `createdBy`, `createdAt`, `publishStatus`, `deletedAt`
+  (dấu xoá), các trường ẩn/nội bộ, hay bỏ qua một bước chuyển trạng thái. Việc cập nhật một Problem `PUBLISHED` phải
   bảo toàn mức độ sẵn sàng xuất bản (ví dụ ít nhất một ngôn ngữ đang bật và contract bắt buộc theo
   loại), khớp với `LRN-001-FR-012`/`FR-018`; một thay đổi làm một Problem đã xuất bản trở nên không
   hợp lệ sẽ bị từ chối mà không thay đổi state.
@@ -1027,5 +1032,5 @@ Không có.
   chung nào.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó KHÔNG ĐƯỢC thêm hành vi, tác nhân hay tiêu chí nghiệm thu vượt
-> ngoài `spec.md` đã Approved (phiên bản 1.1). Kế hoạch này đang chờ con người review trước khi tạo
-> `tasks.md`;
+> ngoài `spec.md` đã Approved (phiên bản 1.1). Danh sách công việc dẫn xuất từ kế hoạch này nằm ở
+> [`tasks.md`](./tasks.md).
