@@ -4,7 +4,7 @@
 
 Approved
 
-Phiên bản `1.0`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
+Phiên bản `1.1`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -89,6 +89,9 @@ Mã nguồn hiện tại là hành vi nền tảng, không phải bản triển 
   JDG-001.
 - **LRN-002-FR-011 — Giới hạn kích thước:** Một Problem MUST có tối đa 100 Test Case. Đầu vào và kết
   quả mong đợi của mỗi Test Case MUST có kích thước tối đa 1 MiB (1.048.576 byte UTF-8) mỗi trường.
+  Tổng dung lượng đầu vào, kết quả mong đợi của mọi Test Case và mọi harness của một Problem MUST
+  không vượt 8 MiB (8.388.608 byte UTF-8), để gói dữ liệu judge luôn gửi được qua luồng chấm hiện
+  có.
 - **LRN-002-FR-012 — Harness ẩn:** Với Problem `FUNCTION` và `OOP`, chủ sở hữu có thẩm quyền MUST
   có thể thiết lập, thay thế và gỡ harness ẩn theo từng ngôn ngữ đang bật khi Problem chỉnh sửa được.
   Problem `STANDARD` MUST NOT có harness. Harness MUST NOT xuất hiện trong phản hồi hướng tới người
@@ -316,6 +319,9 @@ LRN-002 không đưa vào cấu trúc lỗi mới.
   đầy đủ đầu vào, kết quả mong đợi, chế độ hiển thị, điểm và thứ tự của mọi Test Case, kể cả `HIDDEN`.
 - **LRN-002-AC-023:** Cho trước một Problem đã có 100 Test Case, hoặc một trường vượt 1 MiB, khi thêm
   hoặc sửa Test Case, thì bị từ chối và state không đổi.
+- **LRN-002-AC-024:** Cho trước một Problem mà việc thêm/sửa Test Case hoặc đặt harness sẽ làm tổng
+  dung lượng vượt 8 MiB, khi thao tác chạy, thì bị từ chối với lỗi kiểm tra dữ liệu và state không
+  đổi.
 
 ## Ngoài phạm vi
 
@@ -370,17 +376,18 @@ Không còn. Các quyết định sản phẩm đã được chủ sở hữu s�
 7. **Gói judge theo trạng thái:** Chỉ cấp cho Problem `PUBLISHED` chưa xoá mềm và ngôn ngữ đang bật
    (LRN-002-FR-015).
 8. **Giới hạn kích thước:** Tối đa 100 Test Case mỗi Problem; tối đa 1 MiB cho mỗi trường đầu vào,
-   kết quả mong đợi và harness (LRN-002-FR-011).
+   kết quả mong đợi và harness; tổng mỗi Problem tối đa 8 MiB (LRN-002-FR-011, bổ sung ở 1.1).
 9. **Mã quyền:** Tái dùng `problem:update` và `problem:read-managed` của LRN-001; không thêm mã mới.
 10. **Import hàng loạt:** v1 chỉ thêm từng Test Case; import file/zip là Ngoài phạm vi.
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                        |
-| ---------- | --------- | -------------------- | ---------------------------------------------------------------------------------------------- |
-| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                     |
-| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case) |
-| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002              |
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                                                                     |
+| ---------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                                                                  |
+| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case)                                              |
+| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002                                                           |
+| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm trần tổng 8 MiB mỗi Problem vào FR-011 và AC-024, vì gói judge phải vừa một message RabbitMQ (giới hạn mặc định 16 MiB). Đã phê duyệt. |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository và thứ tự thực thi
 > thuộc về `plan.md`, trừ khi một ràng buộc kiến trúc bắt buộc phải nêu ở đây.
