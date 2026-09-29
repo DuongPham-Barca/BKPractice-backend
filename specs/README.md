@@ -108,13 +108,13 @@ Mỗi tính năng nằm trong thư mục service/domain đã định sẵn và c
 └── tasks.md
 ```
 
-| Tiền tố | Service sở hữu | Ví dụ                                                                                                                  |
-| ------- | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `ID-*`  | Identity       | `ID-001 Authentication`, `ID-002 Profile`, `ID-003 RBAC`                                                               |
-| `LRN-*` | Learning       | `LRN-001 Problem Management`, `LRN-002 Course Management`, `LRN-003 Assignment Management`, `LRN-004 Progress`         |
-| `SUB-*` | Submission     | `SUB-001 Run Code`, `SUB-002 Submit Code`, `SUB-003 Submission History`, `SUB-004 Realtime Result`                     |
-| `JDG-*` | Judge          | `JDG-001 Standard Judge`, `JDG-002 Language Runners`, `JDG-003 Function Judge`, `JDG-004 OOP Judge`, `JDG-005 Sandbox` |
-| `COM-*` | Community      | `COM-001 Posts`, `COM-002 Comments`, `COM-003 Reactions`, `COM-004 Bookmarks`, `COM-005 Moderation`                    |
+| Tiền tố | Service sở hữu | Ví dụ                                                                                                                                          |
+| ------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ID-*`  | Identity       | `ID-001 Authentication`, `ID-002 Profile`, `ID-003 RBAC`                                                                                       |
+| `LRN-*` | Learning       | `LRN-001 Problem Management`, `LRN-002 Test Case Management`, `LRN-003 Course Management`, `LRN-004 Assignment Management`, `LRN-005 Progress` |
+| `SUB-*` | Submission     | `SUB-001 Run Code`, `SUB-002 Submit Code`, `SUB-003 Submission History`, `SUB-004 Realtime Result`                                             |
+| `JDG-*` | Judge          | `JDG-001 Standard Judge`, `JDG-002 Language Runners`, `JDG-003 Function Judge`, `JDG-004 OOP Judge`, `JDG-005 Sandbox`                         |
+| `COM-*` | Community      | `COM-001 Posts`, `COM-002 Comments`, `COM-003 Reactions`, `COM-004 Bookmarks`, `COM-005 Moderation`                                            |
 
 Mã định danh là cố định sau khi được phê duyệt và không được tái sử dụng. Các ví dụ trên chỉ giữ chỗ
 cho quy ước đặt tên; chúng không phải là các đặc tả tính năng đã được triển khai hay đã Approved.
