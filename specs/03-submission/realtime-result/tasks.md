@@ -2,17 +2,15 @@
 
 ## Trạng thái
 
-**Chưa phê duyệt — bản nháp, chưa sẵn sàng triển khai.**
+**Approved — 2026-09-30, chủ sở hữu sản phẩm phê duyệt trong hội thoại. Chưa triển khai.**
 
-Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `0.1` ngày `2026-09-29`, trạng thái
-`Proposed`
-Kế hoạch liên quan: [`./plan.md`](./plan.md) — bản nháp, chưa phê duyệt
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `1.0` ngày `2026-09-30`, trạng thái `Approved`
+Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
 và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
 
-Chưa có người phê duyệt và chưa có ngày phê duyệt. Mọi công việc bên dưới bắt đầu ở trạng thái chưa
-hoàn thành, và không mục nào được phép tích trước khi đặc tả chuyển sang `Approved`.
+Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 
 Đánh dấu các mục không áp dụng là `- [x] N/A — lý do`. Giữ danh sách này đồng bộ với bản triển khai
 thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã được xác minh nếu có liên quan.
@@ -20,10 +18,9 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## Chuẩn bị
 
 - [ ] Khảo sát mã nguồn hiện có và trạng thái repository.
-- [ ] **Chuyển `spec.md` sang `Approved`.** Hiện đang là `Proposed`; đây là điều kiện chặn.
-- [ ] **Chốt Câu hỏi mở 1:** dùng WebSocket hay Server-Sent Events.
-- [ ] Chốt Câu hỏi mở 3 (điểm số trong thông báo) và Câu hỏi mở 7 (thu hồi token đang dùng).
-- [ ] Ghi lại kết luận của các câu hỏi mở trong worked entry.
+- [x] Spec và plan Approved; Socket.IO, payload tối thiểu, polling 5 giây, tối đa 5 kênh
+      toàn cụm và đóng khi access token hết hạn.
+- [x] Ghi kết luận câu hỏi mở trong worked entry phê duyệt SRS.
 - [ ] **Báo cho frontend** rằng thông báo sẽ bỏ các trường thừa. Đây là thay đổi phá vỡ hợp đồng.
 - [ ] Xác nhận kiến trúc Submission và Gateway trong `docs/architecture/`.
 - [ ] Xác nhận `plan.md` khớp với đặc tả sau khi sửa và không mở rộng phạm vi.
@@ -55,7 +52,8 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 ## Hợp đồng sự kiện
 
-- [ ] Thêm `SubmissionResultNotification` gồm `submissionId`, `kind`, `status` vào `@app/contracts`.
+- [ ] Thêm `SubmissionResultNotification` gồm public `submissionId`, `kind`, `status`, `ready: true`
+      vào `@app/contracts`.
 - [ ] Thêm `SubmissionRealtimeEnvelope` gồm `userId` và `notification`.
 - [ ] Giữ nguyên tên kênh `REDIS_CHANNELS.submissionResults`.
 - [ ] Đổi nội dung thông báo từ `{ userId, result: JudgeResult }` sang
@@ -93,10 +91,10 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Chuyển tiếp **chỉ** `notification` xuống phòng `user:<userId>`, không chuyển `userId` hay trường
       nào ngoài danh sách cho phép.
 - [ ] Giữ xác thực token khi kết nối và `join` phòng theo `sub`.
-- [ ] Xác minh danh tính chỉ lấy từ token, không đọc tham số chủ sở hữu do client gửi.
-- [ ] Áp dụng chính sách giới hạn số kết nối đồng thời trên một danh tính; đóng kết nối vượt ngưỡng.
-- [ ] N/A — không thêm thời gian sống kết nối, vì ngắt kết nối định kỳ sẽ vô ích khi mọi kết quả vẫn tới
-      được bằng polling.
+- [ ] Từ chối handshake có tham số chủ sở hữu/vai trò/quyền do client gửi; danh tính chỉ lấy từ token.
+- [ ] Áp dụng Redis lease nguyên tử giới hạn 5 kết nối toàn cụm mỗi danh tính; từ chối kết nối
+      thứ sáu, giải phóng lease khi disconnect, từ chối kết nối mới khi Redis không sẵn sàng.
+- [ ] Đóng socket đúng lúc access token hết hạn theo `exp` và giải phóng lease.
 - [ ] Xác minh Gateway không lưu trữ kết quả nghiệp vụ ở bất kỳ đâu.
 
 ## Messaging
@@ -106,7 +104,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## Realtime
 
 - [ ] Xác minh thông báo chỉ phát **sau khi** bản ghi đã lưu và giao dịch đã hoàn tất.
-- [ ] Xác minh nội dung thông báo chỉ gồm `submissionId`, `kind`, `status`.
+- [ ] Xác minh nội dung thông báo chỉ gồm public `submissionId`, `kind`, `status`, `ready: true`.
 - [ ] Xác minh thông báo không chứa `stdout`, `stderr`, `compileOutput`, `error`, điểm số, Test Case,
       kết quả mong đợi, harness, lệnh biên dịch hay tham số sandbox.
 - [ ] Xác minh Gateway log `warn` một dòng khi Redis không sẵn sàng và tự thử lại khi kết nối trở lại.
@@ -120,14 +118,13 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Xác minh mở kênh thiếu hoặc sai token thì không thiết lập được kênh nào.
 - [ ] Xác minh kênh chỉ nhận thông báo của chủ sở hữu token, không của người khác.
 - [ ] Xác minh không có đường để khách chọn danh tính khác qua tham số chung.
-- [ ] Ghi nhận khoảng trống: kênh còn sống sau khi token hết hạn hoặc bị thu hồi, chờ Câu hỏi mở 7.
-- [ ] Xác minh tài khoản bị khoá thì kênh ngừng nhận; việc đóng kênh không xoá kết quả đã lưu.
+- [ ] Xác minh kênh đóng khi token hết hạn; logout/khóa tài khoản không thu hồi token còn hạn theo ID-001.
 - [ ] N/A — không tách quyền theo vai trò cho kênh realtime.
 
 ## Kiểm thử
 
 - [ ] Kiểm thử thông báo chỉ xảy ra sau khi bản ghi đã lưu, theo đúng thứ tự.
-- [ ] Kiểm thử nội dung thông báo chỉ gồm `submissionId`, `kind`, `status`.
+- [ ] Kiểm thử nội dung thông báo chỉ gồm public `submissionId`, `kind`, `status`, `ready: true`.
 - [ ] Kiểm thử thông báo KHÔNG chứa `stdout`, `stderr`, `compileOutput`, `error`, điểm số, Test Case,
       harness, lệnh biên dịch hay tham số sandbox.
 - [ ] Kiểm thử Redis dừng hoàn toàn → bản ghi vẫn hoàn tất, vẫn đọc được kết quả qua polling.
@@ -135,7 +132,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
       hỏng.
 - [ ] Kiểm thử `subscribe` được gọi lại khi kết nối thất bại lúc khởi động rồi hồi phục.
 - [ ] Kiểm thử hai người học, một người nộp bài → kênh của người kia không nhận thông báo.
-- [ ] Kiểm thử mở kênh kèm tham số chủ sở hữu của người khác → tham số bị bỏ qua.
+- [ ] Kiểm thử mở kênh kèm tham số chủ sở hữu/vai trò/quyền → handshake bị từ chối.
 - [ ] Kiểm thử mở kênh thiếu hoặc sai token → không có kênh nào được thiết lập.
 - [ ] Kiểm thử giao lại cùng một kết quả → không có thông báo thứ hai.
 - [ ] Kiểm thử kết nối gián đoạn rồi mở lại → không mất kết quả phát sinh trong lúc gián đoạn.
@@ -144,8 +141,9 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Kiểm thử không nhận thông báo nào → client không kết luận bản ghi chưa xong.
 - [ ] Kiểm thử bản ghi `INTERNAL_ERROR` → thông báo nêu trạng thái lỗi hệ thống, không phải phán quyết
       lời giải.
-- [ ] Kiểm thử token hết hạn hoặc bị thu hồi sau khi kênh mở → kênh ngừng nhận thông báo.
-- [ ] Kiểm thử vượt ngưỡng số kết nối trên một danh tính → kết nối vượt ngưỡng bị đóng.
+- [ ] Kiểm thử token hết hạn sau khi kênh mở → kênh ngừng nhận; logout trước hạn không đóng token.
+- [ ] Kiểm thử kết nối thứ sáu trên Gateway khác bị từ chối; Redis lỗi thì realtime mới bị từ chối.
+- [ ] Kiểm thử client polling 5 giây khi còn chờ và đọc sớm khi có thông báo.
 - [ ] Kiểm thử thông báo nhận được sai hình thức hoặc có trường lạ → bị loại, không chuyển tiếp.
 - [ ] Kiểm thử log không chứa token và không chứa payload thông báo ở mức thông tin.
 - [ ] Chạy `pnpm lint`.
@@ -158,12 +156,12 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 - [ ] Ghi rõ hợp đồng thông báo tối thiểu và lý do loại bỏ toàn bộ output khỏi realtime.
 - [ ] Ghi rõ polling là cơ chế bảo đảm, còn realtime chỉ là tối ưu độ trễ.
-- [ ] Ghi lại khoảng trống về thu hồi token sau khi kênh đã mở.
+- [ ] Ghi rõ hiệu lực token stateless theo ID-001 và chính sách đóng kênh khi hết hạn.
 - [ ] N/A — không có thay đổi hợp đồng sự kiện RabbitMQ.
 
 ## Xác minh
 
-- [ ] Đối chiếu bản triển khai với từng `FR-001` … `FR-019`, `SR-001` … `SR-010` và `AC-001` …
+- [ ] Đối chiếu bản triển khai với từng `FR-001` … `FR-016`, `SR-001` … `SR-012` và `AC-001` …
       `AC-016` của `spec.md`.
 - [ ] Xác minh bằng kiểm thử rằng `stdout` và `stderr` **không còn** lọt tới trình duyệt qua đường
       realtime hiện tại.

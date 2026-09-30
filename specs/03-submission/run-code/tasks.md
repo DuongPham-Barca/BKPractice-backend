@@ -2,17 +2,15 @@
 
 ## Trạng thái
 
-**Chưa phê duyệt — bản nháp, chưa sẵn sàng triển khai.**
+**Approved — 2026-09-30, chủ sở hữu sản phẩm phê duyệt trong hội thoại. Chưa triển khai.**
 
-Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `0.1` ngày `2026-09-29`, trạng thái
-`Proposed`
-Kế hoạch liên quan: [`./plan.md`](./plan.md) — bản nháp, chưa phê duyệt
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `1.0` ngày `2026-09-30`, trạng thái `Approved`
+Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
 và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
 
-Chưa có người phê duyệt và chưa có ngày phê duyệt. Mọi công việc bên dưới bắt đầu ở trạng thái chưa
-hoàn thành, và không mục nào được phép tích trước khi đặc tả chuyển sang `Approved`.
+Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 
 Đánh dấu các mục không áp dụng là `- [x] N/A — lý do`. Giữ danh sách này đồng bộ với bản triển khai
 thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã được xác minh nếu có liên quan.
@@ -20,10 +18,8 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## Chuẩn bị
 
 - [ ] Khảo sát mã nguồn hiện có và trạng thái repository.
-- [ ] **Chuyển `spec.md` sang `Approved`.** Hiện đang là `Proposed`; đây là điều kiện chặn.
-- [ ] Giải quyết Câu hỏi mở 1 (trạng thái thành công của Run) và Câu hỏi mở 2 (giới hạn mặc định).
-      Hai câu này quyết định trực tiếp nội dung tầng domain.
-- [ ] Ghi lại kết luận của 6 câu hỏi mở trong worked entry.
+- [x] Spec và plan Approved; chốt `EXECUTED`, 3000 ms/256 MB, watchdog 10 phút, UUID tùy chọn.
+- [x] Ghi kết luận câu hỏi mở trong worked entry phê duyệt SRS.
 - [ ] Xác nhận kiến trúc Submission trong `docs/architecture/`.
 - [ ] Xác nhận `plan.md` khớp với đặc tả sau khi sửa và không mở rộng phạm vi.
 - [ ] Xác nhận `pnpm migration:run:submission` chạy được trên môi trường đích.
@@ -32,8 +28,8 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 - [ ] Tạo aggregate `SubmissionRecord` không phụ thuộc framework trong
       `modules/submissions/domain/`.
-- [ ] Chuyển `SubmissionKind` và `SubmissionStatus` sang tầng domain, giữ nguyên giá trị chuỗi để
-      không phá dữ liệu đã lưu.
+- [ ] Chuyển `SubmissionKind` và `SubmissionStatus` sang tầng domain; thêm `EXECUTED` cho Run,
+      giữ các giá trị cũ để không phá dữ liệu đã lưu.
 - [ ] Triển khai `createRunRecord`, `markRunQueued`, `markRunFailedToDispatch`.
 - [ ] Triển khai bất biến `isTerminal` và `canProduceWrongAnswer`.
 - [ ] Khai báo `SubmissionRepositoryPort`, `JudgeJobPort`, `RealtimePort` trong
@@ -66,6 +62,8 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## Cơ sở dữ liệu / Migration
 
 - [ ] Tạo migration `<timestamp>-AddRunStdin.ts` thêm cột `submissions.stdin` kiểu `text` nullable.
+- [ ] Tạo migration thêm `EXECUTED` vào PostgreSQL enum; không rollback bằng cách âm thầm đổi
+      bản ghi `EXECUTED` sang phán quyết khác.
 - [ ] Có phương án `down` tương ứng; migration phải hoàn tác được.
 - [ ] Chạy `pnpm migration:run:submission` và xác minh bản ghi Run cũ vẫn đọc được.
 - [ ] Xác minh `synchronize` vẫn đang tắt và migration `InitialSubmissionSchema` không bị sửa.
@@ -73,7 +71,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## API
 
 - [ ] Bổ sung `RunCodeRequestDto` với `language`, `sourceCode`, `stdin` (cho phép rỗng), `problemId`
-      tuỳ chọn.
+      UUID tuỳ chọn; UUID sai dạng bị từ chối nhưng UUID không tồn tại không cần tra Learning.
 - [ ] Tạo DTO kết quả Run liệt kê tường minh các trường trả về; không tuần tự hoá thẳng entity
       TypeORM.
 - [ ] Bật `ValidationPipe` với `whitelist: true` và `forbidNonWhitelisted: true` nếu `main.ts` chưa
@@ -99,7 +97,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Xác minh chủ sở hữu bản ghi chỉ đến từ header tin cậy `x-auth-user-id` do Gateway xác minh.
 - [ ] Kiểm thử trường `userId`, vai trò, quyền trong body bị từ chối.
 - [ ] Xác minh không có hạn mức tần suất nào được áp trong Submission.
-- [ ] N/A — chưa tách quyền theo vai trò; phụ thuộc Câu hỏi mở 3.
+- [ ] Xác minh không có quyền `submission:run` riêng trong v1.
 
 ## Kiểm thử
 
@@ -110,6 +108,9 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Kiểm thử `JudgeJobPort.publish` ném lỗi → bản ghi ở `INTERNAL_ERROR`, không ở `QUEUED`.
 - [ ] Kiểm thử giao lại cùng một kết quả hai lần → không có bản ghi kết quả trùng.
 - [ ] Kiểm thử kết quả không lỗi → trạng thái không phải `WRONG_ANSWER`.
+- [ ] Kiểm thử Judge báo `ACCEPTED` cho Run → lưu `EXECUTED`, không phát `submission.accepted`.
+- [ ] Kiểm thử watchdog 10 phút chuyển bản ghi còn chờ sang `INTERNAL_ERROR`, result muộn không
+      ghi đè; request trùng tạo bản ghi Run mới.
 - [ ] Kiểm thử `RealtimePort` ném lỗi → bản ghi vẫn hoàn tất, use case không ném lỗi ra ngoài.
 - [ ] Kiểm thử thiếu access token → `401`, không tạo bản ghi.
 - [ ] Chạy `pnpm lint`.
@@ -119,7 +120,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 ## Tài liệu
 
-- [ ] Cập nhật [`docs/architecture/submission-service.md`(../../../docs/architecture/submission-service.md)
+- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md)
       khi trạng thái từ PARTIALLY ALIGNED chuyển sang ALIGNED cho phần Run.
 - [ ] Ghi chú migration `stdin` vào tài liệu vận hành.
 - [ ] N/A — tài liệu tương tác phía Gateway không thay đổi.

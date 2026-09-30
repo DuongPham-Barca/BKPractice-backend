@@ -2,22 +2,13 @@
 
 ## Trạng thái
 
-**Chưa phê duyệt — bản nháp.** Đây là lệch quy trình có chủ ý.
-
-Đặc tả liên quan [`./spec.md`](./spec.md) phiên bản `0.1` ngày `2026-09-29` đang ở trạng thái
-`Proposed`, trong khi quy trình yêu cầu `Approved` trước khi lập kế hoạch. Chưa có người phê duyệt,
-chưa có ngày phê duyệt, và tài liệu này **không có hiệu lực để triển khai**.
-
-Nguồn của yêu cầu này: mẫu [`specs/templates/plan.template.md`](../../templates/plan.template.md) và
-[`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
-
-Khi đặc tả chuyển sang `Approved`, phần này phải được cập nhật kèm người phê duyệt và ngày phê duyệt
-thật. Không tự điền để làm tài liệu trông hoàn tất.
+**Approved — 2026-09-30, chủ sở hữu sản phẩm phê duyệt trong hội thoại.** Đây là kế hoạch triển
+khai tương lai; chưa có task mã nguồn nào được thực hiện.
 
 ## Đặc tả liên quan
 
-- [`./spec.md`](./spec.md) — SUB-001 Chạy thử mã (Run Code), phiên bản 0.1, ngày 2026-09-29
-- Trạng thái spec tại thời điểm lập kế hoạch: **`Proposed`** (chưa Approved)
+- [`./spec.md`](./spec.md) — SUB-001 Chạy thử mã (Run Code), phiên bản 1.0, ngày 2026-09-30
+- Trạng thái spec dùng cho kế hoạch: **`Approved`**
 - Spec liên quan cùng nhóm: [`../submit-code/spec.md`](../submit-code/spec.md),
   [`../submission-history/spec.md`](../submission-history/spec.md),
   [`../realtime-result/spec.md`](../realtime-result/spec.md)
@@ -27,7 +18,7 @@ thật. Không tự điền để làm tài liệu trông hoàn tất.
 Service: **Submission**
 
 Lý do: `specs/00-system/service-boundaries.md` và
-[`docs/architecture/submission-service.md`(../../../docs/architecture/submission-service.md) giao
+[`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md) giao
 quyền sở hữu vòng đời bền vững của Run và Submit cho Submission. SUB-001 cũng ghi rõ ở mục Ngoài
 phạm vi rằng không có microservice Run riêng.
 
@@ -35,9 +26,9 @@ phạm vi rằng không có microservice Run riêng.
 
 Kiến trúc: **Clean Architecture + Event-Driven Architecture**
 
-Chép chính xác từ [`specs/00-system/architecture-reference.md`(../../00-system/architecture-reference.md)
+Chép chính xác từ [`specs/00-system/architecture-reference.md`](../../00-system/architecture-reference.md)
 dòng Submission, và khớp với `submission-service.md` cùng
-[ADR 0002(../../../docs/adr/0002-revised-service-internal-architectures.md).
+[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md).
 
 Hệ quả bắt buộc cho kế hoạch này:
 
@@ -52,21 +43,20 @@ Redis thay vì qua port. Run là nơi đầu tiên cần tách port để sửa 
 
 ## Ảnh hưởng tới mã nguồn hiện có
 
-| Tệp hiện có                                     | Ảnh hưởng                                                                                                      |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `modules/submissions/submissions.service.ts`     | `run()` bị chuyển thành một use case riêng; `publishOrFail` được thay bằng port                                            |
-| `modules/submissions/submissions.controller.ts`   | Route Run giữ nguyên đường dẫn; chỉ đổi sang gọi use case                                                        |
-| `modules/submissions/entities/submission.entity.ts` | Entity TypeORM giữ vai trò lưu trữ; aggregate domain tách riêng                                                |
-| `modules/submissions/dto/run-code.dto.ts`         | Bổ sung cấu hình chặn trường lạ và giới hạn `stdin`                                                              |
-| `modules/submissions/judge-result.consumer.ts`   | Consumer mỏng lại, gọi use case; nhánh Run được xử lý trong use case dùng chung                                   |
-| `database/migrations/...InitialSubmissionSchema`  | Không sửa migration đã chạy; thêm migration mới cho cột `stdin`                                                  |
+| Tệp hiện có                                         | Ảnh hưởng                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `modules/submissions/submissions.service.ts`        | `run()` bị chuyển thành một use case riêng; `publishOrFail` được thay bằng port |
+| `modules/submissions/submissions.controller.ts`     | Route Run giữ nguyên đường dẫn; chỉ đổi sang gọi use case                       |
+| `modules/submissions/entities/submission.entity.ts` | Entity TypeORM giữ vai trò lưu trữ; aggregate domain tách riêng                 |
+| `modules/submissions/dto/run-code.dto.ts`           | Bổ sung cấu hình chặn trường lạ và giới hạn `stdin`                             |
+| `modules/submissions/judge-result.consumer.ts`      | Consumer mỏng lại, gọi use case; nhánh Run được xử lý trong use case dùng chung |
+| `database/migrations/...InitialSubmissionSchema`    | Không sửa migration đã chạy; thêm migration mới cho cột `stdin`                 |
 
 Hành vi phải giữ tương thích:
 
 - Đường dẫn `POST /api/run` và mã `202 Accepted` không đổi.
 - Header tin cậy `x-auth-user-id` từ Gateway không đổi.
-- Cặp giới hạn mặc định đang dùng là `3000ms` / `256MB`; kế hoạch giữ nguyên giá trị này cho tới
-  khi Câu hỏi mở 2 được chốt (xem mục Giới hạn thực thi).
+- Cặp giới hạn cố định của Run là `3000ms` / `256MB`; client không được ghi đè.
 
 ## Thay đổi ở tầng domain
 
@@ -75,14 +65,14 @@ Tạo một aggregate không phụ thuộc framework tại
 
 - `SubmissionRecord` — thuộc tính chủ sở hữu, loại bản ghi, `problemId` tuỳ chọn, ngôn ngữ, mã nguồn,
   `stdin`, trạng thái, mốc thời gian.
-- `SubmissionKind` và `SubmissionStatus` giữ nguyên giá trị hiện có để không phá dữ liệu đã lưu.
-  `RUNNING` vẫn tồn tại trong enum vì migration đã tạo giá trị đó, nhưng Run không dùng tới theo
-  SUB-001.
+- `SubmissionKind` giữ giá trị hiện có; `SubmissionStatus` bổ sung `EXECUTED` cho Run thành công.
+  `RUNNING` vẫn tồn tại trong enum lưu trữ nhưng Run không dùng tới.
 - `createRunRecord(input)` — hàm khởi tạo bản ghi Run ở trạng thái `PENDING`.
 - `markRunQueued(record)` — chuyển `PENDING` sang `QUEUED` sau khi việc được giao thành công.
 - `markRunFailedToDispatch(record)` — chuyển sang `INTERNAL_ERROR` khi không phát được việc
   (SUB-001-FR-014).
 - `isTerminal(status)` — bất biến dùng chung, vì SUB-002 và SUB-003 cần cùng một định nghĩa.
+- Consumer ánh xạ kết quả Judge `ACCEPTED` với `mode: RUN` thành `EXECUTED` trước khi lưu.
 - `canProduceWrongAnswer()` — Run không có dữ liệu mong đợi nên không sinh `WRONG_ANSWER`
   (SUB-001-FR-006).
 
@@ -99,11 +89,11 @@ vụ kỹ thuật.
 Các port tối thiểu, đặt tại
 `apps/submission-service/src/modules/submissions/domain/ports/`:
 
-| Port                       | Phục vụ yêu cầu                                  | Cần cho Run        |
-| -------------------------- | ------------------------------------------------ | ------------------ |
-| `SubmissionRepositoryPort` | FR-011 lưu bản ghi bằng PostgreSQL                | Có                 |
-| `JudgeJobPort`             | FR-010 giao việc chấm bất đồng bộ                   | Có                 |
-| `RealtimePort`             | FR-012 phát kết quả sau khi lưu                   | Có                 |
+| Port                       | Phục vụ yêu cầu                    | Cần cho Run |
+| -------------------------- | ---------------------------------- | ----------- |
+| `SubmissionRepositoryPort` | FR-011 lưu bản ghi bằng PostgreSQL | Có          |
+| `JudgeJobPort`             | FR-010 giao việc chấm bất đồng bộ  | Có          |
+| `RealtimePort`             | FR-012 phát kết quả sau khi lưu    | Có          |
 
 Run **không** cần `LearningJudgePackagePort`. Đây là điểm cốt lõi của SUB-001-FR-004: Run không
 được gọi Learning. Việc import port đó vào `modules/run-code` là sai về ranh giới module và sẽ bị
@@ -114,9 +104,13 @@ Thứ tự các bước trong use case, tương ứng SUB-001-FR-014 và FR-015:
 1. Kiểm tra ngữ cảnh tin cậy đã có `userId`.
 2. Lưu bản ghi ở trạng thái `PENDING`.
 3. Phát việc cho Judge.
-4. Thành công: chuyển sang `QUEUED` và trả về định danh cùng trạng thái đã nhận vào hàng đợi.
-5. Thất bại ở bước 3: chuyển sang `INTERNAL_ERROR`, rồi ném lỗi để controller trả `202` kèm lỗi
-   theo quy ước hiện có. Bản ghi không bị bỏ treo ở `QUEUED`.
+4. Thành công: chuyển sang `QUEUED` và trả về `202` cùng định danh và trạng thái hàng đợi.
+5. Thất bại ở bước 3: chuyển sang `INTERNAL_ERROR`, rồi trả lỗi theo quy ước hiện có; không trả
+   `202` kèm lỗi. Bản ghi không bị bỏ treo ở `QUEUED`.
+
+Watchdog định kỳ cập nhật có điều kiện bản ghi `PENDING`/`QUEUED` quá 10 phút từ `createdAt` sang
+`INTERNAL_ERROR`; consumer chỉ áp dụng kết quả nếu bản ghi chưa terminal. Xử lý race bằng cập nhật
+nguyên tử, kết quả đến sau timeout bị bỏ qua.
 
 Nếu bước 2 thành công nhưng bước 3 thất bại, bản ghi vẫn tồn tại ở `INTERNAL_ERROR` và vẫn đọc được
 trong lịch sử. Đây là hành vi đã chốt, không phải một lựa chọn của kế hoạch.
@@ -124,7 +118,7 @@ trong lịch sử. Đây là hành vi đã chốt, không phải một lựa ch�
 ## Lưu trữ
 
 - `SubmissionRepositoryPort` có các thao tác: `save(record)`, `findById(id)`, `findByIdAndOwner(id,
-  userId)`, `listByOwner(filters, cursor, limit)`. Danh sách thuộc SUB-003, nhưng phương thức đặt ở
+userId)`, `listByOwner(filters, cursor, limit)`. Danh sách thuộc SUB-003, nhưng phương thức đặt ở
   port dùng chung để tránh hai aggregate cùng đọc một bảng.
 - Xác định bản ghi Run bằng cặp `userId` và `kind = 'RUN'`; không cần một bảng riêng.
 - Quyền sở hữu cơ sở dữ liệu: Submission sở hữu `submissions` và `submission_results`. Run không tạo
@@ -138,11 +132,12 @@ trong lịch sử. Đây là hành vi đã chốt, không phải một lựa ch�
 Bảng `submissions` hiện có KHÔNG có cột lưu `stdin`, trong khi SUB-001-FR-011 yêu cầu lưu `stdin`
 cùng mã nguồn. Đây là thiếu sót thật, không phải lựa chọn của kế hoạch.
 
-| Thay đổi          | Chi tiết                                                                        |
-| ----------------- | ------------------------------------------------------------------------------- |
-| Cột mới           | `submissions.stdin` kiểu `text`, cho phép `NULL`                                |
-| Index mới         | Không thêm. Index hiện có trên `user_id` và `problem_id` đã phục vụ truy vấn Run |
-| Ràng buộc         | Không có ràng buộc mới; `stdin` là dữ liệu do người học gửi                   |
+| Thay đổi              | Chi tiết                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| Cột mới               | `submissions.stdin` kiểu `text`, cho phép `NULL`                                                  |
+| Enum mới              | Thêm `EXECUTED` vào `submissions_status_enum` cho Run thành công                                  |
+| Index mới             | Không thêm. Index hiện có trên `user_id` và `problem_id` đã phục vụ truy vấn Run                  |
+| Ràng buộc             | Không có ràng buộc mới; `stdin` là dữ liệu do người học gửi                                       |
 | Ảnh hưởng tương thích | Cột cho phép `NULL` nên các bản ghi Run cũ vẫn đọc được; giá trị `NULL` được hiểu là `stdin` rỗng |
 
 `SubmissionResult` không thay đổi. `stdout` và `stderr` vẫn được lưu vì SUB-002-FR-019 yêu cầu
@@ -156,15 +151,17 @@ lưu, còn quyền xem được quyết định ở SUB-003.
 - `down`: `ALTER TABLE "submissions" DROP COLUMN "stdin"`
 - Tính hoàn tác: có, vì cột nullable và không có ràng buộc phụ thuộc
 - Migration `1700000001000-InitialSubmissionSchema` đã tồn tại **không được sửa**
+- Migration riêng thêm giá trị `EXECUTED` vào PostgreSQL enum. `down` không được âm thầm đổi các
+  bản ghi `EXECUTED` sang phán quyết khác; rollback enum yêu cầu quy trình dữ liệu riêng.
 - `synchronize` phải tiếp tục ở trạng thái tắt; không được dùng nó thay cho migration
 
 ## API
 
-| Route                       | Method | Mã thành công | Ghi chú                                |
-| --------------------------- | ------ | ------------- | -------------------------------------- |
-| `/api/run`                  | `POST` | `202`         | Đường dẫn giữ nguyên; Gateway đã proxy |
+| Route      | Method | Mã thành công | Ghi chú                                |
+| ---------- | ------ | ------------- | -------------------------------------- |
+| `/api/run` | `POST` | `202`         | Đường dẫn giữ nguyên; Gateway đã proxy |
 
-Phản hồi `202` trả về: định danh bản ghi, loại là thử nghiệm, trạng thái đã nhận vào hàng đợi,
+Phản hồi `202` trả về: `id` công khai (`publicId` theo SUB-003), loại là thử nghiệm, trạng thái đã nhận vào hàng đợi,
 ngôn ngữ, thời điểm tạo. Không trả phán quyết trong cùng phản hồi (SUB-001-AC-001).
 
 Phản hồi phải được ánh xạ qua một DTO kết quả riêng, không trả thẳng entity TypeORM. Lý do là
@@ -175,12 +172,13 @@ SUB-001-SR-004 và SUB-003-SR-008: tuần tự hoá thẳng entity sẽ làm l�
 `RunCodeRequestDto`:
 
 - `language` — `@IsIn(SUPPORTED_LANGUAGES)`; lấy từ danh mục dùng chung trong
-  [`libs/contracts/src/judge.contracts.ts`(../../../libs/contracts/src/judge.contracts.ts),
+  [`libs/contracts/src/judge.contracts.ts`](../../../libs/contracts/src/judge.contracts.ts),
   không khai báo lại danh sách (SUB-001-FR-003).
 - `sourceCode` — `@IsString()`, `@MinLength(1)`, `@MaxLength(100_000)`.
 - `stdin` — `@IsString()`, `@MaxLength(100_000)`, cho phép chuỗi rỗng. Cần cho phép rỗng vì
   SUB-001-FR-008 nói rõ `stdin` có thể rỗng.
-- `problemId` — `@IsOptional()`, `@IsUUID('4')`, chỉ lưu làm nhãn (SUB-001-FR-005).
+- `problemId` — `@IsOptional()`, `@IsUUID('4')`, chỉ lưu làm nhãn (SUB-001-FR-005); UUID sai định
+  dạng bị từ chối, UUID không tồn tại vẫn được lưu.
 
 Chống gán hàng loạt: bật `ValidationPipe` với `whitelist: true` và `forbidNonWhitelisted: true` ở
 `main.ts` nếu chưa có. Đây là điều kiện cần để đạt SUB-001-AC-008 và SUB-001-AC-016; cần kiểm tra
@@ -190,8 +188,7 @@ trạng thái hiện tại của `main.ts` trước khi thêm.
 
 - Chủ sở hữu lấy từ header tin cậy `x-auth-user-id` mà Gateway đã xác minh. Controller chỉ đọc
   header này và không nhận bất kỳ định danh nào từ body.
-- Không thêm kiểm tra quyền theo vai trò ở Submission trong phiên bản này, vì SUB-001 cho phép mọi
-  vai trò đã xác thực. Câu hỏi mở 3 chưa chốt, nên không được tự động tạo quyền mới.
+- Không thêm quyền `submission:run`; mọi vai trò đã xác thực được Run theo SUB-001.
 - Không thêm hạn mức tần suất (SUB-001-SR-009).
 - Việc một Run không cấp quyền lên Problem hay tiến độ được đảm bảo bằng cách Run không gọi bất kỳ
   service nào khác ngoài Judge.
@@ -227,44 +224,47 @@ tệp gốc nếu chúng còn được dùng cho Submit.
 
 ## Xử lý lỗi
 
-| Lỗi                            | Nơi xử lý                                            | Kết quả                                        |
-| ------------------------------ | ---------------------------------------------------- | ---------------------------------------------- |
-| Thiếu `x-auth-user-id`         | Controller, trước khi gọi use case                  | `401`                                          |
-| Lỗi kiểm tra dữ liệu          | `ValidationPipe`                                    | `400`, không tạo bản ghi                      |
-| Lỗi lưu trữ bản ghi           | Use case, ném lỗi                                   | Không có bản ghi, không gọi Judge              |
-| Lỗi phát việc cho Judge        | Use case, chuyển bản ghi sang `INTERNAL_ERROR`        | Bản ghi kết thúc, không bị treo               |
-| Kết quả phán quyết không hợp lệ | Consumer, kiểm tra hình thức trước khi áp dụng    | Giữ trạng thái cũ, log cảnh báo                |
-| Lỗi phát realtime              | Adapter, nuốt và log                                 | Bản ghi vẫn hoàn tất                           |
+| Lỗi                             | Nơi xử lý                                      | Kết quả                           |
+| ------------------------------- | ---------------------------------------------- | --------------------------------- |
+| Thiếu `x-auth-user-id`          | Controller, trước khi gọi use case             | `401`                             |
+| Lỗi kiểm tra dữ liệu            | `ValidationPipe`                               | `400`, không tạo bản ghi          |
+| Lỗi lưu trữ bản ghi             | Use case, ném lỗi                              | Không có bản ghi, không gọi Judge |
+| Lỗi phát việc cho Judge         | Use case, chuyển bản ghi sang `INTERNAL_ERROR` | Bản ghi kết thúc, không bị treo   |
+| Kết quả phán quyết không hợp lệ | Consumer, kiểm tra hình thức trước khi áp dụng | Giữ trạng thái cũ, log cảnh báo   |
+| Lỗi phát realtime               | Adapter, nuốt và log                           | Bản ghi vẫn hoàn tất              |
 
 Không thêm cấu trúc lỗi mới theo SUB-001. Dùng các exception sẵn có của NestJS đang được
 `submissions.controller.ts` và `learning-judge.client.ts` sử dụng.
 
 ## Bảo mật
 
-| Mối đe doạ                          | Biện pháp trong kế hoạch                                                       |
-| ----------------------------------- | --------------------------------------------------------------------------------- |
-| Mã nguồn biến thành lệnh            | Truyền qua trường `sourceCode` của `JudgeRequest`; Submission không dựng lệnh nào |
-| Client gửi header định danh giả     | Gateway đã xoá header trước khi xác thực; Submission chỉ đọc header sau đó        |
-| Client gửi dữ liệu judge giả        | `whitelist` + `forbidNonWhitelisted` loại trường lạ trước khi tới use case        |
-| Lộ dữ liệu judge qua phản hồi      | DTO kết quả liệt kê tường minh, không tuần tự hoá thẳng entity                  |
-| Lộ mã nguồn qua log                 | Không log `sourceCode` hay `stdin`; chỉ log định danh bản ghi và mã lỗi            |
-| Truy cập bản ghi của người khác    | Truy vấn luôn kèm `userId`; Run không có route đọc bản ghi nào                   |
+| Mối đe doạ                      | Biện pháp trong kế hoạch                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| Mã nguồn biến thành lệnh        | Truyền qua trường `sourceCode` của `JudgeRequest`; Submission không dựng lệnh nào |
+| Client gửi header định danh giả | Gateway đã xoá header trước khi xác thực; Submission chỉ đọc header sau đó        |
+| Client gửi dữ liệu judge giả    | `whitelist` + `forbidNonWhitelisted` loại trường lạ trước khi tới use case        |
+| Lộ dữ liệu judge qua phản hồi   | DTO kết quả liệt kê tường minh, không tuần tự hoá thẳng entity                    |
+| Lộ mã nguồn qua log             | Không log `sourceCode` hay `stdin`; chỉ log định danh bản ghi và mã lỗi           |
+| Truy cập bản ghi của người khác | Truy vấn luôn kèm `userId`; Run không có route đọc bản ghi nào                    |
 
 ## Chiến lược kiểm thử
 
-| Mã            | Kịch bản kiểm thử                                                                 |
-| ------------- | ------------------------------------------------------------------------------------- |
-| FR-008, AC-007 | Ngôn ngữ ngoài danh mục, mã nguồn rỗng, `stdin` quá dài → từ chối, không tạo bản ghi  |
-| FR-009, AC-016 | Body chứa `userId`/vai trò/quyền → bị từ chối bởi `forbidNonWhitelisted`              |
+| Mã             | Kịch bản kiểm thử                                                                      |
+| -------------- | -------------------------------------------------------------------------------------- |
+| FR-008, AC-007 | Ngôn ngữ ngoài danh mục, mã nguồn rỗng, `stdin` quá dài → từ chối, không tạo bản ghi   |
+| FR-009, AC-016 | Body chứa `userId`/vai trò/quyền → bị từ chối bởi `forbidNonWhitelisted`               |
 | AC-008         | Body chứa `expectedOutput`, `testCases`, `timeLimitMs` → trường bị từ chối             |
 | FR-010, AC-001 | Run hợp lệ → bản ghi `QUEUED`, `JudgeJobPort.publish` được gọi đúng một lần            |
-| FR-011, AC-002 | Kết quả phán quyết tới → trạng thái, thời gian, bộ nhớ được lưu, realtime được phát |
-| AC-003         | Assert **không có** lời gọi `AcceptedEventPort` cho bản ghi `RUN`                     |
-| AC-009         | `problemId` không tồn tại → bản ghi vẫn tạo, không có lời gọi HTTP nào tới Learning  |
-| FR-014, AC-010 | `JudgeJobPort.publish` ném lỗi → bản ghi ở `INTERNAL_ERROR`, không ở `QUEUED`         |
-| FR-015, AC-011 | Áp dụng cùng một kết quả hai lần → không có bản ghi kết quả trùng                     |
-| AC-013         | Kết quả không lỗi → trạng thái không phải `WRONG_ANSWER`                              |
-| AC-012         | `RealtimePort` ném lỗi → bản ghi vẫn hoàn tất, không ném lỗi ra ngoài                |
+| FR-011, AC-002 | Kết quả phán quyết tới → trạng thái, thời gian, bộ nhớ được lưu, realtime được phát    |
+| AC-003         | Assert **không có** lời gọi `AcceptedEventPort` cho bản ghi `RUN`                      |
+| AC-009         | `problemId` không tồn tại → bản ghi vẫn tạo, không có lời gọi HTTP nào tới Learning    |
+| FR-014, AC-010 | `JudgeJobPort.publish` ném lỗi → bản ghi ở `INTERNAL_ERROR`, không ở `QUEUED`          |
+| FR-015, AC-011 | Áp dụng cùng một kết quả hai lần → không có bản ghi kết quả trùng                      |
+| AC-013         | Kết quả không lỗi → trạng thái không phải `WRONG_ANSWER`                               |
+| FR-006         | Judge báo `ACCEPTED` cho Run → lưu `EXECUTED`, không phát tiến độ                      |
+| FR-005         | `problemId` sai dạng UUID → từ chối; UUID không tồn tại → vẫn chạy, không gọi Learning |
+| FR-014         | Watchdog quá 10 phút → `INTERNAL_ERROR`; kết quả về sau không ghi đè                   |
+| AC-012         | `RealtimePort` ném lỗi → bản ghi vẫn hoàn tất, không ném lỗi ra ngoài                  |
 
 Kiểm thử phải dùng port giả (fake) chứ không mock repository TypeORM, để chứng minh use case không
 phụ thuộc framework.
@@ -290,13 +290,12 @@ phụ thuộc framework.
 
 ## Rủi ro
 
-| Rủi ro                                                              | Biện pháp giảm thiểu                                                       |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Câu hỏi mở 1 về trạng thái thành công của Run chưa chốt              | Giữ hành vi hiện tại là chấp nhận `ACCEPTED` từ Judge, ghi rõ rằng đây là hành vi mượn; nếu chốt khác thì sửa ở domain |
-| Câu hỏi mở 2 về giới hạn mặc định chưa chốt                        | Giữ `3000ms` / `256MB` trong một hằng số có tên, không rải rác ở controller |
-| Câu hỏi mở 4 về bản ghi treo chưa chốt                              | Không tự thêm timeout; ghi nhận rủi ro vận hành và báo cáo                     |
-| Migration cột `stdin` chạy trên môi trường đã có dữ liệu             | Cột nullable nên không cần backfill; migration hoàn tác được                  |
-| Tách port làm thay đổi hành vi Submit ngoài ý muốn                   | Bước 1 chỉ thêm, chưa xoá; xác minh bằng kiểm thử Submit hiện có trước khi dọn tệp cũ |
+| Rủi ro                                                   | Biện pháp giảm thiểu                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Judge trả `ACCEPTED` cho Run, khác ý nghĩa Submit        | Ánh xạ thành `EXECUTED` trước khi lưu; không phát tiến độ                             |
+| Bản ghi treo hoặc kết quả tới sau timeout                | Watchdog 10 phút và cập nhật trạng thái có điều kiện, terminal là bất biến            |
+| Migration cột `stdin` chạy trên môi trường đã có dữ liệu | Cột nullable nên không cần backfill; migration hoàn tác được                          |
+| Tách port làm thay đổi hành vi Submit ngoài ý muốn       | Bước 1 chỉ thêm, chưa xoá; xác minh bằng kiểm thử Submit hiện có trước khi dọn tệp cũ |
 
 ## Tuân thủ kiến trúc
 
@@ -312,19 +311,10 @@ phụ thuộc framework.
   `submission-service.md`, phải dừng và báo cáo.
 - **Không đưa vào service này:** mã biên dịch, runner, sandbox, mã của Judge.
 
-## Câu hỏi mở còn chặn kế hoạch này
+## Quyết định đã chốt
 
-Các câu hỏi dưới đây lấy từ `spec.md`. Chúng chưa được giải quyết, và câu 1, 2, 4 ảnh hưởng trực
-tiếp tới kế hoạch:
-
-1. **Trạng thái thành công của Run** — ảnh hưởng tới `createRunRecord` và tới cách SUB-003 hiển thị.
-2. **Giới hạn mặc định của Run** — ảnh hưởng tới hằng số giới hạn và tới việc có cho phép ghi đè
-   hay không.
-3. **Quyền chạy Run** — ảnh hưởng tới việc có thêm kiểm tra quyền trong Submission hay không.
-4. **Bản ghi Run treo** — ảnh hưởng tới việc có cần một cơ chế hết hạn trong Submission hay không.
-5. **Số lần Run tối đa theo người học** — ảnh hưởng tới việc có cần bộ đếm trong lưu trữ hay không.
-6. **`problemId` rỗng** — ảnh hưởng tới việc `problem_id` có nullable hay không. Kế hoạch giữ
-   nullable theo hành vi hiện tại.
+`EXECUTED` cho Run thành công, 3000 ms/256 MB cố định, watchdog 10 phút, không quyền riêng/không
+quota, `problemId` UUID nullable không tra Learning. Không còn câu hỏi chặn kế hoạch.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó KHÔNG ĐƯỢC thêm hành vi, tác nhân hay tiêu chí nghiệm thu vượt
-> ngoài `spec.md`. Vì `spec.md` chưa Approved, tài liệu này chưa có hiệu lực để triển khai.
+> ngoài `spec.md` Approved.
