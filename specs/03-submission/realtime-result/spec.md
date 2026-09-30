@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Proposed
+Approved
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -37,15 +37,15 @@ SUB-004 chỉ mô tả hành vi, không thiết kế cơ chế:
 
 - Redis pub/sub là kênh nội bộ giữa Submission và Gateway.
 - Gateway là bên sở hữu phía client của kênh đẩy. Submission không mở kết nối tới trình duyệt.
-- `specs/00-system/communication.md` chỉ phê duyệt **một chiều** cho tin realtime, và chỉ dành cho
-  thông báo không quan trọng. Phát lại kết quả cho nhiều instance Gateway chưa được kiểm chứng trong
-  kiến trúc.
+- `specs/00-system/communication.md` phê duyệt Redis Pub/Sub một chiều cho thông báo không quan
+  trọng. Các Gateway subscriber đang hoạt động cùng kênh có thể đều nhận cùng tín hiệu, nhưng
+  không có cam kết giao bền vững hoặc phát lại.
 
 Hai hệ quả trực tiếp của việc realtime là một chiều và là best-effort:
 
-1. **Một thông báo có thể tới đúng một instance Gateway, hoặc không tới instance nào.** Nếu người
-   học đang kết nối với một instance khác, thông báo không tới. Đây không phải lỗi cần sửa, mà là
-   hành vi đã biết.
+1. **Thông báo là best-effort trên mọi Gateway.** Mỗi Gateway đang subscribe có thể nhận cùng
+   thông báo và phát tới socket của chủ sở hữu trên instance đó. Redis/Gateway gián đoạn có thể
+   làm mất thông báo.
 2. **Không có hàng đợi bền vững, không có lưu trữ, không có phát lại.** Người học có thể không nhận
    được thông báo. Vì vậy polling không phải là phương án dự phòng, mà là **cơ chế bảo đảm duy nhất**
    rằng kết quả tới được người học.
@@ -89,21 +89,23 @@ Quyết định sản phẩm đã chốt cho phiên bản này và ràng buộc 
   phải đọc được.
 - **SUB-004-FR-011 — Không suy luận trạng thái từ việc im lặng:** Vắng mặt thông báo realtime
   MUST NOT được client diễn giải là một trạng thái. Trạng thái thật chỉ lấy từ dữ liệu.
-- **SUB-004-FR-012 — Không phát trạng thái trung gian:** Vì SUB-002 chỉ biết phán quyết cuối cùng,
-  Submission MUST chỉ phát khi bản ghi chuyển sang trạng thái cuối cùng. Nếu sau này có trạng thái
-  trung gian, việc phát thêm trạng thái đó là Câu hỏi mở.
+- Client theo dõi một bản ghi còn chờ bằng polling chi tiết mỗi 5 giây, kể cả khi Socket.IO đang
+  kết nối; dừng polling khi đọc được trạng thái cuối. Thông báo realtime chỉ kích hoạt đọc sớm.
+- **SUB-004-FR-012 — Không phát trạng thái trung gian:** Submission MUST chỉ phát khi bản ghi chuyển
+  sang trạng thái cuối cùng; v1 không phát `RUNNING`.
 - **SUB-004-FR-013 — Kết nối thay thế:** Khi một kết nối realtime bị gián đoạn và được mở lại, người
   học MUST vẫn nhận được các kết quả phát sinh trong lúc gián đoạn, nhờ polling. Kênh realtime mới
   mở MUST NOT được coi là đã bù cho các kết quả bị bỏ lỡ.
 - **SUB-004-FR-014 — Nhiều phiên của cùng một người học:** Khi cùng một người học mở nhiều phiên, mỗi
   phiên đang mở kênh đều có thể nhận thông báo cho chủ sở hữu đó. Việc phát tới mọi kênh của một
   chủ sở hữu là hành vi được phép, vì mọi kênh đều thuộc cùng một chủ sở hữu đã xác thực.
-- **SUB-004-FR-015 — Đóng kênh khi hết hạn xác thực:** Khi access token hết hạn hoặc bị thu hồi, Gateway
-  MUST ngừng cấp thông báo cho kênh đó. Kênh cũ MUST NOT tiếp tục nhận kết quả như một kênh hợp lệ.
+- **SUB-004-FR-015 — Đóng kênh khi hết hạn xác thực:** Khi access token hết hạn, Gateway
+  MUST ngừng cấp thông báo cho kênh đó. V1 không thu hồi access token đang còn hạn khi logout hoặc
+  khoá tài khoản theo ID-001-FR-019; Gateway đóng kênh đúng lúc token hết hạn.
 - **SUB-004-FR-016 — Không thay thế lưu trữ:** Realtime MUST NOT được dùng làm nơi lưu kết quả. Thông
   báo có thể mất, và việc mất thông báo không được làm mất kết quả.
 
-## Quy tắc nghiệp vại
+## Quy tắc nghiệp vụ
 
 ### Vị trí của realtime trong luồng tổng thể
 
@@ -125,25 +127,23 @@ Judge -> RabbitMQ judge.result -> Submission
   thống không giữ được khi khởi động lại.
 - Nếu bước (2) thất bại, bước (1) vẫn giữ nguyên hiệu lực và bước (3) vẫn cho kết quả. Đây là hành
   vi bắt buộc, không phải một trường hợp ngoại lệ.
-- Vì dữ liệu chỉ đi một chiều qua Redis, nếu người học đang kết nối với một instance Gateway khác
-  với instance nhận được thông báo, người học sẽ không nhận được thông báo trong lần chạy đó. Việc
-  này được chấp nhận trong phạm vi này và phải được nói rõ với người dùng.
+- Mỗi Gateway subscriber đang hoạt động có thể phát tới các socket tương ứng trên instance của
+  mình. Không có replay khi Redis/Gateway gián đoạn; client tiếp tục polling.
 
 ### Nội dung kết quả
 
-| Nhóm      | Trường                                                                                          |
-| --------- | ----------------------------------------------------------------------------------------------- |
-| Định danh  | Định danh công khai của bản ghi                                                                    |
-| Phân loại  | Loại bản ghi: nộp bài chính thức hay Run                                                             |
-| Trạng thái | Trạng thái cuối cùng của bản ghi                                                                   |
-| Tín hiệu   | Báo hiệu rằng chi tiết kết quả đã sẵn sàng để đọc                                                  |
+| Nhóm       | Trường                                            |
+| ---------- | ------------------------------------------------- |
+| Định danh  | Định danh công khai của bản ghi                   |
+| Phân loại  | Loại bản ghi: nộp bài chính thức hay Run          |
+| Trạng thái | Trạng thái cuối cùng của bản ghi                  |
+| Tín hiệu   | Báo hiệu rằng chi tiết kết quả đã sẵn sàng để đọc |
 
 - Thông báo phải đủ để giao diện cập nhật một dòng lịch sử, và không nhiều hơn thế. Mọi thứ khác
   được lấy qua chi tiết bản ghi.
 - Thông báo phải phản ánh trạng thái đã lưu. Vì nó phát sau bước (1), người học nhận được thông
   báo rồi đọc chi tiết sẽ luôn thấy trạng thái đó.
-- Điểm số có nằm trong thông báo hay không là Câu hỏi mở. Việc không đưa điểm vào thông báo là an
-  toàn, vì nó giữ thông báo nhỏ và tránh rủi ro hiển thị sai.
+- Không đưa điểm số hay output vào thông báo; client đọc chi tiết qua SUB-003.
 
 ### Vòng đời kênh
 
@@ -153,8 +153,9 @@ Judge -> RabbitMQ judge.result -> Submission
   và mở lại.
 - Khi Gateway khởi động lại hoặc kết nối bị gián đoạn, client phải mở lại kênh và đồng thời tiếp
   tục polling, vì các kết quả phát sinh trong lúc gián đoạn chỉ tới được bằng polling.
-- Thời gian giữ một kênh mở chưa được chốt. Nếu không có giới hạn, một kênh có thể giữ tài nguyên
-  vô hạn. Đây là Câu hỏi mở.
+- Kênh đóng không muộn hơn thời điểm token hết hạn. Mỗi danh tính có tối đa 5 kết nối đồng thời
+  trên toàn bộ Gateway; kết nối thứ sáu bị từ chối. Khi không thể kiểm tra giới hạn này, Gateway
+  từ chối kết nối realtime mới; lịch sử và polling vẫn hoạt động.
 
 ## Quy tắc phân quyền
 
@@ -169,8 +170,8 @@ Judge -> RabbitMQ judge.result -> Submission
 - Gateway thực hiện xác thực và kiểm tra ở mức thô. Submission MUST kiểm tra rằng chủ sở hữu kênh
   khớp với chủ sở hữu bản ghi trước khi phát, và Gateway MUST không chuyển tiếp một thông báo cho
   một kênh không thuộc sở hữu.
-- Tài khoản bị khoá hoặc bị vô hiệu hoá MUST không còn nhận thông báo, theo hành vi đã Approved trong
-  [ID-001](../../01-identity/authentication/spec.md).
+- Tài khoản bị khoá không nhận token mới; kênh mở bằng access token còn hạn tiếp tục tới lúc token
+  hết hạn theo [ID-001](../../01-identity/authentication/spec.md).
 - Không có quyền đọc kênh realtime của người khác. Xem
   [`specs/00-system/roles-permissions.md`](../../00-system/roles-permissions.md) để biết
   `STUDENT` là vai trò duy nhất được mô tả với nội dung học tập ở đây.
@@ -183,7 +184,7 @@ tên chính xác, loại kênh và hình dạng DTO thuộc về `plan.md`.
 ### Mở kênh
 
 Yêu cầu mở kênh do Gateway phục vụ, cần access token hợp lệ. Nó MUST NOT nhận một tham số chủ
-sở hữu, vai trò hay quyền từ client. Việc chọn WebSocket hay Server-Sent Events là Câu hỏi mở.
+sở hữu, vai trò hay quyền từ client. V1 dùng Socket.IO namespace `/submissions` của Gateway.
 
 ### Nội dung phát từ Submission
 
@@ -200,21 +201,21 @@ cùng. Đây là contract giao tiếp nội bộ, không phải đầu vào củ
 
 ## Tình huống lỗi
 
-| Trường hợp                                                        | Hành vi quan sát được                                                        |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Thiếu hoặc sai access token khi mở kênh                            | Không thiết lập kênh; không nhận thông báo nào                              |
-| Cố truyền chủ sở hữu hoặc vai trò khi mở kênh                     | Yêu cầu bị từ chối; danh tính lấy từ token đã xác minh                      |
-| Token hết hạn hoặc bị thu hồi trong lúc kênh đang mở             | Kênh ngừng nhận thông báo; client phải lấy token mới và mở lại              |
-| Tài khoản bị khoá trong lúc kênh đang mở                            | Kênh ngừng nhận thông báo, theo hành vi đã Approved trong ID-001            |
-| Redis không sẵn sàng khi phát                                      | Bản ghi vẫn hoàn tất và được lưu; không có thông báo; polling vẫn cho kết quả |
-| Phát realtime thất bại sau khi lưu thành công                      | Không có thông báo; kết quả vẫn đọc được qua cơ chế kéo; không lỗi cho người học |
-| Người học đang kết nối với instance Gateway khác instance nhận thông báo | Không nhận được thông báo trong lần chạy đó; polling vẫn cho kết quả        |
-| Gateway khởi động lại giữa chừng                                    | Client mở lại kênh và tiếp tục polling; các kết quả trong lúc gián đoạn vẫn đọc được |
-| Kết nối bị gián đoạn rồi mở lại                                     | Không có kết quả nào bị mất; các kết quả phát sinh lúc gián đoạn tới bằng polling |
-| Bản ghi hoàn tất trước khi người học mở trang                      | Không có thông báo nào được phát, nhưng người học vẫn thấy kết quả qua cơ chế kéo |
-| Kết quả phán quyết được giao lại lặp                                 | Không có thông báo thứ hai cho cùng một bản ghi                              |
-| Bản ghi không thuộc chủ sở hữu kênh nhận thông báo                   | Cấm; một kênh chỉ nhận kết quả của chủ sở hữu kênh                          |
-| Cố dựng nhiều kênh không giới hạn                                    | Chính sách vòng đời kênh áp dụng; giới hạn cụ thể là Câu hỏi mở            |
+| Trường hợp                                         | Hành vi quan sát được                                                                     |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Thiếu hoặc sai access token khi mở kênh            | Không thiết lập kênh; không nhận thông báo nào                                            |
+| Cố truyền chủ sở hữu hoặc vai trò khi mở kênh      | Yêu cầu bị từ chối; danh tính lấy từ token đã xác minh                                    |
+| Token hết hạn trong lúc kênh đang mở               | Gateway đóng kênh; client phải lấy token mới và mở lại                                    |
+| Tài khoản bị khoá trong lúc kênh đang mở           | Token cũ còn hạn tiếp tục hiệu lực tới lúc hết hạn theo ID-001                            |
+| Redis không sẵn sàng khi phát                      | Bản ghi vẫn hoàn tất và được lưu; không có thông báo; polling vẫn cho kết quả             |
+| Phát realtime thất bại sau khi lưu thành công      | Không có thông báo; kết quả vẫn đọc được qua cơ chế kéo; không lỗi cho người học          |
+| Người học kết nối Gateway khác                     | Gateway subscriber đang hoạt động có thể nhận cùng tín hiệu Redis; polling vẫn là bảo đảm |
+| Gateway khởi động lại giữa chừng                   | Client mở lại kênh và tiếp tục polling; các kết quả trong lúc gián đoạn vẫn đọc được      |
+| Kết nối bị gián đoạn rồi mở lại                    | Không có kết quả nào bị mất; các kết quả phát sinh lúc gián đoạn tới bằng polling         |
+| Bản ghi hoàn tất trước khi người học mở trang      | Không phát lại thông báo cũ; người học vẫn thấy kết quả qua cơ chế kéo                    |
+| Kết quả phán quyết được giao lại lặp               | Không có thông báo thứ hai cho cùng một bản ghi                                           |
+| Bản ghi không thuộc chủ sở hữu kênh nhận thông báo | Cấm; một kênh chỉ nhận kết quả của chủ sở hữu kênh                                        |
+| Kết nối thứ sáu của một danh tính                  | Bị từ chối; tối đa 5 kết nối đồng thời toàn cụm Gateway                                   |
 
 SUB-004 không đưa ra cấu trúc lỗi mới. Tuần tự hoá ở tầng truyền tải tuân theo quy ước
 Gateway/Submission/NestJS hiện có.
@@ -230,16 +231,16 @@ Gateway/Submission/NestJS hiện có.
   đúng; chỉ có độ trễ cảm nhận được là khác nhau.
 - Người học giữ một kênh mở rất lâu mà không tạo bản ghi mới. Thời gian giữ kênh chưa được chốt, và
   việc một kênh mở lâu không được tạo ra tình huống có hậu quả khác với việc không có kênh.
-- Người học đã đăng xuất ở một tab khác trong khi một kênh vẫn mở. Hành vi phụ thuộc vào việc token
-  còn hợp lệ; việc thu hồi token chủ động là Câu hỏi mở.
+- Người học đăng xuất ở tab khác; access token cũ vẫn hợp lệ tới lúc hết hạn theo ID-001, khi đó
+  Gateway đóng kênh.
 - Redis phục hồi sau khi hỏng. Kết quả phát sinh trong lúc hỏng vẫn tới được người học bằng polling,
   và việc phục hồi không được tạo ra một loạt thông báo gộp cho các kết quả cũ.
 - Một bản ghi `INTERNAL_ERROR`. Người học nhận được thông báo có trạng thái lỗi hệ thống, và đọc
   được chi tiết. Thông báo đó không phải là phán quyết về lời giải.
 - Nhiều Submission instance phát cùng một bản ghi do giao lại trùng. Chỉ một thông báo được phát,
   nhờ việc áp dụng kết quả chống giao lại trùng của SUB-002.
-- Redis có nhiều instance. Kết quả là không xác định instance nào nhận được thông báo. Đây là hành
-  vi đã biết và được chấp nhận, không phải một lỗi cần phát hiện.
+- Nhiều Gateway subscriber cùng nhận tín hiệu Redis Pub/Sub khi đang hoạt động; tín hiệu mất khi
+  subscriber hoặc Redis gián đoạn và không được phát lại.
 
 ## Yêu cầu bảo mật
 
@@ -266,7 +267,7 @@ Gateway/Submission/NestJS hiện có.
 - **SUB-004-SR-009 — Ghi log an toàn:** Log kết nối MUST NOT ghi access token, và MUST ghi ở mức tối
   thiểu cần thiết cho vận hành. Mã nguồn và dữ liệu judge ẩn MUST NOT được ghi.
 - **SUB-004-SR-010 — Chống lạm dụng kênh:** Số kênh đồng thời trên mỗi danh tính và thời gian giữ
-  kênh phải có chính sách giới hạn đã phê duyệt. Giá trị cụ thể là Câu hỏi mở.
+  kênh phải có chính sách giới hạn: tối đa 5 kết nối trên toàn cụm, không giữ sau khi token hết hạn.
 - **SUB-004-SR-011 — Không lộ nội dung không tin cậy:** Mọi trường trong thông báo phải là giá trị do
   hệ thống sinh ra, không phải nội dung do người học hay Judge cung cấp tự do.
 - **SUB-004-SR-012 — Không tự leo thang phân quyền:** Việc phát realtime không cấp thêm khả năng
@@ -297,12 +298,12 @@ Gateway/Submission/NestJS hiện có.
 - **SUB-004-AC-009:** Cho trước cùng một kết quả phán quyết được giao lại lặp, khi nó được xử lý,
   thì không có thông báo thứ hai nào cho cùng một bản ghi.
 - **SUB-004-AC-010:** Cho trước một bản ghi nộp bài chính thức và một bản ghi Run của cùng một người
-  học, khi cả hai hoàn tất, thì mỗi bản ghi có đúng một thông báo và thông báo phân biệt được loại
-  bản ghi.
-- **SUB-004-AC-011:** Cho trước một kênh đang mở thuộc về một token hết hạn hoặc bị thu hồi, khi trạng
-  thái token thay đổi, thì kênh ngừng nhận thông báo.
-- **SUB-004-AC-012:** Cho trước một tài khoản bị khoá trong lúc kênh đang mở, khi trạng thái tài khoản
-  thay đổi, thì kênh ngừng nhận thông báo, và việc đóng kênh không xoá kết quả đã lưu.
+  học, khi cả hai hoàn tất và Redis sẵn sàng, thì mỗi bản ghi có một lần phát tín hiệu với loại
+  bản ghi đúng; khi tín hiệu mất, polling vẫn đọc được cả hai kết quả.
+- **SUB-004-AC-011:** Cho trước một kênh đang mở, khi access token hết hạn, thì Gateway đóng kênh
+  và kênh ngừng nhận thông báo.
+- **SUB-004-AC-012:** Cho trước một tài khoản bị khoá trong lúc kênh đang mở, thì access token cũ
+  còn hiệu lực tới lúc hết hạn theo ID-001; việc đóng kênh không xoá kết quả đã lưu.
 - **SUB-004-AC-013:** Cho trước một người học mở nhiều phiên cùng lúc, khi một bản ghi hoàn tất, thì
   mọi phiên đang kết nối của chủ sở hữu đó có thể nhận thông báo, và không có phiên nào nhận thông
   báo của người khác.
@@ -323,7 +324,7 @@ Gateway/Submission/NestJS hiện có.
 - Nội dung thông báo, việc dựng bảng xếp hạng, và thông báo mang tính xã hội
 - Thông báo cho giảng viên, thông báo cho quản trị viên, và bất kỳ vai trò nào khác ngoài chủ sở
   hữu
-- WebSocket hay Server-Sent Events ở mức công nghệ; SUB-004 chỉ ràng buộc hành vi
+- Server-Sent Events và một công nghệ kênh khác Socket.IO trong v1
 - Ứng dụng di động và giao diện cụ thể; SUB-004 chỉ ràng buộc hành vi phía server
 - Trạng thái trung gian của quá trình chấm, ví dụ việc Judge đã bắt đầu chạy
 - Hàng đợi ngắn hạn giữa Submission và Gateway, và cơ chế xác nhận đã nhận thông báo
@@ -360,40 +361,20 @@ Gateway/Submission/NestJS hiện có.
 - [SUB-003 Submission History](../submission-history/spec.md) cho cơ chế kéo và nội dung chi tiết
   mà thông báo chỉ dẫn tới.
 
-## Câu hỏi mở
+## Quyết định đã phê duyệt
 
-Các quyết định sản phẩm sau chưa được giải quyết bởi Kiến trúc, SDD hệ thống, các đặc tả Identity
-đã Approved, hay nền tảng hiện tại. Chúng chặn việc phê duyệt ở những chỗ chúng ảnh hưởng tới hành
-vi được yêu cầu:
-
-1. **Công nghệ kênh:** Dùng WebSocket hay Server-Sent Events cho phía client? Kiến trúc chỉ quy
-   định Redis pub/sub nội bộ và Gateway phục vụ phía client, chưa chốt công nghệ phía client. Lựa
-   chọn này ảnh hưởng tới việc Gateway triển khai thế nào.
-2. **Thứ tự phát khi có nhiều Submission instance:** Nếu một bản ghi kết thúc ở một instance, có cần
-   bảo đảm mọi instance đều phát không, hay chỉ cần phục vụ tốt nhất có thể? Quyết định này ảnh hưởng
-   tới việc có cần một cơ chế phát bổ sung hay không.
-3. **Điểm số trong thông báo:** Thông báo có nên mang điểm số để giao diện cập nhật một dòng đầy
-   đủ, hay giữ thông báo tối giản và luôn kéo chi tiết? SUB-004 hiện chọn tối giản.
-4. **Chu kỳ polling và ngưỡng chuyển sang realtime:** Client nên polling với chu kỳ bao nhiêu, và có
-   nên bắt đầu polling đồng thời với kênh realtime, hay chỉ polling khi realtime hỏng? Chính sách
-   này ảnh hưởng trực tiếp tới tải hệ thống.
-5. **Vòng đời kênh:** Thời gian tối đa một kênh được giữ mở, số kênh đồng thời tối đa trên một danh
-   tính, và hành vi khi vượt giới hạn chưa được chốt.
-6. **Trạng thái trung gian:** Nếu SUB-002 chốt một trạng thái như `RUNNING`, có phát trạng thái đó
-   qua realtime không? Và khi phát, người học có thấy một báo hiệu tiến độ không?
-7. **Thu hồi token đang dùng:** Khi một token bị thu hồi, có cần chấm dứt ngay các kênh đang mở
-   bằng token đó không? ID-001 đã phê duyệt hành vi cho request, nhưng chưa chốt hành vi cho một
-   kênh đã thiết lập.
-8. **Bảo mật output trong thông báo:** SUB-004 loại bỏ toàn bộ output khỏi thông báo. Nếu sau này
-   cho phép hiển thị một dạng output đã lọc theo Câu hỏi mở 1 của SUB-003, thông báo có được mang
-   theo hay vẫn phải kéo từ chi tiết?
+Gateway dùng Socket.IO; Redis Pub/Sub fan-out best-effort tới các Gateway subscriber đang hoạt
+động. Client polling chi tiết mỗi 5 giây khi bản ghi còn chờ và đọc sớm khi có tín hiệu realtime.
+Mỗi danh tính tối đa 5 kênh toàn cụm; kênh đóng lúc token hết hạn, không thu hồi tức thời khi
+logout/khóa tài khoản theo ID-001. Chỉ phát trạng thái cuối, không mang điểm số hay output; mọi
+chi tiết đọc qua SUB-003.
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                             |
-| ---------- | --------- | -------------------- | --------------------------------------------------- |
-| 2026-09-29 | 0.1       | Codex / TBD          | Đặc tả Kết quả realtime ban đầu ở trạng thái Proposed |
+| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                               |
+| ---------- | --------- | --------------------------- | ----------------------------------------------------- |
+| 2026-09-29 | 0.1       | Codex / TBD                 | Đặc tả Kết quả realtime ban đầu ở trạng thái Proposed |
+| 2026-09-30 | 1.0       | Chủ sở hữu sản phẩm / Codex | Phê duyệt realtime và chính sách vòng đời kênh        |
 
 > `spec.md` mô tả CÁI GÌ. Controller, DTO, entity, aggregate, repository, migration, hình dạng
-> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt
-> của con người.
+> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về `plan.md`.

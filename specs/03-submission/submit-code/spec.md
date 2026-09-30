@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Proposed
+Approved
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -10,7 +10,7 @@ Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
 Cho phép một người học đã xác thực nộp một lời giải cho một Problem đã xuất bản, để hệ thống chấm
 lời giải đó trên Test Case ẩn do Learning sở hữu, lưu lại kết quả bền vững, và phát ra một sự kiện
-tiến độ chính xác một lần khi lời giải được chấp nhận chính thức.
+tiến độ không bị mất khi lời giải được chấp nhận chính thức.
 
 ## Tác nhân
 
@@ -34,14 +34,15 @@ SUB-002 là tính năng trung tâm của Submission và là nguồn duy nhất �
 `submission.accepted`. Nó khác [SUB-001](../run-code/spec.md) ở ba điểm quyết định:
 
 1. **Dữ liệu chấm đến từ Learning, không phải từ người học.** Submission phải lấy gói dữ liệu
-   judge được bảo vệ chứa Test Case ẩn, kết quả mong đợi, harness, giới hạn thực thi và tập ngôn
-   ngữ đang bật trước khi tạo việc cho Judge. Người học không bao giờ cung cấp những dữ liệu này.
+   judge được bảo vệ chứa Test Case ẩn, kết quả mong đợi, harness và giới hạn thực thi trước khi
+   tạo việc cho Judge. Learning chỉ cấp gói cho Problem `PUBLISHED` và ngôn ngữ đang bật; người
+   học không bao giờ cung cấp dữ liệu judge.
 2. **Kết quả mang ý nghĩa chính thức.** Một phán quyết được chấp nhận trên một nộp bài chính thức là
    căn cứ để Learning đánh dấu Problem là đã giải và cập nhật tiến độ. Vì vậy ý nghĩa chấm điểm là
    một quyết định nghiệp vụ thuộc Submission, không phải một phép ánh xạ máy từ phán quyết của Judge.
 3. **Kết quả phải bền vững và chống giao lại trùng.** Kết quả đi qua RabbitMQ với thủ công ACK, nên
-   cùng một kết quả có thể được giao nhiều lần. Việc áp dụng kết quả MUST là idempotent, và sự kiện
-   tiến độ MUST được phát đúng một lần cho mỗi lần nộp bài được chấp nhận.
+   cùng một kết quả có thể được giao nhiều lần. Việc áp dụng kết quả MUST là idempotent; sự kiện
+   tiến độ được phát bền vững và Learning áp dụng hiệu ứng đúng một lần theo `eventId`.
 
 Quyết định sản phẩm đã chốt cho phiên bản này và ràng buộc SUB-002:
 
@@ -63,11 +64,13 @@ tảng hành vi, không phải một đặc tả `SUB-002` đã Approved.
 - **SUB-002-FR-002 — Ngôn ngữ phải được bật cho Problem:** Lời giải MUST dùng một ngôn ngữ nằm
   trong danh mục ngôn ngữ đã phê duyệt dùng chung VÀ được bật cho Problem mà lời giải nhắm tới.
   Submission MUST từ chối trước khi tạo việc cho Judge nếu ngôn ngữ không được bật cho Problem đó.
-  Việc từ chối phải nêu rõ ngôn ngữ không hợp lệ cho Problem, không phải một lỗi chung chung.
+  Do LRN-002 trả cùng `404` cho Problem không đủ điều kiện và ngôn ngữ tắt, lỗi này MUST nêu rõ
+  Problem/ngôn ngữ không sẵn sàng cho nộp bài, nhưng MUST NOT khẳng định nguyên nhân chưa thể biết.
 - **SUB-002-FR-003 — Lấy gói dữ liệu judge được bảo vệ:** Trước khi tạo việc cho Judge, Submission
   MUST lấy từ Learning, qua một luồng nội bộ được xác thực, tối thiểu các dữ liệu sau: loại Problem,
-  Test Case kèm kết quả mong đợi và trọng số, giới hạn thời gian, giới hạn bộ nhớ, harness ẩn khi
-  có, và tập ngôn ngữ đang bật của Problem.
+  Test Case kèm kết quả mong đợi và trọng số, giới hạn thời gian, giới hạn bộ nhớ và harness ẩn khi
+  có. Gói được yêu cầu theo `problemId` và ngôn ngữ; việc Learning cấp gói thành công là xác nhận
+  Problem đang `PUBLISHED`, chưa xoá mềm và ngôn ngữ đó đang bật theo LRN-002-FR-015.
 - **SUB-002-FR-004 — Người học không cung cấp dữ liệu judge:** Yêu cầu nộp bài MUST NOT chấp nhận
   `testCases`, `expectedOutput`, `hiddenHarness`, `timeLimitMs`, `memoryLimitMb`, tên file, lệnh biên
   dịch hay tham số Docker. Các trường đó bị từ chối bởi kiểm tra danh sách cho phép và MUST NOT ảnh
@@ -101,17 +104,17 @@ tảng hành vi, không phải một đặc tả `SUB-002` đã Approved.
 - **SUB-002-FR-014 — Định danh sự kiện ổn định:** Mỗi bản ghi nộp bài chính thức được chấp nhận MUST
   có một định danh sự kiện ổn định, được sinh ra một lần và lưu lại. Định danh đó MUST NOT được
   sinh lại khi sự kiện được phát lại.
-- **SUB-002-FR-015 — Phát sự kiện tiến độ chính xác một lần:** Khi một bản ghi nộp bài chính thức được
+- **SUB-002-FR-015 — Giao sự kiện tiến độ không mất:** Khi một bản ghi nộp bài chính thức được
   chấp nhận, Submission MUST phát `submission.accepted` mang định danh sự kiện ổn định, định danh
-  bản ghi, chủ sở hữu, Problem, điểm số và thời điểm xảy ra. Sự kiện MUST NOT được phát lại cho cùng
-  một bản ghi.
-- **SUB-002-FR-016 — Đánh dấu đã phát trước khi phát:** Trước khi phát `submission.accepted`,
-  Submission MUST ghi nhận một dấu hiệu cho biết sự kiện đã được phát, để một lần thất bại sau khi
-  đã phát không dẫn tới phát trùng. Cơ chế phải chịu được việc vừa phát xong vừa sập.
+  bản ghi, chủ sở hữu, Problem, điểm tiến độ 100 và thời điểm xảy ra. Sự kiện MAY được giao lại với
+  cùng `eventId`; Learning MUST áp dụng hiệu ứng tiến độ đúng một lần theo LRN-006.
+- **SUB-002-FR-016 — Outbox bền vững:** Submission MUST ghi ý định phát sự kiện vào outbox trong
+  cùng giao dịch PostgreSQL áp dụng phán quyết `ACCEPTED`. Relay phát qua RabbitMQ với xác nhận và
+  thử lại tới khi thành công; sập sau khi broker nhận nhưng trước khi đánh dấu outbox có thể dẫn đến
+  giao lại cùng `eventId`, không làm mất sự kiện.
 - **SUB-002-FR-017 — Xử lý kết quả idempotent:** Khi nhận một kết quả phán quyết cho một bản ghi đã ở
   trạng thái cuối cùng, Submission MUST giữ nguyên trạng thái và dữ liệu đã lưu, MUST NOT tạo bản
-  ghi kết quả trùng, và vẫn phải bảo đảm sự kiện tiến độ được phát đúng một lần nếu nó chưa từng
-  được phát.
+  ghi kết quả trùng, và giữ một ý định phát outbox duy nhất cho cùng bản ghi được chấp nhận.
 - **SUB-002-FR-018 — Áp dụng kết quả bất biến với giao lại trùng:** Submission MUST coi việc áp dụng
   một kết quả phán quyết như một thao tác chống giao lại trùng: khi hai lần xử lý chạy đồng thời cho
   cùng một bản ghi, nhiều nhất một lần được áp dụng và trạng thái cuối cùng phải nhất quán.
@@ -123,11 +126,10 @@ tảng hành vi, không phải một đặc tả `SUB-002` đã Approved.
   best-effort; xem [SUB-004](../realtime-result/spec.md).
 - **SUB-002-FR-021 — Thất bại chuẩn bị không để lại dở dang:** Nếu không lấy được gói judge, hoặc
   không phát được việc cho Judge, Submission MUST không để lại một bản ghi ở trạng thái chờ vô hạn.
-  Bản ghi phải kết thúc ở một trạng thái lỗi xác định, hoặc yêu cầu phải thất bại trước khi tạo bản
-  ghi. Lựa chọn giữa hai hành vi này là Câu hỏi mở.
+  Nếu Learning không cấp gói, yêu cầu thất bại trước khi tạo bản ghi. Nếu đã tạo bản ghi nhưng không
+  phát được việc, bản ghi kết thúc ở `INTERNAL_ERROR` và vẫn hiện trong lịch sử.
 - **SUB-002-FR-022 — Trùng lặp có kiểm soát:** Nếu cùng một yêu cầu nộp bài được gửi lại, Submission
-  MUST tạo một bản ghi mới theo SUB-002-FR-009, hoặc MUST từ chối yêu cầu trùng. Hành vi đã chọn
-  phải được người dùng biết trước; hiện là Câu hỏi mở.
+  MUST tạo một bản ghi mới theo SUB-002-FR-009. V1 không dùng `Idempotency-Key` hay hạn mức.
 - **SUB-002-FR-023 — Không thuộc phạm vi Run:** Lời giải gửi qua Run MUST NOT tạo ra kết quả chính
   thức. Run không được phát `submission.accepted` và không làm thay đổi tiến độ; xem
   [SUB-001](../run-code/spec.md).
@@ -141,25 +143,25 @@ PENDING -> QUEUED -> ACCEPTED | WRONG_ANSWER | COMPILE_ERROR | RUNTIME_ERROR
                      | TIME_LIMIT_EXCEEDED | MEMORY_LIMIT_EXCEEDED | INTERNAL_ERROR
 ```
 
-| Trạng thái                | Ý nghĩa                                                                   |
-| ------------------------ | ------------------------------------------------------------------------- |
-| `PENDING`                | Bản ghi đã được tạo nhưng việc chưa được giao cho hàng đợi               |
-| `QUEUED`                 | Việc đã được phát cho Judge và chờ kết quả                                 |
-| `ACCEPTED`               | Lời giải đã vượt qua toàn bộ Test Case; đây là cơ sở của tiến độ học tập  |
-| `WRONG_ANSWER`           | Lời giải chạy được nhưng ít nhất một Test Case có kết quả không khớp      |
-| `COMPILE_ERROR`          | Trình biên dịch từ chối mã nguồn                                          |
-| `RUNTIME_ERROR`          | Lời giải chạy nhưng kết thúc bằng lỗi                                    |
-| `TIME_LIMIT_EXCEEDED`    | Lời giải vượt giới hạn thời gian                                          |
-| `MEMORY_LIMIT_EXCEEDED`  | Lời giải vượt giới hạn bộ nhớ                                             |
-| `INTERNAL_ERROR`         | Hệ thống không thể hoàn tất việc chấm; đây KHÔNG phải lỗi của người học  |
+| Trạng thái              | Ý nghĩa                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `PENDING`               | Bản ghi đã được tạo nhưng việc chưa được giao cho hàng đợi               |
+| `QUEUED`                | Việc đã được phát cho Judge và chờ kết quả                               |
+| `ACCEPTED`              | Lời giải đã vượt qua toàn bộ Test Case; đây là cơ sở của tiến độ học tập |
+| `WRONG_ANSWER`          | Lời giải chạy được nhưng ít nhất một Test Case có kết quả không khớp     |
+| `COMPILE_ERROR`         | Trình biên dịch từ chối mã nguồn                                         |
+| `RUNTIME_ERROR`         | Lời giải chạy nhưng kết thúc bằng lỗi                                    |
+| `TIME_LIMIT_EXCEEDED`   | Lời giải vượt giới hạn thời gian                                         |
+| `MEMORY_LIMIT_EXCEEDED` | Lời giải vượt giới hạn bộ nhớ                                            |
+| `INTERNAL_ERROR`        | Hệ thống không thể hoàn tất việc chấm; đây KHÔNG phải lỗi của người học  |
 
 - Mỗi bản ghi nộp bài chính thức bắt đầu ở `PENDING` và chuyển sang `QUEUED` khi việc chấm được giao
   thành công.
 - Bảy trạng thái cuối cùng đã nêu trong bảng kết thúc vòng đời. `INTERNAL_ERROR` là trạng thái
   cuối cùng nhưng khác bản chất: nó biểu diễn thất bại của hệ thống, không phải kết luận về lời giải.
-- `RUNNING` có tồn tại trong danh mục trạng thái nền tảng hiện tại nhưng SUB-002 không dùng tới nó
-  trong phiên bản này, vì Judge chỉ báo cáo phán quyết cuối cùng. Nhu cầu về một trạng thái trung gian
-  là Câu hỏi mở.
+- `RUNNING` có tồn tại trong danh mục trạng thái nền tảng nhưng không dùng trong v1; Judge chỉ báo
+  phán quyết cuối cùng. Bản ghi `PENDING` hoặc `QUEUED` quá 10 phút từ lúc tạo được watchdog chuyển
+  nguyên tử sang `INTERNAL_ERROR`; kết quả muộn không ghi đè trạng thái cuối.
 - Trạng thái không phải là một trường tuỳ ý. Yêu cầu nộp bài MUST NOT chấp nhận trạng thái, điểm
   số hay bất kỳ trường trạng thái kết quả nào từ client.
 - Submission MUST NOT tự tính lại phán quyết. `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`,
@@ -169,13 +171,13 @@ PENDING -> QUEUED -> ACCEPTED | WRONG_ANSWER | COMPILE_ERROR | RUNTIME_ERROR
 ### Ý nghĩa chấm điểm
 
 - **Điểm của một bản ghi là điểm do Judge báo về tập Test Case đã đánh giá.** Submission lưu điểm đó
-  như một thuộc tính quan sát được của bản ghi, và có thể dùng nó trong sự kiện tiến độ.
+  như một thuộc tính quan sát được; khi Judge không báo điểm, giá trị là `null`, không suy thành 0.
 - **Điểm chính thức của một Problem với một người học không thuộc SUB-002.** Việc tổng hợp điểm theo
   Assignment, trọng số `maxScore` và cách quy đổi sang điểm học kỳ thuộc đặc tả Assignment và
   Progress của Learning. SUB-002 chỉ đảm bảo điểm nó phát ra là có nghĩa.
-- **Khi không có điểm rõ ràng, giá trị dùng làm việc phải được định nghĩa tường minh.** Nền tảng
-  hiện tại dùng một giá trị mặc định khi Judge không báo điểm. Đó là hành vi tự suy luận và phải được
-  phê duyệt tường minh; xem Câu hỏi mở.
+- **Điểm tiến độ khác điểm Judge:** Event `submission.accepted` mang `score = 100` cho mọi Submit
+  `ACCEPTED`, kể cả khi điểm Judge là 0 hoặc `null`, theo contract LRN-006. Assignment tự tổng hợp
+  điểm từ dữ liệu cần thiết của Learning; Submission không lưu điểm Assignment riêng.
 - `ACCEPTED` không suy ra từ việc có điểm. Quy tắc là trạng thái phán quyết, và điểm là thuộc tính
   đi kèm.
 - Một bản ghi `WRONG_ANSWER` vẫn có thể đạt một phần điểm nếu Test Case có trọng số. Việc ghi nhận
@@ -186,6 +188,8 @@ PENDING -> QUEUED -> ACCEPTED | WRONG_ANSWER | COMPILE_ERROR | RUNTIME_ERROR
 ### Quan hệ với tiến độ học tập
 
 - `submission.accepted` là tín hiệu duy nhất mà Submission phát để Learning cập nhật tiến độ.
+- Ý định phát được lưu cùng phán quyết; RabbitMQ có thể giao lại cùng `eventId`. Learning nhận biết
+  và bỏ qua sự kiện trùng theo LRN-006-FR-004.
 - Submission MUST NOT gọi trực tiếp một API cập nhật tiến độ của Learning, và MUST NOT truy vấn
   cơ sở dữ liệu của Learning.
 - Sự kiện mang thông tin tối thiểu cần thiết để Learning cập nhật tiến độ: định danh sự kiện ổn
@@ -196,7 +200,7 @@ PENDING -> QUEUED -> ACCEPTED | WRONG_ANSWER | COMPILE_ERROR | RUNTIME_ERROR
 
 ### Ràng buộc dữ liệu judge
 
-- Test Case ẩn, kết quả mong đợi và harness chỉ đi trên luồng nội bộ giữa Learning và Judge. Chúng
+- Test Case ẩn, kết quả mong đợi và harness chỉ đi trên luồng nội bộ Learning → Submission → Judge. Chúng
   MUST NOT xuất hiện trong bất kỳ phản hồi nào hướng tới người học, kể cả trong lỗi.
 - Submission không được lưu Test Case ẩn hay kết quả mong đợi vào cơ sở dữ liệu của mình. Nó chỉ
   giữ mã nguồn của người học và kết quả quan sát được.
@@ -207,15 +211,14 @@ PENDING -> QUEUED -> ACCEPTED | WRONG_ANSWER | COMPILE_ERROR | RUNTIME_ERROR
 
 - Nộp bài là một thao tác được bảo vệ. Người gọi thiếu hoặc sai access token MUST bị từ chối với
   `401` và không có bản ghi nào được tạo.
-- Mọi vai trò đã xác thực MAY nộp bài trong phiên bản này, vì quyền nộp bài phụ thuộc vào khả năng
-  tiếp cận Problem chứ không phụ thuộc vào vai trò. Việc tách một quyền riêng kiểu `submission:submit`
-  khỏi quyền tiếp cận Problem là Câu hỏi mở.
+- Mọi vai trò đã xác thực MAY nộp bài trong phiên bản này; không cần quyền riêng
+  `submission:submit`. Learning quyết định có cấp gói judge cho Problem/ngôn ngữ hay không.
 - Một người học MUST NOT đọc, sửa hay xoá một bản ghi nộp bài không thuộc sở hữu của họ. Khả năng
   giảng viên xem lời giải của sinh viên thuộc phạm vi một đặc tả riêng và nằm ngoài SUB-002.
 - `STUDENT` MUST NOT dùng bất kỳ thao tác nào của Submission để suy ra Test Case ẩn, kết quả mong
   đợi, harness, lệnh biên dịch hay cấu hình sandbox.
 - `ADMIN` không mặc nhiên có thẩm quyền đặc biệt đối với nộp bài. Mọi khả năng đặc biệt cần một quy
- ết định tường minh và cùng việc kiểm tra phía server như mọi tác nhân khác.
+  ết định tường minh và cùng việc kiểm tra phía server như mọi tác nhân khác.
 - Gateway thực hiện xác thực và kiểm tra route ở mức thô. Submission MUST thực thi kiểm tra ngữ
   cảnh tin cậy, quyền và chính sách Problem tại một ranh giới backend tin cậy.
 - Submission MUST suy ra danh tính người gọi từ ngữ cảnh Gateway/service đã được xác minh. Body,
@@ -258,46 +261,45 @@ mà không làm hỏng bản ghi.
 - Trạng thái cuối cùng, điểm số, số Test Case đạt, tổng số Test Case, thời gian chạy và bộ nhớ dùng
   của bản ghi được lưu trữ và quan sát được theo
   [SUB-003](../submission-history/spec.md).
-- Khi bản ghi được chấp nhận chính thức, `submission.accepted` được phát đúng một lần với định danh
-  sự kiện ổn định. Không có sự kiện nào khác được phát cho bản ghi đó.
+- Khi bản ghi được chấp nhận chính thức, outbox phát `submission.accepted` với định danh sự kiện
+  ổn định và có thể thử lại cùng định danh; không tạo sự kiện logic thứ hai cho bản ghi đó.
 - Kết quả được phát cho đúng chủ sở hữu qua luồng realtime theo
   [SUB-004](../realtime-result/spec.md). Việc phát là best-effort.
 - Sự kiện tiến độ MUST NOT chứa mã nguồn, Test Case, kết quả mong đợi hay harness.
 
 ## Tình huống lỗi
 
-| Trường hợp                                              | Hành vi quan sát được                                                                     |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Thiếu hoặc sai access token khi nộp bài                 | `401`; không tạo bản ghi                                                                 |
-| Problem không tồn tại                                   | Lỗi không tìm thấy tương ứng; không tạo bản ghi, không gọi Judge                         |
-| Problem chưa ở trạng thái cho phép nộp bài              | Lỗi nghiệp vụ nêu rõ Problem chưa sẵn sàng nhận lời giải; không tạo bản ghi             |
-| Ngôn ngữ không thuộc danh mục dùng chung                | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                 |
-| Ngôn ngữ chưa được bật cho Problem                       | Lỗi nghiệp vụ nêu rõ ngôn ngữ không hợp lệ cho Problem; không tạo việc cho Judge         |
-| Mã nguồn rỗng hoặc vượt giới hạn độ dài                | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                 |
-| Cố cung cấp Test Case, `expectedOutput`, harness, giới hạn hoặc lệnh runtime | Trường bị từ chối; không thể thay đổi việc chấm                        |
-| Cố cung cấp trạng thái, điểm số, chủ sở hữu, vai trò hay quyền | Trường bị từ chối; không thể ảnh hưởng tới vòng đời hay phân quyền                    |
-| Không lấy được gói dữ liệu judge từ Learning             | Lỗi phụ thuộc; hành vi cụ thể theo SUB-002-FR-021 và Câu hỏi mở                        |
-| Không phát được việc cho Judge                          | Bản ghi kết thúc ở `INTERNAL_ERROR` hoặc yêu cầu thất bại trước khi tạo bản ghi; xem Câu hỏi mở |
-| Judge không trả kết quả                                | Bản ghi không hoàn tất; cách xử lý bản ghi treo là Câu hỏi mở                             |
-| Kết quả phán quyết không hợp lệ về mặt hình thức        | Bản ghi giữ trạng thái trước đó; Submission ghi nhận lỗi nội bộ, không ghi dữ liệu rác    |
-| Kết quả phán quyết về một bản ghi không tồn tại         | Bản ghi không hợp lệ bị loại; Submission ghi nhận lỗi nội bộ                              |
-| Kết quả phán quyết cho bản ghi đã ở trạng thái cuối cùng | Trạng thái và dữ liệu giữ nguyên; không tạo bản ghi kết quả trùng                          |
-| Hai lần xử lý kết quả cho cùng một bản ghi chạy đồng thời | Nhiều nhất một lần áp dụng; trạng thái cuối nhất quán                                      |
-| Sự kiện tiến độ phát thành công nhưng tiến trình sập sau đó | Khi chạy lại, sự kiện MUST NOT được phát lại cho cùng một bản ghi                          |
-| Sự kiện tiến độ không phát được                          | Dấu hiệu đã phát MUST NOT được ghi khi phát thất bại, để một lần thử lại vẫn phát được   |
-| Cố đọc hoặc sửa một bản ghi nộp bài của người khác       | Bị từ chối; không lộ sự tồn tại của bản ghi                                             |
-| Cố sửa mã nguồn của một bản ghi nộp bài đã tạo          | Thao tác không tồn tại trong phạm vi SUB-002; bản ghi giữ nguyên                        |
-| Redis hoặc luồng realtime không sẵn sàng                | Bản ghi vẫn hoàn tất, sự kiện tiến độ vẫn được phát, chỉ thiếu thông báo realtime      |
-| Lỗi lưu trữ hoặc lỗi phụ thuộc ngoài dự kiến           | Quy ước lỗi chuẩn hoá hiện có, không kèm nội dung ẩn hay chi tiết xuyên service        |
+| Trường hợp                                                                   | Hành vi quan sát được                                                                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Thiếu hoặc sai access token khi nộp bài                                      | `401`; không tạo bản ghi                                                                    |
+| Problem không tồn tại                                                        | `404` từ gói judge được ánh xạ thành lỗi Problem/ngôn ngữ không sẵn sàng; không tạo bản ghi |
+| Problem chưa ở trạng thái cho phép nộp bài                                   | Cùng lỗi Problem/ngôn ngữ không sẵn sàng; không tạo bản ghi                                 |
+| Ngôn ngữ không thuộc danh mục dùng chung                                     | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                    |
+| Ngôn ngữ chưa được bật cho Problem                                           | Cùng lỗi Problem/ngôn ngữ không sẵn sàng; không tạo việc cho Judge                          |
+| Mã nguồn rỗng hoặc vượt giới hạn độ dài                                      | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                    |
+| Cố cung cấp Test Case, `expectedOutput`, harness, giới hạn hoặc lệnh runtime | Trường bị từ chối; không thể thay đổi việc chấm                                             |
+| Cố cung cấp trạng thái, điểm số, chủ sở hữu, vai trò hay quyền               | Trường bị từ chối; không thể ảnh hưởng tới vòng đời hay phân quyền                          |
+| Không lấy được gói dữ liệu judge từ Learning                                 | Yêu cầu lỗi trước khi tạo bản ghi; không gọi Judge                                          |
+| Không phát được việc cho Judge                                               | Bản ghi đã tạo kết thúc ở `INTERNAL_ERROR` và hiện trong lịch sử                            |
+| Judge không trả kết quả trong 10 phút                                        | Watchdog chuyển bản ghi còn chờ sang `INTERNAL_ERROR`                                       |
+| Kết quả phán quyết không hợp lệ về mặt hình thức                             | Bản ghi giữ trạng thái trước đó; Submission ghi nhận lỗi nội bộ, không ghi dữ liệu rác      |
+| Kết quả phán quyết về một bản ghi không tồn tại                              | Bản ghi không hợp lệ bị loại; Submission ghi nhận lỗi nội bộ                                |
+| Kết quả phán quyết cho bản ghi đã ở trạng thái cuối cùng                     | Trạng thái và dữ liệu giữ nguyên; không tạo bản ghi kết quả trùng                           |
+| Hai lần xử lý kết quả cho cùng một bản ghi chạy đồng thời                    | Nhiều nhất một lần áp dụng; trạng thái cuối nhất quán                                       |
+| Broker nhận event nhưng relay sập trước khi đánh dấu outbox                  | Relay MAY phát lại cùng `eventId`; Learning bỏ qua hiệu ứng trùng                           |
+| Sự kiện tiến độ chưa phát được                                               | Outbox còn pending và relay thử lại; không mất ý định phát                                  |
+| Cố đọc hoặc sửa một bản ghi nộp bài của người khác                           | Bị từ chối; không lộ sự tồn tại của bản ghi                                                 |
+| Cố sửa mã nguồn của một bản ghi nộp bài đã tạo                               | Thao tác không tồn tại trong phạm vi SUB-002; bản ghi giữ nguyên                            |
+| Redis hoặc luồng realtime không sẵn sàng                                     | Bản ghi vẫn hoàn tất, sự kiện tiến độ vẫn được phát, chỉ thiếu thông báo realtime           |
+| Lỗi lưu trữ hoặc lỗi phụ thuộc ngoài dự kiến                                 | Quy ước lỗi chuẩn hoá hiện có, không kèm nội dung ẩn hay chi tiết xuyên service             |
 
 SUB-002 không đưa ra cấu trúc lỗi mới. Tuần tự hoá ở tầng truyền tải tuân theo quy ước
 Gateway/Submission/NestJS hiện có.
 
 ## Tình huống biên
 
-- Một lời giải có thể nhận `ACCEPTED` với điểm bằng 0 nếu Judge báo như vậy. `ACCEPTED` là quy tắc
-  trạng thái, không phải hệ quả của việc điểm lớn. Việc dùng điểm nào trong sự kiện tiến độ khi điểm
-  bằng 0 là Câu hỏi mở.
+- Một lời giải có thể nhận `ACCEPTED` với điểm Judge bằng 0 hoặc `null`. `ACCEPTED` là quy tắc
+  trạng thái; event tiến độ vẫn mang `score = 100` theo LRN-006.
 - Nhiều nộp bài gần như đồng thời của cùng một người học được chấp nhận đồng thời. Ở phiên bản này
   không có hạn mức, nên thứ tự chấm là bất đảm bảo.
 - Thứ tự mà các kết quả về không nhất thiết khớp với thứ tự gửi. Mỗi bản ghi được xử lý độc lập, nên
@@ -306,12 +308,12 @@ Gateway/Submission/NestJS hiện có.
   thuộc một bản ghi khác. Learning, chứ không phải Submission, quyết định việc gộp nhiều lần giải
   thành một trạng thái tiến độ.
 - Nếu Judge trả về hai kết quả khác nhau cho cùng một bản ghi, kết quả đến trước thắng. Kết quả đến
-  sau bị bỏ qua, nhưng vẫn phải bảo đảm sự kiện tiến độ được phát đúng một lần.
+  sau bị bỏ qua; chỉ một ý định phát event ổn định tồn tại trong outbox.
 - Nếu một bản ghi nhận `INTERNAL_ERROR`, nó vẫn là một bản ghi đã hoàn tất và vẫn hiện trong lịch
   sử. Nó MUST NOT bị xoá để làm sạch, vì người học cần thấy rằng hệ thống đã thất bại chứ không phải
   lời giải của họ.
 - Gánh nặng hàng đợi tăng lên khi một người học gửi nhiều nộp bài. Vì v1 không có hạn mức, đây là rủi
-  ro đã biết và được nêu ở Câu hỏi mở.
+  ro đã biết của v1.
 - Một Problem có thể bị giải bởi lời giải cũ sau khi người học đã xoá lịch sử hiển thị. Xoá ở phía
   người học không thay đổi ý nghĩa của một sự kiện tiến độ đã phát.
 - Một bản ghi thuộc về một người học vẫn tồn tại sau khi tài khoản bị khoá. Quyền truy cập thay đổi;
@@ -349,8 +351,8 @@ Gateway/Submission/NestJS hiện có.
   Learning, Identity hay Judge, và MUST NOT tạo khoá ngoại xuyên service. `problemId` là một giá
   trị định danh ngoài, không phải quan hệ lưu trữ.
 - **SUB-002-SR-011 — Chống giao lại trùng:** Việc áp dụng kết quả phán quyết MUST chịu được giao hàng
-  lặp. Một kết quả không bao giờ được áp dụng hai lần vào cùng một bản ghi, và
-  `submission.accepted` MUST NOT được phát lại cho cùng một bản ghi.
+  lặp. Một kết quả không bao giờ được áp dụng hai lần vào cùng một bản ghi; outbox chỉ tạo một event
+  logic cho bản ghi, dù RabbitMQ MAY giao lại cùng `eventId`.
 - **SUB-002-SR-012 — Thất bại an toàn:** Ngữ cảnh phân quyền bị thiếu, lỗi thời, sai định dạng hay mơ
   hồ MUST thất bại theo hướng đóng và không được để lại một bản ghi ở trạng thái dở dang.
 - **SUB-002-SR-013 — `INTERNAL_ERROR` không phải kết luận:** Submission MUST NOT trình bày
@@ -363,7 +365,7 @@ Gateway/Submission/NestJS hiện có.
   tạo ở trạng thái đã được nhận vào hàng đợi với chủ sở hữu lấy từ ngữ cảnh tin cậy, và phản hồi
   không chứa phán quyết.
 - **SUB-002-AC-002:** Cho trước một Problem đã xuất bản, khi một người học nộp bằng ngôn ngữ chưa được
-  bật cho Problem đó, thì yêu cầu bị từ chối với lỗi nêu rõ ngôn ngữ không hợp lệ cho Problem và
+  bật cho Problem đó, thì yêu cầu bị từ chối với lỗi Problem/ngôn ngữ không sẵn sàng và
   không có việc nào được gửi tới Judge.
 - **SUB-002-AC-003:** Cho trước một Problem không tồn tại hoặc chưa ở trạng thái cho phép nộp bài, khi
   nộp, thì yêu cầu bị từ chối với lỗi phù hợp và không có bản ghi nào được tạo.
@@ -379,18 +381,19 @@ Gateway/Submission/NestJS hiện có.
   quả được ghi nhận trong một thao tác lưu trữ nguyên tử.
 - **SUB-002-AC-008:** Cho trước cùng một kết quả phán quyết được giao lại lần thứ hai do giao hàng lặp,
   khi nó được xử lý, thì trạng thái cuối và dữ liệu đã lưu không đổi, không có bản ghi kết quả trùng, và
-  `submission.accepted` không được phát lại.
+  không tạo thêm ý định phát event; relay MAY giao lại cùng `eventId`.
 - **SUB-002-AC-009:** Cho trước hai lần xử lý kết quả cho cùng một bản ghi chạy đồng thời, khi chúng
   hoàn tất, thì nhiều nhất một lần áp dụng và trạng thái cuối cùng nhất quán.
 - **SUB-002-AC-010:** Cho trước một bản ghi nộp bài chính thức được chấp nhận, khi sự kiện tiến độ được
-  kiểm tra, thì `submission.accepted` được phát đúng một lần với định danh sự kiện ổn định, mang định
-  danh bản ghi, chủ sở hữu, Problem và điểm số, và không mang mã nguồn, Test Case hay harness.
+  kiểm tra, thì outbox có đúng một event logic với định danh ổn định, mang định danh bản ghi, chủ
+  sở hữu, Problem và điểm tiến độ 100, không mang mã nguồn, Test Case hay harness.
 - **SUB-002-AC-011:** Cho trước một bản ghi nhận `INTERNAL_ERROR`, khi sự kiện tiến độ được kiểm tra,
   thì không có `submission.accepted` nào được phát cho nó bất kể điểm số được lưu là bao nhiêu.
-- **SUB-002-AC-012:** Cho trước một Run đã hoàn tất với phán quyết `ACCEPTED`, khi sự kiện tiến độ được
+- **SUB-002-AC-012:** Cho trước một Run đã hoàn tất với trạng thái `EXECUTED`, khi sự kiện tiến độ được
   kiểm tra, thì không có `submission.accepted` nào được phát cho Run đó.
 - **SUB-002-AC-013:** Cho trước một bản ghi đã được chấp nhận và sự kiện tiến độ đã được phát, khi tiến
-  trình sập và kết quả được xử lý lại, thì sự kiện không được phát lại cho bản ghi đó.
+  trình sập và kết quả được xử lý lại, thì không tạo thêm event logic; nếu relay phát lại cùng
+  `eventId`, Learning không áp dụng tiến độ lần nữa.
 - **SUB-002-AC-014:** Cho trước một bản ghi nộp bài chính thức, khi tiến trình sập giữa lúc chuẩn bị hoặc
   lúc phát việc cho Judge, khi xử lý lại, thì bản ghi không bị bỏ treo ở trạng thái chờ vô hạn.
 - **SUB-002-AC-015:** Cho trước hành vi nộp bài, khi quyền sở hữu service được kiểm tra, thì Submission
@@ -430,8 +433,8 @@ Gateway/Submission/NestJS hiện có.
 - Hạn mức tần suất, giới hạn số việc chờ theo người dùng, và trả `429` tại Submission
 - Xác định đạo văn, chống sao chép mã giữa những người học khác nhau, và phân tích tương đối
 - Bất kỳ microservice Submit riêng nào; Submit thuộc Submission
-- Outbox hay chính xác-một-lần tuyệt đối cho sự kiện tiến độ; cơ chế ở phiên bản này là phát kèm
-  dấu hiệu đã phát theo SUB-002-FR-016
+- Bảo đảm broker giao vật lý chính xác một lần; v1 dùng outbox phát at-least-once và Learning
+  chống áp dụng trùng theo `eventId`
 
 ## Phụ thuộc
 
@@ -462,49 +465,21 @@ Gateway/Submission/NestJS hiện có.
 - Đặc tả Assignment trong tương lai của Learning, cho hạn chót, `maxScore` và chấm điểm.
 - Các đặc tả Judge (`JDG-*`), cho phân loại phán quyết, cách ghép harness và các trần sandbox.
 
-## Câu hỏi mở
+## Quyết định đã phê duyệt
 
-Các quyết định sản phẩm sau chưa được giải quyết bởi Kiến trúc, SDD hệ thống, các đặc tả Identity
-đã Approved, hay nền tảng hiện tại. Chúng chặn việc phê duyệt ở những chỗ chúng ảnh hưởng tới hành
-vi được yêu cầu:
-
-1. **Hình dạng contract kiểm tra ngôn ngữ:** SUB-002-FR-002 yêu cầu Submission kiểm tra tập ngôn
-   ngữ đang bật. Gói dữ liệu judge nội bộ hiện tại không mang tập ngôn ngữ đó. Tập ngôn ngữ đang bật
-   sẽ đi kèm trong gói judge hiện có, hay qua một luồng nội bộ riêng của Learning? Câu hỏi này có
-   ảnh hưởng trực tiếp tới LRN-001 và phải được chốt cùng nó.
-2. **Nguồn sự thật của tính sẵn sàng nộp bài:** Submission cần biết Problem có nhận lời giải hay
-   không. Trạng thái `PUBLISHED` của LRN-001 có đủ không, hay cần một khái niệm riêng như
-   `acceptsSubmissions` do Learning sở hữu?
-3. **Giá trị điểm dùng khi Judge không báo điểm:** Nền tảng hiện tại tự gán một giá trị mặc định khi
-   Judge không báo điểm. Giá trị đó là bao nhiêu, và nó có được phép đi vào sự kiện tiến độ như một
-   điểm có nghĩa không?
-4. **Điểm trong sự kiện tiến độ khi `ACCEPTED`:** Một lời giải được chấp nhận có thể mang điểm bằng
-   0. Sự kiện tiến độ nên mang giá trị nào trong trường hợp đó, và Learning nên hiểu nó ra sao?
-5. **Trạng thái trung gian:** `RUNNING` tồn tại trong danh mục nền tảng nhưng Judge chỉ báo cáo phán quyết
-   cuối cùng. Có cần một trạng thái cho biết Judge đã bắt đầu không, và nếu có thì ai phát và qua
-   kênh nào? Điều này có ảnh hưởng tới biểu diễn lịch sử của SUB-003.
-6. **Thất bại khi không lấy được gói judge:** Khi Learning không sẵn sàng, Submission nên từ chối
-   yêu cầu trước khi tạo bản ghi, hay tạo bản ghi rồi kết thúc ở `INTERNAL_ERROR`? Lựa chọn này quyết
-   định người học có nhìn thấy một bản ghi thất bại trong lịch sử hay không.
-7. **Bản ghi treo:** Nếu Judge không bao giờ trả kết quả, bản ghi nộp bài có cơ chế hết hạn nào không,
-   và thời gian chờ là bao nhiêu?
-8. **Yêu cầu trùng lặp:** Nếu client gửi lại cùng một yêu cầu nộp bài do lỗi mạng, Submission tạo
-   bản ghi mới hay từ chối? Nếu chấp nhận trùng lặp, có cần một khoá chống trùng ở phía client hoặc
-   một `Idempotency-Key` không?
-9. **Quyền nộp bài:** Có cần một quyền riêng kiểu `submission:submit` tách khỏi quyền tiếp cận
-   Problem, hay mọi vai trò đã xác thực đều nộp bài được?
-10. **Hiệu lực của việc kiểm tra ngôn ngữ:** Nếu tập ngôn ngữ đang bật thay đổi giữa lúc Submission
-    lấy gói judge và lúc Judge chạy, ai là bên quyết định và bên nào phải xử lý sự lệch đó?
-11. **Điểm chính thức và điểm Assignment:** SUB-002 không sở hữu việc quy đổi điểm. Có cần trường
-    điểm riêng cho điểm Assignment ngay trong bản ghi nộp bài, hay Assignment tính toán từ điểm Problem
-    mà Submission lưu?
+Learning cấp gói judge theo `problemId` và ngôn ngữ chỉ khi Problem `PUBLISHED`, chưa xoá mềm và
+ngôn ngữ đang bật (LRN-002-FR-015). Gói tại lúc nhận yêu cầu là snapshot để Judge xử lý, kể cả
+khi Learning đổi ngôn ngữ sau đó. Điểm Judge thiếu là `null`; event `ACCEPTED` mang 100 theo
+LRN-006. Không dùng `RUNNING`, không quyền riêng, không quota hoặc idempotency key; mỗi yêu cầu tạo
+bản ghi mới. Learning lỗi thì từ chối trước khi tạo bản ghi; phát job lỗi thì bản ghi kết thúc
+`INTERNAL_ERROR`; watchdog 10 phút xử lý bản ghi treo. Submission không lưu điểm Assignment riêng.
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                             |
-| ---------- | --------- | -------------------- | --------------------------------------------------- |
-| 2026-09-29 | 0.1       | Codex / TBD          | Đặc tả Nộp bài chính thức ban đầu ở trạng thái Proposed |
+| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                                 |
+| ---------- | --------- | --------------------------- | ------------------------------------------------------- |
+| 2026-09-29 | 0.1       | Codex / TBD                 | Đặc tả Nộp bài chính thức ban đầu ở trạng thái Proposed |
+| 2026-09-30 | 1.0       | Chủ sở hữu sản phẩm / Codex | Phê duyệt Submit, outbox và contract điểm tiến độ       |
 
 > `spec.md` mô tả CÁI GÌ. Controller, DTO, entity, aggregate, repository, migration, hình dạng
-> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt
-> của con người.
+> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về `plan.md`.

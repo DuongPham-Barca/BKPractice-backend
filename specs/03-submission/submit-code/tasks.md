@@ -2,17 +2,15 @@
 
 ## Trạng thái
 
-**Chưa phê duyệt — bản nháp, chưa sẵn sàng triển khai.**
+**Approved — 2026-09-30, chủ sở hữu sản phẩm phê duyệt trong hội thoại. Chưa triển khai.**
 
-Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `0.1` ngày `2026-09-29`, trạng thái
-`Proposed`
-Kế hoạch liên quan: [`./plan.md`](./plan.md) — bản nháp, chưa phê duyệt
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `1.0` ngày `2026-09-30`, trạng thái `Approved`
+Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
 và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
 
-Chưa có người phê duyệt và chưa có ngày phê duyệt. Mọi công việc bên dưới bắt đầu ở trạng thái chưa
-hoàn thành, và không mục nào được phép tích trước khi đặc tả chuyển sang `Approved`.
+Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 
 Đánh dấu các mục không áp dụng là `- [x] N/A — lý do`. Giữ danh sách này đồng bộ với bản triển khai
 thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã được xác minh nếu có liên quan.
@@ -20,13 +18,9 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 ## Chuẩn bị
 
 - [ ] Khảo sát mã nguồn hiện có và trạng thái repository.
-- [ ] **Chuyển `spec.md` sang `Approved`.** Hiện đang là `Proposed`; đây là điều kiện chặn.
-- [ ] **Chốt Câu hỏi mở 1 với Learning:** tập ngôn ngữ đang bật đi kèm trong gói judge, hay qua
-      một luồng nội bộ riêng?
-- [ ] **Chốt Câu hỏi mở 2 với Learning:** nguồn sự thật của tính sẵn sàng nhận bài.
-- [ ] Chốt Câu hỏi mở 3 và 4 về giá trị điểm khi Judge không báo điểm.
-- [ ] Cập nhật LRN-001 nếu hợp đồng ngôn ngữ và tính sẵn sàng thay đổi.
-- [ ] Ghi lại kết luận của 11 câu hỏi mở trong worked entry.
+- [x] Spec và plan Approved; LRN-002-FR-015 xác nhận ngôn ngữ/Problem, không sửa Learning.
+- [x] Chốt điểm Judge thiếu `null`, event accepted 100, outbox at-least-once, watchdog 10 phút.
+- [x] Ghi kết luận câu hỏi mở trong worked entry phê duyệt SRS.
 - [ ] Xác nhận kiến trúc Submission trong `docs/architecture/`.
 - [ ] Xác nhận `plan.md` khớp với đặc tả sau khi sửa và không mở rộng phạm vi.
 - [ ] Xác minh URL nội bộ của Learning không đi qua Gateway.
@@ -47,9 +41,10 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
       lưu bản ghi → phát việc → chuyển `QUEUED`.
 - [ ] Tạo `ApplyJudgeResultUseCase`.
 - [ ] Thêm `applyVerdictOnce` trả về số hàng bị ảnh hưởng để chống giao lại trùng ở tầng lưu trữ.
-- [ ] Thêm `markAcceptedEventPublishing` và `clearAcceptedEventPublishing`.
-- [ ] Triển khai cơ chế: đánh dấu trước khi phát, xoá dấu hiệu khi phát thất bại.
-- [ ] Bỏ mặc định 100 trong dữ liệu sự kiện tiến độ.
+- [ ] Ghi một hàng outbox `submission.accepted` cùng transaction áp dụng `ACCEPTED`, UNIQUE theo
+      `submission_id` và `event_id`.
+- [ ] Triển khai relay với broker confirm, retry hàng pending cùng `eventId`; Learning khử trùng.
+- [ ] Đặt `score: 100` tường minh cho event tiến độ, giữ điểm Judge 0/null trong bản ghi.
 - [ ] Chỉ triển khai năm port đã lập kế hoạch: repository, judge job, learning package, accepted
       event, realtime.
 
@@ -74,6 +69,8 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 - [ ] Tạo migration `<timestamp>-MakeSubmissionScoreNullable.ts` cho phép `score` là `NULL` và bỏ
       giá trị mặc định.
+- [ ] Tạo migration bảng `submission_accepted_outbox` và index hàng pending; không xóa event chưa
+      giao khi rollback.
 - [ ] Viết `down` có bước `COALESCE(score, 0)` trước khi siết lại `NOT NULL`.
 - [ ] Chạy `pnpm migration:run:submission` và xác minh bản ghi cũ vẫn đọc được.
 - [ ] Ghi nhận giới hạn: các bản ghi `score = 0` cũ không phân biệt được với chưa có điểm.
@@ -117,7 +114,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Kiểm thử body chứa `userId`, vai trò, quyền → bị từ chối.
 - [ ] Xác minh URL gói judge chỉ nhận header nội bộ và không định tuyến qua Gateway.
 - [ ] Xác minh không có hạn mức tần suất nào được áp.
-- [ ] N/A — chưa tách quyền `submission:submit`; phụ thuộc Câu hỏi mở 9.
+- [ ] Xác minh không có quyền `submission:submit` riêng trong v1; mọi vai trò xác thực nộp được.
 
 ## Kiểm thử
 
@@ -132,8 +129,10 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 - [ ] Kiểm thử hai lần xử lý đồng thời → chỉ một lần ghi, trạng thái nhất quán.
 - [ ] Kiểm thử `ACCEPTED` → `AcceptedEventPort` gọi đúng một lần với nội dung đúng.
 - [ ] Kiểm thử `INTERNAL_ERROR` với điểm bất kỳ → `AcceptedEventPort` không được gọi.
-- [ ] Kiểm thử `ACCEPTED` với điểm `0` → sự kiện mang đúng giá trị `0`, không phải `100`.
-- [ ] Kiểm thử giả lập sập sau khi phát → lần chạy lại không phát lại.
+- [ ] Kiểm thử `ACCEPTED` với điểm Judge `0` hoặc `null` → bản ghi giữ giá trị đó, event mang 100.
+- [ ] Kiểm thử crash trước/sau broker confirm → outbox retry cùng `eventId`, Learning chỉ áp dụng
+      tiến độ một lần.
+- [ ] Kiểm thử watchdog 10 phút và kết quả Judge đến sau không ghi đè `INTERNAL_ERROR`.
 - [ ] Kiểm thử phát sự kiện thất bại → dấu hiệu được xoá để lần sau thử lại.
 - [ ] Kiểm thử Run với `ACCEPTED` → không phát `submission.accepted`.
 - [ ] Kiểm thử lỗi chuẩn bị hoặc lỗi phát việc → bản ghi không ở `QUEUED` vô hạn.
@@ -145,8 +144,9 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 ## Tài liệu
 
-- [ ] Cập nhật hợp đồng nội bộ giữa Submission và Learning nếu Câu hỏi mở 1 hoặc 2 thay đổi nó.
-- [ ] Cập nhật [`docs/architecture/submission-service.md`(../../../docs/architecture/submission-service.md)
+- [ ] Xác minh adapter dùng đúng gói judge LRN-002 theo `problemId + language`, không thêm
+      `allowedLanguages` hoặc thay đổi hợp đồng Learning.
+- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md)
       khi trạng thái chuyển khỏi PARTIALLY ALIGNED.
 - [ ] Ghi chú migration `score` và giới hạn dữ liệu `0` cũ vào tài liệu vận hành.
 - [ ] Ghi lại các sai lệch đã được phê duyệt.

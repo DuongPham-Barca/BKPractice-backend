@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Proposed
+Approved
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -22,8 +22,8 @@ nội bộ của bản ghi. Lịch sử là chế độ chỉ đọc, chỉ hi�
   client gửi, và chuyển tiếp ngữ cảnh định danh đã xác minh.
 - **Submission Service:** Chủ sở hữu việc đọc lịch sử và chi tiết bản ghi. Nó trả về dữ liệu đã lọc theo
   chủ sở hữu và đã loại bỏ trường nhạy cảm.
-- **Judger Service:** Chủ sở hữu lịch sử chạy thử cùng nguồn với lịch sử nộp bài. Sự khác biệt về mặt
-  hành vi được mô tả ở [SUB-001](../run-code/spec.md) và
+- **Judge Service:** Trả kết quả thực thi để Submission lưu vào lịch sử; Judge không sở hữu lịch sử.
+  Sự khác biệt hành vi Run/Submit được mô tả ở [SUB-001](../run-code/spec.md) và
   [SUB-002](../submit-code/spec.md).
 
 ## Bối cảnh
@@ -68,7 +68,8 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
   gian chạy, bộ nhớ dùng, và các mốc thời gian.
 - **SUB-003-FR-008 — Không cần biết ID nội bộ:** Mỗi bản ghi MUST có một định danh công khai ổn định để
   tra cứu, tách biệt khỏi khoá chính của cơ sở dữ liệu. Việc tra cứu phải dùng định danh công khai
-  đó, không dùng khoá chính.
+  đó, không dùng khoá chính. Bản ghi cũ MAY được tra cứu bằng UUID khoá chính trong giai đoạn tương
+  thích, luôn với cùng điều kiện chủ sở hữu; phản hồi chỉ trả `publicId` dưới tên `id`.
 - **SUB-003-FR-009 — Điểm và trạng thái nhất quán với nguồn:** Trạng thái và điểm hiển thị MUST là giá
   trị đã lưu của bản ghi tại thời điểm đọc. Submission MUST NOT tự tính lại hay tự suy luận lại kết quả
   khi hiển thị.
@@ -76,8 +77,8 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
   MUST trả về trạng thái hiện tại và các trường kết quả ở dạng chưa có, thay vì trả về 0 như một giá
   trị kết quả thật.
 - **SUB-003-FR-011 — Loại trừ trường nhạy cảm:** `stdout` và `stderr` sinh ra từ Test Case ẩn MUST
-  KHÔNG được trả về cho người học trong phạm vi phiên bản này. Quyết định cuối cùng về việc có cho
-  xem một phần output hay không là Câu hỏi mở, nhưng hành vi mặc định an toàn là loại bỏ.
+  KHÔNG được trả về cho người học. Chỉ chi tiết Run MAY trả stdout/stderr vì Run chỉ dùng stdin của
+  người gọi và không có Test Case ẩn.
 - **SUB-003-FR-012 — Nội dung thuộc quyền xem:** Thông báo lỗi biên dịch, thông báo lỗi runtime và
   thông tin chẩn đoán lỗi biên dịch phải thuộc quyền xem của người học, vì chúng mô tả lỗi trong mã
   của chính họ. Tuy nhiên nội dung đó MUST được giới hạn vào khuôn khung lỗi do Judge cung cấp, và
@@ -98,8 +99,8 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
   sử MUST NOT phụ thuộc vào việc Problem còn tồn tại.
 - **SUB-003-FR-018 — Không phụ thuộc Learning khi đọc:** Việc đọc lịch sử MUST được phục vụ hoàn toàn từ
   dữ liệu Submission đã lưu. Lịch sử MUST NOT phụ thuộc vào việc Learning còn sẵn sàng.
-- **SUB-003-FR-019 — Tài khoản bị khoá:** Tài khoản bị khoá hoặc bị vô hiệu hoá MUST bị từ chối truy cập
-  lịch sử, theo hành vi đã Approved trong
+- **SUB-003-FR-019 — Hiệu lực access token:** Tài khoản bị khoá không nhận token mới; access token đã
+  phát vẫn dùng được tới khi hết hạn theo hành vi đã Approved trong
   [ID-001](../../01-identity/authentication/spec.md).
 - **SUB-003-FR-020 — Bản ghi của người khác:** Khi tra cứu một định danh công khai không thuộc sở hữu
   của người gọi, Submission MUST từ chối, và phản hồi từ chối MUST không tiết lộ rằng bản ghi đó tồn
@@ -109,33 +110,32 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
 
 ### Phạm vi lịch sử
 
-| Loại bản ghi     | Có trong lịch sử mặc định | Ghi chú                                             |
-| ---------------- | -------------------------- | --------------------------------------------------- |
-| Nộp bài chính thức | Có                          | Có thể sinh `submission.accepted` khi được chấp nhận  |
-| Run              | Có                          | Chỉ để thử nghiệm; không bao giờ sinh tiến độ         |
+| Loại bản ghi       | Có trong lịch sử mặc định | Ghi chú                                              |
+| ------------------ | ------------------------- | ---------------------------------------------------- |
+| Nộp bài chính thức | Có                        | Có thể sinh `submission.accepted` khi được chấp nhận |
+| Run                | Có                        | Chỉ để thử nghiệm; không bao giờ sinh tiến độ        |
 
 - Lịch sử của một người học là hợp nhất của cả hai loại, vì người học cần thấy những gì mình đã
   làm với một Problem, kể cả những lần thử chưa chính thức.
 - Việc một lời giải Run xuất hiện cạnh một lời giải nộp bài chính thức trong cùng danh sách MUST
   được phân biệt rõ bằng trường loại, để người học không nhầm một lần thử với một lần nộp.
-- Việc chỉ hiện nộp bài chính thức là Câu hỏi mở. Nếu muốn đổi, cần nói rõ mặc định mới, vì
-  SUB-001 đã cam kết Run có thể lưu bản ghi để tra cứu.
+- Bộ lọc `kind=SUBMIT` cho phép xem riêng lịch sử nộp bài chính thức.
 
 ### Trường dữ liệu trong lịch sử và chi tiết
 
-| Nhóm            | Trường                                                                                     | Lịch sử | Chi tiết |
-| --------------- | ------------------------------------------------------------------------------------------- | ------- | -------- |
-| Định danh       | Định danh công khai của bản ghi                                                                 | Có      | Có       |
-| Phân loại       | Loại bản ghi: nộp bài chính thức hay Run                                                          | Có      | Có       |
-| Bài toán        | Định danh Problem, và tiêu đề hiển thị nếu có                                                   | Có      | Có       |
-| Mã nguồn        | Ngôn ngữ, kích thước mã nguồn, và nội dung mã nguồn                                            | Ngôn ngữ, kích thước | Có     |
-| Kết quả         | Trạng thái, điểm, số Test Case đạt, tổng số Test Case, thời gian chạy, bộ nhớ dùng              | Có      | Có       |
-| Chẩn đoán       | Thông báo lỗi biên dịch, thông báo lỗi runtime, thông tin chẩn đoán lỗi biên dịch              | Không   | Có       |
-| Output thô      | `stdout` và `stderr` từ Test Case ẩn                                                            | Không   | Không    |
-| Dữ liệu judge   | Test Case, kết quả mong đợi, harness, lệnh biên dịch, tham số sandbox                         | Không   | Không    |
+| Nhóm          | Trường                                                                             | Lịch sử              | Chi tiết |
+| ------------- | ---------------------------------------------------------------------------------- | -------------------- | -------- |
+| Định danh     | Định danh công khai của bản ghi                                                    | Có                   | Có       |
+| Phân loại     | Loại bản ghi: nộp bài chính thức hay Run                                           | Có                   | Có       |
+| Bài toán      | Định danh Problem, và tiêu đề hiển thị nếu có                                      | Có                   | Có       |
+| Mã nguồn      | Ngôn ngữ, kích thước mã nguồn, và nội dung mã nguồn                                | Ngôn ngữ, kích thước | Có       |
+| Kết quả       | Trạng thái, điểm, số Test Case đạt, tổng số Test Case, thời gian chạy, bộ nhớ dùng | Có                   | Có       |
+| Chẩn đoán     | Thông báo lỗi biên dịch, thông báo lỗi runtime, thông tin chẩn đoán lỗi biên dịch  | Không                | Có       |
+| Output thô    | `stdout` và `stderr` của Run; không bao giờ của Submit                             | Không                | Chỉ Run  |
+| Dữ liệu judge | Test Case, kết quả mong đợi, harness, lệnh biên dịch, tham số sandbox              | Không                | Không    |
 
-- Việc loại bỏ `stdout` và `stderr` là một quyết định về **quyền xem**, không phải về lưu trữ. Có
-  thể có lý do kỹ thuật để lưu chúng, nhưng SUB-003 không được trả chúng ra.
+- Việc loại bỏ `stdout` và `stderr` của Submit là quyết định về **quyền xem**, không phải lưu trữ;
+  Run trả output thô cho chủ sở hữu trong chi tiết.
 - Tiêu đề Problem trong lịch sử là dữ liệu trình bày. Nó phải chịu được việc Problem đổi tiêu đề,
   và việc Learning không còn sẵn sàng. Vì vậy lịch sử phải tồn tại được mà không cần gọi Learning.
 - Mã nguồn chỉ xuất hiện trong chi tiết. Danh sách không cần mã nguồn và không nên trả vì nó làm phản
@@ -143,13 +143,13 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
 
 ### Phân trang
 
-- Phân trang dựa trên `createdAt` giảm dần, kèm một khoá phá vỡ thứ tự.
+- Phân trang dựa trên `createdAt` giảm dần, kèm `publicId` giảm dần làm khoá phá vỡ thứ tự.
 - Phản hồi phải chứa: các bản ghi của trang hiện tại, mốc thời gian của bản ghi cuối trang, tổng số
   bản ghi khớp bộ lọc, và khoá phá vỡ thứ tự của bản ghi cuối trang khi có trang kế tiếp.
 - Mốc thời gian và khoá phá vỡ thứ tự phải dùng chung một cặp. Dùng riêng rẽ chúng sẽ bỏ sót hoặc
   lặp bản ghi khi nhiều bản ghi trùng thời điểm.
-- Tổng số bản ghi là thông tin tốn khi bản ghi đủ lớn. Nếu không thể tính chính xác với chi phí chấp
-  nhận được, phải nêu rõ và có một hình thức thay thế đã được phê duyệt. Đây là Câu hỏi mở.
+- Tổng số bản ghi khớp bộ lọc MUST là số chính xác; kích thước trang mặc định 20, tối đa 100.
+  V1 chỉ lọc `kind` và `problemId`, không lọc trạng thái hay mốc thời gian.
 
 ### Nhất quán với SUB-002
 
@@ -166,8 +166,8 @@ Hai quyết định trên đều có tác động bảo mật trực tiếp và 
 
 - Lịch sử và chi tiết là tài nguyên riêng tư. Người gọi thiếu hoặc sai access token MUST bị từ chối
   với `401`.
-- Mọi vai trò đã xác thực MAY xem lịch sử của chính mình trong phiên bản này, vì lịch sử là dữ liệu
-  cá nhân chứ không phải tài nguyên của một khóa học. Sự tách quyền riêng là Câu hời mở.
+- Mọi vai trò đã xác thực MAY xem lịch sử của chính mình trong phiên bản này; không cần quyền
+  `submission:history:read` riêng.
 - Một người học MUST NOT đọc bản ghi của người khác, kể cả khi biết định danh công khai của bản
   ghi đó.
 - Một người học MUST NOT đọc lịch sử của những người dùng khác qua bộ lọc, tham số phân trang, hay
@@ -207,30 +207,30 @@ NOT chấp nhận trường cần thiết lập sở hữu hay quyền.
 - Liệt kê lịch sử trả về một trang bản ghi cùng tổng số bản ghi khớp bộ lọc và thông tin điều
   hướng để lấy trang kế tiếp.
 - Chi tiết bản ghi trả về toàn bộ trường trong nhóm "Chi tiết" của bảng ở mục Quy tắc nghiệp vụ.
-- Cả hai phản hồi MUST NOT chứa `stdout` hay `stderr` từ Test Case ẩn, và MUST NOT chứa Test Case,
+- Cả hai phản hồi MUST NOT chứa `stdout` hay `stderr` của Submit, và MUST NOT chứa Test Case,
   kết quả mong đợi, harness, lệnh biên dịch hay tham số sandbox.
 - Phản hồi lỗi MUST tuân theo quy ước lỗi chuẩn hoá hiện có, không kèm chi tiết xuyên service.
 
 ## Tình huống lỗi
 
-| Trường hợp                                                       | Hành vi quan sát được                                                       |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Thiếu hoặc sai access token                                      | `401`                                                                       |
-| Tài khoản bị khoá hoặc vô hiệu hoá                               | `403`, theo hành vi đã Approved trong ID-001                                 |
-| Bộ lọc theo Problem không hợp lệ về mặc hình thức                | Lỗi kiểm tra dữ liệu                                                       |
-| Loại bản ghi không thuộc tập hợp được chấp nhận                   | Lỗi kiểm tra dữ liệu; không bỏ qua bộ lọc một cách âm thầm                  |
-| Con trỏ phân trang không hợp lệ về mặt hình thức                 | Lỗi kiểm tra dữ liệu; không âm thầm trả trang đầu                          |
-| Kích thước trang vượt giới hạn cho phép                           | Lỗi kiểm tra dữ liệu, hoặc bị chặn trên giới hạn đã phê duyệt             |
-| Người học chưa có bản ghi nào                                    | Danh sách rỗng với tổng số bằng 0, không phải lỗi                          |
-| Tra cứu định danh công khai không tồn tại                        | Lỗi không tìm thấy, không tiết lộ nội bộ lưu trữ                            |
-| Tra cứu định danh công khai thuộc về người khác                  | Bị từ chối, không lộ sự tồn tại của bản ghi                                  |
-| Cố truyền chủ sở hữu, vai trò hay quyền trong tham số           | Tham số bị từ chối, không thay đổi phạm vi trả về                            |
-| Bản ghi chưa có phán quyết cuối cùng                              | Trạng thái hiện tại và các trường kết quả ở dạng chưa có, không phải số 0    |
-| Bản ghi `INTERNAL_ERROR`                                          | Vẫn xuất hiện trong lịch sử, với nhãn là lỗi hệ thống chứ không phải lỗi mã  |
-| Problem đã bị gỡ khỏi danh sách công khai hoặc đã thay đổi         | Bản ghi vẫn đọc được, kết quả không thay đổi                                |
-| Learning không sẵn sàng khi người học mở lịch sử                  | Lịch sử vẫn đọc được vì phục vụ từ dữ liệu Submission                        |
-| Yêu cầu cần dữ liệu mà Redis đang giữ và Redis không sẵn sàng   | Lịch sử vẫn đọc được vì PostgreSQL là nguồn chân lý                           |
-| Cố xoá hoặc sửa một bản ghi qua lịch sử                           | Thao tác không tồn tại trong phạm vi SUB-003; dữ liệu giữ nguyên              |
+| Trường hợp                                                    | Hành vi quan sát được                                                       |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Thiếu hoặc sai access token                                   | `401`                                                                       |
+| Token đã hết hạn sau khi tài khoản bị khoá                    | `401`; token còn hạn tiếp tục hiệu lực theo ID-001                          |
+| Bộ lọc theo Problem không hợp lệ về mặc hình thức             | Lỗi kiểm tra dữ liệu                                                        |
+| Loại bản ghi không thuộc tập hợp được chấp nhận               | Lỗi kiểm tra dữ liệu; không bỏ qua bộ lọc một cách âm thầm                  |
+| Con trỏ phân trang không hợp lệ về mặt hình thức              | Lỗi kiểm tra dữ liệu; không âm thầm trả trang đầu                           |
+| Kích thước trang vượt giới hạn cho phép                       | Lỗi kiểm tra dữ liệu; không trả trang vượt 100 bản ghi                      |
+| Người học chưa có bản ghi nào                                 | Danh sách rỗng với tổng số bằng 0, không phải lỗi                           |
+| Tra cứu định danh công khai không tồn tại                     | Lỗi không tìm thấy, không tiết lộ nội bộ lưu trữ                            |
+| Tra cứu định danh công khai thuộc về người khác               | Bị từ chối, không lộ sự tồn tại của bản ghi                                 |
+| Cố truyền chủ sở hữu, vai trò hay quyền trong tham số         | Tham số bị từ chối, không thay đổi phạm vi trả về                           |
+| Bản ghi chưa có phán quyết cuối cùng                          | Trạng thái hiện tại và các trường kết quả ở dạng chưa có, không phải số 0   |
+| Bản ghi `INTERNAL_ERROR`                                      | Vẫn xuất hiện trong lịch sử, với nhãn là lỗi hệ thống chứ không phải lỗi mã |
+| Problem đã bị gỡ khỏi danh sách công khai hoặc đã thay đổi    | Bản ghi vẫn đọc được, kết quả không thay đổi                                |
+| Learning không sẵn sàng khi người học mở lịch sử              | Lịch sử vẫn đọc được vì phục vụ từ dữ liệu Submission                       |
+| Yêu cầu cần dữ liệu mà Redis đang giữ và Redis không sẵn sàng | Lịch sử vẫn đọc được vì PostgreSQL là nguồn chân lý                         |
+| Cố xoá hoặc sửa một bản ghi qua lịch sử                       | Thao tác không tồn tại trong phạm vi SUB-003; dữ liệu giữ nguyên            |
 
 SUB-003 không đưa ra cấu trúc lỗi mới. Tuần tự hoá ở tầng truyền tải tuân theo quy ước
 Gateway/Submission/NestJS hiện có.
@@ -253,9 +253,8 @@ Gateway/Submission/NestJS hiện có.
   trả về vẫn khác nhau, vì sở hữu được áp dụng trước khi lọc và phân trang.
 - Một Problem bị gỡ khỏi danh sách công khai trong khi người học đang xem lịch sử. Bản ghi vẫn đọc
   được, và tiêu đề hiển thị là giá trị đã lưu chứ không phải giá trị phải tra cập nhật.
-- Một bản ghi có điểm bằng 0 vì Judge không báo điểm. Lịch sử phải phân biệt được điểm chưa có và
-  điểm bằng 0 thật, nếu không người học sẽ hiểu sai kết quả. Việc hiển thị điểm khi chưa chốt quy
-  tắc điểm của SUB-002 là Câu hỏi mở.
+- Điểm `null` nghĩa là Judge chưa báo điểm hoặc bản ghi chưa có kết quả; 0 chỉ hiển thị khi Judge
+  thực sự báo 0. Trạng thái phân biệt hai trường hợp `null` đó.
 - Một bản ghi rất dài về mặt kích thước. Kích thước mã nguồn phải hiện trong danh sách mà không cần
   tải nội dung mã nguồn.
 
@@ -272,8 +271,8 @@ Gateway/Submission/NestJS hiện có.
   nội bộ, lệnh biên dịch, tham số Docker và cấu hình sandbox MUST NOT xuất hiện trong phản hồi
   lịch sử, phản hồi chi tiết, log, thông báo lỗi hay ví dụ Swagger.
 - **SUB-003-SR-005 — Kiểm soát output thô:** `stdout` và `stderr` từ Test Case ẩn MUST NOT được trả
-  về cho người học trong phạm vi phiên bản này. Quyết định có cho phép một dạng output đã lọc hay
-  không là Câu hỏi mở và phải được phê duyệt cùng với thay đổi tương ứng.
+  về cho người học. Output thô của Run MAY trả ở chi tiết vì không có Test Case ẩn; output của
+  Submit MUST NOT trả dù được lưu.
 - **SUB-003-SR-006 — Giới hạn chẩn đoán:** Thông báo lỗi biên dịch và thông báo lỗi runtime trả về
   MUST được giới hạn trong khuôn khung lỗi do Judge cung cấp, và MUST NOT chứa dữ liệu judge ẩn.
   Nội dung lỗi phải thuộc quyền xem của người học, vì nó mô tả lỗi trong mã của chính họ.
@@ -290,9 +289,8 @@ Gateway/Submission/NestJS hiện có.
 - **SUB-003-SR-011 — Tác động tới tiến độ:** Lịch sử là chế độ chỉ đọc. Nó MUST NOT phát sự kiện tiến
   độ, MUST NOT gọi API cập nhật tiến độ của Learning, và việc người học xem lại lịch sử MUST NOT
   làm thay đổi tiến độ.
-- **SUB-003-SR-012 — Tài khoản bị khoá:** Submission MUST từ chối truy cập lịch sử khi tài khoản bị khoá
-  hoặc vô hiệu hoá, theo hành vi đã Approved trong ID-001. Việc xoá dữ liệu nộp bài không nằm trong
-  phạm vi SUB-003.
+- **SUB-003-SR-012 — Tài khoản bị khoá:** Quyền đọc lịch sử tuân theo access token còn hạn của
+  ID-001; khóa tài khoản không thu hồi token đã phát. Không xoá dữ liệu nộp bài.
 - **SUB-003-SR-013 — Không dựa vào Redis:** Lịch sử MUST được phục vụ từ PostgreSQL. Redis không
   được dùng làm nguồn chân lý cho lịch sử, và việc Redis không sẵn sàng không được làm hỏng việc đọc
   lịch sử.
@@ -337,15 +335,17 @@ Gateway/Submission/NestJS hiện có.
 - **SUB-003-AC-016:** Cho trước một người học xem lại một Problem đã từng giải được, khi họ mở lịch sử
   của Problem đó, thì bản ghi tương ứng có mặt, nhưng việc suy luận trạng thái đã giải từ lịch sử
   không thay thế nguồn tiến độ của Learning.
-- **SUB-003-AC-017:** Cho trước một tài khoản bị khoá, khi người dùng thử mở lịch sử, thì yêu cầu bị từ
-  chối, và việc truy cập này không xoá dữ liệu nộp bài.
+- **SUB-003-AC-017:** Cho trước một tài khoản bị khoá, khi token cũ còn hạn được dùng để mở lịch sử,
+  thì hành vi tuân theo ID-001; sau khi token hết hạn, yêu cầu bị từ chối và dữ liệu không bị xoá.
 - **SUB-003-AC-018:** Cho trước một yêu cầu lịch sử với kích thước trang vượt giới hạn, khi kiểm tra,
-  thì kích thước trang bị giới hạn và phản hồi vẫn giữ kích thước đã phê duyệt.
+  thì yêu cầu bị từ chối và không có phản hồi trang vượt 100 bản ghi.
 - **SUB-003-AC-019:** Cho trước hành vi lịch sử, khi thực thi được kiểm tra, thì Submission không gọi
   API cập nhật tiến độ của Learning, không phát sự kiện tiến độ, và không phụ thuộc vào việc Learning
   còn sẵn sàng.
 - **SUB-003-AC-020:** Cho trước một yêu cầu cố sửa hoặc xoá một bản ghi qua lịch sử, khi kiểm tra, thì
   thao tác đó không tồn tại trong phạm vi SUB-003 và dữ liệu bản ghi giữ nguyên.
+- **SUB-003-AC-021:** Cho trước một Run thuộc sở hữu của người học, khi mở chi tiết, thì họ xem được
+  `stdout`/`stderr` của Run; cùng thao tác với Submit không trả output thô.
 
 ## Ngoài phạm vi
 
@@ -394,44 +394,20 @@ Gateway/Submission/NestJS hiện có.
 - [SUB-004 Realtime Result](../realtime-result/spec.md) để đảm bảo lịch sử không phụ thuộc realtime.
 - Đặc tả Test Case trong tương lai của Learning, cho tổng số Test Case và trọng số.
 
-## Câu hỏi mở
+## Quyết định đã phê duyệt
 
-Các quyết định sản phẩm sau chưa được giải quyết bởi Kiến trúc, SDD hệ thống, các đặc tả Identity
-đã Approved, hay nền tảng hiện tại. Chúng chặn việc phê duyệt ở những chỗ chúng ảnh hưởng tới hành
-vi được yêu cầu:
-
-1. **Có cho xem output của Test Case ẩn không:** SUB-003-FR-011 loại bỏ `stdout` và `stderr` như hành
-   vi mặc định an toàn. Sản phẩm có chấp nhận việc người học không thấy output này không, hay cần một
-   dạng output đã lọc, ví dụ chỉ output của Test Case công khai, hay chỉ khi bản ghi thuộc Run? Nếu
-   có, cần chốt cơ chế phân biệt Test Case ẩn với Test Case công khai, vì Submission hiện không
-   lưu nhãn đó.
-2. **Mặc định của danh sách lịch sử:** SUB-003-FR-002 đưa cả Run và nộp bài chính thức vào cùng một
-   danh sách. Đây có phải là hành vi mong muốn không, hay lịch sử mặc định chỉ nên hiện nộp bài
-   chính thức với Run nằm ở một mục riêng?
-3. **Cách hiển thị điểm khi chưa chốt quy tắc điểm:** Một bản ghi chưa có phán quyết cuối cùng có
-   điểm chưa có hay điểm bằng 0? SUB-003 đã yêu cầu phân biệt hai điều đó, nhưng nền tảng hiện
-   tại tự gán giá trị mặc định. Câu hỏi này phụ thuộc Câu hỏi mở 3 của SUB-002.
-4. **Độ sâu lịch sử trả về:** Với một người học có rất nhiều bản ghi, trả về tổng số chính xác có
-   chấp nhận được chi phí không, hay cần một hình thức ước lượng hoặc bỏ tổng số?
-5. **Kích thước trang mặc định:** Giá trị mặc định và giá trị tối đa cho kích thước trang chưa được
-   chốt. Quyết định này ảnh hưởng trực tiếp tới chi phí truy vấn và độ lớn phản hồi.
-6. **Quyền xem lịch sử:** Có cần một quyền riêng kiểu `submission:history:read` tách khỏi quyền xem
-   Problem không, hay mọi vai trò đã xác thực đều xem lịch sử của chính mình? Câu hỏi này gắn với
-   Câu hỏi mở 9 của SUB-002.
-7. **Bộ lọc theo trạng thái:** Người học có cần lọc lịch sử theo trạng thái phán quyết không, và có
-   cần bộ lọc theo mốc thời gian không? Danh sách bộ lọc hiện mới gồm Problem và loại bản ghi.
-8. **Thời gian lưu giữ lịch sử:** Có yêu cầu xoá bản ghi nộp bài cũ không, và sau bao lâu? Điều này
-   có tác động tới ý nghĩa của một sự kiện tiến độ đã phát.
-9. **Có cần hiển thị số lần thử liên tiếp không:** Người học có cần thấy "lần thử thứ N" cho mỗi
-   Problem không? Đây là thông tin trình bày, và nó ảnh hưởng tới việc có cần một trường đếm số thứ tự
-   hay không.
+Lịch sử mặc định gồm Run và Submit, phân trang cursor `createdAt + publicId`, trang 20 tối đa 100,
+tổng số chính xác, chỉ lọc `kind`/`problemId`. Điểm thiếu là `null`; chỉ chi tiết Run trả output thô.
+Mọi vai trò đã xác thực chỉ xem lịch sử của chính mình. Không lọc trạng thái/thời gian, không tự
+xoá, không attempt number. Tiêu đề Problem không được snapshot trong v1 và có thể là `null`;
+lịch sử không gọi Learning. ID công khai tách khoá chính, với alias đọc ID cũ có kiểm tra sở hữu.
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                             |
-| ---------- | --------- | -------------------- | --------------------------------------------------- |
-| 2026-09-29 | 0.1       | Codex / TBD          | Đặc tả Lịch sử nộp bài ban đầu ở trạng thái Proposed |
+| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                              |
+| ---------- | --------- | --------------------------- | ---------------------------------------------------- |
+| 2026-09-29 | 0.1       | Codex / TBD                 | Đặc tả Lịch sử nộp bài ban đầu ở trạng thái Proposed |
+| 2026-09-30 | 1.0       | Chủ sở hữu sản phẩm / Codex | Phê duyệt lịch sử, public ID và chính sách output    |
 
 > `spec.md` mô tả CÁI GÌ. Controller, DTO, entity, aggregate, repository, migration, hình dạng
-> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt
-> của con người.
+> lưu trữ, hợp đồng message và thứ tự thực thi thuộc về `plan.md`.

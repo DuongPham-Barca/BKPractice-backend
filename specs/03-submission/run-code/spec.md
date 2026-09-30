@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Proposed
+Approved
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -17,7 +17,7 @@ nộp bài, không làm thay đổi tiến độ học tập, và không làm l�
 - **STUDENT (người học):** Người học đã xác thực, chạy mã của chính mình bằng dữ liệu đầu vào do họ
   tự soạn, để tự kiểm tra trước khi nộp.
 - **LECTURER:** Người dùng giảng dạy đã xác thực. SUB-001 không phân biệt người học với người giảng
-  dạy ở cấp kỹ thuật; quyền cụ thể được chốt trong Câu hỏi mở.
+  dạy ở cấp kỹ thuật; mọi vai trò đã xác thực đều được Run.
 - **Khách chưa xác thực:** Người gọi không có ngữ cảnh định danh tin cậy. Tác nhân này MUST NOT chạy
   được mã.
 - **API Gateway:** Cổng vào công khai, xác minh access token BKPractice, loại bỏ các header định
@@ -70,15 +70,14 @@ Mã nguồn hiện tại của Submission đã có một hành vi Run cơ bản:
   mã nguồn. Run MUST NOT gọi một luồng nội bộ của Learning, MUST NOT nhận Test Case, kết quả mong
   đợi, harness, giới hạn của Problem, hay tập ngôn ngữ đang bật của một Problem. Vì vậy Run có
   thể thực hiện khi Learning không sẵn sàng.
-- **SUB-001-FR-005 — `problemId` là nhãn của người học:** Run MAY chấp nhận một `problemId` tuỳ
+- **SUB-001-FR-005 — `problemId` là nhãn của người học:** Run MAY chấp nhận một `problemId` UUID hợp lệ nhưng tuỳ
   chọn để người học tự ghi nhận Problem đang làm. `problemId` đó là dữ liệu do client cung cấp,
   MUST NOT được Submission phân giải, xác thực hay tra cứu với Learning, MUST NOT ảnh hưởng tới
   phán quyết, điểm số hay trạng thái của bản ghi, và MUST NOT được dùng để quyết định tính hợp
   lệ của Problem.
 - **SUB-001-FR-006 — Đối chiếu là tùy chọn:** Vì Run không có dữ liệu mong đợi, Run MUST NOT sinh ra
   phán quyết `WRONG_ANSWER`. Một lần chạy chỉ có thể kết thúc ở một phán quyết phản ánh việc biên
-  dịch và thực thi thất bại, hoặc ở trạng thái cho biết nó đã chạy xong. Cách biểu diễn trạng thái
-  thành công của Run là Câu hỏi mở.
+  dịch và thực thi thất bại, hoặc ở `EXECUTED` cho biết nó đã chạy xong.
 - **SUB-001-FR-007 — Truyền mã nguồn như dữ liệu:** Mã nguồn và stdin của người học MUST được
   truyền tới Judge như dữ liệu. Chúng MUST NOT trở thành tên file, lệnh biên dịch, lệnh shell,
   tham số Docker hay bất kỳ mảnh lệnh nào do người học kiểm soát.
@@ -118,8 +117,12 @@ PENDING -> QUEUED -> (kết quả phán quyết cuối cùng)
 
 - Run và nộp bài chính thức dùng chung một khái niệm trạng thái vòng đời nhưng là hai thao tác tách
   biệt, theo [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md).
-- Run không có một trạng thái trung gian báo rằng Judge đã bắt đầu, trừ khi Câu hỏi mở được giải
-  quyết. Một Run đang chờ kết quả vẫn ở `QUEUED`.
+- Run không có trạng thái trung gian báo rằng Judge đã bắt đầu. Một Run đang chờ kết quả vẫn ở
+  `QUEUED`.
+- Judge báo chạy thành công theo contract hiện có; Submission ánh xạ kết quả thành `EXECUTED` cho
+  Run, không dùng `ACCEPTED` của Submit.
+- Bản ghi `PENDING` hoặc `QUEUED` quá 10 phút kể từ khi tạo được watchdog của Submission chuyển
+  nguyên tử sang `INTERNAL_ERROR`. Kết quả Judge đến sau không ghi đè trạng thái cuối.
 - Một Run kết thúc ở trạng thái lỗi vẫn là một Run đã hoàn tất về mặt vòng đời; nó không được thử
   lại tự động bởi Submission.
 - Submission không tự tính lại phán quyết. Việc phân loại `TIME_LIMIT_EXCEEDED`,
@@ -129,29 +132,27 @@ PENDING -> QUEUED -> (kết quả phán quyết cuối cùng)
 ### Giới hạn thực thi của Run
 
 - Run không lấy giới hạn thời gian và bộ nhớ từ Problem, vì SUB-001 không gọi Learning. Run dùng
-  một cặp giới hạn mặc định của nền tảng cho thử nghiệm. Giá trị mặc định cụ thể và việc người học
-  có được phép ghi đè hay không là Câu hỏi mở.
+  giới hạn cố định 3000 ms và 256 MB; người học không được ghi đè.
 - Giới hạn mặc định của Run không bao giờ được nới lỏng để vượt trần an toàn mà Judge áp dụng.
   Submission có thể áp một trần chặt hơn, không bao giờ áp trần lỏng hơn.
 
 ### Phân biệt Run và Submit
 
-| Điểm                     | Run (SUB-001)                             | Submit (SUB-002)                                   |
-| ------------------------ | ----------------------------------------- | -------------------------------------------------- |
-| Nguồn dữ liệu đầu vào    | stdin do người học gửi                    | Test Case ẩn do Learning cung cấp                  |
-| Cần gọi Learning         | Không                                     | Có                                                 |
-| Phát `submission.accepted`| Không bao giờ                            | Có, khi được chấp nhập chính thức                   |
-| Cập nhật `Progress`      | Không bao giờ                            | Có                                                 |
-| Vào lịch sử nộp bài       | Không                                    | Có                                                 |
-| Ghi nhận được phân biệt   | Có                                        | Có                                                 |
-| Có thể bị giới hạn hạn mức| Không ở phiên bản này                    | Không ở phiên bản này                              |
+| Điểm                       | Run (SUB-001)          | Submit (SUB-002)                  |
+| -------------------------- | ---------------------- | --------------------------------- |
+| Nguồn dữ liệu đầu vào      | stdin do người học gửi | Test Case ẩn do Learning cung cấp |
+| Cần gọi Learning           | Không                  | Có                                |
+| Phát `submission.accepted` | Không bao giờ          | Có, khi được chấp nhập chính thức |
+| Cập nhật `Progress`        | Không bao giờ          | Có                                |
+| Vào lịch sử nộp bài        | Không                  | Có                                |
+| Ghi nhận được phân biệt    | Có                     | Có                                |
+| Có thể bị giới hạn hạn mức | Không ở phiên bản này  | Không ở phiên bản này             |
 
 ## Quy tắc phân quyền
 
 - Run là một thao tác được bảo vệ. Người gọi thiếu hoặc sai access token MUST bị từ chối với `401`.
-- Mọi vai trò đã xác thực MAY được chạy Run trong phiên bản này, vì Run không tiêu tốn tài nguyên
-  chấm điểm chính thức và không thay đổi tiến độ. Việc `LECTURER` và `ADMIN` có cần một quyền riêng
-  kiểu `submission:run` hay không là Câu hỏi mở.
+- Mọi vai trò đã xác thực MAY được chạy Run trong phiên bản này; không cần quyền riêng
+  `submission:run`.
 - Một người học MUST NOT đọc, sửa hay xoá một bản ghi Run không thuộc sở hữu của họ.
 - `STUDENT` MUST NOT dùng Run để suy ra Test Case ẩn, kết quả mong đợi hay harness. Run không
   cung cấp các dữ liệu đó.
@@ -196,22 +197,22 @@ Docker, chủ sở hữu bản ghi, vai trò hay quyền.
 
 ## Tình huống lỗi
 
-| Trường hợp                                              | Hành vi quan sát được                                                                 |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Thiếu hoặc sai access token khi chạy thử               | `401`; không tạo bản ghi Run                                                            |
-| Ngôn ngữ không thuộc danh mục đã phê duyệt             | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                              |
-| Mã nguồn rỗng hoặc vượt giới hạn độ dài                | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                              |
-| `stdin` không phải chuỗi hoặc vượt giới hạn độ dài     | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                              |
-| Trường không xác định trong body                       | Trường bị từ chối bởi kiểm tra danh sách cho phép; không tạo bản ghi                   |
-| Cố cung cấp `expectedOutput`, `testCases`, `hiddenHarness`, giới hạn hoặc lệnh runtime | Trường bị từ chối; Run không nhận dữ liệu judge và không suy ra được Test Case ẩn |
-| Không phát được việc cho Judge                          | Bản ghi Run ở trạng thái lỗi xác định; yêu cầu báo lỗi; không bỏ treo ở hàng đợi      |
-| Judge không trả kết quả                                | Bản ghi Run không hoàn tất; cách xử lý bản ghi treo là Câu hỏi mở                      |
-| Judge trả về kết quả không hợp lệ về mặt hình thức    | Bản ghi Run giữ trạng thái trước đó; Submission ghi nhận lỗi nội bộ                   |
-| Kết quả phán quyết được giao lại lần hai               | Trạng thái cuối giữ nguyên; không tạo bản ghi kết quả trùng                          |
-| `problemId` không tồn tại hoặc thuộc Problem khác        | Bản ghi Run vẫn được tạo; `problemId` được lưu nguyên văn là nhãn, không ảnh hưởng kết quả |
-| Cố đọc hoặc sửa một bản ghi Run của người khác         | Bị từ chối; không lộ sự tồn tại của bản ghi                                          |
-| Redis hoặc luồng realtime không sẵn sàng                | Bản ghi Run vẫn hoàn tất và vẫn đọc được trong lịch sử; chỉ thiếu thông báo realtime    |
-| Lỗi lưu trữ hoặc lỗi phụ thuộc ngoài dự kiến           | Quy ước lỗi chuẩn hoá hiện có, không kèm nội dung ẩn hay chi tiết xuyên service       |
+| Trường hợp                                                                             | Hành vi quan sát được                                                                      |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Thiếu hoặc sai access token khi chạy thử                                               | `401`; không tạo bản ghi Run                                                               |
+| Ngôn ngữ không thuộc danh mục đã phê duyệt                                             | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                   |
+| Mã nguồn rỗng hoặc vượt giới hạn độ dài                                                | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                   |
+| `stdin` không phải chuỗi hoặc vượt giới hạn độ dài                                     | Lỗi kiểm tra dữ liệu; không tạo bản ghi, không gọi Judge                                   |
+| Trường không xác định trong body                                                       | Trường bị từ chối bởi kiểm tra danh sách cho phép; không tạo bản ghi                       |
+| Cố cung cấp `expectedOutput`, `testCases`, `hiddenHarness`, giới hạn hoặc lệnh runtime | Trường bị từ chối; Run không nhận dữ liệu judge và không suy ra được Test Case ẩn          |
+| Không phát được việc cho Judge                                                         | Bản ghi Run ở trạng thái lỗi xác định; yêu cầu báo lỗi; không bỏ treo ở hàng đợi           |
+| Judge không trả kết quả trong 10 phút                                                  | Watchdog chuyển bản ghi còn chờ sang `INTERNAL_ERROR`; kết quả muộn không ghi đè           |
+| Judge trả về kết quả không hợp lệ về mặt hình thức                                     | Bản ghi Run giữ trạng thái trước đó; Submission ghi nhận lỗi nội bộ                        |
+| Kết quả phán quyết được giao lại lần hai                                               | Trạng thái cuối giữ nguyên; không tạo bản ghi kết quả trùng                                |
+| `problemId` không tồn tại hoặc thuộc Problem khác                                      | Bản ghi Run vẫn được tạo; `problemId` được lưu nguyên văn là nhãn, không ảnh hưởng kết quả |
+| Cố đọc hoặc sửa một bản ghi Run của người khác                                         | Bị từ chối; không lộ sự tồn tại của bản ghi                                                |
+| Redis hoặc luồng realtime không sẵn sàng                                               | Bản ghi Run vẫn hoàn tất và vẫn đọc được trong lịch sử; chỉ thiếu thông báo realtime       |
+| Lỗi lưu trữ hoặc lỗi phụ thuộc ngoài dự kiến                                           | Quy ước lỗi chuẩn hoá hiện có, không kèm nội dung ẩn hay chi tiết xuyên service            |
 
 SUB-001 không đưa ra cấu trúc lỗi mới. Tuần tự hoá ở tầng truyền tải tuân theo quy ước
 Gateway/Submission/NestJS hiện có.
@@ -233,7 +234,8 @@ Gateway/Submission/NestJS hiện có.
   cập lịch sử chứ không xoá dữ liệu.
 - Một kết quả phán quyết đến muộn sau khi người học đã xoá hoặc ẩn bản ghi tương ứng MUST NOT khôi
   phục bản ghi đó.
-- `problemId` rỗng, sai định dạng hoặc thuộc một Problem chưa xuất bản đều không làm Run thất bại.
+- `problemId` vắng mặt hoặc là UUID của Problem chưa xuất bản đều không làm Run thất bại;
+  `problemId` có mặt nhưng sai định dạng UUID bị từ chối trước khi tạo bản ghi.
 
 ## Yêu cầu bảo mật
 
@@ -348,36 +350,19 @@ Gateway/Submission/NestJS hiện có.
   thi.
 - Đặc tả Assignment trong tương lai của Learning, cho hạn chót và điểm chấm.
 
-## Câu hỏi mở
+## Quyết định đã phê duyệt
 
-Các quyết định sản phẩm sau chưa được giải quyết bởi Kiến trúc, SDD hệ thống, các đặc tả Identity
-đã Approved, hay nền tảng hiện tại. Chúng chặn việc phê duyệt ở những chỗ chúng ảnh hưởng tới hành
-vi được yêu cầu:
-
-1. **Trạng thái thành công của Run:** Run không có dữ liệu mong đợi nên không thể sinh
-   `WRONG_ANSWER`. Một Run chạy xong và không lỗi nên được biểu diễn bằng trạng thái nào — một
-   trạng thái thành công riêng, hay trạng thái kết thúc đã phê duyệt dùng chung với nộp bài chính
-   thức? Lựa chọn này ảnh hưởng tới cách SUB-003 hiển thị một lần chạy thành công.
-2. **Giới hạn mặc định của Run:** Cặp thời gian và bộ nhớ mặc định cho thử nghiệm là bao nhiêu, và
-   người học có được ghi đè trong phạm vi một trần an toàn hay không? Nếu cho phép ghi đè, trần đó
-   là bao nhiêu và ai sở hữu chính sách đó?
-3. **Quyền chạy Run:** `LECTURER` và `ADMIN` có cần một quyền riêng kiểu `submission:run`, hay mọi
-   vai trò đã xác thực đều chạy Run được? Điều này ảnh hưởng tới danh sách quyền của ID-003.
-4. **Bản ghi Run treo:** Nếu Judge không bao giờ trả kết quả cho một Run, Submission có cơ chế
-   hết hạn nào không — ví dụ một trạng thái thất bại sau một khoảng thời gian chờ xác định — hay bản
-   ghi được phép ở lại `QUEUED` vô hạn? Nếu có, thời gian chờ là bao nhiêu và ai sở hữu chính sách đó?
-5. **Số lần Run tối đa theo người học:** Một Run thất bại có được thử lại bằng cùng một cặp mã và
-   stdin không, và có cần giới hạn để tránh lạm dụng ngay cả khi v1 không có hạn mức chính thức?
-6. **`problemId` rỗng:** Run có bắt buộc `problemId` để người học theo dõi lần chạy của mình không?
-   Nếu bắt buộc thì nó trở thành một tham chiếu cần được xác thực ở đâu đó, điều này làm SUB-001
-   phụ thuộc Learning và đi ngược lại quyết định "chỉ dùng stdin của người học".
+Run thành công dùng `EXECUTED`; giới hạn cố định 3000 ms/256 MB; mọi người dùng đã xác thực được
+Run. Watchdog chuyển bản ghi còn chờ sau 10 phút sang `INTERNAL_ERROR`. Không hạn mức, không
+khóa chống trùng: mỗi lần gửi tạo một bản ghi. `problemId` là UUID tùy chọn và không được tra cứu
+ở Learning.
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                              |
-| ---------- | --------- | -------------------- | ---------------------------------------------------- |
-| 2026-09-29 | 0.1       | Codex / TBD          | Đặc tả Chạy thử mã ban đầu ở trạng thái Proposed    |
+| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                          |
+| ---------- | --------- | --------------------------- | ------------------------------------------------ |
+| 2026-09-29 | 0.1       | Codex / TBD                 | Đặc tả Chạy thử mã ban đầu ở trạng thái Proposed |
+| 2026-09-30 | 1.0       | Chủ sở hữu sản phẩm / Codex | Phê duyệt hành vi Run và giải quyết câu hỏi mở   |
 
 > `spec.md` mô tả CÁI GÌ. Controller, DTO, entity, repository, migration, hình dạng lưu trữ,
-> chiến lược hàng đợi và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của
-> con người.
+> chiến lược hàng đợi và thứ tự thực thi thuộc về `plan.md`.
