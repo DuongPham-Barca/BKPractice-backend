@@ -34,5 +34,3 @@ Pipeline và bao gồm kiểm thử cho các tình huống lạm dụng, timeout
 giao trùng message, worker sập và dọn dẹp, khi có liên quan. Bất kỳ nới lỏng nào đối với một biện
 pháp kiểm soát sandbox đều cần phê duyệt tường minh về bảo mật và kiến trúc; không được giấu nó
 trong một task tính năng.
-
-adanjdjđk

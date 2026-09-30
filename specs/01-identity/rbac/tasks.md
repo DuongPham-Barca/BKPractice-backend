@@ -385,6 +385,44 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Phụ thuộc:** ID-003-T043.  
       **Truy vết:** Quy trình SDD; Định nghĩa Hoàn thành.
 
+## Bản sửa đổi 0.4 — Truyền quyền hiệu lực
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`. Các task dưới đây dẫn xuất từ mục "Bổ sung cho
+bản sửa đổi 0.4" của kế hoạch.
+
+- [ ] **ID-003-T045 — Chính sách quyền hiệu lực.** Hoàn thiện `PermissionCode` theo mẫu và giới hạn 64
+      ký tự; thêm `EffectivePermissions` (hợp không trùng, sắp xếp). Unit test.
+      **Phụ thuộc:** các task domain của ID-003.
+      **Truy vết:** ID-003-FR-017, FR-019; AC-017, AC-018, AC-019.
+
+- [ ] **ID-003-T046 — Port và adapter `EffectivePermissionReader`.** Đọc `user_roles` →
+      `role_permissions` → `permissions` trong `bkpractice_identity`; export cho module `auth`.
+      Integration test với User nhiều vai trò.
+      **Phụ thuộc:** ID-003-T045.
+      **Truy vết:** ID-003-FR-019; AC-019.
+
+- [ ] **ID-003-T047 — Migration danh mục quyền.** Tạo `<timestamp>-Id003PermissionCatalog.ts`: chèn
+      tám mã `problem:*` và phép gán cho `LECTURER`, idempotent; down xoá đúng những gì đã chèn.
+      Kiểm chứng `pnpm migration:run:identity` / `pnpm migration:revert:identity`.
+      **Phụ thuộc:** các task migration của ID-003.
+      **Truy vết:** ID-003-FR-017, FR-018; AC-017, AC-018.
+
+- [ ] **ID-003-T048 — Gateway truyền quyền.** Trong `gateway-auth.middleware.ts`, xoá
+      `x-auth-permissions` trước khi xác minh; đặt lại từ claim `permissions` (thiếu hoặc sai kiểu thì
+      chuỗi rỗng). Test header giả mạo và token thiếu claim.
+      **Phụ thuộc:** ID-001-T045.
+      **Truy vết:** ID-003-FR-021, FR-022; SR-010; AC-020, AC-021.
+
+- [ ] **ID-003-T049 — E2E độ tươi của quyền.** Gán `LECTURER` cho một User: token cũ không có quyền
+      `problem:*`, token phát hành sau đó thì có.
+      **Phụ thuộc:** ID-003-T046 tới ID-003-T048, ID-001-T046.
+      **Truy vết:** ID-003-FR-023; AC-022.
+
+- [ ] **ID-003-T050 — Đối chiếu bản sửa đổi.** Rà FR-017 tới FR-023, SR-010, SR-011, AC-017 tới
+      AC-022 với code và test; ghi lại việc LRN-001-T002 và LRN-002-T002 đã có seam.
+      **Phụ thuộc:** ID-003-T045 tới ID-003-T049.
+      **Truy vết:** ID-003 bản sửa đổi 0.4.
+
 ## Bảng tổng hợp độ phủ yêu cầu
 
 | Độ phủ                                                            | Ánh xạ công việc                                                               |
@@ -397,6 +435,8 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 | Hành vi API an toàn, lỗi và việc xử lý dữ liệu nhạy cảm           | ID-003-T025–T029, ID-003-T035, ID-003-T038                                     |
 | Quyền sở hữu lớp lưu trữ, tính duy nhất và kiểm chứng migration   | ID-003-T017–T021, ID-003-T037, ID-003-T042                                     |
 | Kiểm chứng cuối cùng về chất lượng/kiến trúc/đặc tả               | ID-003-T039–T044                                                               |
+| Danh mục và cách tính quyền hiệu lực của bản sửa đổi 0.4          | ID-003-T045–T047                                                               |
+| Truyền quyền, kiểm chứng độ tươi và đối chiếu bản sửa đổi 0.4     | ID-003-T048–T050                                                               |
 
 > Danh sách này chỉ mô tả công việc triển khai. Nó không thêm hành vi vượt ngoài `spec.md` đã
 > Approved, và nó không hiện thực RBAC ở giai đoạn này.

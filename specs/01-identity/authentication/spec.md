@@ -4,6 +4,10 @@
 
 Approved
 
+Phiên bản `1.1`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`. Bản sửa đổi ở mục
+[Bản sửa đổi 1.1 — Claim quyền](#bản-sửa-đổi-11--claim-quyền) thay thế các yêu cầu tương ứng của
+phiên bản `1.0`.
+
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
 ## Mục tiêu
@@ -442,6 +446,25 @@ Không còn. Các quyết định sản phẩm đã được chủ sở hữu gi
 giá trị triển khai như tenant ID và client ID của Microsoft vẫn là cấu hình môi trường bắt buộc,
 không phải yêu cầu sản phẩm còn bỏ ngỏ.
 
+## Bản sửa đổi 1.1 — Claim quyền
+
+Đi kèm [ID-003 bản sửa đổi 0.4](../rbac/spec.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực).
+Các yêu cầu sau được thay thế:
+
+- **ID-001-FR-012 (sửa):** Một access token BKPractice MUST xác định đúng một người dùng đã xác thực,
+  tự nhận diện là access token, chỉ chứa các vai trò và **ảnh chụp quyền hiệu lực** cần cho việc
+  phân quyền ở phía sau (ID-003-FR-020), và có thời hạn cấu hình được.
+- **ID-001-SR-010 (sửa):** Token BKPractice chỉ chứa các claim cần cho định danh, kiểm chứng, thời
+  hạn, xoay vòng, và phân quyền theo vai trò/quyền ở phía sau.
+- **ID-001-AC-011 (sửa):** Cho trước một trong hai phương thức đăng nhập thành công, khi kiểm tra
+  access token BKPractice, thì nó chỉ chứa các claim bắt buộc về định danh, vai trò, quyền, loại và
+  thời hạn, không chứa thông tin đăng nhập hay token của nhà cung cấp.
+- **Đầu ra (sửa):** Access token tối thiểu chứa định danh chủ thể, các vai trò đã lưu, các quyền hiệu
+  lực, loại access token và thời điểm hết hạn.
+
+Làm mới phiên MUST phát hành access token với quyền hiệu lực hiện tại, như với vai trò. Refresh token
+không đổi. Thao tác lấy thông tin người dùng hiện tại (`/auth/me`) không đổi.
+
 ## Lịch sử sửa đổi
 
 | Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                         |
@@ -449,6 +472,7 @@ không phải yêu cầu sản phẩm còn bỏ ngỏ.
 | 2026-09-01 | 0.1       | Codex / TBD          | Đặc tả Proposed ban đầu cho việc đăng ký bằng email/mật khẩu                    |
 | 2026-09-01 | 0.2       | Codex / TBD          | Thay đăng ký bằng mã số sinh viên đã được cấp và đăng nhập Microsoft của trường |
 | 2026-09-01 | 1.0       | Chủ sở hữu sản phẩm  | Giải quyết các quyết định về xác thực và phê duyệt ID-001                       |
+| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm claim `permissions` vào access token, đi kèm ID-003 0.4. Đã phê duyệt.     |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository, thư viện Microsoft,
 > ánh xạ TypeORM, transaction và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê

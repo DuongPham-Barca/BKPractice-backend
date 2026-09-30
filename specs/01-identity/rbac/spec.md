@@ -4,6 +4,10 @@
 
 Approved
 
+Phiên bản `0.4`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`. Bản sửa đổi ở mục
+[Bản sửa đổi 0.4 — Truyền quyền hiệu lực](#bản-sửa-đổi-04--truyền-quyền-hiệu-lực) bổ sung cho phiên
+bản `0.3`; khi mâu thuẫn, bản sửa đổi được ưu tiên.
+
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
 ## Mục tiêu
@@ -374,13 +378,95 @@ Không còn. Chính sách quản lý vai trò v1 đã được phê duyệt cho 
 
 Lịch sử audit vẫn nằm ngoài ID-003 v1 và không bắt buộc để triển khai.
 
+## Bản sửa đổi 0.4 — Truyền quyền hiệu lực
+
+### Lý do
+
+LRN-001 và LRN-002 yêu cầu Learning thực thi các quyền `problem:*` theo quy ước `resource:action`
+của ID-003. Access token hiện chỉ mang `sub`, `roles`, `type`, nên các service tiêu thụ không có
+cách tin cậy nào để biết một người dùng có quyền gì (LRN-001-T002). Bảng `permissions` và
+`role_permissions` đã có trong `bkpractice_identity` nhưng chưa được seed và chưa được truyền đi.
+
+Bản sửa đổi này chọn cách truyền **ảnh chụp quyền hiệu lực trong access token**, cùng cơ chế với
+vai trò hiện nay. Không thêm endpoint tra cứu quyền.
+
+### Yêu cầu chức năng bổ sung
+
+- **ID-003-FR-017 — Danh mục quyền tính năng được seed:** Identity MUST seed tĩnh (qua migration) các
+  mã quyền mà một đặc tả tính năng đã Approved định nghĩa, cùng phép gán vai trò-quyền mà đặc tả đó
+  phê duyệt. Mã quyền MUST theo mẫu `resource:action`, chữ thường, tối đa 64 ký tự. Không có CRUD quyền
+  lúc chạy.
+- **ID-003-FR-018 — Danh mục đầu tiên:** Tám quyền của LRN-001/LRN-002 — `problem:create`,
+  `problem:read-managed`, `problem:update`, `problem:publish`, `problem:hold`, `problem:republish`,
+  `problem:delete`, `problem:restore` — MUST được seed và chỉ gán cho `LECTURER`. `STUDENT` và
+  `ADMIN` không nhận quyền nào trong số này (khớp quyết định 2 của LRN-001: `ADMIN` không có thẩm
+  quyền ngầm với Problem).
+- **ID-003-FR-019 — Quyền hiệu lực:** Quyền hiệu lực của một User MUST là hợp của các quyền được gán
+  cho mọi vai trò hiện tại của User đó, không trùng lặp.
+- **ID-003-FR-020 — Ảnh chụp quyền trong access token:** Mỗi access token BKPractice mới phát hành
+  MUST mang claim `permissions` chứa danh sách quyền hiệu lực tại thời điểm phát hành, đã sắp xếp và
+  không trùng. Danh sách rỗng là hợp lệ. Refresh token MUST NOT mang claim này.
+- **ID-003-FR-021 — Truyền qua Gateway:** API Gateway MUST loại bỏ header `x-auth-permissions` do
+  client gửi và chỉ đặt lại nó từ claim `permissions` của access token đã xác minh, theo cùng cách
+  với `x-auth-roles`.
+- **ID-003-FR-022 — Tiêu thụ an toàn:** Service tiêu thụ MUST chỉ đọc quyền từ header do Gateway đặt.
+  Token thiếu claim `permissions` (ví dụ phát hành trước bản sửa đổi này) MUST được coi là không có
+  quyền nào, tức mặc định từ chối.
+- **ID-003-FR-023 — Độ tươi của quyền:** Thay đổi vai trò của User hoặc phép gán vai trò-quyền MUST
+  chỉ có hiệu lực ở access token phát hành sau thay đổi đó, như ID-003-FR-014 với vai trò.
+
+### Yêu cầu bảo mật bổ sung
+
+- **ID-003-SR-010 — Quyền chỉ từ claim đã xác minh:** Quyền MUST NOT được suy ra từ body, query,
+  header do client gửi hay dữ liệu Profile. Header `x-auth-permissions` do client gửi MUST bị loại bỏ
+  trước khi xác minh token.
+- **ID-003-SR-011 — Quyền không thay thế sở hữu:** Có quyền không miễn các kiểm tra sở hữu tài
+  nguyên của service tính năng (ví dụ Giảng viên chỉ quản lý Problem mình tạo).
+
+### Tiêu chí nghiệm thu bổ sung
+
+- **ID-003-AC-017:** Cho trước một User có vai trò `LECTURER`, khi đăng nhập hoặc làm mới phiên, thì
+  access token mới chứa đủ tám quyền `problem:*`, cùng các quyền khác mà đặc tả tính năng đã phê
+  duyệt gán cho `LECTURER` (ví dụ `course:*`, `class:*`, `assignment:*`), đã sắp xếp và không trùng.
+- **ID-003-AC-018:** Cho trước một User chỉ có `STUDENT` hoặc chỉ có `ADMIN`, khi nhận access token
+  mới, thì claim `permissions` không chứa quyền `problem:*` nào; nó chỉ chứa các quyền mà đặc tả tính
+  năng đã phê duyệt gán cho vai trò đó (ví dụ `community:moderate` cho `ADMIN` theo COM-005), và là
+  danh sách rỗng khi không có quyền nào được gán.
+- **ID-003-AC-019:** Cho trước một User có cả `STUDENT` và `LECTURER`, khi nhận access token mới, thì
+  claim `permissions` là hợp không trùng của quyền hai vai trò.
+- **ID-003-AC-020:** Cho trước một request có header `x-auth-permissions` do client gửi, khi đi qua
+  Gateway, thì header đó bị loại bỏ và chỉ được đặt lại từ claim đã xác minh.
+- **ID-003-AC-021:** Cho trước một access token không có claim `permissions`, khi service tiêu thụ
+  đánh giá một hành động cần quyền, thì hành động bị từ chối.
+- **ID-003-AC-022:** Cho trước `ADMIN` gán `LECTURER` cho một User, khi User đó dùng access token cũ,
+  thì token cũ không có quyền mới; access token phát hành sau đó thì có.
+
+### Ngoài phạm vi của bản sửa đổi
+
+- Endpoint REST nội bộ tra cứu quyền
+- Thu hồi quyền tức thời trên token đang hoạt động
+- CRUD quyền hoặc phép gán vai trò-quyền lúc chạy
+- Quyền cho Submission và Community (các đặc tả đó tự định nghĩa khi cần)
+
+### Quyết định đã phê duyệt
+
+Chủ sở hữu sản phẩm phê duyệt ngày 2026-09-29:
+
+1. **Cách truyền:** claim `permissions` trong access token, không có endpoint REST nội bộ.
+2. **Gán quyền:** tám quyền `problem:*` chỉ gán cho `LECTURER`; `ADMIN` không có.
+3. **Token cũ:** token không có claim `permissions` được coi là không có quyền.
+4. **Kèm theo:** ID-001 sửa danh sách claim tối thiểu để có `permissions` (ID-001 bản sửa đổi 1.1).
+5. **Độ tươi:** thay đổi vai trò/quyền chỉ có hiệu lực ở access token phát hành sau đó.
+
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review        | Tóm tắt                                                                |
-| ---------- | --------- | --------------------------- | ---------------------------------------------------------------------- |
-| 2026-09-01 | 0.1       | Codex / TBD                 | Đặc tả RBAC ban đầu ở trạng thái Proposed                              |
-| 2026-09-01 | 0.2       | Chủ sở hữu sản phẩm / Codex | Phê duyệt các quyết định v1 về quản lý vai trò và bảo vệ quản trị viên |
-| 2026-09-01 | 0.3       | Chủ sở hữu sản phẩm         | Phê duyệt đặc tả ID-003 RBAC                                           |
+| Ngày       | Phiên bản | Tác giả/Người review                | Tóm tắt                                                                                                                                                                          |
+| ---------- | --------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | 0.1       | Codex / TBD                         | Đặc tả RBAC ban đầu ở trạng thái Proposed                                                                                                                                        |
+| 2026-09-01 | 0.2       | Chủ sở hữu sản phẩm / Codex         | Phê duyệt các quyết định v1 về quản lý vai trò và bảo vệ quản trị viên                                                                                                           |
+| 2026-09-01 | 0.3       | Chủ sở hữu sản phẩm                 | Phê duyệt đặc tả ID-003 RBAC                                                                                                                                                     |
+| 2026-09-29 | 0.4       | Chủ sở hữu sản phẩm                 | Truyền quyền hiệu lực qua claim `permissions`; seed tám quyền `problem:*` cho `LECTURER`. Đã phê duyệt.                                                                          |
+| 2026-09-30 | 0.4       | Chủ sở hữu sản phẩm (phê duyệt gộp) | Sửa câu chữ AC-017, AC-018 để không mâu thuẫn khi các tính năng khác seed thêm quyền (`course:*`, `class:*`, `assignment:*`, `community:moderate`). Không đổi yêu cầu chức năng. |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết về guard, decorator, permission resolver, repository, controller,
 > migration và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của con người.

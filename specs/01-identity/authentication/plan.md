@@ -309,7 +309,8 @@ Thay đổi ở Gateway:
 - Logout và `/me` vẫn được bảo vệ.
 - Chuyển tiếp header phản hồi `Location` an toàn cho các luồng 302; tiếp tục bỏ `set-cookie` vì cách
   giao refresh đã Approved là qua JSON.
-- Giữ nguyên việc loại bỏ `x-auth-user-id` và `x-auth-roles` do người gọi cung cấp.
+- Giữ nguyên việc loại bỏ `x-auth-user-id` và `x-auth-roles` do người gọi cung cấp; việc loại bỏ và
+  đặt lại `x-auth-permissions` thuộc ID-003-T048.
 - Mở rộng throttler Nest hiện có với các giới hạn theo đường dẫn: mặc định 120/phút, đăng nhập bằng
   mật khẩu 5/phút/IP, Microsoft start/callback/exchange và refresh 30/phút/IP. Các giới hạn và TTL
   đều cấu hình được.
@@ -362,7 +363,7 @@ một lần, không lưu phiên lâu dài.
 - **Argon2PasswordHasher:** Bọc `argon2.verify/hash` hiện có. ID-001 thực hiện việc kiểm tra; tính
   năng cấp tài khoản riêng thực hiện việc băm mật khẩu mặc định đã phê duyệt.
 - **JwtBkTokenService:** Bọc Nest JWT với hai bí mật access/refresh riêng biệt đã được kiểm chứng và
-  TTL cấu hình được. Claim của access: `sub, roles, type=access`; claim của refresh:
+  TTL cấu hình được. Claim của access: `sub, roles, permissions, type=access` (bản sửa đổi 1.1); claim của refresh:
   `sub, jti, fid, type=refresh`, cộng với `iat/exp` chuẩn.
 - **MsalMicrosoftIdentityProvider:** Dùng `ConfidentialClientApplication` của `@azure/msal-node`,
   authority theo tenant, Authorization Code Flow và PKCE. Chỉ trả về `preferred_username`, `tid` và
@@ -601,6 +602,19 @@ nào bên ngoài Identity bị sửa đổi.
   User, MicrosoftIdentity hay RefreshSession.
 - Việc căn chỉnh chỉ giới hạn trong Authentication. Nó không tái cấu trúc Profile/RBAC và không đưa
   vào CQRS, event sourcing, Keycloak, Graph API, hay một microservice khác.
+
+## Bổ sung cho bản sửa đổi 1.1
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`, bám theo ID-001 1.1 và ID-003 0.4.
+
+- Use case đăng nhập (mật khẩu, Microsoft) và làm mới phiên gọi `EffectivePermissionReader` của module
+  `rbac` ngay trước khi phát hành access token, cùng lúc nạp vai trò.
+- `JwtBkTokenService` thêm claim `permissions` (mảng chuỗi, có thể rỗng) vào access token. Refresh
+  token không đổi.
+- `libs/contracts/src/auth.contracts.ts` thêm `permissions: string[]` vào hình dạng claim access.
+- `/auth/me` không đổi.
+- Test: claim access chỉ gồm `sub`, `roles`, `permissions`, `type`, `iat`, `exp` (ID-001-AC-011 sửa);
+  làm mới phiên phản ánh quyền hiện tại.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Việc triển khai vẫn cần `tasks.md` ở Giai đoạn 06, khớp với kế hoạch
 > đã Approved này.
