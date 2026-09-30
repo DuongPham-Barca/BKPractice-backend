@@ -6,7 +6,8 @@ Approved
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-01`.
 
-Kế hoạch này dựa trên phiên bản `0.3` đã Approved của đặc tả ID-003. Nó là một tài liệu thiết kế cho
+Kế hoạch này dựa trên phiên bản `0.3` đã Approved của đặc tả ID-003, và được bổ sung ngày
+`2026-09-29` cho bản sửa đổi `0.4` ở mục [Bổ sung cho bản sửa đổi 0.4](#bổ-sung-cho-bản-sửa-đổi-04). Nó là một tài liệu thiết kế cho
 các công việc triển khai; nó không hiện thực RBAC và không thay đổi đặc tả.
 
 ## Đặc tả liên quan
@@ -597,6 +598,64 @@ Không có.
   không nhận các entity hay use case User/Role/Permission.
 - **Kiểm soát phạm vi:** Không thêm IAM động, OAuth, MFA, ABAC/ReBAC, CQRS, event sourcing, danh sách
   đen trên Redis, microservice audit, CRUD vai trò hay danh mục quyền của tính năng tương lai nào.
+
+## Bổ sung cho bản sửa đổi 0.4
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`, bám theo ID-003 0.4 (FR-017 tới FR-023, SR-010,
+SR-011, AC-017 tới AC-022).
+
+### Domain
+
+- `PermissionCode` (đã có trong danh sách file dự kiến) kiểm mẫu `^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$`,
+  tối đa 64 ký tự (FR-017).
+- Chính sách `EffectivePermissions`: hợp không trùng, sắp xếp theo thứ tự từ điển, của quyền mọi vai
+  trò hiện tại (FR-019).
+
+### Application
+
+- Port mới `EffectivePermissionReader.readForUser(userId)` do module `rbac` sở hữu và export cho
+  module `auth`. Adapter TypeORM đọc `user_roles` → `role_permissions` → `permissions` trong
+  `bkpractice_identity`.
+- ID-001 gọi port này khi phát hành access token (xem bổ sung trong `authentication/plan.md`). Module
+  `rbac` không phát hành token.
+
+### Migration
+
+- Migration mới `apps/identity-service/src/database/migrations/<timestamp>-Id003PermissionCatalog.ts`,
+  `synchronize: false`:
+  - Up: chèn tám mã `problem:create`, `problem:read-managed`, `problem:update`, `problem:publish`,
+    `problem:hold`, `problem:republish`, `problem:delete`, `problem:restore` vào `permissions` (bỏ qua
+    nếu đã có); chèn phép gán của cả tám mã cho vai trò `LECTURER` vào `role_permissions` (bỏ qua nếu
+    đã có). Không gán cho `STUDENT` hay `ADMIN` (FR-018).
+  - Down: xoá đúng các phép gán và tám mã đã chèn.
+- Kiểm chứng bằng `pnpm migration:run:identity` / `pnpm migration:revert:identity`.
+
+### API Gateway
+
+- `apps/api-gateway/src/auth/gateway-auth.middleware.ts`: xoá `x-auth-permissions` cùng lúc với
+  `x-auth-user-id` và `x-auth-roles`, trước khi xác minh token; sau khi xác minh, đặt
+  `x-auth-permissions` bằng `permissions.join(',')` nếu claim là mảng chuỗi, ngược lại đặt chuỗi
+  rỗng (FR-021, FR-022, SR-010).
+- `AccessTokenPayload` của Gateway thêm `permissions?: string[]`.
+
+### Contract dùng chung
+
+- `libs/contracts/src/auth.contracts.ts` (đã có trong kế hoạch ID-001) thêm trường
+  `permissions: string[]` vào hình dạng claim access. Không đưa entity hay use case vào `libs/`.
+- Header `x-auth-permissions` là chuỗi các mã phân cách bằng dấu phẩy; service tiêu thụ tách chuỗi,
+  bỏ phần tử rỗng, và coi header thiếu như tập rỗng (FR-022).
+
+### Kiểm thử
+
+- Unit: `PermissionCode`, `EffectivePermissions` (AC-017 tới AC-019).
+- Integration: adapter đọc quyền với nhiều vai trò; migration up/down.
+- Gateway: header giả mạo bị xoá (AC-020); token thiếu claim cho header rỗng (AC-021).
+- E2E: gán `LECTURER` rồi token cũ không có quyền, token mới thì có (AC-022).
+
+### Rủi ro
+
+- Quyền đổi chỉ có hiệu lực ở token mới; chấp nhận theo FR-023.
+- Token lớn thêm khoảng vài trăm byte với tám quyền; cần theo dõi khi danh mục lớn lên.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó phải được rà soát đối chiếu với `spec.md` đã Approved trước khi tạo
 > `tasks.md`; không mã nguồn RBAC nào được tạo ở giai đoạn này.

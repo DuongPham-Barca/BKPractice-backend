@@ -31,6 +31,10 @@ Approved và không thay đổi `plan.md`.
       tạm. Nếu chủ sở hữu chấp nhận phương án tạm, ghi nhận tường minh rằng Learning ánh xạ tám quyền
       này về ảnh chụp vai trò `LECTURER` tin cậy, và rằng ánh xạ đó phải được thay khi seam thật xuất
       hiện. Không bao giờ rơi về dữ liệu do client cung cấp.
+      **Kết quả (2026-09-29):** Seam đã được phê duyệt ở ID-003 0.4 và ID-001 1.1: access token mang
+      claim `permissions`, Gateway đặt header tin cậy `x-auth-permissions`, tám quyền `problem:*` được
+      seed cho `LECTURER`. Không cần phương án tạm. Khi làm task này, chỉ cần xác nhận ID-003-T045 tới
+      T048 và ID-001-T045 tới T046 đã triển khai; nếu chưa, DỪNG và BÁO CÁO.
       **Phụ thuộc:** LRN-001-T001.
       **Truy vết:** Mục Phân quyền và Rủi ro của kế hoạch; LRN-001-SR-001, LRN-001-SR-002;
       LRN-001-AC-005, LRN-001-AC-006, LRN-001-AC-030.
@@ -291,7 +295,8 @@ Approved và không thay đổi `plan.md`.
 ## Infrastructure
 
 - [ ] **LRN-001-T029 — Hiện thực `PrincipalProvider`.** Đọc các header tin cậy do Gateway thiết lập
-      (`x-auth-user-id`, `x-auth-roles`) và dịch chúng thành một principal độc lập với framework. Từ
+      (`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`) và dịch chúng thành một principal độc
+      lập với framework; header quyền thiếu thì coi là tập rỗng (ID-003-FR-022). Từ
       chối ngữ cảnh bị thiếu hoặc không nhất quán như phòng thủ nhiều lớp cho các lời gọi trực tiếp
       hoặc định tuyến sai. Phải từ chối header định danh/vai trò giả mạo do client gửi và không bao
       giờ chấp nhận một token của nhà cung cấp Microsoft hay một refresh token như một principal.
@@ -300,9 +305,9 @@ Approved và không thay đổi `plan.md`.
       LRN-001-AC-007.
 
 - [ ] **LRN-001-T030 — Hiện thực adapter quyền `problem:*`.** Theo kết quả của LRN-001-T002, đánh
-      giá tám quyền `problem:*` qua seam đã phê duyệt. Nếu phương án tạm được chấp nhận, ánh xạ về
-      ảnh chụp vai trò `LECTURER` tin cậy với `problem:read-managed` ngầm định cho chủ sở hữu, và ghi
-      nhận đây là hạng mục cần review. Không bao giờ rơi về dữ liệu do client cung cấp.
+      giá tám quyền `problem:*` qua seam đã phê duyệt: kiểm mã quyền cần thiết có trong tập quyền của
+      principal (từ `x-auth-permissions`). Không dùng phương án tạm ánh xạ theo vai trò. Không bao giờ
+      rơi về dữ liệu do client cung cấp.
       **Phụ thuộc:** LRN-001-T002, LRN-001-T012, LRN-001-T029.
       **Truy vết:** LRN-001-SR-001, LRN-001-SR-002, LRN-001-SR-012; LRN-001-AC-005,
       LRN-001-AC-006, LRN-001-AC-030.

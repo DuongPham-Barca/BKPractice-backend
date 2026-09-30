@@ -437,6 +437,25 @@ khi cả hành vi lẫn phần kiểm chứng được liệt kê đều đã th
       **Phụ thuộc:** ID-001-T043.  
       **Truy vết:** Quy trình SDD và Định nghĩa Hoàn thành.
 
+## Bản sửa đổi 1.1 — Claim quyền
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
+
+- [ ] **ID-001-T045 — Claim `permissions` trong access token.** `JwtBkTokenService` và contract claim
+      trong `libs/contracts` thêm `permissions: string[]`; refresh token không đổi.
+      **Phụ thuộc:** các task token của ID-001.
+      **Truy vết:** ID-001-FR-012, SR-010 (bản 1.1); ID-003-FR-020.
+
+- [ ] **ID-001-T046 — Nạp quyền khi phát hành.** Đăng nhập bằng mật khẩu, Microsoft và làm mới phiên
+      gọi `EffectivePermissionReader` (ID-003-T046) và đưa kết quả vào claim.
+      **Phụ thuộc:** ID-001-T045, ID-003-T046.
+      **Truy vết:** ID-001 bản 1.1; ID-003-FR-019, FR-023.
+
+- [ ] **ID-001-T047 — Test claim tối thiểu.** Access token chỉ chứa `sub`, `roles`, `permissions`,
+      `type`, `iat`, `exp`; không chứa thông tin đăng nhập hay token nhà cung cấp.
+      **Phụ thuộc:** ID-001-T046.
+      **Truy vết:** ID-001-AC-011 (bản 1.1).
+
 ## Bảng tổng hợp độ phủ
 
 ### Yêu cầu chức năng

@@ -390,6 +390,21 @@ Chủ sở hữu sản phẩm chốt ngày 2026-09-29:
 3. **Danh sách quản lý.** `ListTestCases` trả đầy đủ nội dung mọi Test Case, vì trần 8 MiB giữ phản
    hồi ở kích thước chấp nhận được. Thoả LRN-002-AC-022.
 
+## Tuân thủ kiến trúc
+
+- **Chiều phụ thuộc:** controller chỉ dịch transport và gọi use case; application phụ thuộc aggregate
+  Problem/TestCase cùng các port; domain không import NestJS, TypeORM hay RabbitMQ; adapter TypeORM
+  hiện thực các port tại module `problems`.
+- **DDD có lý do:** Test Case và harness tham gia trực tiếp bất biến publish-readiness của Problem;
+  việc cập nhật và xuất bản khoá cùng aggregate Problem để không tạo trạng thái nửa vời.
+- **Ranh giới module/service:** Test Case ở trong module `problems` của bounded context Learning như
+  `learning-service.md` quy định. Gói judge chỉ được phơi qua endpoint nội bộ được bảo vệ; Learning
+  không thực thi mã và không truy cập CSDL Submission/Judge.
+- **Quyền sở hữu dữ liệu:** mọi bảng Test Case/harness thuộc `bkpractice_learning`; không có khoá
+  ngoại hay repository xuyên service, và không chuyển entity/use case nghiệp vụ vào `libs/`.
+- **Tiệm tiến:** kế hoạch chỉ căn chỉnh các luồng Problem/Test Case bị thay đổi, không tổ chức lại
+  toàn bộ Learning và không có ngoại lệ kiến trúc.
+
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó KHÔNG ĐƯỢC thêm hành vi, tác nhân hay tiêu chí nghiệm thu vượt
 > ngoài `spec.md` đã Approved (phiên bản 1.1). Danh sách công việc dẫn xuất từ kế hoạch này nằm ở
 > [`tasks.md`](./tasks.md).

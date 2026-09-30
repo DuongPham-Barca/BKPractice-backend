@@ -1,18 +1,18 @@
 # 2026-09-29 — Viết và phê duyệt spec, plan, tasks LRN-002 Quản lý Test Case
 
 - Author: DuongPham-Barca (thực hiện cùng Claude Code)
-- Scope: Chỉ tài liệu. Tạo `specs/02-learning/test-cases/spec.md` và sửa bảng mã tính năng trong
-  `specs/README.md`. Không đụng source, cấu hình, dependency hay migration.
+- Scope: Chỉ tài liệu. Tạo và phê duyệt bộ `spec.md`, `plan.md`, `tasks.md` của LRN-002; sửa bảng mã
+  tính năng trong `specs/README.md`. Không đụng source, cấu hình, dependency hay migration.
 
 ## Spec and plan
 
-- Spec: `specs/02-learning/test-cases/spec.md` — LRN-002 phiên bản 0.1
+- Spec: `specs/02-learning/test-cases/spec.md` — LRN-002 phiên bản 1.1
 - Plan: `specs/02-learning/test-cases/plan.md` — Approved 2026-09-29
 - Tasks: `specs/02-learning/test-cases/tasks.md` — Approved, T001–T038 chưa làm
 - Spec status at start: chưa tồn tại; kết thúc là `Approved` 1.1
 
-Lý do không cần feature spec khác: đây chính là bước viết spec (bước 1 của SDD), do người dùng yêu
-cầu.
+Lý do không cần feature spec khác: đây chính là bước viết spec/plan/tasks (bước 1–2 của SDD), do
+người dùng yêu cầu.
 
 ## Questions clarified
 
@@ -28,8 +28,12 @@ cầu.
 ## What was done
 
 - Tạo `specs/02-learning/test-cases/spec.md` từ `specs/templates/spec.template.md`, trạng thái
-  `Proposed` với 10 câu hỏi mở, rồi chốt dần theo trả lời của người dùng. Bản 1.0 Approved gồm 19 FR,
-  9 SR, 23 AC, mục Ngoài phạm vi và danh sách 10 quyết định đã phê duyệt.
+  `Proposed` với 10 câu hỏi mở, rồi chốt dần theo trả lời của người dùng. Bản 1.1 Approved gồm 19 FR,
+  9 SR, 24 AC, mục Ngoài phạm vi, danh sách 10 quyết định đã phê duyệt và trần gói judge 8 MiB.
+- Tạo plan Approved bám DDD + Hexagonal Architecture: Test Case/harness nằm trong aggregate Problem,
+  repository port và adapter TypeORM, migration riêng, API quản lý, gói judge nội bộ và mục Tuân thủ
+  kiến trúc tường minh.
+- Tạo 38 task có dependency/truy vết từ chuẩn bị tới migration, API, test, xác minh và bàn giao.
 - Sửa `specs/README.md`: bảng mã tính năng dùng `LRN-002 Test Case Management` và dời các mã
   Learning còn lại lên một số.
 
@@ -50,7 +54,7 @@ cầu.
 Chưa phải tính năng đã triển khai. Luồng dự kiến theo spec:
 
 1. Giảng viên sở hữu Problem thêm, sửa, sắp xếp hoặc gỡ Test Case qua API quản lý của Learning.
-2. Khi xuất bản, kiểm tra xuất bản của LRN-001 chạy thêm điều kiện Test Case (Câu hỏi mở 1).
+2. Khi xuất bản, kiểm tra xuất bản của LRN-001 chạy thêm các điều kiện Test Case đã phê duyệt.
 3. Khi sinh viên nộp bài, Submission gọi route nội bộ để lấy gói judge; Learning chỉ cấp khi Problem
    đủ điều kiện và ngôn ngữ đang bật.
 4. Judge chấm theo gói đó; người học không bao giờ thấy dữ liệu Test Case ẩn.
@@ -61,8 +65,9 @@ No configuration change.
 
 ## Verification
 
-- Commands run and their results: `prettier --write` trên hai file markdown đã sửa.
-- Not verified: spec chưa được người dùng review.
+- Commands run and their results: `prettier --write` trên bộ tài liệu; kiểm tra cấu trúc/link và
+  Prettier đều pass ở lượt rà soát SRS ngày 2026-09-30.
+- Not verified: không chạy kiểm chứng code vì đây là thay đổi chỉ tài liệu.
 
 ## Remaining
 
@@ -70,5 +75,5 @@ No configuration change.
 - Risks: LRN-002 sửa hành vi hiện có ở ba chỗ khi triển khai: `PublishValidator` của LRN-001 thêm
   điều kiện Test Case; route judge-package chặn Problem chưa xuất bản; harness chuyển khỏi
   `starter_codes`, nên down migration mất harness không có starter code tương ứng. Giới hạn body JSON
-  của Gateway và Learning phải nâng lên. Phụ thuộc quyền `problem:*` (LRN-001-T002) vẫn chưa giải
-  quyết.
+  của Gateway và Learning phải nâng lên. Seam quyền `problem:*` đã được phê duyệt ở ID-003 0.4;
+  triển khai vẫn phải hoàn tất ID-003-T045–T048 và ID-001-T045–T046 trước.

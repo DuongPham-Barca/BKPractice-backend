@@ -23,7 +23,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Phụ thuộc:** Không có.
       **Truy vết:** Quy trình SDD; mục Thứ tự triển khai bước 1 của kế hoạch.
 
-- [ ] **LRN-002-T002 — Xác nhận cơ chế quyền.** Ghi lại kết quả của LRN-001-T002. LRN-002 dùng đúng
+- [ ] **LRN-002-T002 — Xác nhận cơ chế quyền.** Ghi lại kết quả của LRN-001-T002 (seam đã phê duyệt ở ID-003
+      0.4: claim `permissions` → header `x-auth-permissions`). LRN-002 dùng đúng
       seam đó cho `problem:update` và `problem:read-managed`, không thêm mã quyền mới và không bao
       giờ rơi về dữ liệu do client cung cấp.
       **Phụ thuộc:** LRN-002-T001.
