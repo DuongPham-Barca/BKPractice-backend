@@ -17,25 +17,26 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 ## Chuẩn bị
 
-- [ ] Khảo sát mã nguồn hiện có và trạng thái repository.
+- [x] Khảo sát mã nguồn hiện có và trạng thái repository.
 - [x] Spec và plan Approved; chốt `EXECUTED`, 3000 ms/256 MB, watchdog 10 phút, UUID tùy chọn.
 - [x] Ghi kết luận câu hỏi mở trong worked entry phê duyệt SRS.
-- [ ] Xác nhận kiến trúc Submission trong `docs/architecture/`.
-- [ ] Xác nhận `plan.md` khớp với đặc tả sau khi sửa và không mở rộng phạm vi.
+- [x] Xác nhận kiến trúc Submission trong `docs/architecture/`.
+- [x] Xác nhận `plan.md` khớp với đặc tả sau khi sửa và không mở rộng phạm vi.
 - [ ] Xác nhận `pnpm migration:run:submission` chạy được trên môi trường đích.
 
 ## Domain
 
-- [ ] Tạo aggregate `SubmissionRecord` không phụ thuộc framework trong
+- [x] Tạo aggregate `SubmissionRecord` không phụ thuộc framework trong
       `modules/submissions/domain/`.
-- [ ] Chuyển `SubmissionKind` và `SubmissionStatus` sang tầng domain; thêm `EXECUTED` cho Run,
+- [x] Chuyển `SubmissionKind` và `SubmissionStatus` sang tầng domain; thêm `EXECUTED` cho Run,
       giữ các giá trị cũ để không phá dữ liệu đã lưu.
-- [ ] Triển khai `createRunRecord`, `markRunQueued`, `markRunFailedToDispatch`.
-- [ ] Triển khai bất biến `isTerminal` và `canProduceWrongAnswer`.
-- [ ] Khai báo `SubmissionRepositoryPort`, `JudgeJobPort`, `RealtimePort` trong
+- [x] Triển khai `createRunRecord`, `markRunQueued`, `markRunFailedToDispatch`.
+- [x] Triển khai bất biến `isTerminal` và `canProduceWrongAnswer`.
+- [x] Khai báo `SubmissionRepositoryPort`, `JudgeJobPort`, `RealtimePort` trong
       `modules/submissions/domain/ports/`.
-- [ ] Bổ sung kiểm thử domain: Run không sinh `WRONG_ANSWER`; `PENDING → QUEUED → INTERNAL_ERROR`
-      là các chuyển trạng thái hợp lệ; chuyển trạng thái từ một trạng thái cuối cùng bị từ chối.
+- [x] Bổ sung kiểm thử domain: Run không sinh `WRONG_ANSWER`; `PENDING → QUEUED` và
+      `PENDING → INTERNAL_ERROR` là các chuyển trạng thái hợp lệ; chuyển trạng thái từ một trạng
+      thái cuối cùng bị từ chối.
 
 ## Application
 
