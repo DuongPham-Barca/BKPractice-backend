@@ -11,23 +11,9 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 
-export enum SubmissionKind {
-  Run = 'RUN',
-  Submit = 'SUBMIT',
-}
+import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
 
-export enum SubmissionStatus {
-  Pending = 'PENDING',
-  Queued = 'QUEUED',
-  Running = 'RUNNING',
-  Accepted = 'ACCEPTED',
-  WrongAnswer = 'WRONG_ANSWER',
-  CompileError = 'COMPILE_ERROR',
-  RuntimeError = 'RUNTIME_ERROR',
-  TimeLimitExceeded = 'TIME_LIMIT_EXCEEDED',
-  MemoryLimitExceeded = 'MEMORY_LIMIT_EXCEEDED',
-  InternalError = 'INTERNAL_ERROR',
-}
+export { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
 
 @Entity('submissions')
 export class Submission {
