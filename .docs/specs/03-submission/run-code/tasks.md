@@ -8,7 +8,7 @@
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
-và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
+và [`docs/agent/working-agreement.md`](../../../agent/working-agreement.md) bước 1.
 
 Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 
@@ -120,7 +120,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 ## Tài liệu
 
-- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md)
+- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../architecture/submission-service.md)
       khi trạng thái từ PARTIALLY ALIGNED chuyển sang ALIGNED cho phần Run.
 - [ ] Ghi chú migration `stdin` vào tài liệu vận hành.
 - [ ] N/A — tài liệu tương tác phía Gateway không thay đổi.

@@ -1,6 +1,6 @@
 # ID-001 / 4 — HTTP, composition và API Gateway
 
-- Nguồn: [spec](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../../specs/01-identity/authentication/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../specs/01-identity/authentication/tasks.md).
 - Task: ID-001-T017, T025–T032; phụ thuộc các use case ở [phần 2](02-student-login-and-sessions.md) và [phần 3](03-microsoft-login.md).
 
 ## Trình tự thực hiện

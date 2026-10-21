@@ -3,7 +3,7 @@
 Each finished piece of work has one file that records the process. Split those files into folders by area so they stay easy to find. Do not leave every file loose in this directory.
 
 ```text
-docs/worked/<area>/YYYY-MM-DD-short-name.md
+.docs/worked/<area>/YYYY-MM-DD-short-name.md
 ```
 
 `<area>` is:
@@ -15,8 +15,8 @@ docs/worked/<area>/YYYY-MM-DD-short-name.md
 Examples:
 
 ```text
-docs/worked/agent/2026-09-23-working-agreement.md
-docs/worked/identity/auth/2026-09-23-login.md
+.docs/worked/agent/2026-09-23-working-agreement.md
+.docs/worked/identity/auth/2026-09-23-login.md
 ```
 
 Create a folder only when that area has an entry to write. Do not create empty folders.

@@ -1,6 +1,6 @@
 # ID-001 / 6 — Kiểm thử, xác minh và bàn giao
 
-- Nguồn: [spec](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../../specs/01-identity/authentication/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../specs/01-identity/authentication/tasks.md).
 - Task: ID-001-T033–T044 theo thứ tự phụ thuộc trong checklist; bắt đầu khi [các phần 1–5](../README.md) đã có hành vi tương ứng.
 
 ## Trình tự thực hiện

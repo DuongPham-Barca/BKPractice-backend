@@ -7,7 +7,7 @@
 ## Service đích và kiến trúc bắt buộc
 
 - Service: Judge.
-- Kiến trúc: **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md) và [Judge architecture](../../../docs/architecture/judge-service.md).
+- Kiến trúc: **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md) và [Judge architecture](../../../architecture/judge-service.md).
 - Luồng: RabbitMQ consumer (driving adapter) → core orchestration/pipeline → LanguageRunner/Sandbox/ResultPublisher ports → adapters. Không có DDD entity, repository hoặc database nghiệp vụ.
 
 ## Ảnh hưởng tới mã nguồn hiện có

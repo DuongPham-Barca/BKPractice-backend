@@ -32,8 +32,8 @@ mới.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **Clean Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md) và
-[`community-service.md`](../../../docs/architecture/community-service.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md) và
+[`community-service.md`](../../../architecture/community-service.md)).
 
 ```text
 presentation -> application -> domain

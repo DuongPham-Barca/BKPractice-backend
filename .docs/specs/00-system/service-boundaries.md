@@ -1,7 +1,7 @@
 # Ranh giới service
 
 Việc đặt tính năng và xác định quyền sở hữu tuân theo
-[kiến trúc hệ thống](../../docs/architecture/system-architecture.md) có thẩm quyền.
+[kiến trúc hệ thống](../../architecture/system-architecture.md) có thẩm quyền.
 
 ## API Gateway
 

@@ -227,7 +227,7 @@ JudgeResult có thể tương quan; xử lý poison message thuộc contract mes
 
 - [LRN-001 Problem](../../02-learning/problems/spec.md), [LRN-002 Test Case](../../02-learning/test-cases/spec.md)
 - [SUB-001 Run](../../03-submission/run-code/spec.md), [SUB-002 Submit](../../03-submission/submit-code/spec.md)
-- `libs/contracts/src/judge.contracts.ts`, [Kiến trúc Judge](../../../docs/architecture/judge-service.md),
+- `libs/contracts/src/judge.contracts.ts`, [Kiến trúc Judge](../../../architecture/judge-service.md),
   [Judge security](../../00-system/judge-security.md)
 
 ## Câu hỏi mở

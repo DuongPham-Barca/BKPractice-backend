@@ -134,9 +134,9 @@ nào cần thêm/thay contract trước khi được Approved.
 
 ## Nguồn có thẩm quyền
 
-- [Kiến trúc hệ thống](../../docs/architecture/system-architecture.md)
-- [Kiến trúc Judge](../../docs/architecture/judge-service.md)
-- [ADR 0002](../../docs/adr/0002-revised-service-internal-architectures.md)
+- [Kiến trúc hệ thống](../../architecture/system-architecture.md)
+- [Kiến trúc Judge](../../architecture/judge-service.md)
+- [ADR 0002](../../adr/0002-revised-service-internal-architectures.md)
 - [Bảo mật Judge](../00-system/judge-security.md)
 - [Problem](../02-learning/problems/spec.md) và [Test Case](../02-learning/test-cases/spec.md)
 - [Run Code](../03-submission/run-code/spec.md) và [Submit Code](../03-submission/submit-code/spec.md)

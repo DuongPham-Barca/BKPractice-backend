@@ -31,7 +31,7 @@ microservice mới. API Gateway chỉ cần đổi giới hạn kích thước b
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation -> application -> domain

@@ -6,7 +6,7 @@
 
 ## Service và kiến trúc bắt buộc
 
-Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md). `LanguageRunner` hiện là driven port có bốn adapter; giữ quy tắc command/image/filename chỉ do adapter tin cậy quyết định. Không thêm domain/repository/database.
+Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md). `LanguageRunner` hiện là driven port có bốn adapter; giữ quy tắc command/image/filename chỉ do adapter tin cậy quyết định. Không thêm domain/repository/database.
 
 ## Mã hiện có và thay đổi dự kiến
 

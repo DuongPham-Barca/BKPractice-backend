@@ -203,9 +203,9 @@ COM-004 không đưa vào cấu trúc lỗi mới.
 
 ## Phụ thuộc
 
-- [Kiến trúc Community Service](../../../docs/architecture/community-service.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)
+- [Kiến trúc Community Service](../../../architecture/community-service.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)
 - [Ranh giới service](../../00-system/service-boundaries.md)
 - [Chiến lược cơ sở dữ liệu](../../00-system/database-strategy.md)
 - [COM-001 Posts](../posts/spec.md): Post, hiển thị, FR-016 (nhận tương tác mới), bản tóm tắt Post

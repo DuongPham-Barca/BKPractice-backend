@@ -7,7 +7,7 @@
 ## Service đích và kiến trúc bắt buộc
 
 - Service: Judge.
-- Kiến trúc: **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md) và [Judge architecture](../../../docs/architecture/judge-service.md).
+- Kiến trúc: **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md) và [Judge architecture](../../../architecture/judge-service.md).
 - Sandbox là driven adapter. Core chỉ biết contract thực thi, không biết Docker flags, process spawning hay đường dẫn host. Không thêm domain entity/repository/database cho phép biến đổi stateless này.
 
 ## Ảnh hưởng tới mã hiện có

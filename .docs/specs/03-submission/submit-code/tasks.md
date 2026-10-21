@@ -8,7 +8,7 @@
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
-và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
+và [`docs/agent/working-agreement.md`](../../../agent/working-agreement.md) bước 1.
 
 Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 
@@ -146,7 +146,7 @@ thực tế; tích một mục nghĩa là mục đó đã hoàn thành và đã 
 
 - [ ] Xác minh adapter dùng đúng gói judge LRN-002 theo `problemId + language`, không thêm
       `allowedLanguages` hoặc thay đổi hợp đồng Learning.
-- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md)
+- [ ] Cập nhật [`docs/architecture/submission-service.md`](../../../architecture/submission-service.md)
       khi trạng thái chuyển khỏi PARTIALLY ALIGNED.
 - [ ] Ghi chú migration `score` và giới hạn dữ liệu `0` cũ vào tài liệu vận hành.
 - [ ] Ghi lại các sai lệch đã được phê duyệt.

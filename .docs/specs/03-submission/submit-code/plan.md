@@ -25,7 +25,7 @@ Không có service mới. SUB-002 ghi rõ ở mục Ngoài phạm vi rằng khô
 Kiến trúc: **Clean Architecture + Event-Driven Architecture**
 
 Chép từ [`specs/00-system/architecture-reference.md`](../../00-system/architecture-reference.md)
-và [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md).
+và [`docs/architecture/submission-service.md`](../../../architecture/submission-service.md).
 
 `submission-service.md` nêu rõ các quy tắc mà kế hoạch này phải giữ:
 

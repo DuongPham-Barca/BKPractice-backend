@@ -32,8 +32,8 @@ Learning của API Gateway. Không có thay đổi ở Identity (không có quy�
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md) và
-[`learning-service.md`](../../../docs/architecture/learning-service.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md) và
+[`learning-service.md`](../../../architecture/learning-service.md)).
 
 ```text
 presentation -> application -> domain

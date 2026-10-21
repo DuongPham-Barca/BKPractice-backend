@@ -39,7 +39,7 @@ và không đụng tới lớp lưu trữ của Identity, Submission hay Judge.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 Learning giữ Quản lý Problem bên trong module `problems` của một bounded context Learning duy nhất,
 theo đúng chiều phụ thuộc đã được tài liệu hoá:

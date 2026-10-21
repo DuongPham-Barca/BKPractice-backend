@@ -32,7 +32,7 @@ microservice mới.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation (REST controller, RabbitMQ consumer) -> application -> domain
@@ -45,7 +45,7 @@ infrastructure ----implements----^ các port của application/domain
   lần đạt sớm nhất, điểm là điểm cao nhất". Phép tính hoàn thành Course và điểm Assignment là domain
   service thuần. Không thêm bounded context, CQRS hay event store.
 - Đây chính là bước "tách use case `ApplyAcceptedSubmission`" mà
-  [learning-service.md](../../../docs/architecture/learning-service.md) mục Incremental alignment
+  [learning-service.md](../../../architecture/learning-service.md) mục Incremental alignment
   yêu cầu khi luồng tiến độ thay đổi lần tới.
 
 ## Ảnh hưởng tới mã nguồn hiện có

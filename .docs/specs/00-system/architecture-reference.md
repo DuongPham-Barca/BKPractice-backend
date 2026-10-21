@@ -4,16 +4,16 @@
 
 Các quyết định có thẩm quyền vẫn nằm tại:
 
-- [`system-architecture.md`](../../docs/architecture/system-architecture.md)
-- [`service-architectures.md`](../../docs/architecture/service-architectures.md)
-- [`dependency-rules.md`](../../docs/architecture/dependency-rules.md)
+- [`system-architecture.md`](../../architecture/system-architecture.md)
+- [`service-architectures.md`](../../architecture/service-architectures.md)
+- [`dependency-rules.md`](../../architecture/dependency-rules.md)
 - tài liệu riêng của service liên quan trong [`docs/architecture`](../../docs/architecture/)
 - các ADR đã được chấp nhận trong [`docs/adr`](../../docs/adr/)
 
 File này là chỉ mục lập kế hoạch và bản tóm tắt tuân thủ ngắn gọn. Nếu câu chữ có khác biệt, các tài
 liệu kiến trúc và ADR đã chấp nhận được ưu tiên.
 
-Quyết định hiện hành là [ADR 0002](../../docs/adr/0002-revised-service-internal-architectures.md),
+Quyết định hiện hành là [ADR 0002](../../adr/0002-revised-service-internal-architectures.md),
 thay thế ADR 0001.
 
 ## Kiến trúc bắt buộc theo từng đích

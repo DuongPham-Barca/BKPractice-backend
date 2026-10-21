@@ -1,6 +1,6 @@
 # ID-003 / 2 — API quản lý vai trò và principal tin cậy
 
-- Nguồn: [spec](../../../../../specs/01-identity/rbac/spec.md), [plan](../../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../../specs/01-identity/rbac/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/rbac/spec.md), [plan](../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../specs/01-identity/rbac/tasks.md).
 - Task: ID-003-T022–T035; phụ thuộc [chính sách/repository](01-domain-and-repository.md) và ranh giới xác thực ID-001.
 
 ## Trình tự thực hiện

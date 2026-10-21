@@ -1,6 +1,6 @@
 # ID-001 / 2 — Đăng nhập sinh viên và vòng đời phiên
 
-- Nguồn: [spec](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../../specs/01-identity/authentication/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../specs/01-identity/authentication/tasks.md).
 - Task: ID-001-T018, T022–T024; dùng nền tảng T003–T014 của [phần 1](01-foundation-and-storage.md).
 
 ## Trình tự thực hiện

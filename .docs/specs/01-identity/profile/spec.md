@@ -307,11 +307,11 @@ tảng đã thiết lập.
 ## Phụ thuộc
 
 - [ID-001 Authentication](../authentication/spec.md)
-- [Kiến trúc Identity Service](../../../docs/architecture/identity-service.md)
-- [Ranh giới service](../../../specs/00-system/service-boundaries.md)
-- [Vai trò và quyền](../../../specs/00-system/roles-permissions.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [Kiến trúc hệ thống](../../../docs/architecture/system-architecture.md)
+- [Kiến trúc Identity Service](../../../architecture/identity-service.md)
+- [Ranh giới service](../../00-system/service-boundaries.md)
+- [Vai trò và quyền](../../00-system/roles-permissions.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [Kiến trúc hệ thống](../../../architecture/system-architecture.md)
 - [Quy trình SDD](../../README.md)
 - Contract cấp tài khoản của quản trị viên đã phê duyệt cung cấp giá trị `họ tên` ban đầu; ID-002
   không hiện thực luồng import đó.
