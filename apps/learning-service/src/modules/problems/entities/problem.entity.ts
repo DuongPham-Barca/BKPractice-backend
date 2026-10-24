@@ -10,6 +10,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -22,8 +23,13 @@ export enum Difficulty {
 export enum PublishStatus {
   Draft = 'DRAFT',
   Published = 'PUBLISHED',
-  Archived = 'ARCHIVED',
+  OnHold = 'ON_HOLD',
 }
+
+export type ProblemTypeConfigJson = {
+  languageContract?: Record<string, unknown>;
+  ooContract?: Record<string, unknown>;
+};
 
 @Entity('topics')
 export class Topic {
@@ -63,6 +69,10 @@ export class Problem {
   })
   publishStatus!: PublishStatus;
   @Column({ name: 'created_by', type: 'uuid' }) createdBy!: string;
+  @Column({ name: 'type_config', type: 'jsonb', nullable: true })
+  typeConfig!: ProblemTypeConfigJson | null;
+  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
 
   @ManyToMany(() => Topic)
   @JoinTable({
@@ -101,6 +111,7 @@ export class TestCase {
 }
 
 @Entity('starter_codes')
+@Unique('uq_starter_codes_problem_language', ['problem', 'language'])
 export class StarterCode {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @ManyToOne(() => Problem, (problem) => problem.starterCodes, { onDelete: 'CASCADE' })

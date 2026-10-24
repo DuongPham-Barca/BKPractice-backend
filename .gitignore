@@ -17,3 +17,5 @@ Thumbs.db
 *.swp
 *.tsbuildinfo
 .codegraph/
+
+review/

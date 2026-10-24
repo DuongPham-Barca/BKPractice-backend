@@ -28,7 +28,7 @@ bounded context. They must not be split into a Problem Service or Recommendation
         ║  ┌────────────────────────────────────┐   ║
         ║  │  DOMAIN — aggregates, value        │   ║
         ║  │  objects, domain services,         │   ║
-        ║  │  lifecycle invariants              │   ║
+        ║  │  lifecycle, repository ports       │   ║
         ║  └────────────────────────────────────┘   ║
         ╚═══╤═══════════╤═══════════╤═══════════╤═══╝
             │ driven ports          │           │
@@ -73,8 +73,9 @@ modules/
 └── recommendation/
 ```
 
-A module with real domain behavior adds `domain`, `application/ports`, `application/use-cases`,
-`infrastructure` and `presentation`. A module that is still small stays shallow. Test cases, topics,
+A module with real domain behavior adds `domain` (including `domain/repositories` for aggregate
+repositories), `application/ports/out`, `application/use-cases`, `infrastructure` and `presentation`.
+A module that is still small stays shallow. Test cases, topics,
 tags, starter code and supported languages belong to Problems. Chapters stay with Courses. Class
 and Enrollment move to their own `enrollments` module: the join code, the enrolment lifecycle and
 the class-size limit are behaviour of their own and no longer depend on the Course lifecycle.
@@ -91,7 +92,7 @@ infrastructure ----implements----^ application/domain ports
 
 - Domain imports no NestJS, TypeORM, RabbitMQ, Redis, HTTP or JWT code. It is testable with plain
   constructor calls.
-- Application depends only on domain types and its own ports.
+- Application depends only on domain types (including domain repository ports) and its own out ports.
 - REST controllers and message consumers are both driving adapters. They call one use case and
   translate its result; they do not implement multi-step workflows.
 - TypeORM repositories, internal REST responses and RabbitMQ publishing are driven adapters bound at
@@ -102,14 +103,18 @@ external IDs and never cross-database TypeORM relations.
 
 ## Ports
 
-Two kinds of port exist inside the hexagon:
+Two kinds of boundary exist inside the hexagon:
 
-- **Driven port** — a port reached by the core, implemented by an infrastructure adapter (e.g.
-  `ProblemRepository`, `CourseStructureReader`, `TransactionRunner`). Driven ports are declared in
-  `application/ports/` and implemented in `infrastructure/`.
-- **Internal port** — a port used only inside the application layer, with no infrastructure adapter
-  (e.g. `PublishValidator`, `DifficultyLadder`). Internal ports live in `application/` and keep the
-  use case free of framework and infrastructure details.
+- **Driven port** — a port reached by the core, implemented by an infrastructure adapter. Aggregate
+  repository ports (e.g. `ProblemRepository`) are declared in `domain/repositories/`; other driven
+  ports (e.g. `CourseStructureReader`, `TransactionRunner`, `PrincipalProvider`) are declared in
+  `application/ports/out/`. All driven ports are implemented in `infrastructure/`. Port files use
+  `<name>.port.out.ts`; inbound port interfaces, when needed, use `<name>.port.in.ts` under
+  `application/ports/in/`. Never `<name>.port.ts`.
+- **Internal boundary** — a rule or service used only inside the core, with no infrastructure adapter.
+  Pure domain rules (e.g. `PublishValidator`, `DifficultyLadder`) live in `domain/services/`;
+  application-only services (e.g. Problem authorization) live in `application/services/`. Both keep
+  use cases free of framework and infrastructure details.
 
 ### When to create a port
 
