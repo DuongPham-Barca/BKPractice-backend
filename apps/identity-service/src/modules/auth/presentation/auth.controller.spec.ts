@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 
@@ -61,6 +62,7 @@ describe('Identity authentication HTTP contract', () => {
         { provide: LogoutCurrentSession, useValue: logout },
         { provide: GetCurrentAuthenticatedUser, useValue: current },
         { provide: BK_TOKEN_SERVICE, useValue: tokens },
+        { provide: ConfigService, useValue: new ConfigService({ JWT_ACCESS_TTL: '15m' }) },
       ],
     }).compile();
     app = module.createNestApplication();
@@ -101,9 +103,19 @@ describe('Identity authentication HTTP contract', () => {
         },
         body: JSON.stringify(body),
       });
-    expect(
-      (await post('/api/auth/login', { studentId: '2210001', password: '123456' })).status,
-    ).toBe(200);
+    const loginResponse = await post('/api/auth/login', {
+      studentId: '2210001',
+      password: '123456',
+    });
+    expect(loginResponse.status).toBe(200);
+    expect(await loginResponse.json()).toEqual({ userId: 'user-1', refreshToken: 'refresh' });
+    expect(loginResponse.headers.get('set-cookie')).toMatch(/^__Host-bk_access=access;/);
+    expect(loginResponse.headers.get('set-cookie')).toContain('HttpOnly');
+    expect(loginResponse.headers.get('set-cookie')).toContain('Secure');
+    expect(loginResponse.headers.get('set-cookie')).toContain('SameSite=Lax');
+    expect(loginResponse.headers.get('set-cookie')).toContain('Path=/');
+    expect(loginResponse.headers.get('set-cookie')).toContain('Max-Age=900');
+    expect(loginResponse.headers.get('set-cookie')).not.toContain('Domain=');
     expect((await fetch(`${baseUrl}/api/auth/microsoft`, { redirect: 'manual' })).status).toBe(302);
     expect(
       (
@@ -112,12 +124,26 @@ describe('Identity authentication HTTP contract', () => {
         })
       ).status,
     ).toBe(302);
-    expect((await post('/api/auth/microsoft/exchange', { loginCode: 'once' })).status).toBe(200);
-    expect((await post('/api/auth/refresh', { refreshToken: 'refresh' })).status).toBe(200);
+    const exchangeResponse = await post('/api/auth/microsoft/exchange', { loginCode: 'once' });
+    expect(exchangeResponse.status).toBe(200);
+    expect(await exchangeResponse.json()).toEqual({ userId: 'user-1', refreshToken: 'refresh' });
+    expect(exchangeResponse.headers.get('set-cookie')).toMatch(/^__Host-bk_access=access;/);
+    const refreshResponse = await post('/api/auth/refresh', { refreshToken: 'refresh' });
+    expect(refreshResponse.status).toBe(200);
+    expect(await refreshResponse.json()).toEqual({ refreshToken: 'next-refresh' });
+    expect(refreshResponse.headers.get('set-cookie')).toMatch(/^__Host-bk_access=next;/);
     expect((await post('/api/auth/logout', { refreshToken: 'refresh' })).status).toBe(401);
-    expect(
-      (await post('/api/auth/logout', { refreshToken: 'refresh' }, 'Bearer valid')).status,
-    ).toBe(204);
+    const logoutResponse = await post(
+      '/api/auth/logout',
+      { refreshToken: 'refresh' },
+      'Bearer valid',
+    );
+    expect(logoutResponse.status).toBe(204);
+    expect(logoutResponse.headers.get('set-cookie')).toContain('__Host-bk_access=;');
+    expect(logoutResponse.headers.get('set-cookie')).toContain('Path=/');
+    expect(logoutResponse.headers.get('set-cookie')).toContain('HttpOnly');
+    expect(logoutResponse.headers.get('set-cookie')).toContain('Secure');
+    expect(logoutResponse.headers.get('set-cookie')).toContain('SameSite=Lax');
     expect(logout.execute).toHaveBeenCalledWith('user-1', 'refresh');
     expect((await fetch(`${baseUrl}/api/auth/me`)).status).toBe(401);
     const me = await fetch(`${baseUrl}/api/auth/me`, {

@@ -155,5 +155,6 @@ import { User } from '@/modules/users/entities/user.entity';
       useFactory: (accounts: AuthAccountRepository) => new GetCurrentAuthenticatedUser(accounts),
     },
   ],
+  exports: [BK_TOKEN_SERVICE],
 })
 export class AuthModule {}
