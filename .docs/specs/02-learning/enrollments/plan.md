@@ -29,14 +29,14 @@ Service: Learning Service
 
 Class và Enrollment chuyển từ module `courses` sang một module mới `enrollments`
 (`apps/learning-service/src/modules/enrollments/`), trong `bkpractice_learning`. Tên module lấy theo
-bố cục module ưu tiên của [`learning-service.md`](../../../docs/architecture/learning-service.md)
+bố cục module ưu tiên của [`learning-service.md`](../../../architecture/learning-service.md)
 (`modules/enrollments/`) và thư mục tính năng `specs/02-learning/enrollments/`. Không tạo
 microservice mới. Identity cần một migration seed quyền (xem mục Phân quyền). API Gateway không đổi.
 
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation -> application -> domain

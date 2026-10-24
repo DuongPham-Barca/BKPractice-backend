@@ -8,7 +8,7 @@
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved 2026-09-30
 
 Nguồn của yêu cầu này: mẫu [`specs/templates/tasks.template.md`](../../templates/tasks.template.md)
-và [`docs/agent/working-agreement.md`](../../../docs/agent/working-agreement.md) bước 1.
+và [`docs/agent/working-agreement.md`](../../../agent/working-agreement.md) bước 1.
 
 Task code vẫn chưa hoàn thành; chỉ bước phê duyệt tài liệu đã được tích.
 

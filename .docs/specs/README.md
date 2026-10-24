@@ -2,7 +2,7 @@
 
 Thư mục này định nghĩa quy trình Phát triển hướng đặc tả (Spec-Driven Development — SDD) cho các
 công việc tiếp theo của BKPractice. Nó không thay thế tài liệu kiến trúc có thẩm quyền trong
-[`docs/architecture`](../docs/architecture/system-architecture.md).
+[`docs/architecture`](../architecture/system-architecture.md).
 
 ## Trách nhiệm của từng tài liệu
 
@@ -59,7 +59,7 @@ Chỉ người rà soát có thẩm quyền mới được phê duyệt hoặc s
 
 ## Quy trình cho agent
 
-The step-by-step working agreement is [`docs/agent/working-agreement.md`](../docs/agent/working-agreement.md).
+The step-by-step working agreement is [`docs/agent/working-agreement.md`](../agent/working-agreement.md).
 An agent follows that order. The obligations below remain the SDD baseline.
 
 Before implementation, an agent MUST:
@@ -121,7 +121,7 @@ cho quy ước đặt tên; chúng không phải là các đặc tả tính năn
 
 ## Ví dụ: ID-001 Authentication
 
-Bắt đầu bằng cách chép [`spec.template.md`](./templates/spec.template.md) sang
+Bắt đầu bằng cách chép [`spec.template.md`](templates/spec.template.md) sang
 `01-identity/authentication/spec.md`, đặt mã tính năng là `ID-001`, và chỉ mô tả các yêu cầu về xác
 thực. Kiến trúc bắt buộc của nó là **Identity Service: Clean Architecture**.
 
@@ -136,4 +136,4 @@ Quy tắc tương tự áp dụng cho các tiền tố khác:
 - `JDG-*`: Hexagonal Architecture (Ports & Adapters) + Pipeline.
 - `COM-*`: Clean Architecture.
 
-Ma trận service đầy đủ nằm trong [`00-system/architecture-reference.md`](./00-system/architecture-reference.md).
+Ma trận service đầy đủ nằm trong [`00-system/architecture-reference.md`](00-system/architecture-reference.md).

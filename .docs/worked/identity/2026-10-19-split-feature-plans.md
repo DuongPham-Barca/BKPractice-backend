@@ -5,9 +5,9 @@
 
 ## Spec and plan
 
-- Spec: [ID-001 Authentication 1.1](../../../specs/01-identity/authentication/spec.md), [ID-002 Profile 0.4](../../../specs/01-identity/profile/spec.md), [ID-003 RBAC 0.4](../../../specs/01-identity/rbac/spec.md).
-- Plan: Các `plan.md` đã Approved của [Authentication](../../../specs/01-identity/authentication/plan.md), [Profile](../../../specs/01-identity/profile/plan.md), [RBAC](../../../specs/01-identity/rbac/plan.md); kết quả phân rã bắt đầu tại [Identity plan index](../../pm/plan/identity/README.md).
-- Tasks: Checklist hiện có của [Authentication](../../../specs/01-identity/authentication/tasks.md), [Profile](../../../specs/01-identity/profile/tasks.md), [RBAC](../../../specs/01-identity/rbac/tasks.md).
+- Spec: [ID-001 Authentication 1.1](../../specs/01-identity/authentication/spec.md), [ID-002 Profile 0.4](../../specs/01-identity/profile/spec.md), [ID-003 RBAC 0.4](../../specs/01-identity/rbac/spec.md).
+- Plan: Các `plan.md` đã Approved của [Authentication](../../specs/01-identity/authentication/plan.md), [Profile](../../specs/01-identity/profile/plan.md), [RBAC](../../specs/01-identity/rbac/plan.md); kết quả phân rã bắt đầu tại [Identity plan index](../../pm/plan/identity/README.md).
+- Tasks: Checklist hiện có của [Authentication](../../specs/01-identity/authentication/tasks.md), [Profile](../../specs/01-identity/profile/tasks.md), [RBAC](../../specs/01-identity/rbac/tasks.md).
 - Spec status at start: Cả ba spec là `Approved`.
 
 ## Questions clarified

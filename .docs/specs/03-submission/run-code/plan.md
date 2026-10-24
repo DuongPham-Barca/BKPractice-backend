@@ -18,7 +18,7 @@ khai tương lai; chưa có task mã nguồn nào được thực hiện.
 Service: **Submission**
 
 Lý do: `specs/00-system/service-boundaries.md` và
-[`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md) giao
+[`docs/architecture/submission-service.md`](../../../architecture/submission-service.md) giao
 quyền sở hữu vòng đời bền vững của Run và Submit cho Submission. SUB-001 cũng ghi rõ ở mục Ngoài
 phạm vi rằng không có microservice Run riêng.
 
@@ -28,7 +28,7 @@ Kiến trúc: **Clean Architecture + Event-Driven Architecture**
 
 Chép chính xác từ [`specs/00-system/architecture-reference.md`](../../00-system/architecture-reference.md)
 dòng Submission, và khớp với `submission-service.md` cùng
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md).
 
 Hệ quả bắt buộc cho kế hoạch này:
 

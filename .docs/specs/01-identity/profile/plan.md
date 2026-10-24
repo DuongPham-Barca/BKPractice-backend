@@ -30,7 +30,7 @@ cập cơ sở dữ liệu của Learning, Submission hay Community.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **Clean Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 Bản triển khai tuân theo chiều phụ thuộc đã phê duyệt của Identity:
 

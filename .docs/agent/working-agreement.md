@@ -4,7 +4,7 @@ This document is the mandatory process for every change in the `bkpractice-backe
 `AGENTS.md` only points here. It does not repeat these steps. Before editing any file, open this
 document from that pointer and follow it.
 
-This process operates the Spec-Driven Development workflow defined in [`specs/README.md`](../../specs/README.md).
+This process operates the Spec-Driven Development workflow defined in [`specs/README.md`](../specs/README.md).
 It must not loosen the requirements of an Approved `spec.md`, and it must not change the architecture in
 [`docs/architecture/`](../architecture/system-architecture.md) or [`docs/adr/`](../adr/0001-service-specific-internal-architectures.md).
 
@@ -174,8 +174,8 @@ Use this template:
 ## Questions clarified
 
 | Question | Conclusion | Source |
-| --- | --- | --- |
-| ... | ... | ... |
+| -------- | ---------- | ------ |
+| ...      | ...        | ...    |
 
 ## What was done
 
@@ -297,7 +297,7 @@ These locations keep their current roles. Do not put new feature documents there
 - Judge follows Worker + Pipeline + Adapter and treats submitted code as untrusted.
 - A service must not access another service's database, repository, entity, migration, or source internals.
 - Keep service-owned business entities and use cases out of generic shared libraries.
-- The full architecture matrix is in [`specs/00-system/architecture-reference.md`](../../specs/00-system/architecture-reference.md).
+- The full architecture matrix is in [`specs/00-system/architecture-reference.md`](../specs/00-system/architecture-reference.md).
 
 ## Repository tooling and safety
 
@@ -324,6 +324,6 @@ The block between `<!-- CODEGRAPH_START -->` and `<!-- CODEGRAPH_END -->` in `AG
 
 ## Definition of done
 
-Apply [`specs/00-system/definition-of-done.md`](../../specs/00-system/definition-of-done.md) in proportion to the work.
+Apply [`specs/00-system/definition-of-done.md`](../specs/00-system/definition-of-done.md) in proportion to the work.
 
 At minimum, applicable work must match the architecture, be traceable to the Approved spec, have tests when code changes, be documented when a contract changes, be checked with the applicable `pnpm` scripts, and have a worked file. An unrelated check may be marked N/A only with a concrete reason.

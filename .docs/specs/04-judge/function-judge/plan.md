@@ -6,7 +6,7 @@
 
 ## Service đích và kiến trúc bắt buộc
 
-Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md). FUNCTION là chiến lược evaluate/prepare của pipeline, dùng chung LanguageRunner và Sandbox thật; không tạo một service hoặc database riêng, không thêm DDD entity.
+Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md). FUNCTION là chiến lược evaluate/prepare của pipeline, dùng chung LanguageRunner và Sandbox thật; không tạo một service hoặc database riêng, không thêm DDD entity.
 
 ## Hiện trạng và phạm vi thay đổi
 

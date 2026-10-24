@@ -355,12 +355,12 @@ việc ánh xạ lỗi phân quyền hiện có của service sở hữu.
   các ảnh chụp vai trò tin cậy và ngữ nghĩa của token.
 - [ID-002 Profile](../profile/spec.md) cho lệnh cấm tường minh việc thay đổi vai trò/quyền/trạng thái
   thông qua Profile.
-- [Kiến trúc Identity Service](../../../docs/architecture/identity-service.md)
-- [Ranh giới service](../../../specs/00-system/service-boundaries.md)
-- [Quy tắc hệ thống về vai trò và quyền](../../../specs/00-system/roles-permissions.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [Kiến trúc hệ thống](../../../docs/architecture/system-architecture.md)
-- [Kiến trúc API Gateway](../../../docs/architecture/api-gateway.md)
+- [Kiến trúc Identity Service](../../../architecture/identity-service.md)
+- [Ranh giới service](../../00-system/service-boundaries.md)
+- [Quy tắc hệ thống về vai trò và quyền](../../00-system/roles-permissions.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [Kiến trúc hệ thống](../../../architecture/system-architecture.md)
+- [Kiến trúc API Gateway](../../../architecture/api-gateway.md)
 - [Quy trình SDD](../../README.md)
 
 ## Câu hỏi mở

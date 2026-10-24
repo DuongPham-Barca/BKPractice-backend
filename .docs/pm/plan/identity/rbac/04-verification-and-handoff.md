@@ -1,6 +1,6 @@
 # ID-003 / 4 — Kiểm chứng RBAC và bàn giao
 
-- Nguồn: [spec](../../../../../specs/01-identity/rbac/spec.md), [plan](../../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../../specs/01-identity/rbac/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/rbac/spec.md), [plan](../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../specs/01-identity/rbac/tasks.md).
 - Task: ID-003-T036–T044; đối chiếu T050 của [bản sửa đổi 0.4](03-permission-catalog-and-claims.md) sau khi tích hợp Auth/Gateway xong.
 
 ## Trình tự thực hiện

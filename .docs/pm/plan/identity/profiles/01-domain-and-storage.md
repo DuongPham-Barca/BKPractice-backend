@@ -1,6 +1,6 @@
 # ID-002 / 1 — Domain Profile và lưu trữ Identity
 
-- Nguồn: [spec](../../../../../specs/01-identity/profile/spec.md), [plan](../../../../../specs/01-identity/profile/plan.md), [tasks](../../../../../specs/01-identity/profile/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/profile/spec.md), [plan](../../../../specs/01-identity/profile/plan.md), [tasks](../../../../specs/01-identity/profile/tasks.md).
 - Task: ID-002-T001–T014; phụ thuộc ranh giới định danh/tên chính thức do ID-001 và quy trình cấp tài khoản cung cấp.
 
 ## Trình tự thực hiện

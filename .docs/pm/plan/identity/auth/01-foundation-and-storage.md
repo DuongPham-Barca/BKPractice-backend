@@ -1,6 +1,6 @@
 # ID-001 / 1 — Nền tảng, domain và lưu trữ
 
-- Nguồn: [spec](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../../specs/01-identity/authentication/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../specs/01-identity/authentication/tasks.md).
 - Task: ID-001-T001–T014, trừ adapter Microsoft/Redis được triển khai ở [phần 3](03-microsoft-login.md).
 - Đầu vào: trạng thái Approved của ID-001 1.1, schema Identity hiện có và contract cấp tài khoản đã được xác nhận; chưa thực hiện import Excel trong phần này.
 

@@ -1,6 +1,6 @@
 # ID-002 / 2 — Avatar R2 và các use case Profile
 
-- Nguồn: [spec](../../../../../specs/01-identity/profile/spec.md), [plan](../../../../../specs/01-identity/profile/plan.md), [tasks](../../../../../specs/01-identity/profile/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/profile/spec.md), [plan](../../../../specs/01-identity/profile/plan.md), [tasks](../../../../specs/01-identity/profile/tasks.md).
 - Task: ID-002-T015–T024; phụ thuộc [domain/repository](01-domain-and-storage.md) và ngữ cảnh principal tin cậy từ ID-001.
 
 ## Trình tự thực hiện

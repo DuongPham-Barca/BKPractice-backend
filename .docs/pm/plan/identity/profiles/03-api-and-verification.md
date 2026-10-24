@@ -1,6 +1,6 @@
 # ID-002 / 3 — API Profile, Gateway và xác minh
 
-- Nguồn: [spec](../../../../../specs/01-identity/profile/spec.md), [plan](../../../../../specs/01-identity/profile/plan.md), [tasks](../../../../../specs/01-identity/profile/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/profile/spec.md), [plan](../../../../specs/01-identity/profile/plan.md), [tasks](../../../../specs/01-identity/profile/tasks.md).
 - Task: ID-002-T025–T033, T036–T042; T034–T035 đã được đánh dấu N/A có lý do trong checklist gốc.
 - Phụ thuộc: [phần 1](01-domain-and-storage.md), [phần 2](02-avatar-and-use-cases.md) và các ranh giới ID-001/ID-003 đã duyệt.
 

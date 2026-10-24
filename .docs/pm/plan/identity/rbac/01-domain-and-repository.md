@@ -1,6 +1,6 @@
 # ID-003 / 1 — Chính sách RBAC và repository Identity
 
-- Nguồn: [spec](../../../../../specs/01-identity/rbac/spec.md), [plan](../../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../../specs/01-identity/rbac/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/rbac/spec.md), [plan](../../../../specs/01-identity/rbac/plan.md), [tasks](../../../../specs/01-identity/rbac/tasks.md).
 - Task: ID-003-T001–T021; phần danh mục quyền mới của bản sửa đổi 0.4 ở [phần 3](03-permission-catalog-and-claims.md).
 
 ## Trình tự thực hiện

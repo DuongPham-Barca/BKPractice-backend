@@ -1,6 +1,6 @@
 # ID-003 / 3 — Danh mục quyền, quyền hiệu lực và Gateway
 
-- Nguồn: [ID-003 0.4](../../../../../specs/01-identity/rbac/spec.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực), [plan bổ sung](../../../../../specs/01-identity/rbac/plan.md#bổ-sung-cho-bản-sửa-đổi-04), [tasks](../../../../../specs/01-identity/rbac/tasks.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực), [ID-001 1.1](../../../../../specs/01-identity/authentication/spec.md#bản-sửa-đổi-11--claim-quyền).
+- Nguồn: [ID-003 0.4](../../../../specs/01-identity/rbac/spec.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực), [plan bổ sung](../../../../specs/01-identity/rbac/plan.md#bổ-sung-cho-bản-sửa-đổi-04), [tasks](../../../../specs/01-identity/rbac/tasks.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực), [ID-001 1.1](../../../../specs/01-identity/authentication/spec.md#bản-sửa-đổi-11--claim-quyền).
 - Task: ID-003-T045–T050; phối hợp ID-001-T045–T047 ở [Auth claim](../auth/05-permission-claim.md).
 
 ## Trình tự thực hiện

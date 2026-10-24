@@ -1,6 +1,6 @@
 # Identity Authentication — triển khai ID-001
 
-Các phần việc [1–6](../README.md) dùng [spec ID-001 1.1](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md) và [tasks](../../../../../specs/01-identity/authentication/tasks.md) làm nguồn chính. Tài liệu này ghi cách cấu hình và kiểm chứng bản triển khai.
+Các phần việc [1–6](../README.md) dùng [spec ID-001 1.1](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md) và [tasks](../../../../specs/01-identity/authentication/tasks.md) làm nguồn chính. Tài liệu này ghi cách cấu hình và kiểm chứng bản triển khai.
 
 Kết quả đã thực hiện, bằng chứng test và các mục còn mở được ghi tại [worked entry của Authentication](../../../../worked/identity/auth/2026-10-19-identity-authentication.md).
 
