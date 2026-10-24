@@ -5,8 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AuthModule } from './modules/auth/auth.module';
-import { identityEntities } from './modules/identity.entities';
+import { AuthModule } from '@/modules/auth';
+import { identityEntities } from '@/modules/identity.entities';
 
 @Module({
   imports: [
