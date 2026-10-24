@@ -11,6 +11,7 @@ import {
   Res,
   UseFilters,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
@@ -26,6 +27,7 @@ import {
   type BkTokenService,
 } from '@/modules/auth/application';
 import { AuthFailure } from '@/modules/auth/domain';
+import { clearAccessCookie, setAccessCookie } from '@/modules/auth/presentation/auth-cookie';
 import { AuthFailureFilter } from '@/modules/auth/presentation/auth-failure.filter';
 import {
   AuthenticatedResponseDto,
@@ -53,14 +55,23 @@ export class AuthController {
     private readonly logoutUseCase: LogoutCurrentSession,
     private readonly currentUserUseCase: GetCurrentAuthenticatedUser,
     @Inject(BK_TOKEN_SERVICE) private readonly tokens: BkTokenService,
+    private readonly config: ConfigService,
   ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with a provisioned student ID and password' })
-  @ApiResponse({ status: 200, type: AuthenticatedResponseDto })
-  login(@Body() dto: StudentLoginDto): Promise<AuthenticatedResponseDto> {
-    return this.loginUseCase.execute(dto.studentId, dto.password);
+  @ApiResponse({
+    status: 200,
+    type: AuthenticatedResponseDto,
+  })
+  async login(
+    @Body() dto: StudentLoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthenticatedResponseDto> {
+    const result = await this.loginUseCase.execute(dto.studentId, dto.password);
+    setAccessCookie(response, result.accessToken, this.config.getOrThrow<string>('JWT_ACCESS_TTL'));
+    return { userId: result.userId, refreshToken: result.refreshToken };
   }
 
   @Get('microsoft')
@@ -90,17 +101,33 @@ export class AuthController {
   @Post('microsoft/exchange')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Exchange a Microsoft login code within 60 seconds, once' })
-  @ApiResponse({ status: 200, type: AuthenticatedResponseDto })
-  exchangeMicrosoft(@Body() dto: MicrosoftExchangeDto): Promise<AuthenticatedResponseDto> {
-    return this.exchangeMicrosoftUseCase.execute(dto.loginCode);
+  @ApiResponse({
+    status: 200,
+    type: AuthenticatedResponseDto,
+  })
+  async exchangeMicrosoft(
+    @Body() dto: MicrosoftExchangeDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthenticatedResponseDto> {
+    const result = await this.exchangeMicrosoftUseCase.execute(dto.loginCode);
+    setAccessCookie(response, result.accessToken, this.config.getOrThrow<string>('JWT_ACCESS_TTL'));
+    return { userId: result.userId, refreshToken: result.refreshToken };
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotate a refresh token within its session family' })
-  @ApiResponse({ status: 200, type: TokenPairResponseDto })
-  refresh(@Body() dto: RefreshTokenDto): Promise<TokenPairResponseDto> {
-    return this.refreshUseCase.execute(dto.refreshToken);
+  @ApiResponse({
+    status: 200,
+    type: TokenPairResponseDto,
+  })
+  async refresh(
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<TokenPairResponseDto> {
+    const result = await this.refreshUseCase.execute(dto.refreshToken);
+    setAccessCookie(response, result.accessToken, this.config.getOrThrow<string>('JWT_ACCESS_TTL'));
+    return { refreshToken: result.refreshToken };
   }
 
   @Post('logout')
@@ -111,8 +138,10 @@ export class AuthController {
   async logout(
     @Headers('authorization') authorization: string | undefined,
     @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
     await this.logoutUseCase.execute(await this.verifyBearer(authorization), dto.refreshToken);
+    clearAccessCookie(response);
   }
 
   @Get('me')

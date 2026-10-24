@@ -6,7 +6,7 @@ Approved — Sẵn sàng triển khai
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-01`.
 
-Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản Approved `1.0`  
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản Approved `1.2`
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved ngày `2026-09-01`
 
 Mọi công việc triển khai và xác minh đều bắt đầu ở trạng thái chưa hoàn thành. Hãy làm theo thứ tự,
@@ -455,6 +455,26 @@ khi cả hành vi lẫn phần kiểm chứng được liệt kê đều đã th
       `type`, `iat`, `exp`; không chứa thông tin đăng nhập hay token nhà cung cấp.
       **Phụ thuộc:** ID-001-T046.
       **Truy vết:** ID-001-AC-011 (bản 1.1).
+
+## Bản sửa đổi 1.2 — Cookie access token
+
+- [x] **ID-001-T048 — Cập nhật giao token của Identity.** Login, Microsoft exchange và refresh đặt
+      access cookie đã Approved; JSON chỉ giữ userId/refreshToken hoặc refreshToken. Logout xoá
+      cookie. Cập nhật DTO/Swagger và giữ use case phát hành token không đổi. Truy vết: FR-027,
+      FR-029, SR-019–SR-020, AC-025–AC-026, AC-028.
+- [x] **ID-001-T049 — Bảo vệ/ủy quyền cookie ở Gateway.** Chấp nhận cookie hoặc Bearer, kiểm chứng
+      token, ưu tiên Bearer tường minh, xoá Cookie thô và chuyển Bearer đã kiểm chứng tới upstream.
+      Chỉ forward `Set-Cookie` của route Auth thành công đã duyệt. Truy vết: FR-028, SR-019–SR-020,
+      AC-027, AC-030.
+- [x] **ID-001-T050 — Chống CSRF cho cookie.** Kiểm tra Origin/Referer theo CORS_ORIGINS cho
+      mutation dùng cookie và POST phát hành cookie; test nguồn sai/thiếu và luồng Bearer tường minh.
+      Truy vết: FR-030, AC-029.
+- [x] **ID-001-T051 — Kiểm thử và bàn giao.** Test login, Microsoft exchange, refresh, logout,
+      `/me`, API được bảo vệ, CORS/cookie flags, lỗi/token sai và log; chạy các script pnpm áp dụng,
+      đối chiếu spec, cập nhật worked entry. Truy vết: AC-025–AC-030 và Định nghĩa Hoàn thành.
+- [x] **ID-001-T052 — Căn chỉnh realtime.** Cho phép Socket.IO xác thực bằng cùng access cookie
+      với origin frontend đã cấu hình, giữ token handshake cũ và kiểm tra kết nối sai/hết hạn/sai
+      loại. Truy vết: FR-031, AC-031.
 
 ## Bảng tổng hợp độ phủ
 

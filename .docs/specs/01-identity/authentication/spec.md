@@ -4,9 +4,10 @@
 
 Approved
 
-Phiên bản `1.1`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`. Bản sửa đổi ở mục
-[Bản sửa đổi 1.1 — Claim quyền](#bản-sửa-đổi-11--claim-quyền) thay thế các yêu cầu tương ứng của
-phiên bản `1.0`.
+Phiên bản `1.2`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-10-24`. Bản sửa đổi
+[1.2 — Access token trong cookie](#bản-sửa-đổi-12--access-token-trong-cookie) thay thế contract
+giao access token qua JSON và bổ sung cách xác thực request trình duyệt; bản 1.1 về claim quyền vẫn
+có hiệu lực.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -465,6 +466,63 @@ Các yêu cầu sau được thay thế:
 Làm mới phiên MUST phát hành access token với quyền hiệu lực hiện tại, như với vai trò. Refresh token
 không đổi. Thao tác lấy thông tin người dùng hiện tại (`/auth/me`) không đổi.
 
+## Bản sửa đổi 1.2 — Access token trong cookie
+
+Được chủ sở hữu sản phẩm phê duyệt ngày `2026-10-24` cho frontend và API Gateway cùng site.
+Các quy tắc dưới đây thay thế các phần liên quan của FR-011, FR-013, FR-015, phần Đầu vào/Đầu ra,
+Quy tắc phân quyền, AC-012, AC-014, AC-015 và AC-023 ở trên; các quy tắc khác tiếp tục có hiệu lực.
+
+- **ID-001-FR-027 — Giao access token cho trình duyệt:** Sau đăng nhập bằng MSSV, đổi mã Microsoft
+  hoặc làm mới phiên thành công, Identity MUST đặt access token BKPractice vào một cookie host-only
+  tên `__Host-bk_access`, với `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/` và thời hạn không dài hơn
+  thời hạn access token. `accessToken` MUST NOT xuất hiện trong JSON phản hồi. Đăng nhập/đổi mã vẫn
+  trả `userId` và `refreshToken`; làm mới phiên vẫn trả `refreshToken` thay thế. Refresh token tiếp
+  tục được gửi qua JSON/body theo contract hiện có, không được đưa vào cookie bởi bản sửa đổi này.
+- **ID-001-FR-028 — Xác thực bằng cookie tại Gateway:** API Gateway MUST chấp nhận access token
+  BKPractice hợp lệ từ cookie đó cho các API được bảo vệ. Gateway MUST kiểm chứng chữ ký, thời hạn,
+  loại token và claim như với Bearer, rồi mới chuyển định danh/quyền tin cậy và Bearer nội bộ cho
+  service đích. Gateway tiếp tục chấp nhận Bearer tường minh cho client tương thích; nếu cả Bearer
+  lẫn cookie cùng có mặt, Bearer được ưu tiên và token Bearer sai không được rơi về cookie. Gateway
+  MUST NOT chuyển tiếp header Cookie thô tới service đích.
+- **ID-001-FR-029 — Kết thúc cookie:** Đăng xuất thành công MUST xoá access cookie với cùng phạm vi
+  và thuộc tính, đồng thời tiếp tục thu hồi họ refresh được gửi lên. Access token JWT đã phát hành
+  vẫn tuân thời hạn hết hạn tự nhiên của FR-019; việc xoá cookie chỉ kết thúc phiên ở trình duyệt đó.
+- **ID-001-FR-030 — Bảo vệ request dùng cookie:** Gateway MUST từ chối các request thay đổi state
+  được xác thực bằng cookie khi Origin, hoặc Referer dùng thay thế, không khớp một origin frontend
+  đã cấu hình trong `CORS_ORIGINS`. Các thao tác POST phát hành/đổi cookie cũng MUST từ chối origin
+  không được phép. `SameSite=Lax` không thay thế kiểm tra này. Frontend khác origin nhưng cùng site
+  MUST gửi request với credentials để trình duyệt lưu và gửi cookie.
+- **ID-001-FR-031 — Xác thực realtime bằng cookie:** Kết nối Socket.IO tới Gateway MUST có thể dùng
+  cùng access cookie đã kiểm chứng mà không yêu cầu JavaScript đọc access token. Cách gửi token
+  tường minh hiện có MAY tiếp tục hoạt động; khi dùng cookie, origin kết nối MUST thuộc
+  `CORS_ORIGINS`.
+- **ID-001-SR-019 — Phạm vi cookie:** Cookie MUST không có thuộc tính Domain, chỉ được đặt qua
+  HTTPS trong production và không lộ cho JavaScript. Gateway chỉ chuyển tiếp `Set-Cookie` do Identity
+  phát hành trên phản hồi thành công của login, Microsoft exchange, refresh và logout; các
+  `Set-Cookie` khác từ upstream MUST bị loại bỏ.
+- **ID-001-SR-020 — Không rò rỉ token:** Cookie/access token thô MUST NOT xuất hiện trong JSON,
+  redirect URL, log, lỗi, metadata định danh chuyển tiếp hoặc header Cookie chuyển tới service
+  đích. CORS chỉ cho phép các origin đã cấu hình và credentials; không dùng wildcard origin.
+- **ID-001-AC-025:** Login bằng MSSV hoặc Microsoft exchange thành công trả cookie có đủ thuộc tính
+  trên và JSON không chứa `accessToken`.
+- **ID-001-AC-026:** Refresh hợp lệ xoay vòng refresh token và thay cookie access; refresh thất bại
+  không phát hành cookie/token mới.
+- **ID-001-AC-027:** Browser gửi cookie hợp lệ gọi `/auth/me` và API được bảo vệ khác thành công mà
+  không tự thêm header Authorization; cookie sai, hết hạn hoặc sai loại bị từ chối.
+- **ID-001-AC-028:** Logout qua cookie hợp lệ xoá cookie và giữ ngữ nghĩa thu hồi họ refresh hiện có;
+  request browser sau đó không còn được xác thực bằng cookie đã xoá.
+- **ID-001-AC-029:** Request thay đổi state bằng cookie từ origin không được cấu hình hoặc thiếu cả
+  Origin/Referer bị từ chối; request Bearer tường minh tiếp tục dùng contract hiện có.
+- **ID-001-AC-030:** Gateway không chuyển tiếp Cookie thô hoặc `Set-Cookie` tuỳ ý của upstream; bản
+  thân cookie và các trường nhạy cảm không xuất hiện trong log hay phản hồi JSON.
+- **ID-001-AC-031:** Socket.IO nhận cookie access hợp lệ từ frontend đã cấu hình và từ chối cookie
+  sai/hết hạn/sai loại hoặc origin không được phép mà không đòi `handshake.auth.token`.
+
+Một GET hồ sơ công khai vẫn công khai. Nếu nó có cookie/Bearer Admin hợp lệ, Gateway có thể chuyển
+ngữ cảnh đã kiểm chứng để Identity trả góc nhìn Admin; cookie không hợp lệ trên GET công khai chỉ
+nhận góc nhìn công khai. Không thêm refresh cookie, phiên server-side, danh sách đen access token
+hay thay đổi claim quyền của bản 1.1.
+
 ## Lịch sử sửa đổi
 
 | Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                         |
@@ -473,6 +531,7 @@ không đổi. Thao tác lấy thông tin người dùng hiện tại (`/auth/me
 | 2026-09-01 | 0.2       | Codex / TBD          | Thay đăng ký bằng mã số sinh viên đã được cấp và đăng nhập Microsoft của trường |
 | 2026-09-01 | 1.0       | Chủ sở hữu sản phẩm  | Giải quyết các quyết định về xác thực và phê duyệt ID-001                       |
 | 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm claim `permissions` vào access token, đi kèm ID-003 0.4. Đã phê duyệt.     |
+| 2026-10-24 | 1.2       | Chủ sở hữu sản phẩm  | Access token chỉ ở HttpOnly Secure SameSite=Lax cookie cho FE/Gateway cùng site. Đã phê duyệt. |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository, thư viện Microsoft,
 > ánh xạ TypeORM, transaction và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê

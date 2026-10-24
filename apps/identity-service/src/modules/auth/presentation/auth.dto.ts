@@ -74,7 +74,6 @@ export class RefreshTokenDto {
 }
 
 export class TokenPairResponseDto {
-  @ApiProperty() accessToken!: string;
   @ApiProperty() refreshToken!: string;
 }
 
