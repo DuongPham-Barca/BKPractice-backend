@@ -10,6 +10,10 @@ Kế hoạch này bám theo phiên bản `1.1` (Approved) của đặc tả LRN-
 đoạn tasks/triển khai. Nó không triển khai Quản lý Problem và không thay đổi đặc tả. Sau khi được
 phê duyệt, `tasks.md` được dẫn xuất từ kế hoạch này.
 
+Bản sửa đổi `2026-10-24`: `ProblemRepository` là domain repository port tại
+`domain/repositories/`; các out port còn lại ở `application/ports/out/`; response mapper ở
+`presentation/http/mappers/`. Thay đổi này không đổi hành vi nghiệp vụ hay `spec.md`.
+
 ## Đặc tả liên quan
 
 - [LRN-001 Quản lý Problem](./spec.md)
@@ -439,18 +443,23 @@ tuân theo quy ước của repository khi triển khai.
   khai.
 - **Lỗi:** không tồn tại/bị từ chối `404`/`403`; không thay đổi state.
 
-### Các port của tầng application
+### Các port và ranh giới
 
-Chỉ đưa vào các seam thật sự:
+Chỉ đưa vào các seam thật sự. `ProblemRepository` là **domain repository port** tại
+`domain/repositories/`; các port còn lại là **application out port** tại `application/ports/out/`.
+Tên file outbound port dùng hậu tố `.port.out.ts`; inbound port (nếu có interface) dùng
+`.port.in.ts` tại `application/ports/in/`; không dùng `.port.ts`.
+`PublishValidator` là domain service tại `domain/services/`; `ProblemAuthorizationService` là
+application service tại `application/services/`.
 
-| Port                          | Trách nhiệm                                                                                                                                                                                                                                    | Adapter                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `ProblemRepository`           | Nạp/lưu aggregate; truy vấn nội dung đã xuất bản (chưa bị xoá); liệt kê có lọc/tìm kiếm/phân trang; tra cứu theo slug + id; đảm bảo tính duy nhất; truy vấn quản lý theo phạm vi chủ sở hữu, bao gồm cả nội dung đã xoá mềm (`includeDeleted`) | Adapter TypeORM trong `infrastructure/persistence`         |
-| `TopicTagReader`              | Kiểm tra sự tồn tại của các ID Topic/Tag khi tạo/cập nhật                                                                                                                                                                                      | Adapter TypeORM (các bảng do Learning sở hữu)              |
-| `PublishValidator`            | Kiểm tra mức độ sẵn sàng ở tầng domain/application, dùng chung bởi `PublishProblem`, phần hiển thị mức độ sẵn sàng của `GetManagedProblem`/`ListManagedProblem`, và xem trước                                                                  | Nội bộ tầng application; không truy cập CSDL xuyên service |
-| `ProblemAuthorizationService` | Đánh giá quyền `problem:*` cần thiết + quyền sở hữu, dựa trên principal tin cậy                                                                                                                                                                | Adapter hạ tầng đọc ngữ cảnh Gateway                       |
-| `PrincipalProvider`           | Dịch các header Gateway tin cậy thành một principal độc lập với framework                                                                                                                                                                      | Adapter dạng guard/decorator ở tầng hạ tầng                |
-| `TransactionRunner`           | Điều phối nạp aggregate + kiểm tra + lưu một cách nguyên tử                                                                                                                                                                                    | Adapter dùng `DataSource` của TypeORM                      |
+| Port                          | Trách nhiệm                                                                                                                                                                                                                                    | Adapter                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `ProblemRepository`           | Nạp/lưu aggregate; truy vấn nội dung đã xuất bản (chưa bị xoá); liệt kê có lọc/tìm kiếm/phân trang; tra cứu theo slug + id; đảm bảo tính duy nhất; truy vấn quản lý theo phạm vi chủ sở hữu, bao gồm cả nội dung đã xoá mềm (`includeDeleted`) | Adapter TypeORM trong `infrastructure/persistence` |
+| `TopicTagReader`              | Kiểm tra sự tồn tại của các ID Topic/Tag khi tạo/cập nhật                                                                                                                                                                                      | Adapter TypeORM (các bảng do Learning sở hữu)      |
+| `PublishValidator`            | Kiểm tra mức độ sẵn sàng ở tầng domain, dùng chung bởi `PublishProblem`, phần hiển thị mức độ sẵn sàng của `GetManagedProblem`/`ListManagedProblem`, và xem trước                                                                              | Domain service; không truy cập CSDL xuyên service  |
+| `ProblemAuthorizationService` | Đánh giá quyền `problem:*` cần thiết + quyền sở hữu, dựa trên principal tin cậy                                                                                                                                                                | Application service; dùng `PrincipalProvider`      |
+| `PrincipalProvider`           | Dịch các header Gateway tin cậy thành một principal độc lập với framework                                                                                                                                                                      | Adapter dạng guard/decorator ở tầng hạ tầng        |
+| `TransactionRunner`           | Điều phối nạp aggregate + kiểm tra + lưu một cách nguyên tử                                                                                                                                                                                    | Adapter dùng `DataSource` của TypeORM              |
 
 Không thêm base repository chung, bus CQRS, policy engine, event store, hay service Problem riêng.
 
@@ -650,8 +659,9 @@ N/A. Quản lý Problem không có yêu cầu realtime qua Socket.IO hay Redis.
 
 ### Adapter Problem dùng TypeORM
 
-`infrastructure/persistence/problem.repository.ts` hiện thực `ProblemRepository` và `TopicTagReader`
-chỉ bằng datasource và entity của Learning. Nó sở hữu các query builder cho việc liệt
+`infrastructure/persistence/problem.repository.ts` hiện thực domain repository port
+`ProblemRepository`; `TopicTagReader` có adapter riêng trong cùng thư mục. Cả hai chỉ dùng datasource
+và entity của Learning. Nó sở hữu các query builder cho việc liệt
 kê/tìm/lọc/phân trang nội dung đã xuất bản (luôn kèm `deleted_at IS NULL`), tra cứu theo slug/id,
 kiểm tra sự tồn tại của Topic/Tag, chèn slug duy nhất (ánh xạ xung đột ràng buộc duy nhất của CSDL
 thành lỗi nghiệp vụ `DuplicateSlug`), các truy vấn quản lý theo phạm vi chủ sở hữu với cờ
@@ -877,23 +887,24 @@ yêu cầu bảo mật đã được kiểm chứng, và mọi FR/SR/AC đều �
 ### CREATE
 
 - `apps/learning-service/src/modules/problems/domain/` — aggregate Problem độc lập với framework,
-  các value object, enum, máy trạng thái vòng đời, bộ kiểm tra xuất bản, và các bộ kiểm tra contract
-  theo loại (STANDARD/FUNCTION/OOP).
-- `apps/learning-service/src/modules/problems/application/ports/` — `ProblemRepository`,
-  `TopicTagReader`, ranh giới `PublishValidator`, ranh giới `ProblemAuthorizationService`,
+  các value object, enum, máy trạng thái vòng đời, bộ kiểm tra xuất bản, các bộ kiểm tra contract
+  theo loại (STANDARD/FUNCTION/OOP), và `domain/repositories/problem.repository.port.out.ts`.
+- `apps/learning-service/src/modules/problems/application/ports/out/` — `TopicTagReader`,
   `PrincipalProvider`, `TransactionRunner`.
 - `apps/learning-service/src/modules/problems/application/use-cases/` —
   `create-problem`, `update-problem`, `publish-problem`, `hold-problem`, `republish-problem`,
   `soft-delete-problem`, `restore-problem`, `get-published-problem`, `list-published-problems`,
   `get-managed-problem`, `list-managed-problems`, `preview-problem`.
-- `apps/learning-service/src/modules/problems/application/` — service phân quyền/sở hữu Problem và
-  các mapper phản hồi.
+- `apps/learning-service/src/modules/problems/application/services/` — service phân quyền/sở hữu
+  Problem.
+- `apps/learning-service/src/modules/problems/application/results/` — output/result model của use
+  case.
 - `apps/learning-service/src/modules/problems/infrastructure/persistence/` — các adapter TypeORM
   `ProblemRepository`/`TopicTagReader` và phần hiện thực transaction.
 - `apps/learning-service/src/modules/problems/infrastructure/auth/` — guard/decorator principal tin
   cậy và adapter quyền đọc các header do Gateway thiết lập.
 - `apps/learning-service/src/modules/problems/presentation/` — các controller công khai/quản lý, DTO
-  request/response, decorator Swagger.
+  request/response, response mapper và decorator Swagger.
 - `apps/learning-service/src/database/migrations/<timestamp>-Lrn001ProblemManagement.ts`.
 - Các test unit/integration/API/bảo mật tập trung, theo quy ước test của repository cho
   `apps/learning-service`.
@@ -909,9 +920,10 @@ Không có.
    xung đột trước khi thay đổi code.
 2. Định nghĩa các kiểu domain, value object, enum, máy trạng thái vòng đời và bộ kiểm tra contract
    theo loại của Problem, độc lập với framework, không import NestJS/TypeORM.
-3. Định nghĩa các port/use case hẹp của tầng application và ranh giới phân quyền/sở hữu Problem; giải
-   quyết phụ thuộc về cơ chế truyền quyền `problem:*` (claim quyền trong token hoặc REST nội bộ đã
-   phê duyệt của Identity) và dừng lại nếu không thể thoả mãn qua một seam đã được phê duyệt.
+3. Định nghĩa domain repository port `ProblemRepository`, các port/use case hẹp của tầng application
+   và ranh giới phân quyền/sở hữu Problem; giải quyết phụ thuộc về cơ chế truyền quyền `problem:*`
+   (claim quyền trong token hoặc REST nội bộ đã phê duyệt của Identity) và dừng lại nếu không thể
+   thoả mãn qua một seam đã được phê duyệt.
 4. Hiện thực và kiểm thử adapter lưu trữ TypeORM, hành vi slug duy nhất/starter code duy nhất, các
    truy vấn tìm/lọc/phân trang cho nội dung đã xuất bản và chưa bị xoá, các bước chuyển xoá
    mềm/khôi phục, và việc kiểm tra sự tồn tại của Topic/Tag trên schema `bkpractice_learning` hiện có.
@@ -1001,9 +1013,9 @@ Không có.
 
 - **DDD + Hexagonal:** tầng Presentation là driving adapter, phân tích DTO và ánh xạ phản hồi; các
   use case ở tầng application điều phối transaction, port, quyền sở hữu và kiểm tra xuất bản; tầng
-  domain sở hữu aggregate, các value object, các bước chuyển vòng đời, bất biến theo loại và quy tắc
-  định dạng nội dung; tầng infrastructure là driven adapter, hiện thực TypeORM, principal và quyền
-  phía sau các port.
+  domain sở hữu aggregate, các value object, các bước chuyển vòng đời, bất biến theo loại, quy tắc
+  định dạng nội dung và domain repository port `ProblemRepository`; tầng infrastructure là driven
+  adapter, hiện thực TypeORM, principal và quyền phía sau các port.
 - **Phạm vi DDD:** chỉ dùng các khối tactical (aggregate root, value object, domain service,
   repository) trong một bounded context duy nhất. Không đưa vào context map, anti-corruption layer
   hay bounded context thứ hai.
