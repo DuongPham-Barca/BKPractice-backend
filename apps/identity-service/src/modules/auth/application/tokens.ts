@@ -1,0 +1,7 @@
+export const AUTH_ACCOUNT_REPOSITORY = Symbol('AuthAccountRepository');
+export const EXTERNAL_IDENTITY_REPOSITORY = Symbol('ExternalIdentityRepository');
+export const REFRESH_SESSION_REPOSITORY = Symbol('RefreshSessionRepository');
+export const PASSWORD_HASHER = Symbol('PasswordHasher');
+export const BK_TOKEN_SERVICE = Symbol('BkTokenService');
+export const MICROSOFT_IDENTITY_PROVIDER = Symbol('MicrosoftIdentityProvider');
+export const AUTH_FLOW_STORE = Symbol('AuthFlowStore');

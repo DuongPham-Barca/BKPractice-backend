@@ -11,6 +11,7 @@ async function bootstrap(): Promise<void> {
     serviceName: 'identity-service',
     swaggerTitle: 'BKPractice Identity Service',
     port: config.getOrThrow<number>('IDENTITY_SERVICE_PORT'),
+    host: config.get<'redis' | 'memory'>('AUTH_FLOW_STORE') === 'memory' ? '127.0.0.1' : undefined,
   });
 }
 
