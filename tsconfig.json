@@ -26,9 +26,15 @@
       "@app/contracts": ["libs/contracts/src"],
       "@app/contracts/*": ["libs/contracts/src/*"],
       "@app/shared": ["libs/shared/src"],
-      "@app/shared/*": ["libs/shared/src/*"]
+      "@app/shared/*": ["libs/shared/src/*"],
+      "@gateway/*": ["apps/api-gateway/src/*"],
+      "@identity/*": ["apps/identity-service/src/*"],
+      "@learning/*": ["apps/learning-service/src/*"],
+      "@submission/*": ["apps/submission-service/src/*"],
+      "@judge/*": ["apps/judge-service/src/*"],
+      "@community/*": ["apps/community-service/src/*"]
     }
   },
-  "include": ["apps/**/*.ts", "libs/**/*.ts", "test/**/*.ts"],
+  "include": ["apps/**/*.ts", "libs/**/*.ts", "test/**/*.ts", "jest.config.ts"],
   "exclude": ["node_modules", "dist", "coverage"]
 }
