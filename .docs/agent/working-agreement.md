@@ -265,6 +265,18 @@ A function does one thing, so its name starts with a verb that says what it does
 
 Class, entity, and data-type names stay nouns. The verb rule applies only to functions and methods.
 
+### Use decorators for cross-cutting concerns
+
+When a handler or consumer needs a cross-cutting value from the transport context, define it as a
+decorator (`@...`) and attach it at the boundary.
+
+- Use: `@TrustedPrincipal()` to read the trusted principal.
+- Avoid: deep relative imports such as `../../common/...` to reach another file.
+
+A decorator keeps the concern at the boundary and keeps handlers free of another module's folder
+layout. Do not import a cross-cutting concern from another file with `../..`; use the repository path
+aliases, such as `@app/common/...` or `@community/...`, instead.
+
 ## Documentation by module
 
 When implementation has to add documentation, split it into one folder per module. Do not put several modules into one shared file.
