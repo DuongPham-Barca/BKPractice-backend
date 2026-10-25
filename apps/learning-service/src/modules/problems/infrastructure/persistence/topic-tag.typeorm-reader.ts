@@ -1,6 +1,5 @@
+import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import { Injectable } from '@nestjs/common';
-
-import type { TopicTagReader } from '../../application/ports/out/topic-tag-reader.port.out';
 
 import { TypeOrmTransactionContext } from './typeorm-transaction-context';
 

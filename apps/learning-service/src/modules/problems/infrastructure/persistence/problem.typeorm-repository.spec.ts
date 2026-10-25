@@ -1,10 +1,9 @@
-import { QueryFailedError } from 'typeorm';
+import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
+import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
+import { buildProblem } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { PublishStatus as EntityPublishStatus } from '@learning/modules/problems/entities/problem.entity';
 import type { DataSource } from 'typeorm';
-
-import { ConcurrentModificationError } from '../../application/errors/concurrent-modification.error';
-import { DuplicateSlugError } from '../../domain/errors/duplicate-slug.error';
-import { buildProblem } from '../../domain/testing/problem-test.factory';
-import { PublishStatus as EntityPublishStatus } from '../../entities/problem.entity';
+import { QueryFailedError } from 'typeorm';
 
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 import { ProblemTypeOrmRepository } from './problem.typeorm-repository';

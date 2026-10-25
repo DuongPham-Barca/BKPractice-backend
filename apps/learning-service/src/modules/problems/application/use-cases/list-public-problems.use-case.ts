@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-
 import type {
   ProblemListFilter,
   ProblemPage,
   ProblemRepository,
-} from '../../domain/repositories/problem.repository.port.out';
-import { PROBLEM_REPOSITORY } from '../../problem.tokens';
+} from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemSummaryResult } from '../results/problem.results';
 import { ProblemAuthorizationService } from '../services/problem-authorization.service';

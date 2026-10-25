@@ -1,6 +1,5 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
-
-import type { Difficulty, PublishStatus } from '../../domain/value-objects';
+import type { Difficulty, PublishStatus } from '@learning/modules/problems/domain/value-objects';
 
 export interface TopicResult {
   readonly id: string;

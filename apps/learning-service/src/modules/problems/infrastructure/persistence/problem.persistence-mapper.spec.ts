@@ -1,22 +1,21 @@
 import type { SupportedLanguage } from '@app/contracts';
-
-import type { Problem } from '../../domain/problem.aggregate';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import {
   buildProblem,
   functionContract,
   oopContract,
   starterCode,
   TEST_USER_ID,
-} from '../../domain/testing/problem-test.factory';
-import { EnabledLanguage, OopContract } from '../../domain/value-objects';
+} from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { EnabledLanguage, OopContract } from '@learning/modules/problems/domain/value-objects';
 import {
   Difficulty as EntityDifficulty,
   Problem as ProblemEntity,
   ProblemLanguage as ProblemLanguageEntity,
   PublishStatus as EntityPublishStatus,
   StarterCode as StarterCodeEntity,
-} from '../../entities/problem.entity';
-import type { ProblemTypeConfigJson } from '../../entities/problem.entity';
+} from '@learning/modules/problems/entities/problem.entity';
+import type { ProblemTypeConfigJson } from '@learning/modules/problems/entities/problem.entity';
 
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 

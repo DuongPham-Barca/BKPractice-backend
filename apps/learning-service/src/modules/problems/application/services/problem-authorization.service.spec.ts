@@ -1,4 +1,8 @@
-import { buildProblem, TEST_USER_ID } from '../../domain/testing/problem-test.factory';
+import {
+  buildProblem,
+  TEST_USER_ID,
+} from '@learning/modules/problems/domain/testing/problem-test.factory';
+
 import { ForbiddenError } from '../errors/forbidden.error';
 import type { Principal } from '../models/principal';
 import type { PrincipalProvider } from '../ports/out/principal-provider.port.out';

@@ -1,4 +1,4 @@
-import type { PublishIssue } from '../../domain/services/problem-contract.validator';
+import type { PublishIssue } from '@learning/modules/problems/domain/services/problem-contract.validator';
 
 import { ApplicationError } from './application.error';
 

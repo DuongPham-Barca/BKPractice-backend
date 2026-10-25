@@ -1,12 +1,14 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
-import { Inject, Injectable } from '@nestjs/common';
-
-import { DuplicateSlugError } from '../../domain/errors/duplicate-slug.error';
-import { Problem } from '../../domain/problem.aggregate';
-import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import { ContentFormatValidator } from '../../domain/services/content-format.validator';
-import { PublishValidator } from '../../domain/services/publish.validator';
-import { CreatedBy, TagReference, TopicReference } from '../../domain/value-objects';
+import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
+import { Problem } from '@learning/modules/problems/domain/problem.aggregate';
+import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
+import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
+import {
+  CreatedBy,
+  TagReference,
+  TopicReference,
+} from '@learning/modules/problems/domain/value-objects';
 import type {
   Constraints,
   Difficulty,
@@ -21,8 +23,14 @@ import type {
   Slug,
   StarterCode,
   VisibleExample,
-} from '../../domain/value-objects';
-import { PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER } from '../../problem.tokens';
+} from '@learning/modules/problems/domain/value-objects';
+import {
+  PROBLEM_REPOSITORY,
+  TOPIC_TAG_READER,
+  TRANSACTION_RUNNER,
+} from '@learning/modules/problems/problem.tokens';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { UnknownReferenceError } from '../errors/unknown-reference.error';
 import type { UnknownReference } from '../errors/unknown-reference.error';
 import type { TopicTagReader } from '../ports/out/topic-tag-reader.port.out';

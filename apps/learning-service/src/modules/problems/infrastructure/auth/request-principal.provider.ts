@@ -1,11 +1,10 @@
+import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
+import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { isUUID } from 'class-validator';
 import type { Request } from 'express';
-
-import { UnauthorizedError } from '../../application/errors/unauthorized.error';
-import type { Principal } from '../../application/models/principal';
-import type { PrincipalProvider } from '../../application/ports/out/principal-provider.port.out';
 
 const USER_ID_HEADER = 'x-auth-user-id';
 const ROLES_HEADER = 'x-auth-roles';

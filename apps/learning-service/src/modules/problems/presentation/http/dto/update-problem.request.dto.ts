@@ -4,6 +4,7 @@ import {
   type ProblemType,
   type SupportedLanguage,
 } from '@app/contracts';
+import type { Difficulty } from '@learning/modules/problems/domain/value-objects';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -18,8 +19,6 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-
-import type { Difficulty } from '../../../domain/value-objects';
 
 import {
   ExecutionLimitsDto,

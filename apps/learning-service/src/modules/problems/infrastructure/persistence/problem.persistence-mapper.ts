@@ -1,9 +1,7 @@
 import { SUPPORTED_LANGUAGES } from '@app/contracts';
 import type { SupportedLanguage } from '@app/contracts';
-import { Injectable } from '@nestjs/common';
-
-import { Problem } from '../../domain/problem.aggregate';
-import type { ProblemSnapshot } from '../../domain/problem.aggregate';
+import { Problem } from '@learning/modules/problems/domain/problem.aggregate';
+import type { ProblemSnapshot } from '@learning/modules/problems/domain/problem.aggregate';
 import {
   Constraints,
   CreatedBy,
@@ -27,14 +25,15 @@ import {
   parseDifficulty,
   parseProblemType,
   parsePublishStatus,
-} from '../../domain/value-objects';
-import type { OopConstructor, OopMethod } from '../../domain/value-objects';
+} from '@learning/modules/problems/domain/value-objects';
+import type { OopConstructor, OopMethod } from '@learning/modules/problems/domain/value-objects';
 import {
   Difficulty as EntityDifficulty,
   Problem as ProblemEntity,
   PublishStatus as EntityPublishStatus,
-} from '../../entities/problem.entity';
-import type { ProblemTypeConfigJson } from '../../entities/problem.entity';
+} from '@learning/modules/problems/entities/problem.entity';
+import type { ProblemTypeConfigJson } from '@learning/modules/problems/entities/problem.entity';
+import { Injectable } from '@nestjs/common';
 
 type JsonRecord = Record<string, unknown>;
 

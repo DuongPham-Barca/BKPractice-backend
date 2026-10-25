@@ -1,7 +1,6 @@
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-
-import type { TransactionRunner } from '../../application/ports/out/transaction-runner.port.out';
 
 import { TypeOrmTransactionContext } from './typeorm-transaction-context';
 

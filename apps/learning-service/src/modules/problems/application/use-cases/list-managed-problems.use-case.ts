@@ -1,11 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
-
 import type {
   ProblemPage,
   ProblemRepository,
-} from '../../domain/repositories/problem.repository.port.out';
-import { PublishValidator, type PublishReadiness } from '../../domain/services/publish.validator';
-import { PROBLEM_REPOSITORY } from '../../problem.tokens';
+} from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import {
+  PublishValidator,
+  type PublishReadiness,
+} from '@learning/modules/problems/domain/services/publish.validator';
+import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ManagedProblemSummaryResult } from '../results/problem.results';
 import { ProblemAuthorizationService } from '../services/problem-authorization.service';

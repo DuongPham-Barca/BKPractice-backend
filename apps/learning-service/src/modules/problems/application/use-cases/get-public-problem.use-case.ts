@@ -1,7 +1,7 @@
+import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import { PROBLEM_REPOSITORY } from '../../problem.tokens';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemDetailResult } from '../results/problem.results';

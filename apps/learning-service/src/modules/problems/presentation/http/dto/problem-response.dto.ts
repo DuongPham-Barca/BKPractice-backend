@@ -4,9 +4,8 @@ import {
   type ProblemType,
   type SupportedLanguage,
 } from '@app/contracts';
+import type { Difficulty, PublishStatus } from '@learning/modules/problems/domain/value-objects';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import type { Difficulty, PublishStatus } from '../../../domain/value-objects';
 
 export class TopicResponseDto {
   @ApiProperty()

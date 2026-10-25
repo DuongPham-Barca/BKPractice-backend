@@ -1,22 +1,21 @@
 import { randomUUID } from 'node:crypto';
 
-import { Injectable } from '@nestjs/common';
-import { QueryFailedError } from 'typeorm';
-import type { EntityManager, QueryDeepPartialEntity, SelectQueryBuilder } from 'typeorm';
-
-import { ConcurrentModificationError } from '../../application/errors/concurrent-modification.error';
-import { DuplicateSlugError } from '../../domain/errors/duplicate-slug.error';
-import type { Problem } from '../../domain/problem.aggregate';
+import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
+import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import type {
   ManagedProblemListFilter,
   ProblemListFilter,
   ProblemPage,
   ProblemRepository,
-} from '../../domain/repositories/problem.repository.port.out';
+} from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 import {
   Problem as ProblemEntity,
   PublishStatus as EntityPublishStatus,
-} from '../../entities/problem.entity';
+} from '@learning/modules/problems/entities/problem.entity';
+import { Injectable } from '@nestjs/common';
+import type { EntityManager, QueryDeepPartialEntity, SelectQueryBuilder } from 'typeorm';
+import { QueryFailedError } from 'typeorm';
 
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 import { TypeOrmTransactionContext } from './typeorm-transaction-context';

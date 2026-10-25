@@ -1,3 +1,13 @@
+import { CreateProblemUseCase } from '@learning/modules/problems/application/use-cases/create-problem.use-case';
+import { GetManagedProblemUseCase } from '@learning/modules/problems/application/use-cases/get-managed-problem.use-case';
+import { HoldProblemUseCase } from '@learning/modules/problems/application/use-cases/hold-problem.use-case';
+import { ListManagedProblemsUseCase } from '@learning/modules/problems/application/use-cases/list-managed-problems.use-case';
+import { PreviewProblemUseCase } from '@learning/modules/problems/application/use-cases/preview-problem.use-case';
+import { PublishProblemUseCase } from '@learning/modules/problems/application/use-cases/publish-problem.use-case';
+import { RepublishProblemUseCase } from '@learning/modules/problems/application/use-cases/republish-problem.use-case';
+import { RestoreProblemUseCase } from '@learning/modules/problems/application/use-cases/restore-problem.use-case';
+import { SoftDeleteProblemUseCase } from '@learning/modules/problems/application/use-cases/soft-delete-problem.use-case';
+import { UpdateProblemUseCase } from '@learning/modules/problems/application/use-cases/update-problem.use-case';
 import {
   Body,
   Controller,
@@ -24,17 +34,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
-import { CreateProblemUseCase } from '../../application/use-cases/create-problem.use-case';
-import { GetManagedProblemUseCase } from '../../application/use-cases/get-managed-problem.use-case';
-import { HoldProblemUseCase } from '../../application/use-cases/hold-problem.use-case';
-import { ListManagedProblemsUseCase } from '../../application/use-cases/list-managed-problems.use-case';
-import { PreviewProblemUseCase } from '../../application/use-cases/preview-problem.use-case';
-import { PublishProblemUseCase } from '../../application/use-cases/publish-problem.use-case';
-import { RepublishProblemUseCase } from '../../application/use-cases/republish-problem.use-case';
-import { RestoreProblemUseCase } from '../../application/use-cases/restore-problem.use-case';
-import { SoftDeleteProblemUseCase } from '../../application/use-cases/soft-delete-problem.use-case';
-import { UpdateProblemUseCase } from '../../application/use-cases/update-problem.use-case';
 
 import { CreateProblemRequestDto } from './dto/create-problem.request.dto';
 import { IncludeDeletedQueryDto, ManagedProblemQueryDto } from './dto/problem-query.dto';

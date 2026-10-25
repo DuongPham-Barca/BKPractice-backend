@@ -1,17 +1,16 @@
-import type { ArgumentsHost } from '@nestjs/common';
+import { ApplicationError } from '@learning/modules/problems/application/errors/application.error';
+import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
+import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
+import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
+import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
+import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
+import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
+import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
 import { HttpStatus } from '@nestjs/common';
+import type { ArgumentsHost } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-
-import { ApplicationError } from '../../../application/errors/application.error';
-import { ConcurrentModificationError } from '../../../application/errors/concurrent-modification.error';
-import { ForbiddenError } from '../../../application/errors/forbidden.error';
-import { ProblemNotFoundError } from '../../../application/errors/problem-not-found.error';
-import { PublishNotReadyError } from '../../../application/errors/publish-not-ready.error';
-import { UnauthorizedError } from '../../../application/errors/unauthorized.error';
-import { UnknownReferenceError } from '../../../application/errors/unknown-reference.error';
-import { DomainValidationError } from '../../../domain/errors/domain-validation.error';
-import { DuplicateSlugError } from '../../../domain/errors/duplicate-slug.error';
-import { InvalidProblemState } from '../../../domain/errors/invalid-problem-state.error';
 
 import { ProblemExceptionFilter } from './problem-exception.filter';
 

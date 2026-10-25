@@ -1,4 +1,5 @@
 import { PROBLEM_TYPES, type ProblemType } from '@app/contracts';
+import type { Difficulty } from '@learning/modules/problems/domain/value-objects';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -13,8 +14,6 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-
-import type { Difficulty } from '../../../domain/value-objects';
 
 export class ProblemQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1 })

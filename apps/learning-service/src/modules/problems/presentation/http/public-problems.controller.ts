@@ -1,3 +1,5 @@
+import { GetPublicProblemUseCase } from '@learning/modules/problems/application/use-cases/get-public-problem.use-case';
+import { ListPublicProblemsUseCase } from '@learning/modules/problems/application/use-cases/list-public-problems.use-case';
 import { Controller, Get, Param, Query, UseFilters } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -9,9 +11,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
-import { GetPublicProblemUseCase } from '../../application/use-cases/get-public-problem.use-case';
-import { ListPublicProblemsUseCase } from '../../application/use-cases/list-public-problems.use-case';
 
 import { ProblemIdentifierParamDto, ProblemQueryDto } from './dto/problem-query.dto';
 import { ProblemDetailResponseDto, ProblemListResponseDto } from './dto/problem-response.dto';

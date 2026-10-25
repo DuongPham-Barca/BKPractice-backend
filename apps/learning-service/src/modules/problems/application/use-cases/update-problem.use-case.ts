@@ -1,12 +1,10 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
-import { Inject, Injectable } from '@nestjs/common';
-
-import { InvalidProblemState } from '../../domain/errors/invalid-problem-state.error';
-import type { UpdateProblemInput } from '../../domain/problem.aggregate';
-import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import { ContentFormatValidator } from '../../domain/services/content-format.validator';
-import { PublishValidator } from '../../domain/services/publish.validator';
-import { TagReference, TopicReference } from '../../domain/value-objects';
+import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
+import type { UpdateProblemInput } from '@learning/modules/problems/domain/problem.aggregate';
+import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
+import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
+import { TagReference, TopicReference } from '@learning/modules/problems/domain/value-objects';
 import type {
   Constraints,
   Difficulty,
@@ -20,8 +18,14 @@ import type {
   ProblemTitle,
   StarterCode,
   VisibleExample,
-} from '../../domain/value-objects';
-import { PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER } from '../../problem.tokens';
+} from '@learning/modules/problems/domain/value-objects';
+import {
+  PROBLEM_REPOSITORY,
+  TOPIC_TAG_READER,
+  TRANSACTION_RUNNER,
+} from '@learning/modules/problems/problem.tokens';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import { PublishNotReadyError } from '../errors/publish-not-ready.error';
 import { UnknownReferenceError } from '../errors/unknown-reference.error';

@@ -1,9 +1,7 @@
 import type { SupportedLanguage } from '@app/contracts';
-import { Injectable } from '@nestjs/common';
-
-import type { CreateProblemCommand } from '../../../application/use-cases/create-problem.use-case';
-import type { UpdateProblemCommand } from '../../../application/use-cases/update-problem.use-case';
-import { DomainValidationError } from '../../../domain/errors/domain-validation.error';
+import type { CreateProblemCommand } from '@learning/modules/problems/application/use-cases/create-problem.use-case';
+import type { UpdateProblemCommand } from '@learning/modules/problems/application/use-cases/update-problem.use-case';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import {
   Constraints,
   EnabledLanguage,
@@ -20,7 +18,9 @@ import {
   TopicReference,
   VisibleExample,
   type OopMethod,
-} from '../../../domain/value-objects';
+} from '@learning/modules/problems/domain/value-objects';
+import { Injectable } from '@nestjs/common';
+
 import type {
   FunctionContractDto,
   FunctionParameterDto,

@@ -1,7 +1,7 @@
+import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '../../problem.tokens';
 import { ConcurrentModificationError } from '../errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';

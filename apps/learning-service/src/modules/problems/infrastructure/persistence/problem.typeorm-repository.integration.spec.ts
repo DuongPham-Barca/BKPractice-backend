@@ -1,12 +1,13 @@
 import type { SupportedLanguage } from '@app/contracts';
-import { DataSource } from 'typeorm';
-
-import { InitialLearningSchema1700000003000 } from '../../../../database/migrations/1700000003000-InitialLearningSchema';
-import { Lrn001ProblemManagement1700000004000 } from '../../../../database/migrations/1700000004000-Lrn001ProblemManagement';
-import { learningEntities } from '../../../learning.entities';
-import { ConcurrentModificationError } from '../../application/errors/concurrent-modification.error';
-import { DuplicateSlugError } from '../../domain/errors/duplicate-slug.error';
-import { Problem, type CreateProblemInput } from '../../domain/problem.aggregate';
+import { InitialLearningSchema1700000003000 } from '@learning/database/migrations/1700000003000-InitialLearningSchema';
+import { Lrn001ProblemManagement1700000004000 } from '@learning/database/migrations/1700000004000-Lrn001ProblemManagement';
+import { learningEntities } from '@learning/modules/learning.entities';
+import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
+import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
+import {
+  Problem,
+  type CreateProblemInput,
+} from '@learning/modules/problems/domain/problem.aggregate';
 import {
   CreatedBy,
   EnabledLanguage,
@@ -19,7 +20,8 @@ import {
   StarterCode,
   TagReference,
   TopicReference,
-} from '../../domain/value-objects';
+} from '@learning/modules/problems/domain/value-objects';
+import { DataSource } from 'typeorm';
 
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 import { ProblemTypeOrmRepository } from './problem.typeorm-repository';

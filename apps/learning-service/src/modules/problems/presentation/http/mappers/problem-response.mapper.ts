@@ -1,5 +1,3 @@
-import { Injectable } from '@nestjs/common';
-
 import type {
   ManagedProblemDetailResult,
   ManagedProblemSummaryResult,
@@ -9,8 +7,10 @@ import type {
   ProblemReadinessResult,
   ProblemSummaryResult,
   SoftDeleteProblemResult,
-} from '../../../application/results/problem.results';
-import type { ProblemPage } from '../../../domain/repositories/problem.repository.port.out';
+} from '@learning/modules/problems/application/results/problem.results';
+import type { ProblemPage } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { Injectable } from '@nestjs/common';
+
 import type {
   ExecutionLimitsResponseDto,
   FunctionContractResponseDto,

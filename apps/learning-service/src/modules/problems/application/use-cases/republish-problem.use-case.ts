@@ -1,8 +1,8 @@
+import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
+import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import { PublishValidator } from '../../domain/services/publish.validator';
-import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '../../problem.tokens';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import { PublishNotReadyError } from '../errors/publish-not-ready.error';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';

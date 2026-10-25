@@ -1,7 +1,7 @@
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
+import { PRINCIPAL_PROVIDER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { Problem } from '../../domain/problem.aggregate';
-import { PRINCIPAL_PROVIDER } from '../../problem.tokens';
 import { ForbiddenError } from '../errors/forbidden.error';
 import type { Principal } from '../models/principal';
 import type { PrincipalProvider } from '../ports/out/principal-provider.port.out';

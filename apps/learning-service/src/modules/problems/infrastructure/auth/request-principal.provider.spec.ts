@@ -1,6 +1,5 @@
+import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
 import type { Request } from 'express';
-
-import { UnauthorizedError } from '../../application/errors/unauthorized.error';
 
 import { RequestPrincipalProvider } from './request-principal.provider';
 
