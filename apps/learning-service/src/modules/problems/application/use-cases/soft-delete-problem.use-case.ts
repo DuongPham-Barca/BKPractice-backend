@@ -1,17 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
+import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '../../problem.tokens';
 import { ConcurrentModificationError } from '../errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
 import type { SoftDeleteProblemResult } from '../results/problem.results';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 @Injectable()
 export class SoftDeleteProblemUseCase {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
+    @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
   ) {}
 

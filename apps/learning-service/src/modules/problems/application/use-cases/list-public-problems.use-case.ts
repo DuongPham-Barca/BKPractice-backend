@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import type {
   ProblemListFilter,
   ProblemPage,
   ProblemRepository,
 } from '../../domain/repositories/problem.repository.port.out';
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
+import { PROBLEM_REPOSITORY } from '../../problem.tokens';
+import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemSummaryResult } from '../results/problem.results';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 const MAX_LIMIT = 100;
 
@@ -15,6 +16,7 @@ const MAX_LIMIT = 100;
 export class ListPublicProblemsUseCase {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
+    @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
     private readonly resultMapper: ProblemResultMapper,
   ) {}

@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 import type { Problem } from '../problem.aggregate';
 import {
   MAX_MEMORY_LIMIT_MB,
@@ -6,7 +8,7 @@ import {
   MIN_TIME_LIMIT_MS,
 } from '../value-objects';
 
-import type { ProblemContractValidator, PublishIssue } from './problem-contract.validator';
+import { ProblemContractValidator, type PublishIssue } from './problem-contract.validator';
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -19,6 +21,7 @@ export interface PublishReadiness {
   readonly issues: readonly PublishIssue[];
 }
 
+@Injectable()
 export class PublishValidator {
   constructor(private readonly contractValidator: ProblemContractValidator) {}
 

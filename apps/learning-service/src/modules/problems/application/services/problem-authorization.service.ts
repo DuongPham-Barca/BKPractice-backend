@@ -1,4 +1,7 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import type { Problem } from '../../domain/problem.aggregate';
+import { PRINCIPAL_PROVIDER } from '../../problem.tokens';
 import { ForbiddenError } from '../errors/forbidden.error';
 import type { Principal } from '../models/principal';
 import type { PrincipalProvider } from '../ports/out/principal-provider.port.out';
@@ -18,8 +21,12 @@ const ACTION_PERMISSIONS: Record<OwnedProblemAction, string> = {
 
 const LECTURER_ROLE = 'LECTURER';
 
+@Injectable()
 export class ProblemAuthorizationService {
-  constructor(private readonly principalProvider: PrincipalProvider) {}
+  constructor(
+    @Inject(PRINCIPAL_PROVIDER)
+    private readonly principalProvider: PrincipalProvider,
+  ) {}
 
   async requirePublicRead(): Promise<Principal> {
     return this.principalProvider.getPrincipal();

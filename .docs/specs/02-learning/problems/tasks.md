@@ -398,6 +398,14 @@ Approved và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-001-T013 tới LRN-001-T021, LRN-001-T023 tới LRN-001-T025,
       LRN-001-T029, LRN-001-T030, LRN-001-T034, LRN-001-T035.
       **Truy vết:** Mục Adapter hạ tầng và Tuân thủ kiến trúc của kế hoạch; LRN-001-FR-001.
+      **Kết quả kiểm chứng:** boot thật trước đó fail DI (`design:paramtypes` emit `Object` cho
+      param interface do `import type`). Đã sửa: thêm `@Inject(TOKEN)` cho mọi constructor nhận
+      interface port, chuyển import của 4 class cụ thể (`ProblemAuthorizationService`,
+      `ContentFormatValidator`, `PublishValidator`, `ProblemResultMapper`) sang value import, thêm
+      `@Injectable()` cho 3 domain service. Kiểm chứng: `pnpm typecheck`, `eslint`,
+      `pnpm build:learning`, boot với Postgres/RabbitMQ thật (14 route map, "successfully started"),
+      HTTP smoke test đúng hành vi (401 thiếu xác thực, 401 duplicate header, 403 thiếu quyền/role,
+      200 list công khai và managed, 400 validation Nest shape), 12/12 test suite (159 test) pass.
 
 ## Tích hợp API Gateway
 

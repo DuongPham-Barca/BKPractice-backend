@@ -1,11 +1,11 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { InvalidProblemState } from '../../domain/errors/invalid-problem-state.error';
 import type { UpdateProblemInput } from '../../domain/problem.aggregate';
 import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import type { ContentFormatValidator } from '../../domain/services/content-format.validator';
-import type { PublishValidator } from '../../domain/services/publish.validator';
+import { ContentFormatValidator } from '../../domain/services/content-format.validator';
+import { PublishValidator } from '../../domain/services/publish.validator';
 import { TagReference, TopicReference } from '../../domain/value-objects';
 import type {
   Constraints,
@@ -21,15 +21,16 @@ import type {
   StarterCode,
   VisibleExample,
 } from '../../domain/value-objects';
+import { PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER } from '../../problem.tokens';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import { PublishNotReadyError } from '../errors/publish-not-ready.error';
 import { UnknownReferenceError } from '../errors/unknown-reference.error';
 import type { UnknownReference } from '../errors/unknown-reference.error';
 import type { TopicTagReader } from '../ports/out/topic-tag-reader.port.out';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
+import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '../results/problem.results';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 export interface UpdateProblemCommand {
   readonly title?: ProblemTitle;
@@ -53,10 +54,13 @@ export interface UpdateProblemCommand {
 export class UpdateProblemUseCase {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
+    @Inject(TOPIC_TAG_READER)
     private readonly topicTagReader: TopicTagReader,
+    @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
     private readonly contentValidator: ContentFormatValidator,
     private readonly publishValidator: PublishValidator,
+    @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
     private readonly resultMapper: ProblemResultMapper,
   ) {}

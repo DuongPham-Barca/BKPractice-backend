@@ -1,3 +1,5 @@
+import { Injectable } from '@nestjs/common';
+
 import { DomainValidationError } from '../errors/domain-validation.error';
 import type { Problem } from '../problem.aggregate';
 
@@ -10,6 +12,7 @@ const DANGEROUS_TAG_PATTERN =
 const EVENT_HANDLER_PATTERN = /\bon[a-z]+\s*=/i;
 const DANGEROUS_PROTOCOL_PATTERN = /(?:javascript|vbscript)\s*:|data\s*:\s*text\s*\/\s*html/i;
 
+@Injectable()
 export class ContentFormatValidator {
   assertSafe(problem: Problem): void {
     this.assertField(problem.statement.value, 'statement', STATEMENT_MAX_LENGTH);

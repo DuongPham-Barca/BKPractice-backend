@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import type {
   ProblemPage,
   ProblemRepository,
 } from '../../domain/repositories/problem.repository.port.out';
-import type { PublishReadiness, PublishValidator } from '../../domain/services/publish.validator';
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
+import { PublishValidator, type PublishReadiness } from '../../domain/services/publish.validator';
+import { PROBLEM_REPOSITORY } from '../../problem.tokens';
+import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ManagedProblemSummaryResult } from '../results/problem.results';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 const MAX_LIMIT = 100;
 
@@ -15,6 +16,7 @@ const MAX_LIMIT = 100;
 export class ListManagedProblemsUseCase {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
+    @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
     private readonly publishValidator: PublishValidator,
     private readonly resultMapper: ProblemResultMapper,

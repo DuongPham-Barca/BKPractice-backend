@@ -1,20 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import type { ProblemRepository } from '../../domain/repositories/problem.repository.port.out';
-import type { PublishValidator } from '../../domain/services/publish.validator';
+import { PublishValidator } from '../../domain/services/publish.validator';
+import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '../../problem.tokens';
 import { ConcurrentModificationError } from '../errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '../errors/problem-not-found.error';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
+import { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '../results/problem.results';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 @Injectable()
 export class RestoreProblemUseCase {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
+    @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
     private readonly publishValidator: PublishValidator,
+    @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
     private readonly resultMapper: ProblemResultMapper,
   ) {}

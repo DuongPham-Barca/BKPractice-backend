@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import type { Problem } from '../../domain/problem.aggregate';
 import type { ProblemPage } from '../../domain/repositories/problem.repository.port.out';
 import type { PublishReadiness } from '../../domain/services/publish.validator';
+import { TOPIC_TAG_READER } from '../../problem.tokens';
 import type { TopicTagReader } from '../ports/out/topic-tag-reader.port.out';
 
 import type {
@@ -27,7 +28,7 @@ interface ResolvedNames {
 
 @Injectable()
 export class ProblemResultMapper {
-  constructor(private readonly topicTagReader: TopicTagReader) {}
+  constructor(@Inject(TOPIC_TAG_READER) private readonly topicTagReader: TopicTagReader) {}
 
   async toSummary(problem: Problem): Promise<ProblemSummaryResult> {
     return this.summary(problem, await this.loadNames([problem]));
