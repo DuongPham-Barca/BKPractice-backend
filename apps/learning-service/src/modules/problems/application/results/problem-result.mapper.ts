@@ -1,10 +1,9 @@
+import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import type { ProblemPage } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 import type { PublishReadiness } from '@learning/modules/problems/domain/services/publish.validator';
 import { TOPIC_TAG_READER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
-
-import type { TopicTagReader } from '../ports/out/topic-tag-reader.port.out';
 
 import type {
   FunctionContractResult,

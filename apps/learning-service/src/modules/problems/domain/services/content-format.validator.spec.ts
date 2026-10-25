@@ -1,12 +1,15 @@
-import { DomainValidationError } from '../errors/domain-validation.error';
-import { buildProblem, example } from '../testing/problem-test.factory';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
+import {
+  buildProblem,
+  example,
+} from '@learning/modules/problems/domain/testing/problem-test.factory';
 import {
   Constraints,
   InputSpecification,
   OutputSpecification,
   ProblemStatement,
   VisibleExample,
-} from '../value-objects';
+} from '@learning/modules/problems/domain/value-objects';
 
 import {
   ContentFormatValidator,

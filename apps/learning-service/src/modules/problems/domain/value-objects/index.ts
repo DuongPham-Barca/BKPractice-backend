@@ -1,4 +1,4 @@
-export * from '../errors/domain-validation.error';
+export * from '@learning/modules/problems/domain/errors/domain-validation.error';
 
 export * from './contracts';
 export * from './execution';

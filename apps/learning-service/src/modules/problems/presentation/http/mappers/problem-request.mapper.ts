@@ -19,17 +19,16 @@ import {
   VisibleExample,
   type OopMethod,
 } from '@learning/modules/problems/domain/value-objects';
-import { Injectable } from '@nestjs/common';
-
 import type {
   FunctionContractDto,
   FunctionParameterDto,
   OopContractDto,
   OopMethodDto,
   VisibleExampleDto,
-} from '../dto/content.dto';
-import type { CreateProblemRequestDto } from '../dto/create-problem.request.dto';
-import type { UpdateProblemRequestDto } from '../dto/update-problem.request.dto';
+} from '@learning/modules/problems/presentation/http/dto/content.dto';
+import type { CreateProblemRequestDto } from '@learning/modules/problems/presentation/http/dto/create-problem.request.dto';
+import type { UpdateProblemRequestDto } from '@learning/modules/problems/presentation/http/dto/update-problem.request.dto';
+import { Injectable } from '@nestjs/common';
 
 const DEFAULT_TIME_LIMIT_MS = 1_000;
 const DEFAULT_MEMORY_LIMIT_MB = 256;

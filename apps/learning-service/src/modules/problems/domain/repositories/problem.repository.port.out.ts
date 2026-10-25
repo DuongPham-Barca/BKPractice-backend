@@ -1,7 +1,6 @@
 import type { ProblemType } from '@app/contracts';
-
-import type { Problem } from '../problem.aggregate';
-import type { Difficulty } from '../value-objects';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
+import type { Difficulty } from '@learning/modules/problems/domain/value-objects';
 
 export interface ProblemListFilter {
   readonly search?: string;

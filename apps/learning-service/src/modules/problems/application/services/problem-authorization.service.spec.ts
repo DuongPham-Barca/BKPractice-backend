@@ -1,11 +1,10 @@
+import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
+import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
 import {
   buildProblem,
   TEST_USER_ID,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
-
-import { ForbiddenError } from '../errors/forbidden.error';
-import type { Principal } from '../models/principal';
-import type { PrincipalProvider } from '../ports/out/principal-provider.port.out';
 
 import {
   ProblemAuthorizationService,

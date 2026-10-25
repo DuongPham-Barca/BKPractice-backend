@@ -1,4 +1,4 @@
-import { DomainValidationError } from '../errors/domain-validation.error';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 
 import {
   CreatedBy,

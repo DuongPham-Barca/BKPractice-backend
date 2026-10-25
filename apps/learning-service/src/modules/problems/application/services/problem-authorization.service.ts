@@ -1,10 +1,9 @@
+import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
+import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import { PRINCIPAL_PROVIDER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { ForbiddenError } from '../errors/forbidden.error';
-import type { Principal } from '../models/principal';
-import type { PrincipalProvider } from '../ports/out/principal-provider.port.out';
 
 export type OwnedProblemAction =
   'read-managed' | 'update' | 'publish' | 'hold' | 'republish' | 'delete' | 'restore';

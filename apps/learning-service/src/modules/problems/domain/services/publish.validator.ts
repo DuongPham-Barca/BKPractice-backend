@@ -1,12 +1,11 @@
-import { Injectable } from '@nestjs/common';
-
-import type { Problem } from '../problem.aggregate';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import {
   MAX_MEMORY_LIMIT_MB,
   MAX_TIME_LIMIT_MS,
   MIN_MEMORY_LIMIT_MB,
   MIN_TIME_LIMIT_MS,
-} from '../value-objects';
+} from '@learning/modules/problems/domain/value-objects';
+import { Injectable } from '@nestjs/common';
 
 import { ProblemContractValidator, type PublishIssue } from './problem-contract.validator';
 

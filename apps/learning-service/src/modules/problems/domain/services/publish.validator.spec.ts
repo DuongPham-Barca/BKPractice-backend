@@ -1,6 +1,5 @@
 import type { SupportedLanguage } from '@app/contracts';
-
-import { Problem } from '../problem.aggregate';
+import { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import {
   buildProblem,
   functionContract,
@@ -8,14 +7,14 @@ import {
   oopContract,
   snapshotOf,
   starterCode,
-} from '../testing/problem-test.factory';
+} from '@learning/modules/problems/domain/testing/problem-test.factory';
 import type {
   ExecutionLimits,
   OopContract,
   ProblemStatement,
   ProblemTitle,
   Slug,
-} from '../value-objects';
+} from '@learning/modules/problems/domain/value-objects';
 
 import { ProblemContractValidator } from './problem-contract.validator';
 import { PublishValidator } from './publish.validator';

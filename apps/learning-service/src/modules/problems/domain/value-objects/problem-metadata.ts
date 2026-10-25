@@ -1,6 +1,5 @@
 import { PROBLEM_TYPES, type ProblemType } from '@app/contracts';
-
-import { DomainValidationError } from '../errors/domain-validation.error';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 
 import {
   assertEnumValue,

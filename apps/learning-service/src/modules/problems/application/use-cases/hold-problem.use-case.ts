@@ -1,13 +1,12 @@
+import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
+import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { ProblemNotFoundError } from '../errors/problem-not-found.error';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ManagedProblemDetailResult } from '../results/problem.results';
-import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 @Injectable()
 export class HoldProblemUseCase {

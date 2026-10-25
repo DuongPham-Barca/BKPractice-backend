@@ -9,8 +9,6 @@ import type {
   SoftDeleteProblemResult,
 } from '@learning/modules/problems/application/results/problem.results';
 import type { ProblemPage } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
-import { Injectable } from '@nestjs/common';
-
 import type {
   ExecutionLimitsResponseDto,
   FunctionContractResponseDto,
@@ -31,7 +29,8 @@ import type {
   TagResponseDto,
   TopicResponseDto,
   VisibleExampleResponseDto,
-} from '../dto/problem-response.dto';
+} from '@learning/modules/problems/presentation/http/dto/problem-response.dto';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ProblemResponseMapper {

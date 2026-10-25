@@ -1,6 +1,9 @@
 import type { SupportedLanguage } from '@app/contracts';
-
-import { Problem, type CreateProblemInput, type ProblemSnapshot } from '../problem.aggregate';
+import {
+  Problem,
+  type CreateProblemInput,
+  type ProblemSnapshot,
+} from '@learning/modules/problems/domain/problem.aggregate';
 import {
   CreatedBy,
   DeletedMarker,
@@ -16,7 +19,7 @@ import {
   Slug,
   StarterCode,
   VisibleExample,
-} from '../value-objects';
+} from '@learning/modules/problems/domain/value-objects';
 
 export const TEST_PROBLEM_ID = '00000000-0000-4000-8000-000000000001';
 export const TEST_USER_ID = '00000000-0000-4000-8000-000000000002';

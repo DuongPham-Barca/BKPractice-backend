@@ -1,4 +1,13 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
+import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
+import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
+import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
 import type { UpdateProblemInput } from '@learning/modules/problems/domain/problem.aggregate';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
@@ -25,16 +34,6 @@ import {
   TRANSACTION_RUNNER,
 } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { ProblemNotFoundError } from '../errors/problem-not-found.error';
-import { PublishNotReadyError } from '../errors/publish-not-ready.error';
-import { UnknownReferenceError } from '../errors/unknown-reference.error';
-import type { UnknownReference } from '../errors/unknown-reference.error';
-import type { TopicTagReader } from '../ports/out/topic-tag-reader.port.out';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ManagedProblemDetailResult } from '../results/problem.results';
-import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 export interface UpdateProblemCommand {
   readonly title?: ProblemTitle;

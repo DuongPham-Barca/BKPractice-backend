@@ -1,3 +1,6 @@
+import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ManagedProblemSummaryResult } from '@learning/modules/problems/application/results/problem.results';
+import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type {
   ProblemPage,
   ProblemRepository,
@@ -8,10 +11,6 @@ import {
 } from '@learning/modules/problems/domain/services/publish.validator';
 import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ManagedProblemSummaryResult } from '../results/problem.results';
-import { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 const MAX_LIMIT = 100;
 

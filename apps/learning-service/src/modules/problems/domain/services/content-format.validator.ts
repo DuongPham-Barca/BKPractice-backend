@@ -1,7 +1,6 @@
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import { Injectable } from '@nestjs/common';
-
-import { DomainValidationError } from '../errors/domain-validation.error';
-import type { Problem } from '../problem.aggregate';
 
 export const STATEMENT_MAX_LENGTH = 100_000;
 export const TEXT_SECTION_MAX_LENGTH = 20_000;

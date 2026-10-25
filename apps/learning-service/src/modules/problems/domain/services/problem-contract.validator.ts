@@ -1,9 +1,8 @@
 import type { SupportedLanguage } from '@app/contracts';
+import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
+import { OOP_ACCESSES } from '@learning/modules/problems/domain/value-objects';
+import type { OopContract } from '@learning/modules/problems/domain/value-objects';
 import { Injectable } from '@nestjs/common';
-
-import type { Problem } from '../problem.aggregate';
-import { OOP_ACCESSES } from '../value-objects';
-import type { OopContract } from '../value-objects';
 
 export interface PublishIssue {
   readonly code: string;
