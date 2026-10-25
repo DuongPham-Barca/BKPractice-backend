@@ -5,6 +5,7 @@ import type {
   PasswordHasher,
   RefreshRecord,
   RefreshSessionRepository,
+  SessionMetadata,
 } from '@/modules/auth/application/ports';
 import type { AuthAccount } from '@/modules/auth/domain';
 import type { EffectivePermissionReader } from '@/modules/rbac/application/effective-permission-reader';
@@ -29,7 +30,7 @@ export class AuthTokenIssuer {
     const permissions = await this.permissions.readForUser(account.userId);
     const tokenId = randomUUID();
     const [accessToken, refresh] = await Promise.all([
-      this.tokens.signAccess(account, permissions),
+      this.tokens.signAccess(account, permissions, familyId),
       this.tokens.signRefresh(account.userId, tokenId, familyId),
     ]);
     return {
@@ -44,9 +45,9 @@ export class AuthTokenIssuer {
     };
   }
 
-  async issueNewFamily(account: AuthAccount): Promise<TokenPair> {
+  async issueNewFamily(account: AuthAccount, metadata: SessionMetadata = { clientType: 'web' }): Promise<TokenPair> {
     const prepared = await this.prepare(account, randomUUID());
-    await this.sessions.create(prepared.record);
+    await this.sessions.create(prepared.record, metadata);
     return prepared.pair;
   }
 }

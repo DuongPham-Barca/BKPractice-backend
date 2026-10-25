@@ -23,14 +23,31 @@ describe('JwtBkTokenService', () => {
   });
   const tokens = new JwtBkTokenService(jwt, config);
 
+  it('exposes only verified access claims and normalizes legacy tokens without permissions', async () => {
+    const token = await jwt.signAsync(
+      { sub: 'user-1', sid: 'session-1', jti: 'access-1', roles: ['ADMIN'], type: 'access' },
+      { secret: 'a'.repeat(32), expiresIn: '15m' },
+    );
+    expect(await tokens.verifyAccessClaims(token)).toEqual(
+      expect.objectContaining({ sub: 'user-1', roles: ['ADMIN'], permissions: [] }),
+    );
+    const malformed = await jwt.signAsync(
+      { sub: { userId: 'user-1' }, roles: ['ADMIN'], type: 'access' },
+      { secret: 'a'.repeat(32), expiresIn: '15m' },
+    );
+    await expect(tokens.verifyAccessClaims(malformed)).rejects.toBeInstanceOf(AuthFailure);
+  });
+
   it('signs only the approved access claims and keeps permissions out of refresh', async () => {
-    const access = await tokens.signAccess(account, ['problem:create']);
+    const access = await tokens.signAccess(account, ['problem:create'], 'session-1');
     const refresh = await tokens.signRefresh(account.userId, 'token-1', 'family-1');
     expect(Object.keys(jwt.decode<Record<string, unknown>>(access)).sort()).toEqual([
       'exp',
       'iat',
+      'jti',
       'permissions',
       'roles',
+      'sid',
       'sub',
       'type',
     ]);

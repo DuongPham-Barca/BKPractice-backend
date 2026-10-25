@@ -63,18 +63,25 @@ export class MicrosoftExchangeDto {
   @IsNotEmpty()
   @MaxLength(128)
   loginCode!: string;
+
+  @ApiPropertyOptional({ description: 'Required for mobile Microsoft PKCE exchange' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  codeVerifier?: string;
 }
 
 export class RefreshTokenDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Mobile only; web uses the HttpOnly refresh cookie' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(8192)
-  refreshToken!: string;
+  refreshToken?: string;
 }
 
 export class TokenPairResponseDto {
-  @ApiProperty() refreshToken!: string;
+  @ApiPropertyOptional({ description: 'Mobile only' }) accessToken?: string;
+  @ApiPropertyOptional({ description: 'Mobile only' }) refreshToken?: string;
 }
 
 export class AuthenticatedResponseDto extends TokenPairResponseDto {

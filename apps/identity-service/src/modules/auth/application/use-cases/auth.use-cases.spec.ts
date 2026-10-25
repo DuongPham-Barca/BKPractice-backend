@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type { BkRefreshClaims } from '@app/contracts';
 
 import { AuthTokenIssuer } from '@/modules/auth/application';
@@ -9,6 +11,7 @@ import type {
   MicrosoftIdentityProvider,
   PasswordHasher,
   RefreshSessionRepository,
+  LoginCodeGrant,
 } from '@/modules/auth/application/ports';
 import {
   CompleteMicrosoftLogin,
@@ -21,6 +24,7 @@ import {
 } from '@/modules/auth/application/use-cases';
 import { AuthFailure } from '@/modules/auth/domain';
 import type { AuthAccount } from '@/modules/auth/domain';
+import { MemoryAuthFlowStore } from '@/modules/auth/infrastructure/memory';
 
 const account: AuthAccount = {
   userId: 'user-1',
@@ -58,6 +62,9 @@ function createSessions(): RefreshSessionRepository {
     create: jest.fn().mockResolvedValue(undefined),
     rotate: jest.fn().mockResolvedValue(true),
     revokeFamily: jest.fn().mockResolvedValue(undefined),
+    revokeBySid: jest.fn().mockResolvedValue(undefined),
+    revokeAll: jest.fn().mockResolvedValue(undefined),
+    isActive: jest.fn().mockResolvedValue(true),
   };
 }
 
@@ -69,6 +76,9 @@ function createTokens(): BkTokenService {
       .mockResolvedValue({ token: 'refresh', expiresAt: new Date('2030-01-01') }),
     verifyRefresh: jest.fn().mockResolvedValue(refreshClaims),
     verifyAccess: jest.fn().mockResolvedValue('user-1'),
+    verifyAccessClaims: jest
+      .fn()
+      .mockResolvedValue({ sub: 'user-1', sid: 'family-1', jti: 'access-1', roles: ['STUDENT'], permissions: [], type: 'access' }),
   };
 }
 
@@ -131,12 +141,12 @@ describe('Authentication use cases', () => {
     const permissions = { readForUser: jest.fn().mockResolvedValue(['problem:create']) };
     const issuer = new AuthTokenIssuer(tokens, createHasher(), createSessions(), permissions);
     await issuer.issueNewFamily(account);
-    expect(tokens.signAccess).toHaveBeenCalledWith(account, ['problem:create']);
+    expect(tokens.signAccess).toHaveBeenCalledWith(account, ['problem:create'], expect.any(String));
   });
 
   it('consumes Microsoft state and login code only once', async () => {
     const transactions = new Map<string, { nonce: string; verifier: string }>();
-    const loginCodes = new Map<string, string>();
+    const loginCodes = new Map<string, LoginCodeGrant>();
     const flows: AuthFlowStore = {
       putTransaction: async (state, transaction) => {
         transactions.set(state, transaction);
@@ -146,8 +156,8 @@ describe('Authentication use cases', () => {
         transactions.delete(state);
         return value;
       },
-      createLoginCode: async (userId) => {
-        loginCodes.set('once', userId);
+      createLoginCode: async (grant) => {
+        loginCodes.set('once', grant);
         return 'once';
       },
       takeLoginCode: async (code) => {
@@ -194,6 +204,34 @@ describe('Authentication use cases', () => {
     await expect(exchange.execute('once')).rejects.toBeInstanceOf(AuthFailure);
   });
 
+  it('binds a mobile Microsoft handoff to the app PKCE verifier', async () => {
+    const verifier = 'v'.repeat(64);
+    const challenge = createHash('sha256').update(verifier).digest('base64url');
+    const flows = new MemoryAuthFlowStore();
+    const provider: MicrosoftIdentityProvider = {
+      getAuthorizationUrl: jest.fn(async (state) => `https://login.example/oauth?state=${state}`),
+      exchangeCode: jest.fn().mockResolvedValue({ tenantId: 'tenant', objectId: 'object', username: account.email }),
+    };
+    const start = new StartMicrosoftLogin(provider, flows, 'https://mobile.example/auth/callback');
+    const complete = new CompleteMicrosoftLogin(provider, flows,
+      { resolveOrLink: jest.fn().mockResolvedValue(account) },
+      'https://web.example/auth/callback', 'https://mobile.example/auth/callback');
+    const exchange = new ExchangeMicrosoftLoginCode(flows, createAccounts(), createIssuer());
+    const url = await start.execute('mobile', challenge);
+    const redirect = await complete.execute({ code: 'code', state: new URL(url).searchParams.get('state')! });
+    expect(new URL(redirect).origin).toBe('https://mobile.example');
+    expect(redirect).not.toContain('accessToken');
+    const code = new URL(redirect).searchParams.get('loginCode')!;
+    await expect(exchange.execute(code, { clientType: 'mobile' }, 'wrong'.repeat(10)))
+      .rejects.toBeInstanceOf(AuthFailure);
+    await expect(exchange.execute(code, { clientType: 'mobile' }, verifier))
+      .rejects.toBeInstanceOf(AuthFailure);
+    const secondUrl = await start.execute('mobile', challenge);
+    const secondRedirect = await complete.execute({ code: 'code', state: new URL(secondUrl).searchParams.get('state')! });
+    const secondCode = new URL(secondRedirect).searchParams.get('loginCode')!;
+    expect((await exchange.execute(secondCode, { clientType: 'mobile' }, verifier)).userId).toBe(account.userId);
+  });
+
   it('rejects an inactive account before rotating refresh', async () => {
     const accounts = createAccounts();
     jest.mocked(accounts.findById).mockResolvedValue({ ...account, status: 'LOCKED' });
@@ -213,10 +251,11 @@ describe('Authentication use cases', () => {
     ).rejects.toBeInstanceOf(AuthFailure);
   });
 
-  it('does not revoke a different user’s session on logout', async () => {
+  it('revokes the refresh session even when access is absent or stale', async () => {
     const sessions = createSessions();
-    await new LogoutCurrentSession(createTokens(), sessions).execute('other-user', 'refresh');
-    expect(sessions.revokeFamily).not.toHaveBeenCalled();
+    await new LogoutCurrentSession(createTokens(), sessions).execute({ userId: 'other-user', refreshToken: 'refresh' });
+    expect(sessions.revokeFamily).toHaveBeenCalledWith(refreshClaims, 'refresh');
+    expect(sessions.revokeBySid).not.toHaveBeenCalled();
   });
 
   it('returns only the four current-user fields', async () => {

@@ -4,11 +4,12 @@ import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
 
 import { identityEntities } from '../modules/identity.entities';
-import { TypeormEffectivePermissionReader } from '../modules/rbac/infrastructure/typeorm-effective-permission-reader';
+import { TypeormEffectivePermissionReader } from '../modules/rbac/infrastructure/effective-permission-reader';
 import { User } from '../modules/users/entities/user.entity';
 
 import { InitialIdentitySchema1700000000000 } from './migrations/1700000000000-InitialIdentitySchema';
 import { AddStudentMicrosoftAuthentication1700000000001 } from './migrations/1700000000001-AddStudentMicrosoftAuthentication';
+import { AddAuthSessions1700000000003 } from './migrations/1700000000003-AddAuthSessions';
 
 import {
   TypeormAuthAccountRepository,
@@ -36,12 +37,14 @@ describeDatabase('Identity auth migration and session repository', () => {
       migrations: [
         InitialIdentitySchema1700000000000,
         AddStudentMicrosoftAuthentication1700000000001,
+        AddAuthSessions1700000000003,
       ],
       synchronize: false,
     });
     await database.initialize();
     await database.dropDatabase();
     await database.runMigrations({ transaction: 'all' });
+    await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     firstUserId = randomUUID();
     secondUserId = randomUUID();
@@ -67,12 +70,18 @@ describeDatabase('Identity auth migration and session repository', () => {
     );
     expect(rows).toHaveLength(2);
     expect(new Set(rows.map((row) => row.family_id)).size).toBe(2);
+    const sessions: { id: string; client_type: string }[] = await database.query(
+      `SELECT id, client_type FROM sessions`,
+    );
+    expect(sessions).toHaveLength(2);
+    expect(sessions.every((session) => session.client_type === 'web')).toBe(true);
     await expect(
       database.query(`INSERT INTO users (email, password_hash) VALUES ($1, $2)`, [
         'STUDENT1@school.edu',
         'hash',
       ]),
     ).rejects.toBeDefined();
+    await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     const columns: { column_name: string }[] = await database.query(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'refresh_tokens' AND column_name = 'family_id'`,
@@ -125,6 +134,8 @@ describeDatabase('Identity auth migration and session repository', () => {
       [[familyId, independentFamilyId]],
     );
     expect(active.map((row) => row.family_id)).toEqual([independentFamilyId]);
+    expect(await repository.isActive(firstUserId, familyId)).toBe(false);
+    expect(await repository.isActive(firstUserId, independentFamilyId)).toBe(true);
   });
 
   it('loads a preprovisioned student by MSSV without exposing the password hash in other projections', async () => {
@@ -216,6 +227,26 @@ describeDatabase('Identity auth migration and session repository', () => {
       [familyId],
     );
     expect(active).toHaveLength(0);
+  });
+
+  it('makes access sessions inactive immediately after logout-all', async () => {
+    const repository = new TypeormRefreshSessionRepository(database, new Argon2PasswordHasher());
+    const first = randomUUID();
+    const second = randomUUID();
+    const anotherUser = randomUUID();
+    const expiresAt = new Date(Date.now() + 60_000);
+    await repository.create({ tokenId: randomUUID(), familyId: first, userId: firstUserId,
+      tokenHash: await argon2.hash('first'), expiresAt });
+    await repository.create({ tokenId: randomUUID(), familyId: second, userId: firstUserId,
+      tokenHash: await argon2.hash('second'), expiresAt });
+    await repository.create({ tokenId: randomUUID(), familyId: anotherUser, userId: secondUserId,
+      tokenHash: await argon2.hash('other'), expiresAt });
+    expect(await repository.isActive(firstUserId, first)).toBe(true);
+    expect(await repository.isActive(firstUserId, second)).toBe(true);
+    await repository.revokeAll(firstUserId);
+    expect(await repository.isActive(firstUserId, first)).toBe(false);
+    expect(await repository.isActive(firstUserId, second)).toBe(false);
+    expect(await repository.isActive(secondUserId, anotherUser)).toBe(true);
   });
 
   it('links one preprovisioned account and later resolves it by stable Microsoft IDs', async () => {

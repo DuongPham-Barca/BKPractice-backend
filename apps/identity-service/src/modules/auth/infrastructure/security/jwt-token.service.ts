@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import type { BkAccessClaims, BkRefreshClaims } from '@app/contracts';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,10 +18,12 @@ export class JwtBkTokenService implements BkTokenService {
     private readonly config: ConfigService,
   ) {}
 
-  signAccess(account: AuthAccount, permissions: string[]): Promise<string> {
+  signAccess(account: AuthAccount, permissions: string[], sid: string): Promise<string> {
     return this.jwt.signAsync(
       {
         sub: account.userId,
+        sid,
+        jti: randomUUID(),
         roles: account.roles,
         permissions,
         type: 'access',
@@ -68,13 +72,22 @@ export class JwtBkTokenService implements BkTokenService {
   }
 
   async verifyAccess(token: string): Promise<string> {
+    return (await this.verifyAccessClaims(token)).sub;
+  }
+
+  async verifyAccessClaims(token: string): Promise<BkAccessClaims> {
     try {
       const payload = await this.jwt.verifyAsync<BkAccessClaims>(token, {
         secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
       });
       if (
         payload.type !== 'access' ||
+        typeof payload.sub !== 'string' ||
         !payload.sub ||
+        typeof payload.sid !== 'string' ||
+        !payload.sid ||
+        typeof payload.jti !== 'string' ||
+        !payload.jti ||
         !Array.isArray(payload.roles) ||
         !payload.roles.every((role) => typeof role === 'string') ||
         (payload.permissions !== undefined &&
@@ -83,7 +96,7 @@ export class JwtBkTokenService implements BkTokenService {
       ) {
         throw new Error('Invalid access claim');
       }
-      return payload.sub;
+      return { ...payload, permissions: payload.permissions ?? [] };
     } catch {
       throw new AuthFailure('invalid_token');
     }

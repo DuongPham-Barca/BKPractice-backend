@@ -1,4 +1,4 @@
-import type { BkRefreshClaims } from '@app/contracts';
+import type { BkAccessClaims, BkRefreshClaims } from '@app/contracts';
 
 import type { AuthAccount, LocalAuthAccount, MicrosoftIdentity } from '@/modules/auth/domain';
 
@@ -19,10 +19,22 @@ export interface RefreshRecord {
   expiresAt: Date;
 }
 
+export type ClientType = 'web' | 'mobile';
+
+export interface SessionMetadata {
+  clientType: ClientType;
+  device?: string;
+  userAgent?: string;
+  ip?: string;
+}
+
 export interface RefreshSessionRepository {
-  create(record: RefreshRecord): Promise<void>;
+  create(record: RefreshRecord, metadata?: SessionMetadata): Promise<void>;
   rotate(current: BkRefreshClaims, rawToken: string, replacement: RefreshRecord): Promise<boolean>;
   revokeFamily(current: BkRefreshClaims, rawToken: string): Promise<void>;
+  revokeBySid(userId: string, sid: string): Promise<void>;
+  revokeAll(userId: string): Promise<void>;
+  isActive(userId: string, sid: string): Promise<boolean>;
 }
 
 export interface PasswordHasher {
@@ -32,7 +44,7 @@ export interface PasswordHasher {
 }
 
 export interface BkTokenService {
-  signAccess(account: AuthAccount, permissions: string[]): Promise<string>;
+  signAccess(account: AuthAccount, permissions: string[], sid: string): Promise<string>;
   signRefresh(
     userId: string,
     tokenId: string,
@@ -40,11 +52,20 @@ export interface BkTokenService {
   ): Promise<{ token: string; expiresAt: Date }>;
   verifyRefresh(token: string): Promise<BkRefreshClaims>;
   verifyAccess(token: string): Promise<string>;
+  verifyAccessClaims(token: string): Promise<BkAccessClaims>;
 }
 
 export interface OAuthTransaction {
   nonce: string;
   verifier: string;
+  clientType?: ClientType;
+  mobileChallenge?: string;
+}
+
+export interface LoginCodeGrant {
+  userId: string;
+  clientType: ClientType;
+  mobileChallenge?: string;
 }
 
 export interface MicrosoftIdentityProvider {
@@ -55,6 +76,6 @@ export interface MicrosoftIdentityProvider {
 export interface AuthFlowStore {
   putTransaction(state: string, transaction: OAuthTransaction): Promise<void>;
   takeTransaction(state: string): Promise<OAuthTransaction | null>;
-  createLoginCode(userId: string): Promise<string>;
-  takeLoginCode(code: string): Promise<string | null>;
+  createLoginCode(grant: LoginCodeGrant): Promise<string>;
+  takeLoginCode(code: string): Promise<LoginCodeGrant | null>;
 }

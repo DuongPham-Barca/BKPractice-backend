@@ -16,6 +16,7 @@ import {
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
   LoginWithStudentId,
+  LogoutAllSessions,
   LogoutCurrentSession,
   RefreshSession,
   StartMicrosoftLogin,
@@ -30,6 +31,7 @@ import {
 import {
   Argon2PasswordHasher,
   ExternalIdentity,
+  AuthSession,
   JwtBkTokenService,
   MemoryAuthFlowStore,
   MsalMicrosoftIdentityProvider,
@@ -38,7 +40,7 @@ import {
   TypeormExternalIdentityRepository,
   TypeormRefreshSessionRepository,
 } from '@/modules/auth/infrastructure';
-import { AuthController } from '@/modules/auth/presentation';
+import { AuthController, SessionStatusController } from '@/modules/auth/presentation';
 import type { EffectivePermissionReader } from '@/modules/rbac/application/effective-permission-reader';
 import { EFFECTIVE_PERMISSION_READER } from '@/modules/rbac/application/effective-permission-reader';
 import { RbacModule } from '@/modules/rbac/rbac.module';
@@ -46,8 +48,8 @@ import { RefreshToken } from '@/modules/users/entities/refresh-token.entity';
 import { User } from '@/modules/users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, RefreshToken, ExternalIdentity]), RbacModule],
-  controllers: [AuthController],
+  imports: [TypeOrmModule.forFeature([User, RefreshToken, AuthSession, ExternalIdentity]), RbacModule],
+  controllers: [AuthController, SessionStatusController],
   providers: [
     { provide: AUTH_ACCOUNT_REPOSITORY, useClass: TypeormAuthAccountRepository },
     { provide: EXTERNAL_IDENTITY_REPOSITORY, useClass: TypeormExternalIdentityRepository },
@@ -94,9 +96,9 @@ import { User } from '@/modules/users/entities/user.entity';
     },
     {
       provide: StartMicrosoftLogin,
-      inject: [MICROSOFT_IDENTITY_PROVIDER, AUTH_FLOW_STORE],
-      useFactory: (provider: MicrosoftIdentityProvider, flows: AuthFlowStore) =>
-        new StartMicrosoftLogin(provider, flows),
+      inject: [MICROSOFT_IDENTITY_PROVIDER, AUTH_FLOW_STORE, ConfigService],
+      useFactory: (provider: MicrosoftIdentityProvider, flows: AuthFlowStore, config: ConfigService) =>
+        new StartMicrosoftLogin(provider, flows, config.get<string>('AUTH_MOBILE_LOGIN_REDIRECT_URL')),
     },
     {
       provide: CompleteMicrosoftLogin,
@@ -117,6 +119,7 @@ import { User } from '@/modules/users/entities/user.entity';
           flows,
           identities,
           config.getOrThrow<string>('AUTH_WEB_LOGIN_REDIRECT_URL'),
+          config.get<string>('AUTH_MOBILE_LOGIN_REDIRECT_URL'),
         ),
     },
     {
@@ -153,6 +156,11 @@ import { User } from '@/modules/users/entities/user.entity';
       provide: GetCurrentAuthenticatedUser,
       inject: [AUTH_ACCOUNT_REPOSITORY],
       useFactory: (accounts: AuthAccountRepository) => new GetCurrentAuthenticatedUser(accounts),
+    },
+    {
+      provide: LogoutAllSessions,
+      inject: [REFRESH_SESSION_REPOSITORY],
+      useFactory: (sessions: RefreshSessionRepository) => new LogoutAllSessions(sessions),
     },
   ],
   exports: [BK_TOKEN_SERVICE],
