@@ -163,6 +163,6 @@ import { User } from '@/modules/users/entities/user.entity';
       useFactory: (sessions: RefreshSessionRepository) => new LogoutAllSessions(sessions),
     },
   ],
-  exports: [BK_TOKEN_SERVICE],
+  exports: [BK_TOKEN_SERVICE, REFRESH_SESSION_REPOSITORY],
 })
 export class AuthModule {}

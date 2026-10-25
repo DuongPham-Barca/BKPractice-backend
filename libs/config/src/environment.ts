@@ -35,6 +35,21 @@ const serviceSchemas: Record<ServiceName, z.ZodObject> = {
     JWT_REFRESH_SECRET: secret,
     JWT_ACCESS_TTL: z.string().default('15m'),
     JWT_REFRESH_TTL: z.string().default('7d'),
+    R2_ACCOUNT_ID: z.string().regex(/^[0-9a-f]{32}$/),
+    R2_ACCESS_KEY_ID: z.string().min(1),
+    R2_SECRET_ACCESS_KEY: z.string().min(1),
+    R2_REFERENCE_SIGNING_KEY: z.string().min(32),
+    R2_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/),
+    R2_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600),
+    R2_MAX_UPLOAD_BYTES: z.coerce.number().int().positive().max(52428800),
+    R2_ALLOWED_CONTENT_TYPES: z
+      .string()
+      .refine((value) =>
+        value
+          .split(',')
+          .every((item) => ['image/png', 'image/jpeg', 'image/webp'].includes(item.trim())),
+      ),
+    R2_CLEANUP_GRACE_SECONDS: z.coerce.number().int().positive(),
   }),
   'learning-service': commonSchema.extend({
     LEARNING_SERVICE_PORT: port.default(3002),

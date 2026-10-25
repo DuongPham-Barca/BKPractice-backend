@@ -1,13 +1,13 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-import { User } from './user.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 @Entity('profiles')
 export class Profile {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @OneToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
@@ -15,7 +15,7 @@ export class Profile {
   displayName!: string;
 
   @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true })
-  avatarUrl!: string | null;
+  avatarReference!: string | null;
 
   @Column({ type: 'text', nullable: true })
   bio!: string | null;

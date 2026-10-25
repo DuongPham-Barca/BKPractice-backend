@@ -11,7 +11,7 @@ import {
 
 import { Role } from '../../rbac/entities/role.entity';
 
-import { Profile } from './profile.entity';
+import { Profile } from '@/modules/profiles/infrastructure/persistence/profile.entity';
 
 export enum AccountStatus {
   Active = 'ACTIVE',

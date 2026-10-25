@@ -10,6 +10,8 @@ interface AccessTokenPayload {
   type: 'access';
 }
 
+const publicProfileRoute = /^\/api\/users\/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\/profile$/;
+
 const publicRoutes = new Set([
   'POST /api/auth/register',
   'POST /api/auth/login',
@@ -29,7 +31,8 @@ export class GatewayAuthMiddleware implements NestMiddleware {
 
     if (
       !request.path.startsWith('/api/') ||
-      publicRoutes.has(`${request.method} ${request.path}`)
+      publicRoutes.has(`${request.method} ${request.path}`) ||
+      (request.method === 'GET' && publicProfileRoute.test(request.path))
     ) {
       next();
       return;
