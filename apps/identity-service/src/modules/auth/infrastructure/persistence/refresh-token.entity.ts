@@ -10,6 +10,13 @@ export class RefreshToken {
   tokenId!: string;
 
   @Index()
+  @Column({ name: 'family_id', type: 'uuid' })
+  familyId!: string;
+
+  @Column({ name: 'replaced_by_token_id', type: 'uuid', nullable: true })
+  replacedByTokenId!: string | null;
+
+  @Index()
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
 

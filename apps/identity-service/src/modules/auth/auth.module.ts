@@ -15,7 +15,7 @@ import {
   CompleteMicrosoftLogin,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
-  LoginWithStudentId,
+  LoginWithPassword,
   LogoutAllSessions,
   LogoutCurrentSession,
   RefreshSession,
@@ -27,6 +27,11 @@ import {
   type MicrosoftIdentityProvider,
   type PasswordHasher,
   type RefreshSessionRepository,
+  ImportAccounts,
+  ACCOUNT_IMPORT_PARSER,
+  ACCOUNT_IMPORT_REPOSITORY,
+  type AccountImportParser,
+  type AccountImportRepository,
 } from '@/modules/auth/application';
 import {
   Argon2PasswordHasher,
@@ -36,21 +41,43 @@ import {
   MemoryAuthFlowStore,
   MsalMicrosoftIdentityProvider,
   RedisAuthFlowStore,
+  RefreshToken,
   TypeormAuthAccountRepository,
   TypeormExternalIdentityRepository,
   TypeormRefreshSessionRepository,
+  TypeormAccountImportRepository,
+  XlsxAccountParser,
 } from '@/modules/auth/infrastructure';
-import { AuthController, SessionStatusController } from '@/modules/auth/presentation';
+import {
+  AccountImportController,
+  AccountImportGuard,
+  AuthController,
+  SessionStatusController,
+} from '@/modules/auth/presentation';
 import type { EffectivePermissionReader } from '@/modules/rbac/application/effective-permission-reader';
 import { EFFECTIVE_PERMISSION_READER } from '@/modules/rbac/application/effective-permission-reader';
 import { RbacModule } from '@/modules/rbac/rbac.module';
-import { RefreshToken } from '@/modules/users/entities/refresh-token.entity';
-import { User } from '@/modules/users/entities/user.entity';
+import { User } from '@/modules/users/infrastructure/persistence';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, RefreshToken, AuthSession, ExternalIdentity]), RbacModule],
-  controllers: [AuthController, SessionStatusController],
+  imports: [
+    TypeOrmModule.forFeature([User, RefreshToken, AuthSession, ExternalIdentity]),
+    RbacModule,
+  ],
+  controllers: [AuthController, SessionStatusController, AccountImportController],
   providers: [
+    AccountImportGuard,
+    { provide: ACCOUNT_IMPORT_PARSER, useClass: XlsxAccountParser },
+    { provide: ACCOUNT_IMPORT_REPOSITORY, useClass: TypeormAccountImportRepository },
+    {
+      provide: ImportAccounts,
+      inject: [ACCOUNT_IMPORT_PARSER, ACCOUNT_IMPORT_REPOSITORY, PASSWORD_HASHER],
+      useFactory: (
+        parser: AccountImportParser,
+        accounts: AccountImportRepository,
+        passwords: PasswordHasher,
+      ) => new ImportAccounts(parser, accounts, passwords),
+    },
     { provide: AUTH_ACCOUNT_REPOSITORY, useClass: TypeormAuthAccountRepository },
     { provide: EXTERNAL_IDENTITY_REPOSITORY, useClass: TypeormExternalIdentityRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
@@ -86,19 +113,27 @@ import { User } from '@/modules/users/entities/user.entity';
       ) => new AuthTokenIssuer(tokens, hasher, sessions, permissions),
     },
     {
-      provide: LoginWithStudentId,
+      provide: LoginWithPassword,
       inject: [AUTH_ACCOUNT_REPOSITORY, PASSWORD_HASHER, AuthTokenIssuer],
       useFactory: (
         accounts: AuthAccountRepository,
         hasher: PasswordHasher,
         issuer: AuthTokenIssuer,
-      ) => new LoginWithStudentId(accounts, hasher, issuer),
+      ) => new LoginWithPassword(accounts, hasher, issuer),
     },
     {
       provide: StartMicrosoftLogin,
       inject: [MICROSOFT_IDENTITY_PROVIDER, AUTH_FLOW_STORE, ConfigService],
-      useFactory: (provider: MicrosoftIdentityProvider, flows: AuthFlowStore, config: ConfigService) =>
-        new StartMicrosoftLogin(provider, flows, config.get<string>('AUTH_MOBILE_LOGIN_REDIRECT_URL')),
+      useFactory: (
+        provider: MicrosoftIdentityProvider,
+        flows: AuthFlowStore,
+        config: ConfigService,
+      ) =>
+        new StartMicrosoftLogin(
+          provider,
+          flows,
+          config.get<string>('AUTH_MOBILE_LOGIN_REDIRECT_URL'),
+        ),
     },
     {
       provide: CompleteMicrosoftLogin,

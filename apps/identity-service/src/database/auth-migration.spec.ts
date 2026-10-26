@@ -3,20 +3,20 @@ import { randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { DataSource } from 'typeorm';
 
-import { identityEntities } from '../modules/identity.entities';
-import { TypeormEffectivePermissionReader } from '../modules/rbac/infrastructure/effective-permission-reader';
-import { User } from '../modules/users/entities/user.entity';
-
 import { InitialIdentitySchema1700000000000 } from './migrations/1700000000000-InitialIdentitySchema';
 import { AddStudentMicrosoftAuthentication1700000000001 } from './migrations/1700000000001-AddStudentMicrosoftAuthentication';
 import { AddAuthSessions1700000000003 } from './migrations/1700000000003-AddAuthSessions';
 
+import { AddOfficialAccountName1700000000004 } from '@/database/migrations/1700000000004-AddOfficialAccountName';
 import {
   TypeormAuthAccountRepository,
   TypeormExternalIdentityRepository,
   TypeormRefreshSessionRepository,
 } from '@/modules/auth/infrastructure/persistence';
 import { Argon2PasswordHasher } from '@/modules/auth/infrastructure/security';
+import { identityEntities } from '@/modules/identity.entities';
+import { TypeormEffectivePermissionReader } from '@/modules/rbac/infrastructure/effective-permission-reader';
+import { User } from '@/modules/users/infrastructure/persistence';
 
 const testUrl = process.env.TEST_IDENTITY_DATABASE_URL;
 const describeDatabase = testUrl ? describe : describe.skip;
@@ -38,12 +38,14 @@ describeDatabase('Identity auth migration and session repository', () => {
         InitialIdentitySchema1700000000000,
         AddStudentMicrosoftAuthentication1700000000001,
         AddAuthSessions1700000000003,
+        AddOfficialAccountName1700000000004,
       ],
       synchronize: false,
     });
     await database.initialize();
     await database.dropDatabase();
     await database.runMigrations({ transaction: 'all' });
+    await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     firstUserId = randomUUID();
@@ -81,6 +83,7 @@ describeDatabase('Identity auth migration and session repository', () => {
         'hash',
       ]),
     ).rejects.toBeDefined();
+    await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     await database.undoLastMigration({ transaction: 'all' });
     const columns: { column_name: string }[] = await database.query(
@@ -235,12 +238,27 @@ describeDatabase('Identity auth migration and session repository', () => {
     const second = randomUUID();
     const anotherUser = randomUUID();
     const expiresAt = new Date(Date.now() + 60_000);
-    await repository.create({ tokenId: randomUUID(), familyId: first, userId: firstUserId,
-      tokenHash: await argon2.hash('first'), expiresAt });
-    await repository.create({ tokenId: randomUUID(), familyId: second, userId: firstUserId,
-      tokenHash: await argon2.hash('second'), expiresAt });
-    await repository.create({ tokenId: randomUUID(), familyId: anotherUser, userId: secondUserId,
-      tokenHash: await argon2.hash('other'), expiresAt });
+    await repository.create({
+      tokenId: randomUUID(),
+      familyId: first,
+      userId: firstUserId,
+      tokenHash: await argon2.hash('first'),
+      expiresAt,
+    });
+    await repository.create({
+      tokenId: randomUUID(),
+      familyId: second,
+      userId: firstUserId,
+      tokenHash: await argon2.hash('second'),
+      expiresAt,
+    });
+    await repository.create({
+      tokenId: randomUUID(),
+      familyId: anotherUser,
+      userId: secondUserId,
+      tokenHash: await argon2.hash('other'),
+      expiresAt,
+    });
     expect(await repository.isActive(firstUserId, first)).toBe(true);
     expect(await repository.isActive(firstUserId, second)).toBe(true);
     await repository.revokeAll(firstUserId);

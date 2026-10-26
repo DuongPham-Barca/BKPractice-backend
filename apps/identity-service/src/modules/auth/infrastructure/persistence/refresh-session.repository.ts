@@ -10,7 +10,7 @@ import type {
   SessionMetadata,
 } from '@/modules/auth/application/ports';
 import { AuthSession } from '@/modules/auth/infrastructure/persistence/auth-session.entity';
-import { RefreshToken } from '@/modules/users/entities/refresh-token.entity';
+import { RefreshToken } from '@/modules/auth/infrastructure/persistence/refresh-token.entity';
 
 @Injectable()
 export class TypeormRefreshSessionRepository implements RefreshSessionRepository {
@@ -19,7 +19,10 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
     private readonly hasher: PasswordHasher,
   ) {}
 
-  async create(record: RefreshRecord, metadata: SessionMetadata = { clientType: 'web' }): Promise<void> {
+  async create(
+    record: RefreshRecord,
+    metadata: SessionMetadata = { clientType: 'web' },
+  ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       await manager.insert(AuthSession, {
         id: record.familyId,
@@ -104,7 +107,10 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
       const session = await manager
         .createQueryBuilder(AuthSession, 'session')
         .setLock('pessimistic_write')
-        .where('session.id = :sid AND session.userId = :userId', { sid: current.fid, userId: current.sub })
+        .where('session.id = :sid AND session.userId = :userId', {
+          sid: current.fid,
+          userId: current.sub,
+        })
         .getOne();
       if (!session || session.revokedAt) return;
       const stored = await manager
@@ -122,9 +128,11 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
 
   async revokeBySid(userId: string, sid: string): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const session = await manager.createQueryBuilder(AuthSession, 'session')
+      const session = await manager
+        .createQueryBuilder(AuthSession, 'session')
         .setLock('pessimistic_write')
-        .where('session.id = :sid AND session.userId = :userId', { sid, userId }).getOne();
+        .where('session.id = :sid AND session.userId = :userId', { sid, userId })
+        .getOne();
       if (session && !session.revokedAt) await this.revokeLockedFamily(manager, session);
     });
   }
@@ -132,18 +140,28 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
   async revokeAll(userId: string): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       const now = new Date();
-      await manager.createQueryBuilder().update(AuthSession).set({ revokedAt: now })
-        .where('user_id = :userId AND revoked_at IS NULL', { userId }).execute();
-      await manager.createQueryBuilder().update(RefreshToken).set({ revokedAt: now })
-        .where('user_id = :userId AND revoked_at IS NULL', { userId }).execute();
+      await manager
+        .createQueryBuilder()
+        .update(AuthSession)
+        .set({ revokedAt: now })
+        .where('user_id = :userId AND revoked_at IS NULL', { userId })
+        .execute();
+      await manager
+        .createQueryBuilder()
+        .update(RefreshToken)
+        .set({ revokedAt: now })
+        .where('user_id = :userId AND revoked_at IS NULL', { userId })
+        .execute();
     });
   }
 
   async isActive(userId: string, sid: string): Promise<boolean> {
-    const result = await this.dataSource.getRepository(AuthSession).update(
-      { id: sid, userId, revokedAt: IsNull(), expiresAt: MoreThan(new Date()) },
-      { lastUsedAt: new Date() },
-    );
+    const result = await this.dataSource
+      .getRepository(AuthSession)
+      .update(
+        { id: sid, userId, revokedAt: IsNull(), expiresAt: MoreThan(new Date()) },
+        { lastUsedAt: new Date() },
+      );
     return (result.affected ?? 0) > 0;
   }
 
@@ -151,7 +169,11 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
     const now = new Date();
     session.revokedAt = now;
     await manager.save(session);
-    await manager.createQueryBuilder().update(RefreshToken).set({ revokedAt: now })
-      .where('family_id = :familyId AND revoked_at IS NULL', { familyId: session.id }).execute();
+    await manager
+      .createQueryBuilder()
+      .update(RefreshToken)
+      .set({ revokedAt: now })
+      .where('family_id = :familyId AND revoked_at IS NULL', { familyId: session.id })
+      .execute();
   }
 }

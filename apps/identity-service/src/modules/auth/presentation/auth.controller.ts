@@ -27,7 +27,7 @@ import {
   CompleteMicrosoftLogin,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
-  LoginWithStudentId,
+  LoginWithPassword,
   LogoutAllSessions,
   LogoutCurrentSession,
   RefreshSession,
@@ -48,7 +48,7 @@ import {
   MicrosoftCallbackDto,
   MicrosoftExchangeDto,
   RefreshTokenDto,
-  StudentLoginDto,
+  PasswordLoginDto,
 } from '@/modules/auth/presentation/auth.dto';
 
 type AuthResult = { userId: string; accessToken: string; refreshToken: string };
@@ -72,7 +72,7 @@ type AuthResult = { userId: string; accessToken: string; refreshToken: string };
 @Controller('api/auth')
 export class AuthController {
   constructor(
-    private readonly loginUseCase: LoginWithStudentId,
+    private readonly loginUseCase: LoginWithPassword,
     private readonly startMicrosoftUseCase: StartMicrosoftLogin,
     private readonly completeMicrosoftUseCase: CompleteMicrosoftLogin,
     private readonly exchangeMicrosoftUseCase: ExchangeMicrosoftLoginCode,
@@ -88,24 +88,27 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Sign in with a provisioned student ID and password',
+    summary: 'Sign in with student MSSV or lecturer email and password',
     description:
       'Web returns userId and secure HttpOnly cookies; mobile returns userId and both tokens in JSON.',
   })
   @ApiResponse({ status: 200, type: AuthenticatedResponseDto })
   async login(
     @Req() request: Request,
-    @Body() dto: StudentLoginDto,
+    @Body() dto: PasswordLoginDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthenticatedResponseDto> {
     const clientType = this.clientType(request);
     if (clientType === 'web') this.requireOrigin(request);
+    if (Boolean(dto.studentId) === Boolean(dto.email))
+      throw new BadRequestException('Provide exactly one of studentId or email');
     return this.deliver(
       response,
       await this.loginUseCase.execute(
-        dto.studentId,
+        (dto.studentId ?? dto.email)!,
         dto.password,
         this.metadata(request, clientType),
+        dto.email !== undefined ? 'email' : 'studentId',
       ),
       clientType,
     );

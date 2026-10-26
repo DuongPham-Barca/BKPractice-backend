@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import type { AuthFlowStore, OAuthTransaction } from '@/modules/auth/application/ports';
+import type { AuthFlowStore, LoginCodeGrant, OAuthTransaction } from '@/modules/auth/application/ports';
 
 interface Entry<T> {
   value: T;
@@ -9,7 +9,7 @@ interface Entry<T> {
 
 export class MemoryAuthFlowStore implements AuthFlowStore {
   private readonly transactions = new Map<string, Entry<OAuthTransaction>>();
-  private readonly loginCodes = new Map<string, Entry<string>>();
+  private readonly loginCodes = new Map<string, Entry<LoginCodeGrant>>();
 
   async putTransaction(state: string, transaction: OAuthTransaction): Promise<void> {
     this.put(this.transactions, state, transaction, 300_000);
@@ -19,13 +19,13 @@ export class MemoryAuthFlowStore implements AuthFlowStore {
     return this.take(this.transactions, state);
   }
 
-  async createLoginCode(userId: string): Promise<string> {
+  async createLoginCode(grant: LoginCodeGrant): Promise<string> {
     const code = randomBytes(32).toString('base64url');
-    this.put(this.loginCodes, this.hash(code), userId, 60_000);
+    this.put(this.loginCodes, this.hash(code), grant, 60_000);
     return code;
   }
 
-  async takeLoginCode(code: string): Promise<string | null> {
+  async takeLoginCode(code: string): Promise<LoginCodeGrant | null> {
     return this.take(this.loginCodes, this.hash(code));
   }
 

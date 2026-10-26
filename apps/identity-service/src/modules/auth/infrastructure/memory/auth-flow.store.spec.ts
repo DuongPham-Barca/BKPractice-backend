@@ -18,14 +18,14 @@ describe('MemoryAuthFlowStore', () => {
 
   it('consumes an opaque login code once and expires it after 60 seconds', async () => {
     const store = new MemoryAuthFlowStore();
-    const code = await store.createLoginCode('user-1');
+    const code = await store.createLoginCode({ userId: 'user-1', clientType: 'web' });
     expect(code).not.toContain('user-1');
     expect(await Promise.all([store.takeLoginCode(code), store.takeLoginCode(code)])).toEqual([
-      'user-1',
+      { userId: 'user-1', clientType: 'web' },
       null,
     ]);
 
-    const expiredCode = await store.createLoginCode('user-2');
+    const expiredCode = await store.createLoginCode({ userId: 'user-2', clientType: 'web' });
     jest.advanceTimersByTime(60_000);
     expect(await store.takeLoginCode(expiredCode)).toBeNull();
   });

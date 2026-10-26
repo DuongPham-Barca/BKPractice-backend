@@ -3,3 +3,6 @@ export * from '@/modules/auth/presentation/auth.controller';
 export * from '@/modules/auth/presentation/auth.dto';
 export * from '@/modules/auth/presentation/auth-cookie';
 export * from '@/modules/auth/presentation/session-status.controller';
+export * from '@/modules/auth/presentation/account-import.controller';
+export * from '@/modules/auth/presentation/account-import.guard';
+export * from '@/modules/auth/presentation/account-import-failure.filter';

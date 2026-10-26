@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { GatewayAuthMiddleware } from './auth/gateway-auth.middleware';
+import { GatewaySessionVerifier } from './auth/gateway-session-verifier';
 import { GatewayProxyController } from './proxy/gateway-proxy.controller';
 import { GatewayProxyService } from './proxy/gateway-proxy.service';
 import { SubmissionRealtimeGateway } from './realtime/submission-realtime.gateway';
@@ -24,6 +25,7 @@ import { SubmissionRealtimeGateway } from './realtime/submission-realtime.gatewa
   providers: [
     GatewayProxyService,
     GatewayAuthMiddleware,
+    GatewaySessionVerifier,
     SubmissionRealtimeGateway,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

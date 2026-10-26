@@ -13,7 +13,7 @@ import {
   type ProfileRecord,
 } from '@/modules/profiles/domain';
 import { Profile } from '@/modules/profiles/infrastructure/persistence/profile.entity';
-import { User } from '@/modules/users/entities/user.entity';
+import { User } from '@/modules/users/infrastructure/persistence';
 
 function mapProfile(profile: Profile, userId: string): ProfileRecord {
   return {
@@ -33,12 +33,11 @@ export class TypeormProfileAccountContext implements IdentityProfileContext {
     const user = await this.database
       .getRepository(User)
       .createQueryBuilder('user')
-      .select(['user.id', 'user.status'])
+      .select(['user.id', 'user.status', 'user.officialName'])
       .where('user.id = :userId', { userId })
       .getOne();
     if (!user) return null;
-    // The approved account-provisioning contract has not yet supplied an official name.
-    return { userId: user.id, officialName: null, status: user.status };
+    return { userId: user.id, officialName: user.officialName, status: user.status };
   }
 }
 

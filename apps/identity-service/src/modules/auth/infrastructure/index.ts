@@ -3,3 +3,4 @@ export * from '@/modules/auth/infrastructure/microsoft';
 export * from '@/modules/auth/infrastructure/persistence';
 export * from '@/modules/auth/infrastructure/redis';
 export * from '@/modules/auth/infrastructure/security';
+export * from '@/modules/auth/infrastructure/account-import';

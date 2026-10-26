@@ -17,7 +17,7 @@ import {
   CompleteMicrosoftLogin,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
-  LoginWithStudentId,
+  LoginWithPassword,
   LogoutCurrentSession,
   RefreshSession,
   StartMicrosoftLogin,
@@ -45,6 +45,14 @@ const refreshClaims: BkRefreshClaims = {
 function createAccounts(): AuthAccountRepository {
   return {
     findByStudentId: jest.fn().mockResolvedValue({ ...account, passwordHash: 'hash' }),
+    findLecturerByEmail: jest
+      .fn()
+      .mockResolvedValue({
+        ...account,
+        studentId: null,
+        roles: ['LECTURER'],
+        passwordHash: 'hash',
+      }),
     findById: jest.fn().mockResolvedValue(account),
   };
 }
@@ -78,7 +86,14 @@ function createTokens(): BkTokenService {
     verifyAccess: jest.fn().mockResolvedValue('user-1'),
     verifyAccessClaims: jest
       .fn()
-      .mockResolvedValue({ sub: 'user-1', sid: 'family-1', jti: 'access-1', roles: ['STUDENT'], permissions: [], type: 'access' }),
+      .mockResolvedValue({
+        sub: 'user-1',
+        sid: 'family-1',
+        jti: 'access-1',
+        roles: ['STUDENT'],
+        permissions: [],
+        type: 'access',
+      }),
   };
 }
 
@@ -93,7 +108,7 @@ describe('Authentication use cases', () => {
     const accounts = createAccounts();
     const hasher = createHasher();
     const issuer = createIssuer();
-    const result = await new LoginWithStudentId(accounts, hasher, issuer).execute(
+    const result = await new LoginWithPassword(accounts, hasher, issuer).execute(
       ' 2210001 ',
       ' pass word ',
     );
@@ -108,7 +123,7 @@ describe('Authentication use cases', () => {
     const issuer = createIssuer();
     const issue = jest.spyOn(issuer, 'issueNewFamily');
     jest.mocked(accounts.findByStudentId).mockResolvedValueOnce(null);
-    const login = new LoginWithStudentId(accounts, hasher, issuer);
+    const login = new LoginWithPassword(accounts, hasher, issuer);
     await expect(login.execute('missing', 'wrong')).rejects.toEqual(
       new AuthFailure('invalid_credentials'),
     );
@@ -130,7 +145,7 @@ describe('Authentication use cases', () => {
       const issuer = createIssuer();
       const issue = jest.spyOn(issuer, 'issueNewFamily');
       await expect(
-        new LoginWithStudentId(accounts, createHasher(), issuer).execute('2210001', '123456'),
+        new LoginWithPassword(accounts, createHasher(), issuer).execute('2210001', '123456'),
       ).rejects.toBeInstanceOf(AuthFailure);
       expect(issue).not.toHaveBeenCalled();
     },
@@ -210,26 +225,42 @@ describe('Authentication use cases', () => {
     const flows = new MemoryAuthFlowStore();
     const provider: MicrosoftIdentityProvider = {
       getAuthorizationUrl: jest.fn(async (state) => `https://login.example/oauth?state=${state}`),
-      exchangeCode: jest.fn().mockResolvedValue({ tenantId: 'tenant', objectId: 'object', username: account.email }),
+      exchangeCode: jest
+        .fn()
+        .mockResolvedValue({ tenantId: 'tenant', objectId: 'object', username: account.email }),
     };
     const start = new StartMicrosoftLogin(provider, flows, 'https://mobile.example/auth/callback');
-    const complete = new CompleteMicrosoftLogin(provider, flows,
+    const complete = new CompleteMicrosoftLogin(
+      provider,
+      flows,
       { resolveOrLink: jest.fn().mockResolvedValue(account) },
-      'https://web.example/auth/callback', 'https://mobile.example/auth/callback');
+      'https://web.example/auth/callback',
+      'https://mobile.example/auth/callback',
+    );
     const exchange = new ExchangeMicrosoftLoginCode(flows, createAccounts(), createIssuer());
     const url = await start.execute('mobile', challenge);
-    const redirect = await complete.execute({ code: 'code', state: new URL(url).searchParams.get('state')! });
+    const redirect = await complete.execute({
+      code: 'code',
+      state: new URL(url).searchParams.get('state')!,
+    });
     expect(new URL(redirect).origin).toBe('https://mobile.example');
     expect(redirect).not.toContain('accessToken');
     const code = new URL(redirect).searchParams.get('loginCode')!;
-    await expect(exchange.execute(code, { clientType: 'mobile' }, 'wrong'.repeat(10)))
-      .rejects.toBeInstanceOf(AuthFailure);
-    await expect(exchange.execute(code, { clientType: 'mobile' }, verifier))
-      .rejects.toBeInstanceOf(AuthFailure);
+    await expect(
+      exchange.execute(code, { clientType: 'mobile' }, 'wrong'.repeat(10)),
+    ).rejects.toBeInstanceOf(AuthFailure);
+    await expect(exchange.execute(code, { clientType: 'mobile' }, verifier)).rejects.toBeInstanceOf(
+      AuthFailure,
+    );
     const secondUrl = await start.execute('mobile', challenge);
-    const secondRedirect = await complete.execute({ code: 'code', state: new URL(secondUrl).searchParams.get('state')! });
+    const secondRedirect = await complete.execute({
+      code: 'code',
+      state: new URL(secondUrl).searchParams.get('state')!,
+    });
     const secondCode = new URL(secondRedirect).searchParams.get('loginCode')!;
-    expect((await exchange.execute(secondCode, { clientType: 'mobile' }, verifier)).userId).toBe(account.userId);
+    expect((await exchange.execute(secondCode, { clientType: 'mobile' }, verifier)).userId).toBe(
+      account.userId,
+    );
   });
 
   it('rejects an inactive account before rotating refresh', async () => {
@@ -253,7 +284,10 @@ describe('Authentication use cases', () => {
 
   it('revokes the refresh session even when access is absent or stale', async () => {
     const sessions = createSessions();
-    await new LogoutCurrentSession(createTokens(), sessions).execute({ userId: 'other-user', refreshToken: 'refresh' });
+    await new LogoutCurrentSession(createTokens(), sessions).execute({
+      userId: 'other-user',
+      refreshToken: 'refresh',
+    });
     expect(sessions.revokeFamily).toHaveBeenCalledWith(refreshClaims, 'refresh');
     expect(sessions.revokeBySid).not.toHaveBeenCalled();
   });

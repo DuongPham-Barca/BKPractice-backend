@@ -4,14 +4,11 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-import { Role } from '../../rbac/entities/role.entity';
-
-import { Profile } from '@/modules/profiles/infrastructure/persistence/profile.entity';
+import { Role } from '@/modules/rbac/infrastructure/persistence';
 
 export enum AccountStatus {
   Active = 'ACTIVE',
@@ -23,6 +20,12 @@ export enum AccountStatus {
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'student_id', type: 'varchar', length: 64, nullable: true })
+  studentId!: string | null;
+
+  @Column({ name: 'official_name', type: 'varchar', length: 100, nullable: true })
+  officialName!: string | null;
 
   @Column({ type: 'varchar', length: 320, unique: true })
   email!: string;
@@ -40,9 +43,6 @@ export class User {
     inverseJoinColumn: { name: 'role_id' },
   })
   roles!: Role[];
-
-  @OneToOne(() => Profile, (profile) => profile.user)
-  profile?: Profile;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

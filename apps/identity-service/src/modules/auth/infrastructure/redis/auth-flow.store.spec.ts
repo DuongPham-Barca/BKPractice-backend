@@ -28,23 +28,23 @@ describe('RedisAuthFlowStore', () => {
 
   it('stores OAuth state for 300 seconds and consumes it once', async () => {
     const store = new RedisAuthFlowStore(config);
-    await store.putTransaction('state', { nonce: 'nonce', verifier: 'verifier' });
+    await store.putTransaction('state', { nonce: 'nonce', verifier: 'verifier', clientType: 'web' });
     expect(set).toHaveBeenCalledWith('auth:oauth:state', expect.any(String), 'EX', 300);
-    expect(await store.takeTransaction('state')).toEqual({ nonce: 'nonce', verifier: 'verifier' });
+    expect(await store.takeTransaction('state')).toEqual({ nonce: 'nonce', verifier: 'verifier', clientType: 'web' });
     expect(await store.takeTransaction('state')).toBeNull();
   });
 
-  it('stores only a user ID under a hashed login-code key for 60 seconds', async () => {
+  it('stores a client-bound grant under a hashed login-code key for 60 seconds', async () => {
     const store = new RedisAuthFlowStore(config);
-    const code = await store.createLoginCode('user-1');
+    const code = await store.createLoginCode({ userId: 'user-1', clientType: 'web' });
     expect(set).toHaveBeenCalledWith(
       expect.stringMatching(/^auth:login-code:[a-f0-9]{64}$/),
-      'user-1',
+      JSON.stringify({ userId: 'user-1', clientType: 'web' }),
       'EX',
       60,
     );
     expect([...values.keys()][0]).not.toContain(code);
-    expect(await store.takeLoginCode(code)).toBe('user-1');
+    expect(await store.takeLoginCode(code)).toEqual({ userId: 'user-1', clientType: 'web' });
     expect(await store.takeLoginCode(code)).toBeNull();
   });
 });

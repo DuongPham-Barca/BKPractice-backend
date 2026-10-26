@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 import type { ExternalIdentityRepository } from '@/modules/auth/application/ports';
 import type { AuthAccount, MicrosoftIdentity } from '@/modules/auth/domain';
 import { ExternalIdentity } from '@/modules/auth/infrastructure/persistence/external-identity.entity';
-import { AccountStatus, User } from '@/modules/users/entities/user.entity';
+import { AccountStatus, User } from '@/modules/users/infrastructure/persistence';
 
 function mapUser(user: User): AuthAccount {
   return {

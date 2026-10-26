@@ -14,15 +14,23 @@ import type {
 } from '@/modules/auth/application/ports';
 import { AuthFailure, requireActiveAccount } from '@/modules/auth/domain';
 
-export class LoginWithStudentId {
+export class LoginWithPassword {
   constructor(
     private readonly accounts: AuthAccountRepository,
     private readonly hasher: PasswordHasher,
     private readonly issuer: AuthTokenIssuer,
   ) {}
 
-  async execute(studentId: string, password: string, metadata: SessionMetadata = { clientType: 'web' }): Promise<{ userId: string } & TokenPair> {
-    const account = await this.accounts.findByStudentId(studentId.trim());
+  async execute(
+    identifier: string,
+    password: string,
+    metadata: SessionMetadata = { clientType: 'web' },
+    kind: 'studentId' | 'email' = 'studentId',
+  ): Promise<{ userId: string } & TokenPair> {
+    const account =
+      kind === 'email'
+        ? await this.accounts.findLecturerByEmail(identifier.trim().toLowerCase())
+        : await this.accounts.findByStudentId(identifier.trim());
     if (!account) {
       await this.hasher.verifyDummy(password);
       throw new AuthFailure('invalid_credentials');
@@ -94,14 +102,22 @@ export class ExchangeMicrosoftLoginCode {
     private readonly issuer: AuthTokenIssuer,
   ) {}
 
-  async execute(loginCode: string, metadata: SessionMetadata = { clientType: 'web' }, mobileVerifier?: string): Promise<{ userId: string } & TokenPair> {
+  async execute(
+    loginCode: string,
+    metadata: SessionMetadata = { clientType: 'web' },
+    mobileVerifier?: string,
+  ): Promise<{ userId: string } & TokenPair> {
     const grant = await this.flows.takeLoginCode(loginCode);
     if (!grant) throw new AuthFailure('invalid_token');
     if (grant.clientType === 'mobile') {
       const challenge = /^[A-Za-z0-9._~-]{43,128}$/.test(mobileVerifier ?? '')
-        ? createHash('sha256').update(mobileVerifier!).digest('base64url') : '';
-      if (!grant.mobileChallenge || challenge.length !== grant.mobileChallenge.length ||
-          !timingSafeEqual(Buffer.from(challenge), Buffer.from(grant.mobileChallenge)))
+        ? createHash('sha256').update(mobileVerifier!).digest('base64url')
+        : '';
+      if (
+        !grant.mobileChallenge ||
+        challenge.length !== grant.mobileChallenge.length ||
+        !timingSafeEqual(Buffer.from(challenge), Buffer.from(grant.mobileChallenge))
+      )
         throw new AuthFailure('invalid_token');
     }
     const account = await this.accounts.findById(grant.userId);

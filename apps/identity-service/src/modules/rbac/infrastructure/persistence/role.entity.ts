@@ -1,12 +1,9 @@
 import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-import { Permission } from './permission.entity';
+import { RoleName } from '@/modules/rbac/domain';
+import { Permission } from '@/modules/rbac/infrastructure/persistence/permission.entity';
 
-export enum RoleName {
-  Student = 'STUDENT',
-  Lecturer = 'LECTURER',
-  Admin = 'ADMIN',
-}
+export { RoleName } from '@/modules/rbac/domain';
 
 @Entity('roles')
 export class Role {

@@ -4,7 +4,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
-import type { AuthFlowStore, OAuthTransaction } from '@/modules/auth/application/ports';
+import type { AuthFlowStore, LoginCodeGrant, OAuthTransaction } from '@/modules/auth/application/ports';
 import { AuthFailure } from '@/modules/auth/domain';
 
 @Injectable()
@@ -36,9 +36,16 @@ export class RedisAuthFlowStore implements AuthFlowStore, OnModuleDestroy {
         'nonce' in parsed &&
         'verifier' in parsed &&
         typeof parsed.nonce === 'string' &&
-        typeof parsed.verifier === 'string'
+        typeof parsed.verifier === 'string' &&
+        'clientType' in parsed &&
+        (parsed.clientType === 'web' || parsed.clientType === 'mobile')
       ) {
-        return { nonce: parsed.nonce, verifier: parsed.verifier };
+        return {
+          nonce: parsed.nonce,
+          verifier: parsed.verifier,
+          clientType: parsed.clientType,
+          mobileChallenge: 'mobileChallenge' in parsed && typeof parsed.mobileChallenge === 'string' ? parsed.mobileChallenge : undefined,
+        };
       }
     } catch {
       return null;
@@ -46,14 +53,28 @@ export class RedisAuthFlowStore implements AuthFlowStore, OnModuleDestroy {
     return null;
   }
 
-  async createLoginCode(userId: string): Promise<string> {
+  async createLoginCode(grant: LoginCodeGrant): Promise<string> {
     const code = randomBytes(32).toString('base64url');
-    await this.run(() => this.redis.set(this.loginCodeKey(code), userId, 'EX', 60));
+    await this.run(() => this.redis.set(this.loginCodeKey(code), JSON.stringify(grant), 'EX', 60));
     return code;
   }
 
-  takeLoginCode(code: string): Promise<string | null> {
-    return this.run(() => this.redis.getdel(this.loginCodeKey(code)));
+  async takeLoginCode(code: string): Promise<LoginCodeGrant | null> {
+    const value = await this.run(() => this.redis.getdel(this.loginCodeKey(code)));
+    if (!value) return null;
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (typeof parsed === 'object' && parsed !== null && 'userId' in parsed &&
+          'clientType' in parsed && typeof parsed.userId === 'string' &&
+          (parsed.clientType === 'web' || parsed.clientType === 'mobile')) {
+        return { userId: parsed.userId, clientType: parsed.clientType,
+          mobileChallenge: 'mobileChallenge' in parsed && typeof parsed.mobileChallenge === 'string'
+            ? parsed.mobileChallenge : undefined };
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 
   async onModuleDestroy(): Promise<void> {

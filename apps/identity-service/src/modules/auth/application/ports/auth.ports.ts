@@ -4,6 +4,7 @@ import type { AuthAccount, LocalAuthAccount, MicrosoftIdentity } from '@/modules
 
 export interface AuthAccountRepository {
   findByStudentId(studentId: string): Promise<LocalAuthAccount | null>;
+  findLecturerByEmail(email: string): Promise<LocalAuthAccount | null>;
   findById(userId: string): Promise<AuthAccount | null>;
 }
 
