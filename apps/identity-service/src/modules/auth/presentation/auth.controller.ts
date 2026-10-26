@@ -88,7 +88,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Sign in with student MSSV or lecturer email and password',
+    summary: 'Sign in with student MSSV or school email and password',
     description:
       'Web returns userId and secure HttpOnly cookies; mobile returns userId and both tokens in JSON.',
   })
@@ -100,15 +100,12 @@ export class AuthController {
   ): Promise<AuthenticatedResponseDto> {
     const clientType = this.clientType(request);
     if (clientType === 'web') this.requireOrigin(request);
-    if (Boolean(dto.studentId) === Boolean(dto.email))
-      throw new BadRequestException('Provide exactly one of studentId or email');
     return this.deliver(
       response,
       await this.loginUseCase.execute(
-        (dto.studentId ?? dto.email)!,
+        dto.identifier,
         dto.password,
         this.metadata(request, clientType),
-        dto.email !== undefined ? 'email' : 'studentId',
       ),
       clientType,
     );

@@ -121,7 +121,7 @@ describe('Identity authentication HTTP contract', () => {
     const response = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: webHeaders,
-      body: JSON.stringify({ studentId: '2210001', password: '123456' }),
+      body: JSON.stringify({ identifier: '2210001', password: '123456' }),
     });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ userId: 'user-1' });
@@ -159,7 +159,7 @@ describe('Identity authentication HTTP contract', () => {
     const response = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' },
-      body: JSON.stringify({ studentId: '2210001', password: '123456' }),
+      body: JSON.stringify({ identifier: '2210001', password: '123456' }),
     });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(pair);
@@ -236,12 +236,37 @@ describe('Identity authentication HTTP contract', () => {
   });
 
   it('keeps validation and Microsoft redirects safe', async () => {
+    const paddedIdentifier = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: webHeaders,
+      body: JSON.stringify({ identifier: `  ${'a'.repeat(320)}  `, password: '123456' }),
+    });
+    expect(paddedIdentifier.status).toBe(200);
+    expect(login.execute).toHaveBeenLastCalledWith('a'.repeat(320), '123456', expect.any(Object));
+    const tooLongIdentifier = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: webHeaders,
+      body: JSON.stringify({ identifier: 'a'.repeat(321), password: '123456' }),
+    });
+    expect(tooLongIdentifier.status).toBe(400);
     const invalid = await fetch(`${baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: webHeaders,
-      body: JSON.stringify({ studentId: '2210001', password: '123456', roles: ['ADMIN'] }),
+      body: JSON.stringify({ identifier: '2210001', password: '123456', roles: ['ADMIN'] }),
     });
     expect(invalid.status).toBe(400);
+    for (const legacy of [
+      { studentId: '2210001', password: '123456' },
+      { email: 'student@school.edu', password: '123456' },
+      { identifier: '2210001', studentId: '2210001', password: '123456' },
+    ]) {
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: webHeaders,
+        body: JSON.stringify(legacy),
+      });
+      expect(response.status).toBe(400);
+    }
     expect(
       (
         await fetch(`${baseUrl}/api/auth/register`, {

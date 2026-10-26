@@ -32,13 +32,14 @@ export class TypeormExternalIdentityRepository implements ExternalIdentityReposi
         });
         if (linked) {
           const user = await manager.findOne(User, { where: { id: linked.userId } });
-          return user ? mapUser(user) : null;
+          return user && !user.isSystemAccount ? mapUser(user) : null;
         }
 
         const matches = await manager
           .createQueryBuilder(User, 'user')
           .leftJoinAndSelect('user.roles', 'role')
           .where('LOWER(BTRIM(user.email)) = :email', { email: identity.username })
+          .andWhere('user.isSystemAccount = false')
           .take(2)
           .getMany();
         const user = matches[0];

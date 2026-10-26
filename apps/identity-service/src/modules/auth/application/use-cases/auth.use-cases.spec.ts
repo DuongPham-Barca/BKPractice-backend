@@ -44,15 +44,7 @@ const refreshClaims: BkRefreshClaims = {
 
 function createAccounts(): AuthAccountRepository {
   return {
-    findByStudentId: jest.fn().mockResolvedValue({ ...account, passwordHash: 'hash' }),
-    findLecturerByEmail: jest
-      .fn()
-      .mockResolvedValue({
-        ...account,
-        studentId: null,
-        roles: ['LECTURER'],
-        passwordHash: 'hash',
-      }),
+    findByIdentifier: jest.fn().mockResolvedValue({ ...account, passwordHash: 'hash' }),
     findById: jest.fn().mockResolvedValue(account),
   };
 }
@@ -84,16 +76,14 @@ function createTokens(): BkTokenService {
       .mockResolvedValue({ token: 'refresh', expiresAt: new Date('2030-01-01') }),
     verifyRefresh: jest.fn().mockResolvedValue(refreshClaims),
     verifyAccess: jest.fn().mockResolvedValue('user-1'),
-    verifyAccessClaims: jest
-      .fn()
-      .mockResolvedValue({
-        sub: 'user-1',
-        sid: 'family-1',
-        jti: 'access-1',
-        roles: ['STUDENT'],
-        permissions: [],
-        type: 'access',
-      }),
+    verifyAccessClaims: jest.fn().mockResolvedValue({
+      sub: 'user-1',
+      sid: 'family-1',
+      jti: 'access-1',
+      roles: ['STUDENT'],
+      permissions: [],
+      type: 'access',
+    }),
   };
 }
 
@@ -104,6 +94,52 @@ function createIssuer(): AuthTokenIssuer {
 }
 
 describe('Authentication use cases', () => {
+  it('signs in the bootstrap Admin through its technical identifier', async () => {
+    const accounts = createAccounts();
+    const admin = { ...account, studentId: 'admin', roles: ['ADMIN'], passwordHash: 'hash' };
+    jest.mocked(accounts.findByIdentifier).mockResolvedValueOnce(admin);
+    const issuer = createIssuer();
+    const issue = jest.spyOn(issuer, 'issueNewFamily');
+
+    await expect(
+      new LoginWithPassword(accounts, createHasher(), issuer).execute('admin', 'admin'),
+    ).resolves.toEqual({ userId: 'user-1', ...pair });
+    expect(issue).toHaveBeenCalledWith(admin, { clientType: 'web' });
+  });
+
+  it('rejects a wrong Admin password and a locked Admin before issuing tokens', async () => {
+    const accounts = createAccounts();
+    const hasher = createHasher();
+    const issuer = createIssuer();
+    const issue = jest.spyOn(issuer, 'issueNewFamily');
+    const admin = { ...account, studentId: 'admin', roles: ['ADMIN'], passwordHash: 'hash' };
+    jest.mocked(accounts.findByIdentifier).mockResolvedValue(admin);
+    jest.mocked(hasher.verify).mockResolvedValueOnce(false);
+    const login = new LoginWithPassword(accounts, hasher, issuer);
+
+    await expect(login.execute('admin', 'wrong')).rejects.toEqual(
+      new AuthFailure('invalid_credentials'),
+    );
+    jest.mocked(accounts.findByIdentifier).mockResolvedValueOnce({ ...admin, status: 'LOCKED' });
+    await expect(login.execute('admin', 'admin')).rejects.toBeInstanceOf(AuthFailure);
+    expect(issue).not.toHaveBeenCalled();
+  });
+
+  it('returns the bootstrap Admin in its own /auth/me response', async () => {
+    const accounts = createAccounts();
+    jest.mocked(accounts.findById).mockResolvedValueOnce({
+      ...account,
+      studentId: 'admin',
+      roles: ['ADMIN'],
+    });
+    await expect(new GetCurrentAuthenticatedUser(accounts).execute('user-1')).resolves.toEqual({
+      userId: 'user-1',
+      studentId: 'admin',
+      roles: ['ADMIN'],
+      status: 'ACTIVE',
+    });
+  });
+
   it('trims the student ID, keeps the password intact, and creates a new family', async () => {
     const accounts = createAccounts();
     const hasher = createHasher();
@@ -112,9 +148,18 @@ describe('Authentication use cases', () => {
       ' 2210001 ',
       ' pass word ',
     );
-    expect(accounts.findByStudentId).toHaveBeenCalledWith('2210001');
+    expect(accounts.findByIdentifier).toHaveBeenCalledWith('2210001');
     expect(hasher.verify).toHaveBeenCalledWith('hash', ' pass word ');
     expect(result).toEqual({ userId: 'user-1', ...pair });
+  });
+
+  it('uses the same login flow for a school email', async () => {
+    const accounts = createAccounts();
+    await new LoginWithPassword(accounts, createHasher(), createIssuer()).execute(
+      ' STUDENT@school.edu ',
+      '123456',
+    );
+    expect(accounts.findByIdentifier).toHaveBeenCalledWith('STUDENT@school.edu');
   });
 
   it('uses the same public failure for missing student IDs and wrong passwords', async () => {
@@ -122,7 +167,7 @@ describe('Authentication use cases', () => {
     const hasher = createHasher();
     const issuer = createIssuer();
     const issue = jest.spyOn(issuer, 'issueNewFamily');
-    jest.mocked(accounts.findByStudentId).mockResolvedValueOnce(null);
+    jest.mocked(accounts.findByIdentifier).mockResolvedValueOnce(null);
     const login = new LoginWithPassword(accounts, hasher, issuer);
     await expect(login.execute('missing', 'wrong')).rejects.toEqual(
       new AuthFailure('invalid_credentials'),
@@ -140,7 +185,7 @@ describe('Authentication use cases', () => {
     async (status) => {
       const accounts = createAccounts();
       jest
-        .mocked(accounts.findByStudentId)
+        .mocked(accounts.findByIdentifier)
         .mockResolvedValue({ ...account, status, passwordHash: 'hash' });
       const issuer = createIssuer();
       const issue = jest.spyOn(issuer, 'issueNewFamily');

@@ -1,38 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-  ValidateIf,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 export class PasswordLoginDto {
-  @ApiPropertyOptional({
-    maxLength: 64,
-    description: 'Student MSSV; provide exactly one of studentId or email',
-  })
-  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
+  @ApiProperty({ maxLength: 320, description: 'Student MSSV or school email' })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @IsNotEmpty()
   @Matches(/\S/)
-  @MaxLength(64)
-  studentId?: string;
-
-  @ApiPropertyOptional({
-    maxLength: 320,
-    description: 'Lecturer email; mutually exclusive with studentId',
-  })
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
-  @ValidateIf((_object: unknown, value: unknown) => value !== undefined)
-  @IsEmail()
   @MaxLength(320)
-  email?: string;
+  identifier!: string;
 
   @ApiProperty({ maxLength: 128 })
   @IsString()

@@ -25,12 +25,8 @@ export class LoginWithPassword {
     identifier: string,
     password: string,
     metadata: SessionMetadata = { clientType: 'web' },
-    kind: 'studentId' | 'email' = 'studentId',
   ): Promise<{ userId: string } & TokenPair> {
-    const account =
-      kind === 'email'
-        ? await this.accounts.findLecturerByEmail(identifier.trim().toLowerCase())
-        : await this.accounts.findByStudentId(identifier.trim());
+    const account = await this.accounts.findByIdentifier(identifier.trim());
     if (!account) {
       await this.hasher.verifyDummy(password);
       throw new AuthFailure('invalid_credentials');

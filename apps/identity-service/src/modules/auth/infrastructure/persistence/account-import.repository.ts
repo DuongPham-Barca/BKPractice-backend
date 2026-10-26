@@ -88,11 +88,13 @@ export class TypeormAccountImportRepository implements AccountImportRepository {
     rows: AccountImportRow[],
   ): Promise<ImportIssue[]> {
     const ids = rows.flatMap((row) => (row.studentId ? [row.studentId] : []));
+    const conditions = ['LOWER(BTRIM(user.email)) IN (:...emails)'];
+    if (ids.length) conditions.push('user.studentId IN (:...ids)');
     const query = manager
       .createQueryBuilder(User, 'user')
       .select(['user.email', 'user.studentId'])
-      .where('LOWER(BTRIM(user.email)) IN (:...emails)', { emails: rows.map((row) => row.email) });
-    if (ids.length) query.orWhere('user.studentId IN (:...ids)', { ids });
+      .where(`(${conditions.join(' OR ')})`, { emails: rows.map((row) => row.email), ids })
+      .andWhere('user.isSystemAccount = false');
     const existing = await query.getMany();
     const emails = new Set(existing.map((user) => user.email.trim().toLowerCase()));
     const studentIds = new Set(existing.map((user) => user.studentId));

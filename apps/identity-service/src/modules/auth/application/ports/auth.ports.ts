@@ -3,8 +3,7 @@ import type { BkAccessClaims, BkRefreshClaims } from '@app/contracts';
 import type { AuthAccount, LocalAuthAccount, MicrosoftIdentity } from '@/modules/auth/domain';
 
 export interface AuthAccountRepository {
-  findByStudentId(studentId: string): Promise<LocalAuthAccount | null>;
-  findLecturerByEmail(email: string): Promise<LocalAuthAccount | null>;
+  findByIdentifier(identifier: string): Promise<LocalAuthAccount | null>;
   findById(userId: string): Promise<AuthAccount | null>;
 }
 
