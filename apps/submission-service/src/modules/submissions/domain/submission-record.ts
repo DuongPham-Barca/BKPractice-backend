@@ -65,27 +65,36 @@ export function createRunRecord(input: CreateRunRecordInput): SubmissionRecord {
   };
 }
 
-export function markRunQueued(record: SubmissionRecord, now: Date): SubmissionRecord {
-  assertPendingRun(record, SubmissionStatus.Queued);
+export interface CreateSubmitRecordInput {
+  readonly userId: string;
+  readonly problemId: string;
+  readonly language: string;
+  readonly sourceCode: string;
+  readonly now: Date;
+}
 
+export function createSubmitRecord(input: CreateSubmitRecordInput): SubmissionRecord {
   return {
-    ...record,
-    status: SubmissionStatus.Queued,
-    updatedAt: new Date(now),
+    id: null,
+    publicId: null,
+    userId: input.userId,
+    problemId: input.problemId,
+    kind: SubmissionKind.Submit,
+    language: input.language,
+    sourceCode: input.sourceCode,
+    stdin: '',
+    status: SubmissionStatus.Pending,
+    createdAt: new Date(input.now),
+    updatedAt: new Date(input.now),
   };
 }
 
-export function markRunFailedToDispatch(record: SubmissionRecord, now: Date): SubmissionRecord {
-  assertPendingRun(record, SubmissionStatus.InternalError);
+export type TerminalSubmissionStatus = Exclude<
+  SubmissionStatus,
+  SubmissionStatus.Pending | SubmissionStatus.Queued | SubmissionStatus.Running
+>;
 
-  return {
-    ...record,
-    status: SubmissionStatus.InternalError,
-    updatedAt: new Date(now),
-  };
-}
-
-export function isTerminal(status: SubmissionStatus): boolean {
+export function isTerminal(status: SubmissionStatus): status is TerminalSubmissionStatus {
   return ![SubmissionStatus.Pending, SubmissionStatus.Queued, SubmissionStatus.Running].includes(
     status,
   );
@@ -95,8 +104,59 @@ export function canProduceWrongAnswer(kind: SubmissionKind): boolean {
   return kind === SubmissionKind.Submit;
 }
 
-function assertPendingRun(record: SubmissionRecord, target: SubmissionStatus): void {
-  if (record.kind !== SubmissionKind.Run || record.status !== SubmissionStatus.Pending) {
-    throw new InvalidSubmissionTransitionError(record, target);
+export type SubmitVerdictStatus = Exclude<TerminalSubmissionStatus, SubmissionStatus.Executed>;
+
+// A Judge score may be missing; null keeps "not reported" distinct from a real 0.
+export type DecidingScore = number | null;
+
+export interface SubmitVerdict {
+  readonly status: SubmitVerdictStatus;
+  readonly score: DecidingScore;
+  readonly passedTests: number | null;
+  readonly totalTests: number | null;
+  readonly runtimeMs: number | null;
+  readonly memoryKb: number | null;
+}
+
+// LRN-006 fixes the progress score of every officially accepted submission.
+export const ACCEPTED_PROGRESS_SCORE = 100;
+
+const submitVerdictStatuses: readonly SubmitVerdictStatus[] = [
+  SubmissionStatus.Accepted,
+  SubmissionStatus.WrongAnswer,
+  SubmissionStatus.CompileError,
+  SubmissionStatus.RuntimeError,
+  SubmissionStatus.TimeLimitExceeded,
+  SubmissionStatus.MemoryLimitExceeded,
+  SubmissionStatus.InternalError,
+];
+
+export function toJudgeVerdictStatus(judgeStatus: string): SubmitVerdictStatus | null {
+  return submitVerdictStatuses.find((status: string) => status === judgeStatus) ?? null;
+}
+
+export function applyVerdict(
+  record: SubmissionRecord,
+  verdict: SubmitVerdict,
+  now: Date,
+): SubmissionRecord {
+  if (record.kind !== SubmissionKind.Submit || isTerminal(record.status)) {
+    throw new InvalidSubmissionTransitionError(record, verdict.status);
   }
+
+  return {
+    ...record,
+    status: verdict.status,
+    updatedAt: new Date(now),
+  };
+}
+
+export function isOfficiallyAccepted<T extends SubmissionRecord>(
+  record: T,
+): record is T & { readonly problemId: string } {
+  return (
+    record.kind === SubmissionKind.Submit &&
+    record.status === SubmissionStatus.Accepted &&
+    record.problemId !== null
+  );
 }
