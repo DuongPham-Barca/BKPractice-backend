@@ -29,14 +29,14 @@ describe('Account Excel import boundaries', () => {
       {
         row: 2,
         studentId: '00123',
-        officialName: 'Nguyễn An',
+        displayName: 'Nguyễn An',
         email: 'student@sv1.dut.udn.vn',
         role: 'STUDENT',
       },
       {
         row: 4,
         studentId: null,
-        officialName: 'Lecturer',
+        displayName: 'Lecturer',
         email: 'lecturer@dut.udn.vn',
         role: 'LECTURER',
       },

@@ -2,7 +2,7 @@ import type { ProfilePatch, ProfileRecord } from '@/modules/profiles/domain';
 
 export interface ProfileAccount {
   userId: string;
-  officialName: string | null;
+  displayName: string | null;
   status: 'ACTIVE' | 'LOCKED' | 'PENDING';
 }
 
@@ -12,10 +12,10 @@ export interface IdentityProfileContext {
 
 export interface ProfileRepository {
   find(userId: string): Promise<ProfileRecord | null>;
-  loadOrCreate(userId: string, officialName: string | null): Promise<ProfileRecord>;
+  loadOrCreate(userId: string, displayName: string | null): Promise<ProfileRecord>;
   update(
     userId: string,
-    officialName: string | null,
+    displayName: string | null,
     patch: ProfilePatch,
     createIfMissing: boolean,
   ): Promise<{ profile: ProfileRecord; replacedAvatar: string | null }>;

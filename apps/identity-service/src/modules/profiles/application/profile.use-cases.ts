@@ -28,12 +28,12 @@ export class ProfileUseCases {
 
   async getMy(userId: string): Promise<PrivateProfile> {
     const account = await this.requireAccount(userId);
-    return this.toPrivate(await this.profiles.loadOrCreate(userId, account.officialName));
+    return this.toPrivate(await this.profiles.loadOrCreate(userId, account.displayName));
   }
 
   async updateMy(userId: string, input: unknown): Promise<PrivateProfile> {
     const account = await this.requireAccount(userId);
-    return this.update(userId, account.officialName, input, true);
+    return this.update(userId, account.displayName, input, true);
   }
 
   async getPublic(userId: string): Promise<PublicProfile> {
@@ -74,7 +74,7 @@ export class ProfileUseCases {
 
   private async update(
     userId: string,
-    officialName: string | null,
+    displayName: string | null,
     input: unknown,
     createIfMissing: boolean,
   ): Promise<PrivateProfile> {
@@ -84,7 +84,7 @@ export class ProfileUseCases {
     }
     const { profile, replacedAvatar } = await this.profiles.update(
       userId,
-      officialName,
+      displayName,
       patch,
       createIfMissing,
     );

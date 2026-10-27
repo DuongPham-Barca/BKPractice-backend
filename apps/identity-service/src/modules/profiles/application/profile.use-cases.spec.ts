@@ -5,7 +5,7 @@ import {
   type ProfileRepository,
 } from '@/modules/profiles/application';
 import {
-  normalizeOfficialName,
+  normalizeInitialDisplayName,
   ProfileFailure,
   type ProfilePatch,
   type ProfileRecord,
@@ -14,7 +14,7 @@ import { RoleName, type AuthorizationPrincipal } from '@/modules/rbac/domain';
 
 describe('ProfileUseCases', () => {
   let saved: ProfileRecord | null;
-  let officialName: string | null;
+  let initialDisplayName: string | null;
   let status: 'ACTIVE' | 'LOCKED' | 'PENDING';
   let cases: ProfileUseCases;
   let avatars: AvatarStorage;
@@ -31,10 +31,10 @@ describe('ProfileUseCases', () => {
 
   beforeEach(() => {
     saved = null;
-    officialName = '  Nguyễn An  ';
+    initialDisplayName = '  Nguyễn An  ';
     status = 'ACTIVE';
     const accounts: IdentityProfileContext = {
-      findAccount: jest.fn(async (userId) => ({ userId, officialName, status })),
+      findAccount: jest.fn(async (userId) => ({ userId, displayName: initialDisplayName, status })),
     };
     const repository: ProfileRepository = {
       find: jest.fn(async () => saved),
@@ -42,7 +42,7 @@ describe('ProfileUseCases', () => {
         saved ??= {
           profileId: 'profile-id',
           userId,
-          displayName: normalizeOfficialName(name),
+          displayName: normalizeInitialDisplayName(name),
           avatarReference: null,
           bio: null,
         };
@@ -53,7 +53,7 @@ describe('ProfileUseCases', () => {
         saved ??= {
           profileId: 'profile-id',
           userId,
-          displayName: normalizeOfficialName(name),
+          displayName: normalizeInitialDisplayName(name),
           avatarReference: null,
           bio: null,
         };
@@ -79,7 +79,7 @@ describe('ProfileUseCases', () => {
     cases = new ProfileUseCases(accounts, repository, avatars);
   });
 
-  it('creates a profile once from the official name and keeps later custom text', async () => {
+  it('creates a missing profile once from the imported name and keeps later custom text', async () => {
     expect((await cases.getMy('student-id')).displayName).toBe('Nguyễn An');
     await cases.updateMy('student-id', { displayName: '  Tên riêng  ', bio: '  Xin chào  ' });
     expect(await cases.getMy('student-id')).toEqual({
@@ -96,15 +96,26 @@ describe('ProfileUseCases', () => {
     });
   });
 
-  it('does not create an empty profile without an approved official name', async () => {
-    officialName = null;
+  it('changes only supplied fields in separate profile patches', async () => {
+    await cases.updateMy('student-id', { bio: 'Xin chào' });
+    await cases.updateMy('student-id', { avatar: 'avatar-key' });
+    expect(await cases.getMy('student-id')).toEqual({
+      userId: 'student-id',
+      displayName: 'Nguyễn An',
+      avatar: 'https://signed.example/avatar-key',
+      bio: 'Xin chào',
+    });
+  });
+
+  it('does not create an empty profile without an imported name', async () => {
+    initialDisplayName = null;
     await expect(cases.getMy('student-id')).rejects.toThrow('missing_name');
     expect(saved).toBeNull();
   });
 
-  it('keeps an existing profile usable when the official name is unavailable', async () => {
+  it('keeps an existing profile usable when the imported name is unavailable', async () => {
     await cases.getMy('student-id');
-    officialName = null;
+    initialDisplayName = null;
     expect((await cases.getMy('student-id')).displayName).toBe('Nguyễn An');
   });
 

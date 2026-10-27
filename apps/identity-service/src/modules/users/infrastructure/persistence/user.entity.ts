@@ -24,8 +24,8 @@ export class User {
   @Column({ name: 'student_id', type: 'varchar', length: 64, nullable: true })
   studentId!: string | null;
 
-  @Column({ name: 'official_name', type: 'varchar', length: 100, nullable: true })
-  officialName!: string | null;
+  @Column({ name: 'display_name', type: 'varchar', length: 100, nullable: true })
+  displayName!: string | null;
 
   @Column({ type: 'varchar', length: 320, unique: true })
   email!: string;

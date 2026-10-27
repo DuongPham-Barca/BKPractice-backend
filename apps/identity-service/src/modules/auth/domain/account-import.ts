@@ -12,7 +12,7 @@ export interface ImportIssue {
 export interface AccountImportRow {
   row: number;
   studentId: string | null;
-  officialName: string;
+  displayName: string;
   email: string;
   role: RoleName.Student | RoleName.Lecturer;
 }
@@ -54,7 +54,7 @@ export function validateAccountImport(input: RawAccountImportRow[]): AccountImpo
         : typeof rawId === 'number' && Number.isSafeInteger(rawId) && rawId >= 0
           ? String(rawId)
           : '';
-    const officialName = typeof rawName === 'string' ? rawName.trim() : '';
+    const displayName = typeof rawName === 'string' ? rawName.trim() : '';
     const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
     const emailDomain =
       role === RoleName.Student
@@ -66,7 +66,7 @@ export function validateAccountImport(input: RawAccountImportRow[]): AccountImpo
       issues.push({ row, field, code });
     };
     if (values.length > 4) invalid('row', 'unexpected_columns');
-    if (!officialName || officialName.length > 100 || /\p{Cc}/u.test(officialName))
+    if (!displayName || displayName.length > 100 || /\p{Cc}/u.test(displayName))
       invalid('name', 'invalid_name');
     if (
       email.length > 320 ||
@@ -95,7 +95,7 @@ export function validateAccountImport(input: RawAccountImportRow[]): AccountImpo
       result.push({
         row,
         studentId: role === RoleName.Student ? studentId : null,
-        officialName,
+        displayName,
         email,
         role,
       });

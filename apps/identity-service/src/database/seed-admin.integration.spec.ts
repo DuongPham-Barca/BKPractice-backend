@@ -98,7 +98,7 @@ databaseTests('bootstrap administrator — isolated PostgreSQL', () => {
     const importRow: AccountImportRow = {
       row: 2,
       studentId: config.loginId,
-      officialName: 'Another user',
+      displayName: 'Another user',
       email: config.email,
       role: RoleName.Student,
     };

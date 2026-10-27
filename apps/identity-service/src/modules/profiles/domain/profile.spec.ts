@@ -1,5 +1,5 @@
 import {
-  normalizeOfficialName,
+  normalizeInitialDisplayName,
   normalizeProfilePatch,
   ProfileFailure,
 } from '@/modules/profiles/domain';
@@ -13,8 +13,11 @@ describe('Profile domain', () => {
       bio: 'Xin chào 👋',
     });
     expect(normalizeProfilePatch({ bio: null })).toEqual({ bio: null });
+    expect(
+      normalizeProfilePatch({ displayName: 'Dũng Quốc', avatar: undefined, bio: undefined }),
+    ).toEqual({ displayName: 'Dũng Quốc' });
     expect(normalizeProfilePatch({})).toEqual({});
-    expect(normalizeOfficialName('  Trần Bình  ')).toBe('Trần Bình');
+    expect(normalizeInitialDisplayName('  Trần Bình  ')).toBe('Trần Bình');
   });
 
   it('enforces text limits after trimming', () => {
@@ -34,6 +37,6 @@ describe('Profile domain', () => {
     ]) {
       expect(() => normalizeProfilePatch(patch)).toThrow(ProfileFailure);
     }
-    expect(() => normalizeOfficialName(null)).toThrow('missing_name');
+    expect(() => normalizeInitialDisplayName(null)).toThrow('missing_name');
   });
 });

@@ -12,7 +12,7 @@ export class ProfileFailureFilter implements ExceptionFilter {
     const request = host.switchToHttp().getRequest<Request>();
     const responses = {
       invalid: [400, 'Invalid profile request'],
-      missing_name: [409, 'Official name is unavailable'],
+      missing_name: [409, 'Initial display name is unavailable'],
       not_found: [404, 'Profile unavailable'],
       forbidden: [403, 'Forbidden'],
       dependency: [503, 'Profile dependency unavailable'],

@@ -39,22 +39,22 @@ export function normalizeProfilePatch(value: unknown): ProfilePatch {
     throw new ProfileFailure('invalid');
   }
   const patch: ProfilePatch = {};
-  if (Object.hasOwn(input, 'displayName')) {
+  if (input.displayName !== undefined) {
     patch.displayName = trimText(input.displayName, 100) as string;
   }
-  if (Object.hasOwn(input, 'avatar')) {
+  if (input.avatar !== undefined) {
     if (input.avatar !== null && typeof input.avatar !== 'string') {
       throw new ProfileFailure('invalid');
     }
     patch.avatar = input.avatar;
   }
-  if (Object.hasOwn(input, 'bio')) {
+  if (input.bio !== undefined) {
     patch.bio = trimText(input.bio, 1000, true);
   }
   return patch;
 }
 
-export function normalizeOfficialName(value: string | null): string {
+export function normalizeInitialDisplayName(value: string | null): string {
   if (value === null) throw new ProfileFailure('missing_name');
   try {
     return trimText(value, 100) as string;

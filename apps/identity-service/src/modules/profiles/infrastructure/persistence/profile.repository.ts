@@ -7,7 +7,7 @@ import type {
   ProfileRepository,
 } from '@/modules/profiles/application';
 import {
-  normalizeOfficialName,
+  normalizeInitialDisplayName,
   ProfileFailure,
   type ProfilePatch,
   type ProfileRecord,
@@ -33,12 +33,12 @@ export class TypeormProfileAccountContext implements IdentityProfileContext {
     const user = await this.database
       .getRepository(User)
       .createQueryBuilder('user')
-      .select(['user.id', 'user.status', 'user.officialName'])
+      .select(['user.id', 'user.status', 'user.displayName'])
       .where('user.id = :userId', { userId })
       .andWhere('user.isSystemAccount = false')
       .getOne();
     if (!user) return null;
-    return { userId: user.id, officialName: user.officialName, status: user.status };
+    return { userId: user.id, displayName: user.displayName, status: user.status };
   }
 }
 
@@ -51,23 +51,23 @@ export class TypeormProfileRepository implements ProfileRepository {
     return profile ? mapProfile(profile, userId) : null;
   }
 
-  async loadOrCreate(userId: string, officialName: string | null): Promise<ProfileRecord> {
+  async loadOrCreate(userId: string, displayName: string | null): Promise<ProfileRecord> {
     return this.database.transaction(async (manager) => {
       await this.lockUser(manager, userId);
-      return mapProfile(await this.findOrCreate(manager, userId, officialName), userId);
+      return mapProfile(await this.findOrCreate(manager, userId, displayName), userId);
     });
   }
 
   async update(
     userId: string,
-    officialName: string | null,
+    displayName: string | null,
     patch: ProfilePatch,
     createIfMissing: boolean,
   ): Promise<{ profile: ProfileRecord; replacedAvatar: string | null }> {
     return this.database.transaction(async (manager) => {
       await this.lockUser(manager, userId);
       const entity = createIfMissing
-        ? await this.findOrCreate(manager, userId, officialName)
+        ? await this.findOrCreate(manager, userId, displayName)
         : await this.findEntity(manager, userId);
       if (!entity) throw new ProfileFailure('not_found');
       const oldAvatar = entity.avatarReference;
@@ -93,13 +93,13 @@ export class TypeormProfileRepository implements ProfileRepository {
   private async findOrCreate(
     manager: EntityManager,
     userId: string,
-    officialName: string | null,
+    displayName: string | null,
   ): Promise<Profile> {
     const existing = await this.findEntity(manager, userId);
     if (existing) return existing;
     const profile = manager.getRepository(Profile).create({
       user: { id: userId } as User,
-      displayName: normalizeOfficialName(officialName),
+      displayName: normalizeInitialDisplayName(displayName),
       avatarReference: null,
       bio: null,
     });

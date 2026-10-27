@@ -12,6 +12,7 @@ import {
   type AccountImportRow,
   type ImportIssue,
 } from '@/modules/auth/domain';
+import { Profile } from '@/modules/profiles/infrastructure/persistence';
 import { Role } from '@/modules/rbac/infrastructure/persistence';
 import { AccountStatus, User } from '@/modules/users/infrastructure/persistence';
 
@@ -39,11 +40,20 @@ export class TypeormAccountImportRepository implements AccountImportRepository {
           id: randomUUID(),
           studentId: row.studentId,
           email: row.email,
-          officialName: row.officialName,
+          displayName: row.displayName,
           passwordHash: row.passwordHash,
           status: AccountStatus.Active,
         }));
         await manager.insert(User, users);
+        await manager.insert(
+          Profile,
+          users.map((user, index) => ({
+            user: { id: user.id },
+            displayName: rows[index]!.displayName,
+            avatarReference: null,
+            bio: null,
+          })),
+        );
         await manager.insert(
           'user_roles',
           users.map((user, index) => ({
