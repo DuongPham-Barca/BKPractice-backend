@@ -1,7 +1,7 @@
 import { SUPPORTED_LANGUAGES } from '@app/contracts';
 import type { SupportedLanguage } from '@app/contracts';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 
 export class RunCodeDto {
   @ApiProperty({ enum: SUPPORTED_LANGUAGES })
@@ -21,6 +21,6 @@ export class RunCodeDto {
 
   @ApiProperty({ required: false, format: 'uuid' })
   @IsOptional()
-  @IsString()
+  @IsUUID('4')
   problemId?: string;
 }
