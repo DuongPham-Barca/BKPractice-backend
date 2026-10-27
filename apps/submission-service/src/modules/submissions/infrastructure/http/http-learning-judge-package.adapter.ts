@@ -1,17 +1,16 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { isAxiosError } from 'axios';
-import { firstValueFrom } from 'rxjs';
-
 import {
   JudgePackageUnavailableError,
   ProblemNotSubmittableError,
-} from '../../domain/ports/learning-judge-package.port';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
 import type {
   JudgePackage,
   LearningJudgePackagePort,
-} from '../../domain/ports/learning-judge-package.port';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
+import { isAxiosError } from 'axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class HttpLearningJudgePackageAdapter implements LearningJudgePackagePort {

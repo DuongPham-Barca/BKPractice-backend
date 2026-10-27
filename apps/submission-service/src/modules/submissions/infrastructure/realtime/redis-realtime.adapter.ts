@@ -1,10 +1,9 @@
 import { REDIS_CHANNELS } from '@app/contracts';
 import type { SubmissionRealtimeEnvelope } from '@app/contracts';
-
 import type {
   RealtimePort,
   SubmissionRealtimeNotification,
-} from '../../domain/ports/realtime.port';
+} from '@submission/modules/submissions/domain/ports/realtime.port';
 
 export interface RedisRealtimeClient {
   readonly status: string;

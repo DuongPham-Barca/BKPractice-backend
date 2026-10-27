@@ -1,7 +1,9 @@
 import type { SubmissionRealtimeEnvelope } from '@app/contracts';
-
-import type { SubmissionRealtimeNotification } from '../../domain/ports/realtime.port';
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
+import type { SubmissionRealtimeNotification } from '@submission/modules/submissions/domain/ports/realtime.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import type { RedisRealtimeClient, WarningLogger } from './redis-realtime.adapter';
 import { RedisRealtimeAdapter } from './redis-realtime.adapter';

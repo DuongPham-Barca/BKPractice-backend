@@ -2,11 +2,10 @@ import { RabbitMqService } from '@app/common';
 import { RABBIT_EXCHANGES, RABBIT_ROUTING_KEYS } from '@app/contracts';
 import type { SubmissionAcceptedEvent } from '@app/contracts';
 import { Injectable, Logger } from '@nestjs/common';
-
 import type {
   AcceptedEventPort,
   AcceptedProgressEvent,
-} from '../../domain/ports/accepted-event.port';
+} from '@submission/modules/submissions/domain/ports/accepted-event.port';
 
 @Injectable()
 export class RabbitAcceptedEventAdapter implements AcceptedEventPort {

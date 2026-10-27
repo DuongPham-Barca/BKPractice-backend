@@ -1,5 +1,9 @@
 import type { CompilerError, SupportedLanguage } from '@app/contracts';
 import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
+import {
   Column,
   CreateDateColumn,
   Entity,
@@ -10,8 +14,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import type { Relation } from 'typeorm';
-
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
 
 @Entity('submissions')
 export class Submission {

@@ -4,9 +4,12 @@ import { RabbitMqService } from '@app/common';
 import { RABBIT_EXCHANGES, RABBIT_ROUTING_KEYS } from '@app/contracts';
 import type { JudgeRequest, SupportedLanguage } from '@app/contracts';
 import { Injectable } from '@nestjs/common';
-
-import type { JudgeJobPort, RunJudgeJob, SubmitJudgeJob } from '../../domain/ports/judge-job.port';
-import { SubmissionKind } from '../../domain/submission-record';
+import type {
+  JudgeJobPort,
+  RunJudgeJob,
+  SubmitJudgeJob,
+} from '@submission/modules/submissions/domain/ports/judge-job.port';
+import { SubmissionKind } from '@submission/modules/submissions/domain/submission-record';
 
 @Injectable()
 export class RabbitJudgeJobAdapter implements JudgeJobPort {

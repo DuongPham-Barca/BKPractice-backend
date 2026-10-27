@@ -1,7 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import type { SubmissionExecutionError } from '../../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
+import type { SubmissionExecutionError } from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export class SubmissionDetailDto {
   @ApiProperty({ format: 'uuid' }) id!: string;

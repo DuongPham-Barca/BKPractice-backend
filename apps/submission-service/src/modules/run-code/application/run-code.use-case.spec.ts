@@ -1,9 +1,15 @@
-import type { JudgeJobPort, RunJudgeJob } from '../../submissions/domain/ports/judge-job.port';
+import type {
+  JudgeJobPort,
+  RunJudgeJob,
+} from '@submission/modules/submissions/domain/ports/judge-job.port';
 import type {
   PersistedSubmissionRecord,
   SubmissionRepositoryPort,
-} from '../../submissions/domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../../submissions/domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import { RunCodeUseCase } from './run-code.use-case';
 

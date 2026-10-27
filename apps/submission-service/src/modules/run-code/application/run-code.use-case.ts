@@ -1,10 +1,10 @@
-import type { JudgeJobPort } from '../../submissions/domain/ports/judge-job.port';
-import type { SubmissionRepositoryPort } from '../../submissions/domain/ports/submission-repository.port';
+import type { JudgeJobPort } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import type { SubmissionRepositoryPort } from '@submission/modules/submissions/domain/ports/submission-repository.port';
 import {
   SubmissionKind,
   SubmissionStatus,
   createRunRecord,
-} from '../../submissions/domain/submission-record';
+} from '@submission/modules/submissions/domain/submission-record';
 
 export interface RunCodeInput {
   readonly userId: string;

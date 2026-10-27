@@ -1,7 +1,9 @@
+import type { SubmitVerdictPersistenceInput } from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 import type { DataSource, EntityManager, Repository } from 'typeorm';
-
-import type { SubmitVerdictPersistenceInput } from '../../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
 
 import { SubmissionAcceptedOutbox } from './submission-accepted-outbox.entity';
 import { Submission } from './submission.entity';

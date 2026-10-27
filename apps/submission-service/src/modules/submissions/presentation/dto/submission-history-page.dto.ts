@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export class SubmissionHistoryItemDto {
   @ApiProperty({ format: 'uuid' }) id!: string;

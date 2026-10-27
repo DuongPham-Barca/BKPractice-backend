@@ -1,7 +1,6 @@
 import type { RabbitMqService } from '@app/common';
 import { RABBIT_EXCHANGES, RABBIT_ROUTING_KEYS } from '@app/contracts';
-
-import { SubmissionKind } from '../../domain/submission-record';
+import { SubmissionKind } from '@submission/modules/submissions/domain/submission-record';
 
 import { RabbitJudgeJobAdapter } from './rabbit-judge-job.adapter';
 

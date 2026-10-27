@@ -1,12 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsISO8601, IsOptional, IsUUID, Max, Min, ValidateIf } from 'class-validator';
-
 import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
-} from '../../application/list-submission-history.use-case';
-import { SubmissionKind } from '../../domain/submission-record';
+} from '@submission/modules/submissions/application/list-submission-history.use-case';
+import { SubmissionKind } from '@submission/modules/submissions/domain/submission-record';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsISO8601, IsOptional, IsUUID, Max, Min, ValidateIf } from 'class-validator';
 
 // The owner is never a query parameter; it only comes from the trusted x-auth-user-id header.
 export class ListSubmissionHistoryQueryDto {

@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
-
-import type { RelayAcceptedEventsUseCase } from '../../application/relay-accepted-events.use-case';
+import type { RelayAcceptedEventsUseCase } from '@submission/modules/submissions/application/relay-accepted-events.use-case';
 
 export const ACCEPTED_EVENT_RELAY_INTERVAL_MS = 5_000;
 

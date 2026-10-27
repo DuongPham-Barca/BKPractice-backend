@@ -1,12 +1,11 @@
 import type { HttpService } from '@nestjs/axios';
 import type { ConfigService } from '@nestjs/config';
-import { AxiosError, AxiosHeaders } from 'axios';
-import { of, throwError } from 'rxjs';
-
 import {
   JudgePackageUnavailableError,
   ProblemNotSubmittableError,
-} from '../../domain/ports/learning-judge-package.port';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
+import { AxiosError, AxiosHeaders } from 'axios';
+import { of, throwError } from 'rxjs';
 
 import { HttpLearningJudgePackageAdapter } from './http-learning-judge-package.adapter';
 

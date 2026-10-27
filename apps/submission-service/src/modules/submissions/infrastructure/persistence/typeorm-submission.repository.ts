@@ -1,10 +1,8 @@
 import type { SupportedLanguage } from '@app/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, Repository } from 'typeorm';
-
-import type { AcceptedEventOutboxPort } from '../../domain/ports/accepted-event-outbox.port';
-import type { AcceptedProgressEvent } from '../../domain/ports/accepted-event.port';
+import type { AcceptedEventOutboxPort } from '@submission/modules/submissions/domain/ports/accepted-event-outbox.port';
+import type { AcceptedProgressEvent } from '@submission/modules/submissions/domain/ports/accepted-event.port';
 import type {
   PersistedSubmissionRecord,
   RunResultPersistenceInput,
@@ -13,10 +11,18 @@ import type {
   SubmissionHistorySlice,
   SubmissionRepositoryPort,
   SubmitVerdictPersistenceInput,
-} from '../../domain/ports/submission-repository.port';
-import type { HistoryCursor, SubmissionHistoryFilter } from '../../domain/submission-history';
-import type { SubmissionRecord } from '../../domain/submission-record';
-import { SubmissionKind, SubmissionStatus, isTerminal } from '../../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import type {
+  HistoryCursor,
+  SubmissionHistoryFilter,
+} from '@submission/modules/submissions/domain/submission-history';
+import type { SubmissionRecord } from '@submission/modules/submissions/domain/submission-record';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+  isTerminal,
+} from '@submission/modules/submissions/domain/submission-record';
+import { DataSource, IsNull, Repository } from 'typeorm';
 
 import { SubmissionAcceptedOutbox } from './submission-accepted-outbox.entity';
 import { Submission, SubmissionResult } from './submission.entity';

@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-import { SubmissionKind, SubmissionStatus } from '../../../submissions/domain/submission-record';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export class RunCodeResponseDto {
   @ApiProperty({ format: 'uuid' }) id!: string;

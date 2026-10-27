@@ -1,4 +1,4 @@
-import type { ExpireStaleSubmissionsUseCase } from '../../application/expire-stale-submissions.use-case';
+import type { ExpireStaleSubmissionsUseCase } from '@submission/modules/submissions/application/expire-stale-submissions.use-case';
 
 import { SubmissionWatchdog } from './submission-watchdog';
 

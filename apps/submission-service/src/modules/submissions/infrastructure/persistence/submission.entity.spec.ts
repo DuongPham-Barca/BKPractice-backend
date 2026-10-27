@@ -1,6 +1,8 @@
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 import { getMetadataArgsStorage } from 'typeorm';
-
-import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
 
 import { Submission } from './submission.entity';
 
