@@ -1,3 +1,6 @@
+import type { Provider } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+
 import { CREATE_PROBLEM_PORT_IN } from './application/ports/in/create-problem.port.in';
 import { GET_MANAGED_PROBLEM_PORT_IN } from './application/ports/in/get-managed-problem.port.in';
 import { GET_PUBLIC_PROBLEM_PORT_IN } from './application/ports/in/get-public-problem.port.in';
@@ -22,8 +25,15 @@ import { RepublishProblemUseCase } from './application/use-cases/republish-probl
 import { RestoreProblemUseCase } from './application/use-cases/restore-problem.use-case';
 import { SoftDeleteProblemUseCase } from './application/use-cases/soft-delete-problem.use-case';
 import { UpdateProblemUseCase } from './application/use-cases/update-problem.use-case';
+import { ProblemPersistenceMapper } from './infrastructure/persistence/problem.persistence-mapper';
+import { ProblemTypeOrmRepository } from './infrastructure/persistence/problem.typeorm-repository';
+import { TopicTagTypeOrmReader } from './infrastructure/persistence/topic-tag.typeorm-reader';
+import { TypeOrmTransactionContext } from './infrastructure/persistence/typeorm-transaction-context';
+import { TypeOrmTransactionRunner } from './infrastructure/persistence/typeorm-transaction-runner';
+import { InternalServiceGuard } from './internal-service.guard';
 import { ManagedProblemsController } from './presentation/http/managed-problems.controller';
 import { PublicProblemsController } from './presentation/http/public-problems.controller';
+import { PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER } from './problem.tokens';
 import { ProblemsModule } from './problems.module';
 
 interface ModuleProvider {
@@ -83,5 +93,33 @@ describe('ProblemsModule inbound port wiring', () => {
       GET_PUBLIC_PROBLEM_PORT_IN,
       LIST_PUBLIC_PROBLEMS_PORT_IN,
     ]);
+  });
+});
+
+describe('ProblemsModule dependency resolution', () => {
+  it('resolves every inbound port without request-scoped providers', async () => {
+    const adapters: unknown[] = [
+      InternalServiceGuard,
+      ProblemTypeOrmRepository,
+      TopicTagTypeOrmReader,
+      TypeOrmTransactionRunner,
+      TypeOrmTransactionContext,
+      ProblemPersistenceMapper,
+    ];
+    const stubbed: unknown[] = [PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER];
+    const providers = (Reflect.getMetadata('providers', ProblemsModule) as Provider[]).filter(
+      (provider) =>
+        !adapters.includes(provider) && !stubbed.includes((provider as ModuleProvider).provide),
+    );
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        ...providers,
+        ...stubbed.map((token) => ({ provide: token as symbol, useValue: {} })),
+      ],
+    }).compile();
+
+    for (const [token, useCase] of INBOUND_BINDINGS) {
+      expect(moduleRef.get(token, { strict: false })).toBeInstanceOf(useCase);
+    }
   });
 });

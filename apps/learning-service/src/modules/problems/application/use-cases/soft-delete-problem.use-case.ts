@@ -1,5 +1,6 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { ISoftDeleteProblemPortIn } from '@learning/modules/problems/application/ports/in/soft-delete-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import type { SoftDeleteProblemResult } from '@learning/modules/problems/application/results/problem.results';
@@ -18,14 +19,14 @@ export class SoftDeleteProblemUseCase implements ISoftDeleteProblemPortIn {
     private readonly transactionRunner: TransactionRunner,
   ) {}
 
-  async execute(id: string): Promise<SoftDeleteProblemResult> {
+  async execute(principal: Principal, id: string): Promise<SoftDeleteProblemResult> {
     const problem = await this.repository.findById(id);
 
     if (problem === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    const principal = await this.authorization.requireOwned(problem, 'delete');
+    this.authorization.requireOwned(principal, problem, 'delete');
     const now = new Date();
     problem.softDelete(now);
 

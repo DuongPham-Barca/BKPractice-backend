@@ -1,7 +1,6 @@
 import type { IListPublicProblemsPortIn } from '@learning/modules/problems/application/ports/in/list-public-problems.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ProblemSummaryResult } from '@learning/modules/problems/application/results/problem.results';
-import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type {
   ProblemListFilter,
   ProblemPage,
@@ -15,7 +14,6 @@ const MAX_LIMIT = 100;
 @Injectable()
 export class ListPublicProblemsUseCase implements IListPublicProblemsPortIn {
   constructor(
-    private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
     private readonly resultMapper: ProblemResultMapper,
@@ -26,8 +24,6 @@ export class ListPublicProblemsUseCase implements IListPublicProblemsPortIn {
     page: number,
     limit: number,
   ): Promise<ProblemPage<ProblemSummaryResult>> {
-    await this.authorization.requirePublicRead();
-
     const normalizedPage = normalizePage(page);
     const normalizedLimit = normalizeLimit(limit);
     const result = await this.repository.listPublished({

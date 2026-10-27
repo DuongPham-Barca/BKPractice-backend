@@ -3,6 +3,7 @@ import { ProblemNotFoundError } from '@learning/modules/problems/application/err
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IUpdateProblemPortIn } from '@learning/modules/problems/application/ports/in/update-problem.port.in';
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
@@ -37,14 +38,18 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(id: string, command: UpdateProblemCommand): Promise<ManagedProblemDetailResult> {
+  async execute(
+    principal: Principal,
+    id: string,
+    command: UpdateProblemCommand,
+  ): Promise<ManagedProblemDetailResult> {
     const existing = await this.repository.findById(id);
 
     if (existing === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    await this.authorization.requireOwned(existing, 'update');
+    this.authorization.requireOwned(principal, existing, 'update');
 
     const expectedUpdatedAt = existing.updatedAt;
 

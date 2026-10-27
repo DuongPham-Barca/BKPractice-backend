@@ -1,4 +1,5 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IPreviewProblemPortIn } from '@learning/modules/problems/application/ports/in/preview-problem.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
@@ -18,14 +19,14 @@ export class PreviewProblemUseCase implements IPreviewProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(id: string): Promise<ManagedProblemDetailResult> {
+  async execute(principal: Principal, id: string): Promise<ManagedProblemDetailResult> {
     const problem = await this.repository.findByIdIncludingDeleted(id);
 
     if (problem === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    await this.authorization.requireOwned(problem, 'read-managed');
+    this.authorization.requireOwned(principal, problem, 'read-managed');
 
     const slugAvailable = await this.repository.isSlugAvailable(
       problem.slug.value,

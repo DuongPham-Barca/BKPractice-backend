@@ -1,5 +1,6 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IRepublishProblemPortIn } from '@learning/modules/problems/application/ports/in/republish-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
@@ -22,14 +23,14 @@ export class RepublishProblemUseCase implements IRepublishProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(id: string): Promise<ManagedProblemDetailResult> {
+  async execute(principal: Principal, id: string): Promise<ManagedProblemDetailResult> {
     const problem = await this.repository.findById(id);
 
     if (problem === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    await this.authorization.requireOwned(problem, 'republish');
+    this.authorization.requireOwned(principal, problem, 'republish');
 
     const expectedUpdatedAt = problem.updatedAt;
     const slugAvailable = await this.repository.isSlugAvailable(

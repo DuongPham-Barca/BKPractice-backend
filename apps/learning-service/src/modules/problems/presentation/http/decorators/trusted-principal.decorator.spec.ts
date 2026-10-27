@@ -1,13 +1,13 @@
 import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
 import type { Request } from 'express';
 
-import { RequestPrincipalProvider } from './request-principal.provider';
+import { readTrustedPrincipal } from './trusted-principal.decorator';
 
 const USER_ID = '00000000-0000-4000-8000-000000000031';
 
-describe('RequestPrincipalProvider', () => {
-  it('parses, trims, and deduplicates trusted headers', async () => {
-    const provider = new RequestPrincipalProvider(
+describe('readTrustedPrincipal', () => {
+  it('parses, trims, and deduplicates trusted headers', () => {
+    const principal = readTrustedPrincipal(
       requestWith([
         'X-Auth-User-Id',
         USER_ID,
@@ -18,31 +18,27 @@ describe('RequestPrincipalProvider', () => {
       ]),
     );
 
-    await expect(provider.getPrincipal()).resolves.toEqual({
+    expect(principal).toEqual({
       userId: USER_ID,
       roles: ['LECTURER', 'STUDENT'],
       permissions: ['problem:create', 'problem:read-managed'],
     });
   });
 
-  it('requires a missing user id and invalid UUID to be rejected', async () => {
-    await expect(
-      new RequestPrincipalProvider(requestWith([])).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
-    await expect(
-      new RequestPrincipalProvider(requestWith(['x-auth-user-id', 'not-a-uuid'])).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+  it('requires a missing user id and invalid UUID to be rejected', () => {
+    expect(() => readTrustedPrincipal(requestWith([]))).toThrow(UnauthorizedError);
+    expect(() => readTrustedPrincipal(requestWith(['x-auth-user-id', 'not-a-uuid']))).toThrow(
+      UnauthorizedError,
+    );
   });
 
-  it('rejects duplicate identity, role, and permission headers', async () => {
-    await expect(
-      new RequestPrincipalProvider(
-        requestWith(['x-auth-user-id', USER_ID, 'X-Auth-User-Id', USER_ID]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+  it('rejects duplicate identity, role, and permission headers', () => {
+    expect(() =>
+      readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'X-Auth-User-Id', USER_ID])),
+    ).toThrow(UnauthorizedError);
 
-    await expect(
-      new RequestPrincipalProvider(
+    expect(() =>
+      readTrustedPrincipal(
         requestWith([
           'x-auth-user-id',
           USER_ID,
@@ -51,11 +47,11 @@ describe('RequestPrincipalProvider', () => {
           'x-auth-roles',
           'LECTURER',
         ]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+      ),
+    ).toThrow(UnauthorizedError);
 
-    await expect(
-      new RequestPrincipalProvider(
+    expect(() =>
+      readTrustedPrincipal(
         requestWith([
           'x-auth-user-id',
           USER_ID,
@@ -64,64 +60,60 @@ describe('RequestPrincipalProvider', () => {
           'x-auth-permissions',
           'problem:update',
         ]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+      ),
+    ).toThrow(UnauthorizedError);
   });
 
-  it('rejects empty entries, invalid patterns, and values over the cap', async () => {
+  it('rejects empty entries, invalid patterns, and values over the cap', () => {
     for (const roles of ['LECTURER,,STUDENT', 'LECTURER,', ',LECTURER', 'Lecturer']) {
-      await expect(
-        new RequestPrincipalProvider(
-          requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', roles]),
-        ).getPrincipal(),
-      ).rejects.toBeInstanceOf(UnauthorizedError);
+      expect(() =>
+        readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', roles])),
+      ).toThrow(UnauthorizedError);
     }
 
     for (const permissions of ['problem:create,', 'Problem:create', 'problem', 'problem:Create']) {
-      await expect(
-        new RequestPrincipalProvider(
+      expect(() =>
+        readTrustedPrincipal(
           requestWith(['x-auth-user-id', USER_ID, 'x-auth-permissions', permissions]),
-        ).getPrincipal(),
-      ).rejects.toBeInstanceOf(UnauthorizedError);
+        ),
+      ).toThrow(UnauthorizedError);
     }
 
     const rolesOverCap = Array.from({ length: 51 }, (_, index) => `ROLE_${index}`);
-    await expect(
-      new RequestPrincipalProvider(
+    expect(() =>
+      readTrustedPrincipal(
         requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', rolesOverCap.join(',')]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+      ),
+    ).toThrow(UnauthorizedError);
 
     const permissionsOverCap = Array.from({ length: 201 }, (_, index) => `resource${index}:action`);
-    await expect(
-      new RequestPrincipalProvider(
+    expect(() =>
+      readTrustedPrincipal(
         requestWith([
           'x-auth-user-id',
           USER_ID,
           'x-auth-permissions',
           permissionsOverCap.join(','),
         ]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+      ),
+    ).toThrow(UnauthorizedError);
 
-    await expect(
-      new RequestPrincipalProvider(
-        requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', '']),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(() =>
+      readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', ''])),
+    ).toThrow(UnauthorizedError);
   });
 
-  it('defaults missing permissions to an empty array', async () => {
-    const principal = await new RequestPrincipalProvider(
+  it('defaults missing permissions to an empty array', () => {
+    const principal = readTrustedPrincipal(
       requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', 'LECTURER']),
-    ).getPrincipal();
+    );
 
     expect(principal.permissions).toEqual([]);
   });
 
-  it('ignores authorization, body, query, and non-contract header names', async () => {
+  it('ignores authorization, body, query, and non-contract header names', () => {
     const request = requestWith(['x-auth-user-id', USER_ID]);
-    const provider = new RequestPrincipalProvider(
+    const principal = readTrustedPrincipal(
       Object.assign(request, {
         headers: {
           authorization: 'Bearer malicious',
@@ -133,27 +125,27 @@ describe('RequestPrincipalProvider', () => {
       }),
     );
 
-    await expect(provider.getPrincipal()).resolves.toEqual({
+    expect(principal).toEqual({
       userId: USER_ID,
       roles: [],
       permissions: [],
     });
 
-    await expect(
-      new RequestPrincipalProvider(
+    expect(() =>
+      readTrustedPrincipal(
         requestWith([
           'x-user-id',
           '00000000-0000-4000-8000-000000000099',
           'x-permissions',
           'problem:create',
         ]),
-      ).getPrincipal(),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+      ),
+    ).toThrow(UnauthorizedError);
   });
 
-  it('does not retain references to the request header array', async () => {
+  it('does not retain references to the request header array', () => {
     const rawHeaders = ['x-auth-user-id', USER_ID, 'x-auth-roles', 'LECTURER'];
-    const principal = await new RequestPrincipalProvider(requestWith(rawHeaders)).getPrincipal();
+    const principal = readTrustedPrincipal(requestWith(rawHeaders));
 
     rawHeaders[1] = '00000000-0000-4000-8000-000000000099';
     rawHeaders[3] = 'ADMIN';

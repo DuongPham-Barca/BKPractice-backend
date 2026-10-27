@@ -1,8 +1,7 @@
 import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
 import type { Principal } from '@learning/modules/problems/application/models/principal';
-import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
-import { Inject, Injectable, Scope } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
+import { createParamDecorator } from '@nestjs/common';
+import type { ExecutionContext } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import type { Request } from 'express';
 
@@ -14,28 +13,28 @@ const MAX_PERMISSIONS = 200;
 const ROLE_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 const PERMISSION_PATTERN = /^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/;
 
-@Injectable({ scope: Scope.REQUEST })
-export class RequestPrincipalProvider implements PrincipalProvider {
-  constructor(@Inject(REQUEST) private readonly request: Request) {}
+export function readTrustedPrincipal(request: Request): Principal {
+  const rawHeaders = request.rawHeaders ?? [];
+  const userId = readSingleHeader(rawHeaders, USER_ID_HEADER);
 
-  async getPrincipal(): Promise<Principal> {
-    const rawHeaders = this.request.rawHeaders ?? [];
-    const userId = readSingleHeader(rawHeaders, USER_ID_HEADER);
-
-    if (userId === undefined || !isUUID(userId)) {
-      throw new UnauthorizedError();
-    }
-
-    const roles = parseList(readSingleHeader(rawHeaders, ROLES_HEADER), MAX_ROLES, ROLE_PATTERN);
-    const permissions = parseList(
-      readSingleHeader(rawHeaders, PERMISSIONS_HEADER),
-      MAX_PERMISSIONS,
-      PERMISSION_PATTERN,
-    );
-
-    return { userId, roles, permissions };
+  if (userId === undefined || !isUUID(userId)) {
+    throw new UnauthorizedError();
   }
+
+  const roles = parseList(readSingleHeader(rawHeaders, ROLES_HEADER), MAX_ROLES, ROLE_PATTERN);
+  const permissions = parseList(
+    readSingleHeader(rawHeaders, PERMISSIONS_HEADER),
+    MAX_PERMISSIONS,
+    PERMISSION_PATTERN,
+  );
+
+  return { userId, roles, permissions };
 }
+
+export const TrustedPrincipal = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): Principal =>
+    readTrustedPrincipal(context.switchToHttp().getRequest<Request>()),
+);
 
 function readSingleHeader(rawHeaders: readonly string[], name: string): string | undefined {
   const values: string[] = [];

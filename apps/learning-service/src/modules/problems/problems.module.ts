@@ -38,7 +38,6 @@ import {
   Tag,
   ProblemLanguage,
 } from './entities/problem.entity';
-import { RequestPrincipalProvider } from './infrastructure/auth/request-principal.provider';
 import { ProblemPersistenceMapper } from './infrastructure/persistence/problem.persistence-mapper';
 import { ProblemTypeOrmRepository } from './infrastructure/persistence/problem.typeorm-repository';
 import { TopicTagTypeOrmReader } from './infrastructure/persistence/topic-tag.typeorm-reader';
@@ -50,12 +49,7 @@ import { ManagedProblemsController } from './presentation/http/managed-problems.
 import { ProblemRequestMapper } from './presentation/http/mappers/problem-request.mapper';
 import { ProblemResponseMapper } from './presentation/http/mappers/problem-response.mapper';
 import { PublicProblemsController } from './presentation/http/public-problems.controller';
-import {
-  PROBLEM_REPOSITORY,
-  TOPIC_TAG_READER,
-  TRANSACTION_RUNNER,
-  PRINCIPAL_PROVIDER,
-} from './problem.tokens';
+import { PROBLEM_REPOSITORY, TOPIC_TAG_READER, TRANSACTION_RUNNER } from './problem.tokens';
 import { ProblemsController } from './problems.controller';
 
 @Module({
@@ -66,9 +60,14 @@ import { ProblemsController } from './problems.controller';
   providers: [
     InternalServiceGuard,
     ProblemExceptionFilter,
-    ContentFormatValidator,
-    ProblemContractValidator,
-    PublishValidator,
+    { provide: ContentFormatValidator, useFactory: () => new ContentFormatValidator() },
+    { provide: ProblemContractValidator, useFactory: () => new ProblemContractValidator() },
+    {
+      provide: PublishValidator,
+      useFactory: (contractValidator: ProblemContractValidator) =>
+        new PublishValidator(contractValidator),
+      inject: [ProblemContractValidator],
+    },
     ProblemAuthorizationService,
     ProblemResultMapper,
     CreateProblemUseCase,
@@ -90,11 +89,9 @@ import { ProblemsController } from './problems.controller';
     TypeOrmTransactionRunner,
     ProblemTypeOrmRepository,
     TopicTagTypeOrmReader,
-    RequestPrincipalProvider,
     { provide: PROBLEM_REPOSITORY, useExisting: ProblemTypeOrmRepository },
     { provide: TOPIC_TAG_READER, useExisting: TopicTagTypeOrmReader },
     { provide: TRANSACTION_RUNNER, useExisting: TypeOrmTransactionRunner },
-    { provide: PRINCIPAL_PROVIDER, useExisting: RequestPrincipalProvider },
     { provide: CREATE_PROBLEM_PORT_IN, useExisting: CreateProblemUseCase },
     { provide: UPDATE_PROBLEM_PORT_IN, useExisting: UpdateProblemUseCase },
     { provide: PUBLISH_PROBLEM_PORT_IN, useExisting: PublishProblemUseCase },

@@ -6,7 +6,7 @@ import {
   LIST_PUBLIC_PROBLEMS_PORT_IN,
   type IListPublicProblemsPortIn,
 } from '@learning/modules/problems/application/ports/in/list-public-problems.port.in';
-import { Controller, Get, Inject, Param, Query, UseFilters } from '@nestjs/common';
+import { Controller, Get, Inject, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBadRequestResponse,
@@ -21,11 +21,13 @@ import {
 import { ProblemIdentifierParamDto, ProblemQueryDto } from './dto/problem-query.dto';
 import { ProblemDetailResponseDto, ProblemListResponseDto } from './dto/problem-response.dto';
 import { ProblemExceptionFilter } from './filters/problem-exception.filter';
+import { TrustedPrincipalGuard } from './guards/trusted-principal.guard';
 import { ProblemResponseMapper } from './mappers/problem-response.mapper';
 
 @ApiTags('problems')
 @ApiBearerAuth()
 @UseFilters(ProblemExceptionFilter)
+@UseGuards(TrustedPrincipalGuard)
 @Controller('api/problems')
 export class PublicProblemsController {
   constructor(

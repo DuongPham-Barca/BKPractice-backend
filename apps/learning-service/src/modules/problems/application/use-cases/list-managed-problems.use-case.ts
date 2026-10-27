@@ -1,3 +1,4 @@
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IListManagedProblemsPortIn } from '@learning/modules/problems/application/ports/in/list-managed-problems.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemSummaryResult } from '@learning/modules/problems/application/results/problem.results';
@@ -26,11 +27,12 @@ export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
   ) {}
 
   async execute(
+    principal: Principal,
     includeDeleted: boolean,
     page: number,
     limit: number,
   ): Promise<ProblemPage<ManagedProblemSummaryResult>> {
-    const principal = await this.authorization.requireManagedList();
+    this.authorization.requireManagedList(principal);
     const normalizedPage = normalizePage(page);
     const normalizedLimit = normalizeLimit(limit);
     const result = await this.repository.listManaged({

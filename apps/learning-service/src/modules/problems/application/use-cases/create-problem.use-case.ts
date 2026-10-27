@@ -1,6 +1,7 @@
 import type { CreateProblemCommand } from '@learning/modules/problems/application/command/create-problem.command';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { ICreateProblemPortIn } from '@learning/modules/problems/application/ports/in/create-problem.port.in';
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
@@ -39,8 +40,11 @@ export class CreateProblemUseCase implements ICreateProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(command: CreateProblemCommand): Promise<ManagedProblemDetailResult> {
-    const principal = await this.authorization.requireCreate();
+  async execute(
+    principal: Principal,
+    command: CreateProblemCommand,
+  ): Promise<ManagedProblemDetailResult> {
+    this.authorization.requireCreate(principal);
 
     const [missingTopicIds, missingTagIds] = await Promise.all([
       this.topicTagReader.findMissingTopicIds(command.topicIds),

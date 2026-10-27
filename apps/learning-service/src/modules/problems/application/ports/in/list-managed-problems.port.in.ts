@@ -1,8 +1,10 @@
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { ManagedProblemSummaryResult } from '@learning/modules/problems/application/results/problem.results';
 import type { ProblemPage } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 
 export interface IListManagedProblemsPortIn {
   execute(
+    principal: Principal,
     includeDeleted: boolean,
     page: number,
     limit: number,

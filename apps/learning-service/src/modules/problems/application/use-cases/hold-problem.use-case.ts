@@ -1,4 +1,5 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IHoldProblemPortIn } from '@learning/modules/problems/application/ports/in/hold-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
@@ -21,14 +22,14 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(id: string): Promise<ManagedProblemDetailResult> {
+  async execute(principal: Principal, id: string): Promise<ManagedProblemDetailResult> {
     const problem = await this.repository.findById(id);
 
     if (problem === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    await this.authorization.requireOwned(problem, 'hold');
+    this.authorization.requireOwned(principal, problem, 'hold');
 
     const expectedUpdatedAt = problem.updatedAt;
     problem.hold();

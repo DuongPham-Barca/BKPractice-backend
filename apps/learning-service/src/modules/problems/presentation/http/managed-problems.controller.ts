@@ -1,3 +1,4 @@
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import {
   CREATE_PROBLEM_PORT_IN,
   type ICreateProblemPortIn,
@@ -66,6 +67,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { TrustedPrincipal } from './decorators/trusted-principal.decorator';
 import { CreateProblemRequestDto } from './dto/create-problem.request.dto';
 import { IncludeDeletedQueryDto, ManagedProblemQueryDto } from './dto/problem-query.dto';
 import {
@@ -121,8 +123,14 @@ export class ManagedProblemsController {
   @ApiForbiddenResponse({ description: 'Missing LECTURER role or problem:create permission' })
   @ApiConflictResponse({ description: 'Slug already exists' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async create(@Body() dto: CreateProblemRequestDto): Promise<ManagedProblemResponseDto> {
-    const result = await this.createProblem.execute(this.requestMapper.toCreateCommand(dto));
+  async create(
+    @TrustedPrincipal() principal: Principal,
+    @Body() dto: CreateProblemRequestDto,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.createProblem.execute(
+      principal,
+      this.requestMapper.toCreateCommand(dto),
+    );
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -141,9 +149,11 @@ export class ManagedProblemsController {
   @ApiForbiddenResponse({ description: 'Missing LECTURER role or problem:read-managed permission' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async listManaged(
+    @TrustedPrincipal() principal: Principal,
     @Query() query: ManagedProblemQueryDto,
   ): Promise<ManagedProblemListResponseDto> {
     const page = await this.listManagedProblems.execute(
+      principal,
       query.includeDeleted,
       query.page,
       query.limit,
@@ -166,10 +176,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async getManaged(
+    @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: IncludeDeletedQueryDto,
   ): Promise<ManagedProblemResponseDto> {
-    const result = await this.getManagedProblem.execute(id, query.includeDeleted);
+    const result = await this.getManagedProblem.execute(principal, id, query.includeDeleted);
     return this.responseMapper.toManagedDetail(result, query.includeDeleted);
   }
 
@@ -189,10 +200,15 @@ export class ManagedProblemsController {
   @ApiConflictResponse({ description: 'Problem is ON_HOLD or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async update(
+    @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProblemRequestDto,
   ): Promise<ManagedProblemResponseDto> {
-    const result = await this.updateProblem.execute(id, this.requestMapper.toUpdateCommand(dto));
+    const result = await this.updateProblem.execute(
+      principal,
+      id,
+      this.requestMapper.toUpdateCommand(dto),
+    );
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -215,8 +231,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not DRAFT or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async publish(@Param('id', ParseUUIDPipe) id: string): Promise<ManagedProblemResponseDto> {
-    const result = await this.publishProblem.execute(id);
+  async publish(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.publishProblem.execute(principal, id);
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -236,8 +255,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not PUBLISHED or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async hold(@Param('id', ParseUUIDPipe) id: string): Promise<ManagedProblemResponseDto> {
-    const result = await this.holdProblem.execute(id);
+  async hold(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.holdProblem.execute(principal, id);
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -256,8 +278,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not ON_HOLD or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async republish(@Param('id', ParseUUIDPipe) id: string): Promise<ManagedProblemResponseDto> {
-    const result = await this.republishProblem.execute(id);
+  async republish(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.republishProblem.execute(principal, id);
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -277,8 +302,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is DRAFT or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<SoftDeleteProblemResponseDto> {
-    const result = await this.softDeleteProblem.execute(id);
+  async remove(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<SoftDeleteProblemResponseDto> {
+    const result = await this.softDeleteProblem.execute(principal, id);
     return this.responseMapper.toSoftDelete(result);
   }
 
@@ -298,8 +326,11 @@ export class ManagedProblemsController {
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not deleted or concurrent modification' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async restore(@Param('id', ParseUUIDPipe) id: string): Promise<ManagedProblemResponseDto> {
-    const result = await this.restoreProblem.execute(id);
+  async restore(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.restoreProblem.execute(principal, id);
     return this.responseMapper.toManagedDetail(result, false);
   }
 
@@ -318,8 +349,11 @@ export class ManagedProblemsController {
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-  async preview(@Param('id', ParseUUIDPipe) id: string): Promise<ManagedProblemResponseDto> {
-    const result = await this.previewProblem.execute(id);
+  async preview(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ManagedProblemResponseDto> {
+    const result = await this.previewProblem.execute(principal, id);
     return this.responseMapper.toManagedDetail(result, true);
   }
 }

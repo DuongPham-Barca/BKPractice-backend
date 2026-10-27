@@ -2,7 +2,6 @@ import type { SupportedLanguage } from '@app/contracts';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import { OOP_ACCESSES } from '@learning/modules/problems/domain/value-objects';
 import type { OopContract } from '@learning/modules/problems/domain/value-objects';
-import { Injectable } from '@nestjs/common';
 
 export interface PublishIssue {
   readonly code: string;
@@ -10,7 +9,6 @@ export interface PublishIssue {
   readonly message: string;
 }
 
-@Injectable()
 export class ProblemContractValidator {
   validate(problem: Problem): readonly PublishIssue[] {
     const issues: PublishIssue[] = [];

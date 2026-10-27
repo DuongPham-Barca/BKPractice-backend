@@ -1,6 +1,5 @@
 import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
 import type { Principal } from '@learning/modules/problems/application/models/principal';
-import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
 import {
   buildProblem,
   TEST_USER_ID,
@@ -23,96 +22,61 @@ const ACTION_PERMISSIONS: Record<OwnedProblemAction, string> = {
 };
 
 describe('ProblemAuthorizationService', () => {
-  it('allows a lecturer with the exact permission and ownership', async () => {
-    for (const action of Object.keys(ACTION_PERMISSIONS) as OwnedProblemAction[]) {
-      const service = serviceWith(principal([ACTION_PERMISSIONS[action]]));
+  const service = new ProblemAuthorizationService();
 
-      await expect(service.requireOwned(problem(), action)).resolves.toEqual(
-        principal([ACTION_PERMISSIONS[action]]),
-      );
+  it('allows a lecturer with the exact permission and ownership', () => {
+    for (const action of Object.keys(ACTION_PERMISSIONS) as OwnedProblemAction[]) {
+      expect(() =>
+        service.requireOwned(principal([ACTION_PERMISSIONS[action]]), problem(), action),
+      ).not.toThrow();
     }
   });
 
-  it('rejects a missing lecturer role', async () => {
-    const service = serviceWith({
+  it('rejects a missing lecturer role', () => {
+    const student: Principal = {
       userId: TEST_USER_ID,
       roles: ['STUDENT'],
       permissions: Object.values(ACTION_PERMISSIONS),
-    });
+    };
 
-    await expect(service.requireOwned(problem(), 'update')).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(service.requireCreate()).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(service.requireManagedList()).rejects.toBeInstanceOf(ForbiddenError);
+    expect(() => service.requireOwned(student, problem(), 'update')).toThrow(ForbiddenError);
+    expect(() => service.requireCreate(student)).toThrow(ForbiddenError);
+    expect(() => service.requireManagedList(student)).toThrow(ForbiddenError);
   });
 
-  it('rejects missing or case-mismatched permissions', async () => {
-    const service = serviceWith({ userId: TEST_USER_ID, roles: ['LECTURER'], permissions: [] });
-
-    await expect(service.requireOwned(problem(), 'update')).rejects.toBeInstanceOf(ForbiddenError);
-
-    const caseMismatch = serviceWith({
-      userId: TEST_USER_ID,
-      roles: ['LECTURER'],
-      permissions: ['PROBLEM:UPDATE'],
-    });
-
-    await expect(caseMismatch.requireOwned(problem(), 'update')).rejects.toBeInstanceOf(
+  it('rejects missing or case-mismatched permissions', () => {
+    expect(() => service.requireOwned(principal([]), problem(), 'update')).toThrow(ForbiddenError);
+    expect(() => service.requireOwned(principal(['PROBLEM:UPDATE']), problem(), 'update')).toThrow(
       ForbiddenError,
     );
   });
 
-  it('does not grant permissions through the ADMIN role', async () => {
-    const service = serviceWith({
-      userId: TEST_USER_ID,
-      roles: ['ADMIN'],
-      permissions: [],
-    });
+  it('does not grant permissions through the ADMIN role', () => {
+    const admin: Principal = { userId: TEST_USER_ID, roles: ['ADMIN'], permissions: [] };
 
-    await expect(service.requireOwned(problem(), 'update')).rejects.toBeInstanceOf(ForbiddenError);
+    expect(() => service.requireOwned(admin, problem(), 'update')).toThrow(ForbiddenError);
   });
 
-  it('rejects a different owner even with the right permission', async () => {
-    const service = serviceWith({
+  it('rejects a different owner even with the right permission', () => {
+    const otherOwner: Principal = {
       userId: OTHER_USER_ID,
       roles: ['LECTURER'],
       permissions: ['problem:update'],
-    });
+    };
 
-    await expect(service.requireOwned(problem(), 'update')).rejects.toBeInstanceOf(ForbiddenError);
+    expect(() => service.requireOwned(otherOwner, problem(), 'update')).toThrow(ForbiddenError);
   });
 
-  it('requires problem:create and problem:read-managed for list/create gates', async () => {
-    await expect(serviceWith(principal(['problem:create'])).requireCreate()).resolves.toBeDefined();
-    await expect(
-      serviceWith(principal(['problem:read-managed'])).requireManagedList(),
-    ).resolves.toBeDefined();
-    await expect(serviceWith(principal([])).requireCreate()).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(serviceWith(principal([])).requireManagedList()).rejects.toBeInstanceOf(
-      ForbiddenError,
-    );
-  });
-
-  it('allows public read with a principal without role or permissions', async () => {
-    const service = serviceWith({ userId: TEST_USER_ID, roles: [], permissions: [] });
-
-    await expect(service.requirePublicRead()).resolves.toEqual({
-      userId: TEST_USER_ID,
-      roles: [],
-      permissions: [],
-    });
+  it('requires problem:create and problem:read-managed for list/create gates', () => {
+    expect(() => service.requireCreate(principal(['problem:create']))).not.toThrow();
+    expect(() => service.requireManagedList(principal(['problem:read-managed']))).not.toThrow();
+    expect(() => service.requireCreate(principal([]))).toThrow(ForbiddenError);
+    expect(() => service.requireManagedList(principal([]))).toThrow(ForbiddenError);
   });
 });
 
 function principal(permissions: string[]): Principal {
   return { userId: TEST_USER_ID, roles: ['LECTURER'], permissions };
-}
-
-function serviceWith(principalValue: Principal): ProblemAuthorizationService {
-  const provider: PrincipalProvider = {
-    getPrincipal: jest.fn().mockResolvedValue(principalValue),
-  };
-
-  return new ProblemAuthorizationService(provider);
 }
 
 function problem() {

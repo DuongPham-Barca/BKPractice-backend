@@ -1,4 +1,5 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IGetManagedProblemPortIn } from '@learning/modules/problems/application/ports/in/get-managed-problem.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
@@ -18,14 +19,18 @@ export class GetManagedProblemUseCase implements IGetManagedProblemPortIn {
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
-  async execute(id: string, includeDeleted: boolean): Promise<ManagedProblemDetailResult> {
+  async execute(
+    principal: Principal,
+    id: string,
+    includeDeleted: boolean,
+  ): Promise<ManagedProblemDetailResult> {
     const problem = await this.repository.findByIdIncludingDeleted(id);
 
     if (problem === null) {
       throw new ProblemNotFoundError(id);
     }
 
-    await this.authorization.requireOwned(problem, 'read-managed');
+    this.authorization.requireOwned(principal, problem, 'read-managed');
 
     if (problem.isDeleted && !includeDeleted) {
       throw new ProblemNotFoundError(id);

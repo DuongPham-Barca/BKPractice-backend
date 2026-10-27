@@ -1,9 +1,7 @@
 import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
 import type { Principal } from '@learning/modules/problems/application/models/principal';
-import type { PrincipalProvider } from '@learning/modules/problems/application/ports/out/principal-provider.port.out';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
-import { PRINCIPAL_PROVIDER } from '@learning/modules/problems/problem.tokens';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 export type OwnedProblemAction =
   'read-managed' | 'update' | 'publish' | 'hold' | 'republish' | 'delete' | 'restore';
@@ -22,44 +20,23 @@ const LECTURER_ROLE = 'LECTURER';
 
 @Injectable()
 export class ProblemAuthorizationService {
-  constructor(
-    @Inject(PRINCIPAL_PROVIDER)
-    private readonly principalProvider: PrincipalProvider,
-  ) {}
-
-  async requirePublicRead(): Promise<Principal> {
-    return this.principalProvider.getPrincipal();
-  }
-
-  async requireCreate(): Promise<Principal> {
-    const principal = await this.principalProvider.getPrincipal();
-
+  requireCreate(principal: Principal): void {
     this.requireLecturer(principal);
     this.requirePermission(principal, 'problem:create');
-
-    return principal;
   }
 
-  async requireManagedList(): Promise<Principal> {
-    const principal = await this.principalProvider.getPrincipal();
-
+  requireManagedList(principal: Principal): void {
     this.requireLecturer(principal);
     this.requirePermission(principal, 'problem:read-managed');
-
-    return principal;
   }
 
-  async requireOwned(problem: Problem, action: OwnedProblemAction): Promise<Principal> {
-    const principal = await this.principalProvider.getPrincipal();
-
+  requireOwned(principal: Principal, problem: Problem, action: OwnedProblemAction): void {
     this.requireLecturer(principal);
     this.requirePermission(principal, ACTION_PERMISSIONS[action]);
 
     if (problem.createdBy.value !== principal.userId) {
       throw new ForbiddenError();
     }
-
-    return principal;
   }
 
   private requireLecturer(principal: Principal): void {
