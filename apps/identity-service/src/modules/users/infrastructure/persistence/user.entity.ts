@@ -36,6 +36,9 @@ export class User {
   @Column({ type: 'enum', enum: AccountStatus, default: AccountStatus.Active })
   status!: AccountStatus;
 
+  @Column({ name: 'is_system_account', type: 'boolean', default: false })
+  isSystemAccount!: boolean;
+
   @ManyToMany(() => Role, { eager: true })
   @JoinTable({
     name: 'user_roles',

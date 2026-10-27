@@ -13,7 +13,8 @@ export class TypeormRbacRepository implements RbacRepository {
          COALESCE(array_agg(r.name::text ORDER BY r.name::text)
            FILTER (WHERE r.name IS NOT NULL), ARRAY[]::text[]) AS roles
        FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id
-       LEFT JOIN roles r ON r.id = ur.role_id WHERE u.id = $1 GROUP BY u.id`,
+       LEFT JOIN roles r ON r.id = ur.role_id
+       WHERE u.id = $1 AND u.is_system_account = false GROUP BY u.id`,
       [userId],
     );
     const row = rows[0];

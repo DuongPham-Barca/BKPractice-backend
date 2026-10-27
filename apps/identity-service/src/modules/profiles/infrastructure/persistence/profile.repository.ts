@@ -35,6 +35,7 @@ export class TypeormProfileAccountContext implements IdentityProfileContext {
       .createQueryBuilder('user')
       .select(['user.id', 'user.status', 'user.officialName'])
       .where('user.id = :userId', { userId })
+      .andWhere('user.isSystemAccount = false')
       .getOne();
     if (!user) return null;
     return { userId: user.id, officialName: user.officialName, status: user.status };

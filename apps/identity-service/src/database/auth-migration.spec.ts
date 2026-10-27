@@ -8,6 +8,7 @@ import { AddStudentMicrosoftAuthentication1700000000001 } from './migrations/170
 import { AddAuthSessions1700000000003 } from './migrations/1700000000003-AddAuthSessions';
 
 import { AddOfficialAccountName1700000000004 } from '@/database/migrations/1700000000004-AddOfficialAccountName';
+import { AddSystemAccount1700000000005 } from '@/database/migrations/1700000000005-AddSystemAccount';
 import {
   TypeormAuthAccountRepository,
   TypeormExternalIdentityRepository,
@@ -39,15 +40,15 @@ describeDatabase('Identity auth migration and session repository', () => {
         AddStudentMicrosoftAuthentication1700000000001,
         AddAuthSessions1700000000003,
         AddOfficialAccountName1700000000004,
+        AddSystemAccount1700000000005,
       ],
       synchronize: false,
     });
     await database.initialize();
     await database.dropDatabase();
     await database.runMigrations({ transaction: 'all' });
-    await database.undoLastMigration({ transaction: 'all' });
-    await database.undoLastMigration({ transaction: 'all' });
-    await database.undoLastMigration({ transaction: 'all' });
+    for (let index = 0; index < 4; index++)
+      await database.undoLastMigration({ transaction: 'all' });
     firstUserId = randomUUID();
     secondUserId = randomUUID();
     const hash = await argon2.hash('123456');
@@ -83,9 +84,8 @@ describeDatabase('Identity auth migration and session repository', () => {
         'hash',
       ]),
     ).rejects.toBeDefined();
-    await database.undoLastMigration({ transaction: 'all' });
-    await database.undoLastMigration({ transaction: 'all' });
-    await database.undoLastMigration({ transaction: 'all' });
+    for (let index = 0; index < 4; index++)
+      await database.undoLastMigration({ transaction: 'all' });
     const columns: { column_name: string }[] = await database.query(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'refresh_tokens' AND column_name = 'family_id'`,
     );
@@ -141,17 +141,18 @@ describeDatabase('Identity auth migration and session repository', () => {
     expect(await repository.isActive(firstUserId, independentFamilyId)).toBe(true);
   });
 
-  it('loads a preprovisioned student by MSSV without exposing the password hash in other projections', async () => {
+  it('loads a preprovisioned student by MSSV or email without exposing the password hash in other projections', async () => {
     await database.query(`UPDATE users SET student_id = '2210001' WHERE id = $1`, [firstUserId]);
     await database.query(`UPDATE users SET student_id = '2210002' WHERE id = $1`, [secondUserId]);
     await expect(
       database.query(`UPDATE users SET student_id = '2210001' WHERE id = $1`, [secondUserId]),
     ).rejects.toBeDefined();
     const repository = new TypeormAuthAccountRepository(database.getRepository(User));
-    const local = await repository.findByStudentId('2210001');
+    const local = await repository.findByIdentifier('2210001');
     expect(local?.userId).toBe(firstUserId);
     expect(await argon2.verify(local?.passwordHash ?? '', '123456')).toBe(true);
-    expect(await repository.findByStudentId('missing')).toBeNull();
+    expect((await repository.findByIdentifier('STUDENT1@SCHOOL.EDU'))?.userId).toBe(firstUserId);
+    expect(await repository.findByIdentifier('missing')).toBeNull();
     await expect(repository.findById(firstUserId)).resolves.not.toHaveProperty('passwordHash');
   });
 
