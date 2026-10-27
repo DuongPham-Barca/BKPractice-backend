@@ -5,7 +5,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { Submission, SubmissionResult } from './modules/submissions/entities/submission.entity';
+import { RunCodeModule } from './modules/run-code/run-code.module';
+import { SubmissionAcceptedOutbox } from './modules/submissions/infrastructure/persistence/submission-accepted-outbox.entity';
+import {
+  Submission,
+  SubmissionResult,
+} from './modules/submissions/infrastructure/persistence/submission.entity';
 import { SubmissionsModule } from './modules/submissions/submissions.module';
 
 @Module({
@@ -17,11 +22,13 @@ import { SubmissionsModule } from './modules/submissions/submissions.module';
         databaseOptions(config.getOrThrow<string>('SUBMISSION_DATABASE_URL'), [
           Submission,
           SubmissionResult,
+          SubmissionAcceptedOutbox,
         ]),
     }),
     HttpModule,
     RabbitMqModule,
     SubmissionsModule,
+    RunCodeModule,
     HealthModule.forService('submission-service'),
   ],
 })
