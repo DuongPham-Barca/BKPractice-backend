@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -22,12 +21,12 @@ import {
   ProblemNotSubmittableError,
 } from '../domain/ports/learning-judge-package.port';
 
+import { TrustedOwner } from './decorators/trusted-owner.decorator';
 import { ListSubmissionHistoryQueryDto } from './dto/list-submission-history.query.dto';
 import { SubmissionDetailDto } from './dto/submission-detail.dto';
 import { SubmissionHistoryPageDto } from './dto/submission-history-page.dto';
 import { SubmitCodeRequestDto } from './dto/submit-code-request.dto';
 import { SubmitCodeResponseDto } from './dto/submit-code-response.dto';
-import { requireTrustedOwner } from './trusted-owner';
 
 @ApiTags('submissions')
 @Controller('api')
@@ -42,10 +41,9 @@ export class SubmissionsController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: SubmitCodeResponseDto })
   async submit(
-    @Headers('x-auth-user-id') userId: string | undefined,
+    @TrustedOwner() ownerId: string,
     @Body() dto: SubmitCodeRequestDto,
   ): Promise<SubmitCodeResponseDto> {
-    const ownerId = requireTrustedOwner(userId);
     try {
       const result = await this.submitCode.execute({ userId: ownerId, ...dto });
       return { ...result, createdAt: result.createdAt.toISOString() };
@@ -61,11 +59,11 @@ export class SubmissionsController {
   @Get('submissions')
   @ApiOkResponse({ type: SubmissionHistoryPageDto })
   async list(
-    @Headers('x-auth-user-id') userId: string | undefined,
+    @TrustedOwner() ownerId: string,
     @Query() query: ListSubmissionHistoryQueryDto,
   ): Promise<SubmissionHistoryPageDto> {
     const page = await this.listSubmissionHistory.execute({
-      ownerId: requireTrustedOwner(userId),
+      ownerId,
       filter: { kind: query.kind, problemId: query.problemId },
       cursor:
         query.cursor && query.cursorId
@@ -79,11 +77,11 @@ export class SubmissionsController {
   @Get('submissions/:publicId')
   @ApiOkResponse({ type: SubmissionDetailDto })
   async get(
-    @Headers('x-auth-user-id') userId: string | undefined,
+    @TrustedOwner() ownerId: string,
     @Param('publicId', new ParseUUIDPipe({ version: '4' })) publicId: string,
   ): Promise<SubmissionDetailDto> {
     const detail = await this.getSubmissionDetail.execute({
-      ownerId: requireTrustedOwner(userId),
+      ownerId,
       publicIdOrLegacyId: publicId,
     });
     if (!detail) throw new NotFoundException('Submission not found');

@@ -1,9 +1,9 @@
-import { UnauthorizedException } from '@nestjs/common';
-
 import { SubmissionKind, SubmissionStatus } from '../../submissions/domain/submission-record';
 import type { RunCodeUseCase } from '../application/run-code.use-case';
 
 import { RunCodeController } from './run-code.controller';
+
+const OWNER_ID = '11111111-2222-4333-8444-555555555555';
 
 describe('RunCodeController', () => {
   it('returns the exact public acceptance response and no database ID', async () => {
@@ -17,7 +17,7 @@ describe('RunCodeController', () => {
     const runCode = { execute: jest.fn().mockResolvedValue(acceptance) };
     const controller = new RunCodeController(runCode as unknown as RunCodeUseCase);
 
-    const result = await controller.run('owner-id', {
+    const result = await controller.run(OWNER_ID, {
       language: 'python',
       sourceCode: 'print(1)',
       stdin: '',
@@ -27,15 +27,5 @@ describe('RunCodeController', () => {
     expect(Object.keys(result).sort()).toEqual(
       ['id', 'kind', 'status', 'language', 'createdAt'].sort(),
     );
-  });
-
-  it('rejects Run without the trusted owner header before invoking the use case', async () => {
-    const runCode = { execute: jest.fn() };
-    const controller = new RunCodeController(runCode as unknown as RunCodeUseCase);
-
-    await expect(
-      controller.run(undefined, { language: 'python', sourceCode: 'print(1)', stdin: '' }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(runCode.execute).not.toHaveBeenCalled();
   });
 });

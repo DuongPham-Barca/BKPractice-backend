@@ -1,8 +1,4 @@
-import {
-  NotFoundException,
-  ServiceUnavailableException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 
 import type { GetSubmissionDetailUseCase } from '../application/get-submission-detail.use-case';
 import type { ListSubmissionHistoryUseCase } from '../application/list-submission-history.use-case';
@@ -14,6 +10,8 @@ import {
 import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
 
 import { SubmissionsController } from './submissions.controller';
+
+const OWNER_ID = '11111111-2222-4333-8444-555555555555';
 
 function controllerWith(
   overrides: {
@@ -35,7 +33,7 @@ describe('SubmissionsController history', () => {
   it('scopes the list to the trusted owner and passes a complete cursor through', async () => {
     const listSubmissionHistory = { execute: jest.fn().mockResolvedValue(emptyPage) };
 
-    const page = await controllerWith({ listSubmissionHistory }).list('owner-id', {
+    const page = await controllerWith({ listSubmissionHistory }).list(OWNER_ID, {
       kind: SubmissionKind.Submit,
       cursor: '2026-10-27T06:00:00.123456Z',
       cursorId: 'b6a0c1f2-3d4e-4f5a-8b9c-0d1e2f3a4b5c',
@@ -43,7 +41,7 @@ describe('SubmissionsController history', () => {
     });
 
     expect(listSubmissionHistory.execute).toHaveBeenCalledWith({
-      ownerId: 'owner-id',
+      ownerId: OWNER_ID,
       filter: { kind: SubmissionKind.Submit, problemId: undefined },
       cursor: {
         createdAt: '2026-10-27T06:00:00.123456Z',
@@ -52,15 +50,6 @@ describe('SubmissionsController history', () => {
       limit: 50,
     });
     expect(page).toEqual(emptyPage);
-  });
-
-  it('rejects the list without the trusted owner header', async () => {
-    const listSubmissionHistory = { execute: jest.fn() };
-
-    await expect(
-      controllerWith({ listSubmissionHistory }).list(undefined, {}),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(listSubmissionHistory.execute).not.toHaveBeenCalled();
   });
 });
 
@@ -76,7 +65,7 @@ describe('SubmissionsController detail', () => {
     const controller = controllerWith({ getSubmissionDetail });
 
     await expect(
-      controller.get('owner-id', '93c160ad-dd5d-4c7f-a88a-c9c72d0ec4fd'),
+      controller.get(OWNER_ID, '93c160ad-dd5d-4c7f-a88a-c9c72d0ec4fd'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
@@ -93,22 +82,13 @@ describe('SubmissionsController Submit', () => {
     };
     const submitCode = { execute: jest.fn().mockResolvedValue(acceptance) };
 
-    const result = await controllerWith({ submitCode }).submit('owner-id', submitBody);
+    const result = await controllerWith({ submitCode }).submit(OWNER_ID, submitBody);
 
-    expect(submitCode.execute).toHaveBeenCalledWith({ userId: 'owner-id', ...submitBody });
+    expect(submitCode.execute).toHaveBeenCalledWith({ userId: OWNER_ID, ...submitBody });
     expect(result).toEqual({ ...acceptance, createdAt: '2026-10-27T06:00:00.000Z' });
     expect(Object.keys(result).sort()).toEqual(
       ['id', 'kind', 'status', 'problemId', 'language', 'createdAt'].sort(),
     );
-  });
-
-  it('rejects Submit without the trusted owner header before invoking the use case', async () => {
-    const submitCode = { execute: jest.fn() };
-
-    await expect(
-      controllerWith({ submitCode }).submit(undefined, submitBody),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(submitCode.execute).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -118,7 +98,7 @@ describe('SubmissionsController Submit', () => {
     const submitCode = { execute: jest.fn().mockRejectedValue(error) };
 
     await expect(
-      controllerWith({ submitCode }).submit('owner-id', submitBody),
+      controllerWith({ submitCode }).submit(OWNER_ID, submitBody),
     ).rejects.toBeInstanceOf(expected);
   });
 });

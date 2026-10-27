@@ -1,7 +1,7 @@
-import { Body, Controller, Headers, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
+import { TrustedOwner } from '@submission/modules/submissions/presentation/decorators/trusted-owner.decorator';
 
-import { requireTrustedOwner } from '../../submissions/presentation/trusted-owner';
 import { RunCodeUseCase } from '../application/run-code.use-case';
 
 import { RunCodeResponseDto } from './dto/run-code-response.dto';
@@ -15,14 +15,8 @@ export class RunCodeController {
   @Post('run')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: RunCodeResponseDto })
-  async run(
-    @Headers('x-auth-user-id') userId: string | undefined,
-    @Body() dto: RunCodeDto,
-  ): Promise<RunCodeResponseDto> {
-    const result = await this.runCode.execute({
-      userId: requireTrustedOwner(userId),
-      ...dto,
-    });
+  async run(@TrustedOwner() ownerId: string, @Body() dto: RunCodeDto): Promise<RunCodeResponseDto> {
+    const result = await this.runCode.execute({ userId: ownerId, ...dto });
     return { ...result, createdAt: result.createdAt.toISOString() };
   }
 }
