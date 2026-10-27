@@ -8,13 +8,24 @@ export class UpdateProfileDto {
   @MaxLength(100)
   displayName?: string;
 
-  @ApiPropertyOptional({ nullable: true, maxLength: 500 })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 500,
+    description:
+      'Omit to keep the current avatar, or send null to clear it; a new value is an approved R2 reference.',
+  })
   @ValidateIf((_object, value: unknown) => value !== undefined && value !== null)
   @IsString()
   @MaxLength(500)
   avatar?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, maxLength: 1000 })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 1000,
+    description: 'Omit to keep the current bio, or send null to clear it.',
+  })
   @ValidateIf((_object, value: unknown) => value !== undefined && value !== null)
   @IsString()
   @MaxLength(1000)

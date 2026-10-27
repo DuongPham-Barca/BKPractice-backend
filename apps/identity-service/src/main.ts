@@ -7,6 +7,13 @@ import { IdentityServiceModule } from './identity-service.module';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(IdentityServiceModule);
   const config = app.get(ConfigService);
+  app.enableCors({
+    origin: config
+      .getOrThrow<string>('CORS_ORIGINS')
+      .split(',')
+      .map((origin) => origin.trim()),
+    credentials: true,
+  });
   await configureHttpApp(app, {
     serviceName: 'identity-service',
     swaggerTitle: 'BKPractice Identity Service',

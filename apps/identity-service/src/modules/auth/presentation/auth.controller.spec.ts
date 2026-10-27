@@ -178,6 +178,39 @@ describe('Identity authentication HTTP contract', () => {
     expect(rotated.headers.get('set-cookie')).toBeNull();
   });
 
+  it('serves /me directly from Identity with an active web cookie or app Bearer session', async () => {
+    const missing = await fetch(`${baseUrl}/api/auth/me`);
+    expect(missing.status).toBe(401);
+
+    const web = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { cookie: '__Host-bk_access=access' },
+    });
+    expect(web.status).toBe(200);
+
+    const appClient = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { authorization: 'Bearer access' },
+    });
+    expect(appClient.status).toBe(200);
+    expect(await appClient.json()).toEqual({
+      userId: 'user-1',
+      studentId: '2210001',
+      roles: ['STUDENT'],
+      status: 'ACTIVE',
+    });
+    expect(sessions.isActive).toHaveBeenCalledWith('user-1', 'session-1');
+
+    const staleBearer = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { authorization: 'Bearer invalid', cookie: '__Host-bk_access=access' },
+    });
+    expect(staleBearer.status).toBe(401);
+
+    sessions.isActive.mockResolvedValueOnce(false);
+    const revoked = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { authorization: 'Bearer access' },
+    });
+    expect(revoked.status).toBe(401);
+  });
+
   it('keeps logout idempotent and requires authentication for logout-all', async () => {
     const empty = await fetch(`${baseUrl}/api/auth/logout`, {
       method: 'POST',

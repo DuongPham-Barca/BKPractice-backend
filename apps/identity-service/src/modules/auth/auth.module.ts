@@ -52,6 +52,7 @@ import {
   AccountImportController,
   AccountImportGuard,
   AuthController,
+  IdentityAccessAuthenticator,
   SessionStatusController,
 } from '@/modules/auth/presentation';
 import type { EffectivePermissionReader } from '@/modules/rbac/application/effective-permission-reader';
@@ -67,6 +68,7 @@ import { User } from '@/modules/users/infrastructure/persistence';
   controllers: [AuthController, SessionStatusController, AccountImportController],
   providers: [
     AccountImportGuard,
+    IdentityAccessAuthenticator,
     { provide: ACCOUNT_IMPORT_PARSER, useClass: XlsxAccountParser },
     { provide: ACCOUNT_IMPORT_REPOSITORY, useClass: TypeormAccountImportRepository },
     {
@@ -198,6 +200,6 @@ import { User } from '@/modules/users/infrastructure/persistence';
       useFactory: (sessions: RefreshSessionRepository) => new LogoutAllSessions(sessions),
     },
   ],
-  exports: [BK_TOKEN_SERVICE, REFRESH_SESSION_REPOSITORY],
+  exports: [BK_TOKEN_SERVICE, REFRESH_SESSION_REPOSITORY, IdentityAccessAuthenticator],
 })
 export class AuthModule {}

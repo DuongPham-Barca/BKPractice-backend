@@ -51,7 +51,7 @@ export class AccountImportController {
   @ApiOperation({
     summary: 'Import accounts atomically (ADMIN and user:import)',
     description:
-      'One .xlsx sheet, headers mssv,name,email,role. Maximum 5 MiB and 1,000 data rows. STUDENT requires mssv; LECTURER leaves it empty. Any invalid/duplicate row rejects the entire file. Browsers authenticate through Gateway using access cookie and CSRF.',
+      'One .xlsx sheet, headers mssv,name,email,role. Maximum 5 MiB and 1,000 data rows. STUDENT requires mssv; LECTURER leaves it empty. Each accepted row creates a User and Profile with the same initial displayName. Any invalid/duplicate row rejects the entire file. Browsers use the access cookie with Origin and CSRF; apps use a Bearer token.',
   })
   @ApiResponse({
     status: 201,

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
 
 import { AddProfileValidationConstraints1700000000002 } from '@/database/migrations/1700000000002-AddProfileValidationConstraints';
+import { InitializeImportedProfiles1700000000006 } from '@/database/migrations/1700000000006-InitializeImportedProfiles';
 import { identityEntities } from '@/modules/identity.entities';
 import { TypeormProfileRepository } from '@/modules/profiles/infrastructure/persistence/profile.repository';
 
@@ -98,6 +99,52 @@ const isolated =
       ).rejects.toThrow();
       expect((await repository.find(userId))?.bio).toBeNull();
     } finally {
+      await runner.release();
+    }
+  });
+
+  it('backfills missing Profiles from existing User names without replacing customized Profiles', async () => {
+    const migration = new InitializeImportedProfiles1700000000006();
+    const runner = database.createQueryRunner();
+    await runner.startTransaction();
+    try {
+      await migration.down(runner);
+      const missingId = randomUUID();
+      const customizedId = randomUUID();
+      await runner.query(
+        'INSERT INTO users (id, email, password_hash, official_name) VALUES ($1, $2, $3, $4), ($5, $6, $7, $8)',
+        [
+          missingId,
+          `profile-${missingId}@example.test`,
+          'test-hash',
+          '  Tên ban đầu  ',
+          customizedId,
+          `profile-${customizedId}@example.test`,
+          'test-hash',
+          'Tên gốc',
+        ],
+      );
+      await runner.query('INSERT INTO profiles (user_id, display_name) VALUES ($1, $2)', [
+        customizedId,
+        'Tên đã sửa',
+      ]);
+      await migration.up(runner);
+      const profiles = await runner.manager.query<Array<{ user_id: string; display_name: string }>>(
+        'SELECT user_id, display_name FROM profiles WHERE user_id IN ($1, $2) ORDER BY user_id',
+        [missingId, customizedId],
+      );
+      expect(profiles).toHaveLength(2);
+      expect(profiles.find((profile) => profile.user_id === missingId)?.display_name).toBe(
+        'Tên ban đầu',
+      );
+      expect(profiles.find((profile) => profile.user_id === customizedId)?.display_name).toBe(
+        'Tên đã sửa',
+      );
+      expect(
+        await runner.query('SELECT display_name FROM users WHERE id = $1', [missingId]),
+      ).toMatchObject([{ display_name: '  Tên ban đầu  ' }]);
+    } finally {
+      await runner.rollbackTransaction();
       await runner.release();
     }
   });
