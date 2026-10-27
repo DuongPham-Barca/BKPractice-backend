@@ -447,8 +447,9 @@ tuân theo quy ước của repository khi triển khai.
 
 Chỉ đưa vào các seam thật sự. `ProblemRepository` là **domain repository port** tại
 `domain/repositories/`; các port còn lại là **application out port** tại `application/ports/out/`.
-Tên file outbound port dùng hậu tố `.port.out.ts`; inbound port (nếu có interface) dùng
-`.port.in.ts` tại `application/ports/in/`; không dùng `.port.ts`.
+Tên file outbound port dùng hậu tố `.port.out.ts`; inbound port dùng `.port.in.ts` tại
+`application/ports/in/`; mỗi use case có inbound port interface và controller inject qua token
+`..._PORT_IN`; không dùng `.port.ts`. Command của use case đặt tại `application/command/`.
 `PublishValidator` là domain service tại `domain/services/`; `ProblemAuthorizationService` là
 application service tại `application/services/`.
 

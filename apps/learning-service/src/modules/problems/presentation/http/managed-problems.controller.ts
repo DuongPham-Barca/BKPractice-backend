@@ -1,13 +1,43 @@
-import { CreateProblemUseCase } from '@learning/modules/problems/application/use-cases/create-problem.use-case';
-import { GetManagedProblemUseCase } from '@learning/modules/problems/application/use-cases/get-managed-problem.use-case';
-import { HoldProblemUseCase } from '@learning/modules/problems/application/use-cases/hold-problem.use-case';
-import { ListManagedProblemsUseCase } from '@learning/modules/problems/application/use-cases/list-managed-problems.use-case';
-import { PreviewProblemUseCase } from '@learning/modules/problems/application/use-cases/preview-problem.use-case';
-import { PublishProblemUseCase } from '@learning/modules/problems/application/use-cases/publish-problem.use-case';
-import { RepublishProblemUseCase } from '@learning/modules/problems/application/use-cases/republish-problem.use-case';
-import { RestoreProblemUseCase } from '@learning/modules/problems/application/use-cases/restore-problem.use-case';
-import { SoftDeleteProblemUseCase } from '@learning/modules/problems/application/use-cases/soft-delete-problem.use-case';
-import { UpdateProblemUseCase } from '@learning/modules/problems/application/use-cases/update-problem.use-case';
+import {
+  CREATE_PROBLEM_PORT_IN,
+  type ICreateProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/create-problem.port.in';
+import {
+  GET_MANAGED_PROBLEM_PORT_IN,
+  type IGetManagedProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/get-managed-problem.port.in';
+import {
+  HOLD_PROBLEM_PORT_IN,
+  type IHoldProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/hold-problem.port.in';
+import {
+  LIST_MANAGED_PROBLEMS_PORT_IN,
+  type IListManagedProblemsPortIn,
+} from '@learning/modules/problems/application/ports/in/list-managed-problems.port.in';
+import {
+  PREVIEW_PROBLEM_PORT_IN,
+  type IPreviewProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/preview-problem.port.in';
+import {
+  PUBLISH_PROBLEM_PORT_IN,
+  type IPublishProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/publish-problem.port.in';
+import {
+  REPUBLISH_PROBLEM_PORT_IN,
+  type IRepublishProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/republish-problem.port.in';
+import {
+  RESTORE_PROBLEM_PORT_IN,
+  type IRestoreProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/restore-problem.port.in';
+import {
+  SOFT_DELETE_PROBLEM_PORT_IN,
+  type ISoftDeleteProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/soft-delete-problem.port.in';
+import {
+  UPDATE_PROBLEM_PORT_IN,
+  type IUpdateProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/update-problem.port.in';
 import {
   Body,
   Controller,
@@ -15,6 +45,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -53,16 +84,26 @@ import { ProblemResponseMapper } from './mappers/problem-response.mapper';
 @Controller('api/problems')
 export class ManagedProblemsController {
   constructor(
-    private readonly createProblem: CreateProblemUseCase,
-    private readonly updateProblem: UpdateProblemUseCase,
-    private readonly publishProblem: PublishProblemUseCase,
-    private readonly holdProblem: HoldProblemUseCase,
-    private readonly republishProblem: RepublishProblemUseCase,
-    private readonly softDeleteProblem: SoftDeleteProblemUseCase,
-    private readonly restoreProblem: RestoreProblemUseCase,
-    private readonly getManagedProblem: GetManagedProblemUseCase,
-    private readonly listManagedProblems: ListManagedProblemsUseCase,
-    private readonly previewProblem: PreviewProblemUseCase,
+    @Inject(CREATE_PROBLEM_PORT_IN)
+    private readonly createProblem: ICreateProblemPortIn,
+    @Inject(UPDATE_PROBLEM_PORT_IN)
+    private readonly updateProblem: IUpdateProblemPortIn,
+    @Inject(PUBLISH_PROBLEM_PORT_IN)
+    private readonly publishProblem: IPublishProblemPortIn,
+    @Inject(HOLD_PROBLEM_PORT_IN)
+    private readonly holdProblem: IHoldProblemPortIn,
+    @Inject(REPUBLISH_PROBLEM_PORT_IN)
+    private readonly republishProblem: IRepublishProblemPortIn,
+    @Inject(SOFT_DELETE_PROBLEM_PORT_IN)
+    private readonly softDeleteProblem: ISoftDeleteProblemPortIn,
+    @Inject(RESTORE_PROBLEM_PORT_IN)
+    private readonly restoreProblem: IRestoreProblemPortIn,
+    @Inject(GET_MANAGED_PROBLEM_PORT_IN)
+    private readonly getManagedProblem: IGetManagedProblemPortIn,
+    @Inject(LIST_MANAGED_PROBLEMS_PORT_IN)
+    private readonly listManagedProblems: IListManagedProblemsPortIn,
+    @Inject(PREVIEW_PROBLEM_PORT_IN)
+    private readonly previewProblem: IPreviewProblemPortIn,
     private readonly requestMapper: ProblemRequestMapper,
     private readonly responseMapper: ProblemResponseMapper,
   ) {}

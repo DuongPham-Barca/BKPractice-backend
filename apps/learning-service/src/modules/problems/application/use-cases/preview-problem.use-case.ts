@@ -1,4 +1,5 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { IPreviewProblemPortIn } from '@learning/modules/problems/application/ports/in/preview-problem.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
@@ -8,7 +9,7 @@ import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class PreviewProblemUseCase {
+export class PreviewProblemUseCase implements IPreviewProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)

@@ -1,6 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { CREATE_PROBLEM_PORT_IN } from './application/ports/in/create-problem.port.in';
+import { GET_MANAGED_PROBLEM_PORT_IN } from './application/ports/in/get-managed-problem.port.in';
+import { GET_PUBLIC_PROBLEM_PORT_IN } from './application/ports/in/get-public-problem.port.in';
+import { HOLD_PROBLEM_PORT_IN } from './application/ports/in/hold-problem.port.in';
+import { LIST_MANAGED_PROBLEMS_PORT_IN } from './application/ports/in/list-managed-problems.port.in';
+import { LIST_PUBLIC_PROBLEMS_PORT_IN } from './application/ports/in/list-public-problems.port.in';
+import { PREVIEW_PROBLEM_PORT_IN } from './application/ports/in/preview-problem.port.in';
+import { PUBLISH_PROBLEM_PORT_IN } from './application/ports/in/publish-problem.port.in';
+import { REPUBLISH_PROBLEM_PORT_IN } from './application/ports/in/republish-problem.port.in';
+import { RESTORE_PROBLEM_PORT_IN } from './application/ports/in/restore-problem.port.in';
+import { SOFT_DELETE_PROBLEM_PORT_IN } from './application/ports/in/soft-delete-problem.port.in';
+import { UPDATE_PROBLEM_PORT_IN } from './application/ports/in/update-problem.port.in';
 import { ProblemResultMapper } from './application/results/problem-result.mapper';
 import { ProblemAuthorizationService } from './application/services/problem-authorization.service';
 import { CreateProblemUseCase } from './application/use-cases/create-problem.use-case';
@@ -83,6 +95,18 @@ import { ProblemsController } from './problems.controller';
     { provide: TOPIC_TAG_READER, useExisting: TopicTagTypeOrmReader },
     { provide: TRANSACTION_RUNNER, useExisting: TypeOrmTransactionRunner },
     { provide: PRINCIPAL_PROVIDER, useExisting: RequestPrincipalProvider },
+    { provide: CREATE_PROBLEM_PORT_IN, useExisting: CreateProblemUseCase },
+    { provide: UPDATE_PROBLEM_PORT_IN, useExisting: UpdateProblemUseCase },
+    { provide: PUBLISH_PROBLEM_PORT_IN, useExisting: PublishProblemUseCase },
+    { provide: HOLD_PROBLEM_PORT_IN, useExisting: HoldProblemUseCase },
+    { provide: REPUBLISH_PROBLEM_PORT_IN, useExisting: RepublishProblemUseCase },
+    { provide: SOFT_DELETE_PROBLEM_PORT_IN, useExisting: SoftDeleteProblemUseCase },
+    { provide: RESTORE_PROBLEM_PORT_IN, useExisting: RestoreProblemUseCase },
+    { provide: GET_PUBLIC_PROBLEM_PORT_IN, useExisting: GetPublicProblemUseCase },
+    { provide: LIST_PUBLIC_PROBLEMS_PORT_IN, useExisting: ListPublicProblemsUseCase },
+    { provide: GET_MANAGED_PROBLEM_PORT_IN, useExisting: GetManagedProblemUseCase },
+    { provide: LIST_MANAGED_PROBLEMS_PORT_IN, useExisting: ListManagedProblemsUseCase },
+    { provide: PREVIEW_PROBLEM_PORT_IN, useExisting: PreviewProblemUseCase },
   ],
 })
 export class ProblemsModule {}

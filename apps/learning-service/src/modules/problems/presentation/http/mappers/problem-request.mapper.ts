@@ -1,6 +1,6 @@
 import type { SupportedLanguage } from '@app/contracts';
-import type { CreateProblemCommand } from '@learning/modules/problems/application/use-cases/create-problem.use-case';
-import type { UpdateProblemCommand } from '@learning/modules/problems/application/use-cases/update-problem.use-case';
+import type { CreateProblemCommand } from '@learning/modules/problems/application/command/create-problem.command';
+import type { UpdateProblemCommand } from '@learning/modules/problems/application/command/update-problem.command';
 import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import {
   Constraints,

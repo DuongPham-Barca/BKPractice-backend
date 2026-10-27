@@ -109,8 +109,9 @@ Two kinds of boundary exist inside the hexagon:
   repository ports (e.g. `ProblemRepository`) are declared in `domain/repositories/`; other driven
   ports (e.g. `CourseStructureReader`, `TransactionRunner`, `PrincipalProvider`) are declared in
   `application/ports/out/`. All driven ports are implemented in `infrastructure/`. Port files use
-  `<name>.port.out.ts`; inbound port interfaces, when needed, use `<name>.port.in.ts` under
-  `application/ports/in/`. Never `<name>.port.ts`.
+  `<name>.port.out.ts`; inbound port interfaces use `<name>.port.in.ts` under
+  `application/ports/in/`, and controllers inject them through `<NAME>_PORT_IN` tokens. Never
+  `<name>.port.ts`.
 - **Internal boundary** — a rule or service used only inside the core, with no infrastructure adapter.
   Pure domain rules (e.g. `PublishValidator`, `DifficultyLadder`) live in `domain/services/`;
   application-only services (e.g. Problem authorization) live in `application/services/`. Both keep

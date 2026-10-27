@@ -127,13 +127,13 @@ Approved và không thay đổi `plan.md`.
 
 ## Port và ranh giới
 
-- [x] **LRN-001-T011 — Định nghĩa sáu port/ranh giới.** Chỉ thêm `ProblemRepository` (domain
+- [x] **LRN-001-T011 — Định nghĩa bảy port/ranh giới.** Chỉ thêm `ProblemRepository` (domain
       repository port tại `domain/repositories/`), `TopicTagReader`, `PrincipalProvider`,
       `TransactionRunner` (application out port tại `application/ports/out/`), `PublishValidator`
-      (domain service tại `domain/services/`) và `ProblemAuthorizationService` (application service
-      tại `application/services/`). Use case class là contract vào của application; không thêm
-      interface `...UseCase` riêng trong LRN-001. File outbound port dùng hậu tố `.port.out.ts`;
-      inbound port (nếu có interface) dùng `.port.in.ts` tại `application/ports/in/`; không dùng
+      (domain service tại `domain/services/`), `ProblemAuthorizationService` (application service
+      tại `application/services/`) và inbound port cho từng use case. Mỗi use case implement
+      `I...PortIn` tại `application/ports/in/`; controller inject qua token `..._PORT_IN`. File
+      outbound port dùng hậu tố `.port.out.ts`; inbound port dùng `.port.in.ts`; không dùng
       `.port.ts`. Các port không chứa TypeORM, NestJS, HTTP hay kiểu phản hồi của Gateway. Không thêm base repository chung, bus CQRS, policy engine hay event store.
       **Phụ thuộc:** LRN-001-T005, LRN-001-T008.
       **Truy vết:** Mục Các port và ranh giới và Tuân thủ kiến trúc của kế hoạch.
@@ -392,9 +392,9 @@ Approved và không thay đổi `plan.md`.
 - [x] **LRN-001-T038 — Nối dây composition root của module Problems.** Đăng ký các use case,
       `PublishValidator` và `ProblemAuthorizationService` làm provider của Nest; bind
       `ProblemRepository`, `TopicTagReader`, `TransactionRunner` và `PrincipalProvider` với adapter
-      tương ứng; chỉ phơi bày những provider mà tầng presentation cần. Giữ phần nối dây module không
-      chứa hành vi nghiệp vụ và không có trừu tượng hoá trùng lặp. Không đụng các module
-      Courses/Assignments/Progress.
+      tương ứng; bind 12 inbound port token tới use case class bằng `useExisting`; chỉ phơi bày
+      những provider mà tầng presentation cần. Giữ phần nối dây module không chứa hành vi nghiệp vụ
+      và không có trừu tượng hoá trùng lặp. Không đụng các module Courses/Assignments/Progress.
       **Phụ thuộc:** LRN-001-T013 tới LRN-001-T021, LRN-001-T023 tới LRN-001-T025,
       LRN-001-T029, LRN-001-T030, LRN-001-T034, LRN-001-T035.
       **Truy vết:** Mục Adapter hạ tầng và Tuân thủ kiến trúc của kế hoạch; LRN-001-FR-001.

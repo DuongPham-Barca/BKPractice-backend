@@ -1,5 +1,6 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { ISoftDeleteProblemPortIn } from '@learning/modules/problems/application/ports/in/soft-delete-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import type { SoftDeleteProblemResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
@@ -8,7 +9,7 @@ import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/proble
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class SoftDeleteProblemUseCase {
+export class SoftDeleteProblemUseCase implements ISoftDeleteProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)

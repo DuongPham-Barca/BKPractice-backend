@@ -1,8 +1,9 @@
-import type { ProblemType, SupportedLanguage } from '@app/contracts';
+import type { UpdateProblemCommand } from '@learning/modules/problems/application/command/update-problem.command';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { IUpdateProblemPortIn } from '@learning/modules/problems/application/ports/in/update-problem.port.in';
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
@@ -14,20 +15,6 @@ import type { ProblemRepository } from '@learning/modules/problems/domain/reposi
 import { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import { TagReference, TopicReference } from '@learning/modules/problems/domain/value-objects';
-import type {
-  Constraints,
-  Difficulty,
-  EnabledLanguage,
-  ExecutionLimits,
-  FunctionContract,
-  InputSpecification,
-  OopContract,
-  OutputSpecification,
-  ProblemStatement,
-  ProblemTitle,
-  StarterCode,
-  VisibleExample,
-} from '@learning/modules/problems/domain/value-objects';
 import {
   PROBLEM_REPOSITORY,
   TOPIC_TAG_READER,
@@ -35,26 +22,8 @@ import {
 } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-export interface UpdateProblemCommand {
-  readonly title?: ProblemTitle;
-  readonly statement?: ProblemStatement;
-  readonly inputSpecification?: InputSpecification | null;
-  readonly outputSpecification?: OutputSpecification | null;
-  readonly problemType?: ProblemType;
-  readonly difficulty?: Difficulty;
-  readonly examples?: readonly VisibleExample[];
-  readonly constraints?: Constraints | null;
-  readonly executionLimits?: ExecutionLimits;
-  readonly topicIds?: readonly string[];
-  readonly tagIds?: readonly string[];
-  readonly enabledLanguages?: readonly EnabledLanguage[];
-  readonly starterCodes?: readonly StarterCode[];
-  readonly functionContracts?: ReadonlyMap<SupportedLanguage, FunctionContract>;
-  readonly oopContracts?: ReadonlyMap<SupportedLanguage, OopContract>;
-}
-
 @Injectable()
-export class UpdateProblemUseCase {
+export class UpdateProblemUseCase implements IUpdateProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(TOPIC_TAG_READER)

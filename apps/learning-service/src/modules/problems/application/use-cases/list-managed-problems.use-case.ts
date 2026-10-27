@@ -1,3 +1,4 @@
+import type { IListManagedProblemsPortIn } from '@learning/modules/problems/application/ports/in/list-managed-problems.port.in';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemSummaryResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
@@ -15,7 +16,7 @@ import { Inject, Injectable } from '@nestjs/common';
 const MAX_LIMIT = 100;
 
 @Injectable()
-export class ListManagedProblemsUseCase {
+export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)

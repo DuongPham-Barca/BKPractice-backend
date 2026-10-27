@@ -1,5 +1,6 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { IRestoreProblemPortIn } from '@learning/modules/problems/application/ports/in/restore-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
@@ -10,7 +11,7 @@ import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/proble
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class RestoreProblemUseCase {
+export class RestoreProblemUseCase implements IRestoreProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)

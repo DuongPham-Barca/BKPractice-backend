@@ -1,6 +1,12 @@
-import { GetPublicProblemUseCase } from '@learning/modules/problems/application/use-cases/get-public-problem.use-case';
-import { ListPublicProblemsUseCase } from '@learning/modules/problems/application/use-cases/list-public-problems.use-case';
-import { Controller, Get, Param, Query, UseFilters } from '@nestjs/common';
+import {
+  GET_PUBLIC_PROBLEM_PORT_IN,
+  type IGetPublicProblemPortIn,
+} from '@learning/modules/problems/application/ports/in/get-public-problem.port.in';
+import {
+  LIST_PUBLIC_PROBLEMS_PORT_IN,
+  type IListPublicProblemsPortIn,
+} from '@learning/modules/problems/application/ports/in/list-public-problems.port.in';
+import { Controller, Get, Inject, Param, Query, UseFilters } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBadRequestResponse,
@@ -23,8 +29,10 @@ import { ProblemResponseMapper } from './mappers/problem-response.mapper';
 @Controller('api/problems')
 export class PublicProblemsController {
   constructor(
-    private readonly getPublicProblem: GetPublicProblemUseCase,
-    private readonly listPublicProblems: ListPublicProblemsUseCase,
+    @Inject(GET_PUBLIC_PROBLEM_PORT_IN)
+    private readonly getPublicProblem: IGetPublicProblemPortIn,
+    @Inject(LIST_PUBLIC_PROBLEMS_PORT_IN)
+    private readonly listPublicProblems: IListPublicProblemsPortIn,
     private readonly responseMapper: ProblemResponseMapper,
   ) {}
 

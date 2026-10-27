@@ -1,6 +1,7 @@
-import type { ProblemType, SupportedLanguage } from '@app/contracts';
+import type { CreateProblemCommand } from '@learning/modules/problems/application/command/create-problem.command';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import type { ICreateProblemPortIn } from '@learning/modules/problems/application/ports/in/create-problem.port.in';
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
@@ -16,21 +17,6 @@ import {
   TagReference,
   TopicReference,
 } from '@learning/modules/problems/domain/value-objects';
-import type {
-  Constraints,
-  Difficulty,
-  EnabledLanguage,
-  ExecutionLimits,
-  FunctionContract,
-  InputSpecification,
-  OopContract,
-  OutputSpecification,
-  ProblemStatement,
-  ProblemTitle,
-  Slug,
-  StarterCode,
-  VisibleExample,
-} from '@learning/modules/problems/domain/value-objects';
 import {
   PROBLEM_REPOSITORY,
   TOPIC_TAG_READER,
@@ -38,27 +24,8 @@ import {
 } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
-export interface CreateProblemCommand {
-  readonly slug: Slug;
-  readonly title: ProblemTitle;
-  readonly statement: ProblemStatement;
-  readonly inputSpecification: InputSpecification | null;
-  readonly outputSpecification: OutputSpecification | null;
-  readonly problemType: ProblemType;
-  readonly difficulty: Difficulty;
-  readonly examples: readonly VisibleExample[];
-  readonly constraints: Constraints | null;
-  readonly executionLimits: ExecutionLimits;
-  readonly topicIds: readonly string[];
-  readonly tagIds: readonly string[];
-  readonly enabledLanguages: readonly EnabledLanguage[];
-  readonly starterCodes: readonly StarterCode[];
-  readonly functionContracts: ReadonlyMap<SupportedLanguage, FunctionContract>;
-  readonly oopContracts: ReadonlyMap<SupportedLanguage, OopContract>;
-}
-
 @Injectable()
-export class CreateProblemUseCase {
+export class CreateProblemUseCase implements ICreateProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(TOPIC_TAG_READER)

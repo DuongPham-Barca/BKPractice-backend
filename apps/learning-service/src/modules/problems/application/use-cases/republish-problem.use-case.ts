@@ -1,5 +1,6 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
+import type { IRepublishProblemPortIn } from '@learning/modules/problems/application/ports/in/republish-problem.port.in';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
@@ -10,7 +11,7 @@ import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/proble
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class RepublishProblemUseCase {
+export class RepublishProblemUseCase implements IRepublishProblemPortIn {
   constructor(
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)
