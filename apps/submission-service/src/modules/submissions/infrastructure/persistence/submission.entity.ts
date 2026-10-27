@@ -11,13 +11,18 @@ import {
 } from 'typeorm';
 import type { Relation } from 'typeorm';
 
-import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
-
-export { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+import { SubmissionKind, SubmissionStatus } from '../../domain/submission-record';
 
 @Entity('submissions')
 export class Submission {
   @PrimaryGeneratedColumn('uuid') id!: string;
+  @Column({
+    name: 'public_id',
+    type: 'uuid',
+    unique: true,
+    default: () => 'gen_random_uuid()',
+  })
+  publicId!: string;
   @Index()
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
@@ -27,9 +32,10 @@ export class Submission {
   @Column({ type: 'enum', enum: SubmissionKind }) kind!: SubmissionKind;
   @Column({ type: 'varchar', length: 20 }) language!: SupportedLanguage;
   @Column({ name: 'source_code', type: 'text' }) sourceCode!: string;
+  @Column({ type: 'text', nullable: true }) stdin!: string | null;
   @Column({ type: 'enum', enum: SubmissionStatus, default: SubmissionStatus.Pending })
   status!: SubmissionStatus;
-  @Column({ type: 'integer', default: 0 }) score!: number;
+  @Column({ type: 'integer', nullable: true }) score!: number | null;
   @Column({ name: 'passed_tests', type: 'integer', nullable: true }) passedTests!: number | null;
   @Column({ name: 'total_tests', type: 'integer', nullable: true }) totalTests!: number | null;
   @Column({ name: 'runtime_ms', type: 'integer', nullable: true }) runtimeMs!: number | null;
