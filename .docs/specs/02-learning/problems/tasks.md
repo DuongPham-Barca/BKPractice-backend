@@ -127,14 +127,17 @@ Approved và không thay đổi `plan.md`.
 
 ## Port và ranh giới
 
-- [x] **LRN-001-T011 — Định nghĩa bảy port/ranh giới.** Chỉ thêm `ProblemRepository` (domain
-      repository port tại `domain/repositories/`), `TopicTagReader`, `PrincipalProvider`,
-      `TransactionRunner` (application out port tại `application/ports/out/`), `PublishValidator`
+- [x] **LRN-001-T011 — Định nghĩa các port/ranh giới.** Chỉ thêm `ProblemRepository` (domain
+      repository port tại `domain/repositories/`), `TopicTagReader`, `TransactionRunner`
+      (application out port tại `application/ports/out/`), `PublishValidator`
       (domain service tại `domain/services/`), `ProblemAuthorizationService` (application service
       tại `application/services/`) và inbound port cho từng use case. Mỗi use case implement
       `I...PortIn` tại `application/ports/in/`; controller inject qua token `..._PORT_IN`. File
       outbound port dùng hậu tố `.port.out.ts`; inbound port dùng `.port.in.ts`; không dùng
-      `.port.ts`. Các port không chứa TypeORM, NestJS, HTTP hay kiểu phản hồi của Gateway. Không thêm base repository chung, bus CQRS, policy engine hay event store.
+      `.port.ts`. Các port không chứa TypeORM, NestJS, HTTP hay kiểu phản hồi của Gateway. Không thêm
+      base repository chung, bus CQRS, policy engine hay event store. Principal tin cậy không phải
+      out port: `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở presentation đọc header Gateway và
+      controller truyền `Principal` vào use case.
       **Phụ thuộc:** LRN-001-T005, LRN-001-T008.
       **Truy vết:** Mục Các port và ranh giới và Tuân thủ kiến trúc của kế hoạch.
 
@@ -303,12 +306,14 @@ Approved và không thay đổi `plan.md`.
 
 ## Infrastructure
 
-- [x] **LRN-001-T029 — Hiện thực `PrincipalProvider`.** Đọc các header tin cậy do Gateway thiết lập
-      (`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`) và dịch chúng thành một principal độc
-      lập với framework; header quyền thiếu thì coi là tập rỗng (ID-003-FR-022). Từ
-      chối ngữ cảnh bị thiếu hoặc không nhất quán như phòng thủ nhiều lớp cho các lời gọi trực tiếp
-      hoặc định tuyến sai. Phải từ chối header định danh/vai trò giả mạo do client gửi và không bao
-      giờ chấp nhận một token của nhà cung cấp Microsoft hay một refresh token như một principal.
+- [x] **LRN-001-T029 — Hiện thực cơ chế principal tin cậy.** (Điều chỉnh 2026-10-27: thay
+      `RequestPrincipalProvider` bằng `@TrustedPrincipal()` + `TrustedPrincipalGuard`.) Đọc các
+      header tin cậy do Gateway thiết lập (`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`)
+      và dịch chúng thành một principal độc lập với framework; header quyền thiếu thì coi là tập
+      rỗng (ID-003-FR-022). Từ chối ngữ cảnh bị thiếu hoặc không nhất quán như phòng thủ nhiều lớp
+      cho các lời gọi trực tiếp hoặc định tuyến sai. Phải từ chối header định danh/vai trò giả mạo
+      do client gửi và không bao giờ chấp nhận một token của nhà cung cấp Microsoft hay một refresh
+      token như một principal.
       **Phụ thuộc:** LRN-001-T011.
       **Truy vết:** LRN-001-FR-004; LRN-001-SR-002, LRN-001-SR-012; LRN-001-AC-005,
       LRN-001-AC-007.
@@ -323,8 +328,8 @@ Approved và không thay đổi `plan.md`.
 
 - [x] **LRN-001-T031 — Thêm test cho các adapter hạ tầng.** Kiểm thử việc ánh xạ giữa lớp lưu trữ và
       domain, việc chuyển đổi xung đột ràng buộc duy nhất thành lỗi nghiệp vụ, hành vi của
-      `TransactionRunner` khi rollback, việc từ chối header giả mạo ở `PrincipalProvider`, và việc
-      adapter quyền không bao giờ đọc dữ liệu từ client.
+      `TransactionRunner` khi rollback, việc từ chối header giả mạo ở decorator/guard principal, và
+      việc kiểm tra quyền không bao giờ đọc dữ liệu từ client.
       **Phụ thuộc:** LRN-001-T023, LRN-001-T024, LRN-001-T025, LRN-001-T029, LRN-001-T030.
       **Truy vết:** LRN-001-SR-002, LRN-001-SR-009, LRN-001-SR-012; LRN-001-AC-007,
       LRN-001-AC-018.
@@ -391,8 +396,9 @@ Approved và không thay đổi `plan.md`.
 
 - [x] **LRN-001-T038 — Nối dây composition root của module Problems.** Đăng ký các use case,
       `PublishValidator` và `ProblemAuthorizationService` làm provider của Nest; bind
-      `ProblemRepository`, `TopicTagReader`, `TransactionRunner` và `PrincipalProvider` với adapter
-      tương ứng; bind 12 inbound port token tới use case class bằng `useExisting`; chỉ phơi bày
+      `ProblemRepository`, `TopicTagReader`, `TransactionRunner` với adapter tương ứng; dùng
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở presentation; bind 12 inbound port token tới
+      use case class bằng `useExisting`; chỉ phơi bày
       những provider mà tầng presentation cần. Giữ phần nối dây module không chứa hành vi nghiệp vụ
       và không có trừu tượng hoá trùng lặp. Không đụng các module Courses/Assignments/Progress.
       **Phụ thuộc:** LRN-001-T013 tới LRN-001-T021, LRN-001-T023 tới LRN-001-T025,

@@ -107,7 +107,7 @@ Two kinds of boundary exist inside the hexagon:
 
 - **Driven port** — a port reached by the core, implemented by an infrastructure adapter. Aggregate
   repository ports (e.g. `ProblemRepository`) are declared in `domain/repositories/`; other driven
-  ports (e.g. `CourseStructureReader`, `TransactionRunner`, `PrincipalProvider`) are declared in
+  ports (e.g. `CourseStructureReader`, `TransactionRunner`) are declared in
   `application/ports/out/`. All driven ports are implemented in `infrastructure/`. Port files use
   `<name>.port.out.ts`; inbound port interfaces use `<name>.port.in.ts` under
   `application/ports/in/`, and controllers inject them through `<NAME>_PORT_IN` tokens. Never
@@ -139,9 +139,10 @@ Rules:
 
 ### Ports shared between modules
 
-`PrincipalProvider` and `TransactionRunner` (LRN-001) are shared ports. Import them from the module
-that owns them; do not copy them and do not move them into `libs/`. Avoid creating a generic shared
-Learning service.
+`TransactionRunner` (LRN-001) is a shared port. Import it from the module that owns it; do not copy
+it and do not move it into `libs/`. The trusted principal is a transport concern: reuse LRN-001's
+`@TrustedPrincipal()`/`TrustedPrincipalGuard` in presentation instead of introducing a shared
+principal port. Avoid creating a generic shared Learning service.
 
 ## Current implementation and status
 

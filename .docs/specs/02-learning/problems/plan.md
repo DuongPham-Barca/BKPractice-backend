@@ -54,9 +54,10 @@ infrastructure ----implements----^ các port của application/domain
 ```
 
 Theo cách diễn đạt hexagonal: các controller REST là **driving adapter** gọi vào use case, còn
-repository TypeORM, provider principal và transaction runner là các **driven adapter** được lõi gọi
-ra thông qua port. Chiều phụ thuộc không đổi so với cách diễn đạt trước đó; điều được nhấn mạnh thêm
-là ranh giới port/adapter và việc mô hình hoá bằng các khối DDD tactical.
+repository TypeORM và transaction runner là các **driven adapter** được lõi gọi ra thông qua port.
+Principal tin cậy được đọc ở tầng presentation bằng decorator/guard và truyền vào use case như một
+tham số. Chiều phụ thuộc không đổi so với cách diễn đạt trước đó; điều được nhấn mạnh thêm là ranh
+giới port/adapter và việc mô hình hoá bằng các khối DDD tactical.
 
 - DDD chỉ dùng ở mức **tactical**: aggregate root `Problem`, các value object (slug, giới hạn thực
   thi, ví dụ hiển thị, contract theo ngôn ngữ), một domain service cho việc kiểm tra mức độ sẵn sàng
@@ -458,9 +459,13 @@ application service tại `application/services/`.
 | `ProblemRepository`           | Nạp/lưu aggregate; truy vấn nội dung đã xuất bản (chưa bị xoá); liệt kê có lọc/tìm kiếm/phân trang; tra cứu theo slug + id; đảm bảo tính duy nhất; truy vấn quản lý theo phạm vi chủ sở hữu, bao gồm cả nội dung đã xoá mềm (`includeDeleted`) | Adapter TypeORM trong `infrastructure/persistence` |
 | `TopicTagReader`              | Kiểm tra sự tồn tại của các ID Topic/Tag khi tạo/cập nhật                                                                                                                                                                                      | Adapter TypeORM (các bảng do Learning sở hữu)      |
 | `PublishValidator`            | Kiểm tra mức độ sẵn sàng ở tầng domain, dùng chung bởi `PublishProblem`, phần hiển thị mức độ sẵn sàng của `GetManagedProblem`/`ListManagedProblem`, và xem trước                                                                              | Domain service; không truy cập CSDL xuyên service  |
-| `ProblemAuthorizationService` | Đánh giá quyền `problem:*` cần thiết + quyền sở hữu, dựa trên principal tin cậy                                                                                                                                                                | Application service; dùng `PrincipalProvider`      |
-| `PrincipalProvider`           | Dịch các header Gateway tin cậy thành một principal độc lập với framework                                                                                                                                                                      | Adapter dạng guard/decorator ở tầng hạ tầng        |
+| `ProblemAuthorizationService` | Đánh giá quyền `problem:*` cần thiết + quyền sở hữu, dựa trên principal tin cậy                                                                                                                                                                | Application service; nhận `Principal` từ use case  |
 | `TransactionRunner`           | Điều phối nạp aggregate + kiểm tra + lưu một cách nguyên tử                                                                                                                                                                                    | Adapter dùng `DataSource` của TypeORM              |
+
+Principal tin cậy không phải out port: `@TrustedPrincipal()` (param decorator) và
+`TrustedPrincipalGuard` đọc header Gateway ở tầng presentation; controller truyền `Principal` vào
+inbound port. Route public dùng guard để giữ `401` khi thiếu principal, còn route managed dùng
+decorator trực tiếp.
 
 Không thêm base repository chung, bus CQRS, policy engine, event store, hay service Problem riêng.
 
@@ -671,11 +676,14 @@ thành lỗi nghiệp vụ `DuplicateSlug`), các truy vấn quản lý theo ph�
 
 ### Adapter principal/quyền
 
-`infrastructure/auth/` đọc các header tin cậy do Gateway thiết lập (`x-auth-user-id`,
-`x-auth-roles`) và từ chối ngữ cảnh bị thiếu/không nhất quán (phòng thủ nhiều lớp cho các lời gọi
-trực tiếp hoặc định tuyến sai). Nó phải từ chối các header định danh/vai trò giả mạo do client gửi và
-không bao giờ được chấp nhận một token của nhà cung cấp Microsoft hay một refresh token như một
-principal của BKPractice.
+`presentation/http/decorators/trusted-principal.decorator.ts` và
+`presentation/http/guards/trusted-principal.guard.ts` đọc các header tin cậy do Gateway thiết lập
+(`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`) và từ chối ngữ cảnh bị thiếu/không nhất
+quán (phòng thủ nhiều lớp cho các lời gọi trực tiếp hoặc định tuyến sai). Chúng phải từ chối các
+header định danh/vai trò giả mạo do client gửi và không bao giờ được chấp nhận một token của nhà
+cung cấp Microsoft hay một refresh token như một principal của BKPractice. Ở tầng application,
+`ProblemAuthorizationService` kiểm tra role `LECTURER`, quyền `problem:*` và quyền sở hữu trên
+`Principal` do controller truyền vào; không còn `PrincipalProvider` out port.
 
 ### Adapter kiểm tra nội dung
 
@@ -891,7 +899,7 @@ yêu cầu bảo mật đã được kiểm chứng, và mọi FR/SR/AC đều �
   các value object, enum, máy trạng thái vòng đời, bộ kiểm tra xuất bản, các bộ kiểm tra contract
   theo loại (STANDARD/FUNCTION/OOP), và `domain/repositories/problem.repository.port.out.ts`.
 - `apps/learning-service/src/modules/problems/application/ports/out/` — `TopicTagReader`,
-  `PrincipalProvider`, `TransactionRunner`.
+  `TransactionRunner`.
 - `apps/learning-service/src/modules/problems/application/use-cases/` —
   `create-problem`, `update-problem`, `publish-problem`, `hold-problem`, `republish-problem`,
   `soft-delete-problem`, `restore-problem`, `get-published-problem`, `list-published-problems`,
@@ -902,8 +910,9 @@ yêu cầu bảo mật đã được kiểm chứng, và mọi FR/SR/AC đều �
   case.
 - `apps/learning-service/src/modules/problems/infrastructure/persistence/` — các adapter TypeORM
   `ProblemRepository`/`TopicTagReader` và phần hiện thực transaction.
-- `apps/learning-service/src/modules/problems/infrastructure/auth/` — guard/decorator principal tin
-  cậy và adapter quyền đọc các header do Gateway thiết lập.
+- `apps/learning-service/src/modules/problems/presentation/http/decorators/` và
+  `presentation/http/guards/` — decorator/guard đọc các header tin cậy do Gateway thiết lập và cung
+  cấp `Principal` cho controller.
 - `apps/learning-service/src/modules/problems/presentation/` — các controller công khai/quản lý, DTO
   request/response, response mapper và decorator Swagger.
 - `apps/learning-service/src/database/migrations/<timestamp>-Lrn001ProblemManagement.ts`.
@@ -931,8 +940,8 @@ Không có.
 5. Viết và kiểm chứng migration LRN-001 (`type_config`, `deleted_at`, enum `publish_status`, các ràng
    buộc CHECK/UNIQUE, partial index) với `synchronize: false`; kiểm chứng bằng
    `pnpm migration:run:learning` / revert.
-6. Bổ sung composition root của module Problems, tích hợp guard/decorator principal tin cậy, và
-   adapter quyền.
+6. Bổ sung composition root của module Problems, tích hợp decorator/guard principal tin cậy ở
+   presentation, và service quyền ở application.
 7. Hiện thực các use case và phần ánh xạ lỗi của chúng; giữ tầng Presentation chỉ lo transport.
 8. Hiện thực DTO, controller, metadata Swagger, và các phép chiếu phản hồi công khai/quản lý.
 9. Chạy các test unit, lưu trữ, đồng thời, API và bảo mật (bao gồm phép chiếu phản hồi, giả mạo người
@@ -1016,7 +1025,8 @@ Không có.
   use case ở tầng application điều phối transaction, port, quyền sở hữu và kiểm tra xuất bản; tầng
   domain sở hữu aggregate, các value object, các bước chuyển vòng đời, bất biến theo loại, quy tắc
   định dạng nội dung và domain repository port `ProblemRepository`; tầng infrastructure là driven
-  adapter, hiện thực TypeORM, principal và quyền phía sau các port.
+  adapter, hiện thực TypeORM; principal tin cậy được đọc ở presentation bằng decorator/guard, còn
+  quyền được kiểm tra trong application service.
 - **Phạm vi DDD:** chỉ dùng các khối tactical (aggregate root, value object, domain service,
   repository) trong một bounded context duy nhất. Không đưa vào context map, anti-corruption layer
   hay bounded context thứ hai.

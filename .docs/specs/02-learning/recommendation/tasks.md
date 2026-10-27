@@ -18,9 +18,10 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-007-T001 — Xác nhận nền tảng.** Khảo sát trạng thái Git, `spec.md` 1.0 Approved,
       `plan.md` Approved, kiến trúc Learning (DDD + Hexagonal, ADR 0002). Xác nhận đã triển khai:
-      LRN-001 (`PrincipalProvider`, `problems.deleted_at`, `ON_HOLD`), LRN-003 (`courses.status`,
-      `courses.deleted_at`, `chapter_problems` với `display_order`), LRN-006 (đã giải = `solved_at`
-      khác null). Ghi lại tên bảng/cột thật; kiểm xem LRN-001 đã tạo index theo `topic_id`/`tag_id`
+      LRN-001 (`@TrustedPrincipal()`/`TrustedPrincipalGuard`, `problems.deleted_at`, `ON_HOLD`),
+      LRN-003 (`courses.status`, `courses.deleted_at`, `chapter_problems` với `display_order`),
+      LRN-006 (đã giải = `solved_at` khác null). Ghi lại tên bảng/cột thật; kiểm xem LRN-001 đã tạo
+      index theo `topic_id`/`tag_id`
       chưa. Thiếu phụ thuộc nào thì **DỪNG và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Mục Phụ thuộc và Thứ tự triển khai bước 1 của kế hoạch.
@@ -62,7 +63,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 - [ ] **LRN-007-T007 — Định nghĩa port `RecommendationCandidateReader`.** Hai phương thức
       `findNextInFollowedCourses(userId)` và
       `findSimilarCandidates(userId, { excludeProblemIds, limit, ladder })`, trả value object domain.
-      Không port nào khác ngoài `PrincipalProvider` của LRN-001.
+      Không port nào khác. Principal lấy qua `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001.
       **Phụ thuộc:** LRN-007-T004.
       **Truy vết:** Mục Port của kế hoạch.
 
@@ -135,8 +136,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Truy vết:** Định nghĩa Hoàn thành; SR-003.
 
 - [ ] **LRN-007-T017 — Nối dây module.** Tạo `recommendation.module.ts`: gắn port với adapter,
-      đăng ký use case, controller, import `PrincipalProvider` như LRN-001 export. Nạp
-      `RecommendationModule` trong `learning-service.module.ts`. Không đổi module khác.
+      đăng ký use case, controller, dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001.
+      Nạp `RecommendationModule` trong `learning-service.module.ts`. Không đổi module khác.
       **Phụ thuộc:** LRN-007-T008, LRN-007-T010, LRN-007-T015.
       **Truy vết:** Mục Adapter hạ tầng và Tuân thủ kiến trúc của kế hoạch.
 
