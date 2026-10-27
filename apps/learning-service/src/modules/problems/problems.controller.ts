@@ -4,7 +4,7 @@ import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Problem, PublishStatus, StarterCode, TestCase } from './entities/problem.entity';
+import { Problem, StarterCode, TestCase } from './entities/problem.entity';
 import { InternalServiceGuard } from './internal-service.guard';
 
 interface JudgePackage {
@@ -24,15 +24,6 @@ export class ProblemsController {
     @InjectRepository(TestCase) private readonly testCases: Repository<TestCase>,
     @InjectRepository(StarterCode) private readonly starterCodes: Repository<StarterCode>,
   ) {}
-
-  @Get('api/problems')
-  list(): Promise<Problem[]> {
-    return this.problems.find({
-      where: { publishStatus: PublishStatus.Published },
-      relations: { topics: true, tags: true, languages: true, starterCodes: true },
-      order: { createdAt: 'DESC' },
-    });
-  }
 
   @Get('internal/problems/:id/judge-package/:language')
   @UseGuards(InternalServiceGuard)

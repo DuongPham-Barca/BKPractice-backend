@@ -35,7 +35,7 @@ Gateway.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation -> application -> domain
@@ -45,8 +45,9 @@ infrastructure ----implements----^ các port của application/domain
 - Module `assignments` có bất biến thật (vòng đời, khoá chỉnh sửa theo thời gian, danh sách Problem
   duy nhất và giới hạn, điều kiện xuất bản), nên được phân tầng đủ: `domain`, `application/ports`,
   `application/use-cases`, `infrastructure`, `presentation`.
-- Tái dùng các port hạ tầng chung của LRN-001 (`PrincipalProvider`, `TransactionRunner`) và bộ kiểm
-  tra Markdown hạn chế của LRN-001. **LRN-001 phải được triển khai trước.**
+- Tái dùng `TransactionRunner`, cơ chế principal tin cậy
+  (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) và bộ kiểm tra Markdown hạn chế của LRN-001.
+  **LRN-001 phải được triển khai trước.**
 - Đọc dữ liệu của module khác trong Learning (Class/Enrollment của LRN-004, Problem của LRN-001) chỉ
   qua port đọc hẹp, hiện thực bởi adapter TypeORM trong cùng service. Không
   gọi use case của module khác theo kiểu dịch vụ chung, không sửa bảng của module khác.
@@ -77,12 +78,12 @@ infrastructure ----implements----^ các port của application/domain
 
 ### Phân loại thay đổi
 
-| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REUSE     | Bảng `assignment_problems` và các cột hiện có; cột `assignments.course_id` (giữ nguyên, LRN-005 không ghi, luôn `NULL` với Assignment mới); `PrincipalProvider`, `TransactionRunner`, bộ kiểm Markdown hạn chế của LRN-001; `ProblemReferenceReader` do `problems` export (plan LRN-003) nếu đã có; route prefix của Gateway; quy ước lỗi hiện có |
-| MODIFY    | Entity `Assignment` (`classroom` bắt buộc, thêm cột mới; quan hệ `course` giữ nguyên, không dùng), `AssignmentProblem` (không đổi cột, thêm CHECK/index ở migration); `learning-service.module.ts` (import `AssignmentsModule`)                                                                                                                   |
-| CREATE    | Domain (aggregate, value object, `AssignmentPublishValidator`); port và adapter; use case; controller, DTO; `assignments.module.ts`; migration `Lrn005AssignmentManagement`; migration seed quyền ở Identity; test                                                                                                                                |
-| REMOVE    | Không có                                                                                                                                                                                                                                                                                                                                          |
+| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| REUSE     | Bảng `assignment_problems` và các cột hiện có; cột `assignments.course_id` (giữ nguyên, LRN-005 không ghi, luôn `NULL` với Assignment mới); `TransactionRunner`, cơ chế principal tin cậy (`@TrustedPrincipal()`/`TrustedPrincipalGuard`), bộ kiểm Markdown hạn chế của LRN-001; `ProblemReferenceReader` do `problems` export (plan LRN-003) nếu đã có; route prefix của Gateway; quy ước lỗi hiện có |
+| MODIFY    | Entity `Assignment` (`classroom` bắt buộc, thêm cột mới; quan hệ `course` giữ nguyên, không dùng), `AssignmentProblem` (không đổi cột, thêm CHECK/index ở migration); `learning-service.module.ts` (import `AssignmentsModule`)                                                                                                                                                                        |
+| CREATE    | Domain (aggregate, value object, `AssignmentPublishValidator`); port và adapter; use case; controller, DTO; `assignments.module.ts`; migration `Lrn005AssignmentManagement`; migration seed quyền ở Identity; test                                                                                                                                                                                     |
+| REMOVE    | Không có                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ## Thay đổi ở tầng domain
 
@@ -165,11 +166,12 @@ Mỗi use case thay đổi dữ liệu chạy trong `TransactionRunner`, nạp C
 | `ClassAccessReader`    | `loadClass(classId, { lockShared })` → `{ id, ownerId, status }`; `isEnrolled(classId, userId)`                       | TypeORM trên bảng Class/Enrollment của LRN-004                                                                          |
 | `ProblemCatalogReader` | `loadStates(problemIds)` → `{ id, slug, title, difficulty, publishStatus, deleted }`; không đọc Test Case/harness     | Tái dùng `ProblemReferenceReader` do `problems` export (plan LRN-003), hoặc TypeORM chỉ đọc trên `problems` nếu chưa có |
 | `Clock`                | `now()`; cho phép test biên thời gian không phụ thuộc đồng hồ thật                                                    | Adapter hệ thống                                                                                                        |
-| `PrincipalProvider`    | (LRN-001) principal tin cậy gồm `userId`, `roles`, `permissions`                                                      | Tái dùng                                                                                                                |
 | `TransactionRunner`    | (LRN-001) nguyên tử                                                                                                   | Tái dùng                                                                                                                |
 
 `AssignmentAccessPolicy` là thành phần application (không phải port) gom kiểm tra "có quyền X và
-principal là chủ sở hữu Class", dùng chung cho mọi use case quản lý. Không thêm port nào khác.
+principal là chủ sở hữu Class", dùng chung cho mọi use case quản lý. Principal tin cậy không phải
+port: controller dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 và truyền `Principal`
+vào use case. Không thêm port nào khác.
 
 ## Lưu trữ
 
@@ -284,8 +286,9 @@ Tất cả route cần Bearer token; Gateway đặt header định danh tin cậ
 
 ## Phân quyền
 
-- Principal lấy từ `PrincipalProvider` của LRN-001 (header `x-auth-user-id`, `x-auth-roles`,
-  `x-auth-permissions` do Gateway làm sạch và đặt lại). Thiếu header quyền thì tập quyền rỗng.
+- Principal lấy từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 tại presentation
+  (header `x-auth-user-id`, `x-auth-roles`, `x-auth-permissions` do Gateway làm sạch và đặt lại).
+  Thiếu header quyền thì tập quyền rỗng.
 - `AssignmentAccessPolicy.requireManage(principal, permission, classAccess)`: có mã quyền và
   `classAccess.ownerId === principal.userId`; thiếu thì `403`. `ADMIN` không có nhánh ngoại lệ.
 - Đọc hướng sinh viên: `ClassAccessReader.isEnrolled(classId, principal.userId)`; sai thì `404`.
@@ -337,17 +340,17 @@ Không đưa vào cấu trúc lỗi mới.
 
 ## Bảo mật
 
-| Yêu cầu | Cách thực thi                                                                                        |
-| ------- | ---------------------------------------------------------------------------------------------------- |
-| SR-001  | Quyền, sở hữu, thành viên, trạng thái kiểm trong use case, không ở controller                        |
-| SR-002  | Principal chỉ từ `PrincipalProvider`; không route nào nhận định danh người dùng từ client            |
-| SR-003  | Truy vấn sinh viên lọc trạng thái, xoá mềm, `startsAt`; lọc Problem theo FR-015; lỗi `404` đồng nhất |
-| SR-004  | Không response DTO nào có trường tiến độ/điểm/thành viên; module không phụ thuộc `progress`          |
-| SR-005  | `ProblemCatalogReader` không chọn cột Test Case/harness; test soi phản hồi                           |
-| SR-006  | DTO danh sách cho phép + `forbidNonWhitelisted`                                                      |
-| SR-007  | Bộ kiểm Markdown hạn chế của LRN-001                                                                 |
-| SR-008  | Chỉ datasource Learning; ID người dùng là UUID thuần; không khoá ngoại xuyên service                 |
-| SR-009  | Thiếu principal hoặc thiếu quyền thì từ chối trước khi đọc dữ liệu                                   |
+| Yêu cầu | Cách thực thi                                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------------- |
+| SR-001  | Quyền, sở hữu, thành viên, trạng thái kiểm trong use case, không ở controller                             |
+| SR-002  | Principal chỉ từ decorator/guard tin cậy của LRN-001; không route nào nhận định danh người dùng từ client |
+| SR-003  | Truy vấn sinh viên lọc trạng thái, xoá mềm, `startsAt`; lọc Problem theo FR-015; lỗi `404` đồng nhất      |
+| SR-004  | Không response DTO nào có trường tiến độ/điểm/thành viên; module không phụ thuộc `progress`               |
+| SR-005  | `ProblemCatalogReader` không chọn cột Test Case/harness; test soi phản hồi                                |
+| SR-006  | DTO danh sách cho phép + `forbidNonWhitelisted`                                                           |
+| SR-007  | Bộ kiểm Markdown hạn chế của LRN-001                                                                      |
+| SR-008  | Chỉ datasource Learning; ID người dùng là UUID thuần; không khoá ngoại xuyên service                      |
+| SR-009  | Thiếu principal hoặc thiếu quyền thì từ chối trước khi đọc dữ liệu                                        |
 
 ## Chiến lược kiểm thử
 
@@ -413,8 +416,9 @@ Không đưa vào cấu trúc lỗi mới.
 
 ## Phụ thuộc
 
-- **LRN-001 đã triển khai:** `PrincipalProvider`, `TransactionRunner`, bộ kiểm Markdown hạn chế, trạng
-  thái và xoá mềm Problem.
+- **LRN-001 đã triển khai:** `TransactionRunner`, cơ chế principal tin cậy
+  (`@TrustedPrincipal()`/`TrustedPrincipalGuard`), bộ kiểm Markdown hạn chế, trạng thái và xoá mềm
+  Problem.
 - **LRN-004:** bảng/entity Class với `lecturer_id` là chủ sở hữu và trạng thái `ACTIVE`/`ARCHIVED`;
   Enrollment hiện hành. LRN-004 cần khoá `FOR UPDATE` dòng Class khi đổi trạng thái, và không được xoá
   cứng Class có Assignment (khoá ngoại `RESTRICT`).

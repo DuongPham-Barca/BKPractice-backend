@@ -15,9 +15,9 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 ## Chuẩn bị
 
 - [ ] **LRN-003-T001 — Xác nhận nền tảng.** Khảo sát Git, spec 1.0, plan, kiến trúc Learning (ADR
-      0002). Xác nhận LRN-001 đã triển khai (`PrincipalProvider` có `permissions`, `TransactionRunner`,
-      bộ kiểm Markdown, `problems.deleted_at`) và ID-003-T045 tới T048 đã có. Thiếu thì **DỪNG và BÁO
-      CÁO**.
+      0002). Xác nhận LRN-001 đã triển khai (`TransactionRunner`,
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` có `permissions`, bộ kiểm Markdown,
+      `problems.deleted_at`) và ID-003-T045 tới T048 đã có. Thiếu thì **DỪNG và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Mục Thứ tự triển khai bước 1 của kế hoạch.
 
@@ -69,7 +69,8 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 ## Tầng application
 
 - [ ] **LRN-003-T009 — Port.** `CourseRepository` (có `loadForUpdate`), `CourseReferenceChecker`,
-      `ProblemReferenceReader`; dùng lại `PrincipalProvider`, `TransactionRunner` của LRN-001.
+      `ProblemReferenceReader`; dùng lại `TransactionRunner` của LRN-001; principal lấy qua
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard`, không phải port.
       **Phụ thuộc:** LRN-003-T005.
       **Truy vết:** Mục Port của kế hoạch.
 

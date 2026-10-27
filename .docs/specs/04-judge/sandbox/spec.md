@@ -130,7 +130,7 @@ security controls hiện hành.
 
 ## Phụ thuộc
 
-[Judge security](../../00-system/judge-security.md), [Judge architecture](../../../docs/architecture/judge-service.md),
+[Judge security](../../00-system/judge-security.md), [Judge architecture](../../../architecture/judge-service.md),
 [JDG-001](../standard-judge/spec.md), [JDG-002](../language-runners/spec.md), Docker sandbox adapter.
 
 ## Câu hỏi mở

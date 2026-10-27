@@ -32,7 +32,7 @@ microservice mới.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation (REST controller, RabbitMQ consumer) -> application -> domain
@@ -45,7 +45,7 @@ infrastructure ----implements----^ các port của application/domain
   lần đạt sớm nhất, điểm là điểm cao nhất". Phép tính hoàn thành Course và điểm Assignment là domain
   service thuần. Không thêm bounded context, CQRS hay event store.
 - Đây chính là bước "tách use case `ApplyAcceptedSubmission`" mà
-  [learning-service.md](../../../docs/architecture/learning-service.md) mục Incremental alignment
+  [learning-service.md](../../../architecture/learning-service.md) mục Incremental alignment
   yêu cầu khi luồng tiến độ thay đổi lần tới.
 
 ## Ảnh hưởng tới mã nguồn hiện có
@@ -85,12 +85,12 @@ infrastructure ----implements----^ các port của application/domain
 
 ### Phân loại thay đổi
 
-| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                                                                                 |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| REUSE     | Bảng `progress` và cột hiện có; `RabbitMqService` và topology queue/DLQ; contract `SubmissionAcceptedEvent` và hằng số messaging (không đổi); `PrincipalProvider`, `TransactionRunner` của LRN-001; `ValidationPipe` toàn cục; bảng `chapters`/`chapter_problems` (LRN-003), `classes`/`enrollments` (LRN-004), `assignments`/`assignment_problems` (LRN-005) chỉ để đọc |
-| MODIFY    | Entity `Progress` (giữ enum, domain không ghi `ATTEMPTED`); `progress.module.ts` (nối dây use case, port, adapter, controller); `gateway-proxy.service.ts` (thêm tiền tố `/api/progress`)                                                                                                                                                                                |
-| CREATE    | Domain `ProblemProgress`, `AcceptedSubmission`, `CompletionCount`, `CourseCompletionCalculator`, `AssignmentScoreCalculator`; port và adapter; 7 use case; consumer mới ở `presentation`; 2 controller và DTO; entity `ProgressEventReceipt`; migration `Lrn006Progress`; test                                                                                           |
-| REMOVE    | `modules/progress/progress.consumer.ts` (thay bằng consumer mỏng gọi `ApplyAcceptedSubmission`)                                                                                                                                                                                                                                                                          |
+| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REUSE     | Bảng `progress` và cột hiện có; `RabbitMqService` và topology queue/DLQ; contract `SubmissionAcceptedEvent` và hằng số messaging (không đổi); `TransactionRunner` và cơ chế principal tin cậy (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) của LRN-001; `ValidationPipe` toàn cục; bảng `chapters`/`chapter_problems` (LRN-003), `classes`/`enrollments` (LRN-004), `assignments`/`assignment_problems` (LRN-005) chỉ để đọc |
+| MODIFY    | Entity `Progress` (giữ enum, domain không ghi `ATTEMPTED`); `progress.module.ts` (nối dây use case, port, adapter, controller); `gateway-proxy.service.ts` (thêm tiền tố `/api/progress`)                                                                                                                                                                                                                                       |
+| CREATE    | Domain `ProblemProgress`, `AcceptedSubmission`, `CompletionCount`, `CourseCompletionCalculator`, `AssignmentScoreCalculator`; port và adapter; 7 use case; consumer mới ở `presentation`; 2 controller và DTO; entity `ProgressEventReceipt`; migration `Lrn006Progress`; test                                                                                                                                                  |
+| REMOVE    | `modules/progress/progress.consumer.ts` (thay bằng consumer mỏng gọi `ApplyAcceptedSubmission`)                                                                                                                                                                                                                                                                                                                                 |
 
 Không sửa `libs/contracts`, `libs/common` hay bất cứ file nào của Submission.
 
@@ -157,8 +157,10 @@ Class nào tồn tại.
 | `AssignmentReader`       | Nạp Assignment theo `(classId?, assignmentId)` với `deadlineAt`, các trường quyết định hiển thị của LRN-005, danh sách `(problemId, maxScore, order, visibleToStudent)`                                                 | TypeORM chỉ đọc                                 |
 | `PublishedProblemFilter` | Lọc một tập `problemId` còn `PUBLISHED` chưa xoá mềm (cho `ListMySolvedProblems`, `GetMySolvedStatus`)                                                                                                                  | TypeORM chỉ đọc                                 |
 | `Clock`                  | Thời điểm hiện tại, để kiểm thử `startsAt`/`deadlineAt`/`isFinal` không phụ thuộc đồng hồ thật                                                                                                                          | `SystemClock`                                   |
-| `PrincipalProvider`      | (LRN-001) `userId`, `roles`, `permissions` từ header Gateway                                                                                                                                                            | Header Gateway                                  |
 | `TransactionRunner`      | (LRN-001) transaction cho `ApplyAcceptedSubmission`                                                                                                                                                                     | DataSource                                      |
+
+Principal tin cậy không phải port: controller dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard`
+của LRN-001 và truyền `Principal` vào use case.
 
 Ba reader chéo module là port riêng của `progress`, vì tiến độ chỉ cần một phép chiếu chỉ đọc rất hẹp
 của Course, Class và Assignment. Chúng thuộc cùng bounded context và cùng cơ sở dữ liệu; chúng không
@@ -260,8 +262,9 @@ cần Bearer token.
 
 ## Phân quyền
 
-- Principal từ `PrincipalProvider` của LRN-001 (header `x-auth-user-id`, `x-auth-permissions` do
-  Gateway đặt lại). Thiếu `x-auth-user-id` → `401`; thiếu quyền → coi là rỗng.
+- Principal từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 tại presentation (header
+  `x-auth-user-id`, `x-auth-permissions` do Gateway đặt lại). Thiếu `x-auth-user-id` → `401`; thiếu
+  quyền → coi là rỗng.
 - Route `me/*`: chỉ cần principal hợp lệ; `userId` luôn là principal, không có tham số người dùng.
 - Route `classes/*`: `ClassProgressAuthorization` trong tầng application kiểm tra
   `permissions` chứa `class:read-managed` và `class.lecturerId === principal.userId`. `ADMIN` không có
@@ -338,7 +341,7 @@ Không đưa vào cấu trúc lỗi mới.
 | Yêu cầu | Cách thực thi                                                                                                                 |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | SR-001  | Quyền, sở hữu, đăng ký kiểm trong use case, không ở controller                                                                |
-| SR-002  | Principal chỉ từ `PrincipalProvider`; route `me/*` không có tham số người dùng; `forbidNonWhitelisted`                        |
+| SR-002  | Principal chỉ từ decorator/guard tin cậy của LRN-001; route `me/*` không có tham số người dùng; `forbidNonWhitelisted`        |
 | SR-003  | Use case `me/*` chỉ truy vấn theo principal; use case lớp giới hạn theo sinh viên đang đăng ký và Course/Assignment của Class |
 | SR-004  | Reader chỉ trả nội dung hiển thị; không hiển thị thì `404` hoặc coi là chưa giải                                              |
 | SR-005  | DTO không có trường mã nguồn, Test Case, harness, kết quả chấm                                                                |
@@ -394,9 +397,9 @@ Không đưa vào cấu trúc lỗi mới.
 
 ## Thứ tự triển khai
 
-1. Xác nhận LRN-001 (`PrincipalProvider`, `TransactionRunner`, `deleted_at` của Problem), LRN-003
-   (`chapter_problems`, trạng thái Course), LRN-004 (trạng thái Class, `class:read-managed`) và LRN-005
-   (bảng Assignment, quy tắc hiển thị) đã triển khai.
+1. Xác nhận LRN-001 (`TransactionRunner`, `@TrustedPrincipal()`/`TrustedPrincipalGuard`, `deleted_at`
+   của Problem), LRN-003 (`chapter_problems`, trạng thái Course), LRN-004 (trạng thái Class,
+   `class:read-managed`) và LRN-005 (bảng Assignment, quy tắc hiển thị) đã triển khai.
 2. Domain: `AcceptedSubmission`, `ProblemProgress`, `CompletionCount`, hai domain service; unit test.
 3. Migration LRN-006 và entity biên nhận; kiểm chứng up/down.
 4. Adapter `ProgressRepository` và `ApplyAcceptedSubmission`; thay consumer cũ; integration test
@@ -410,7 +413,8 @@ năng đó.
 
 ## Phụ thuộc
 
-- **LRN-001 đã triển khai:** `PrincipalProvider`, `TransactionRunner`, xoá mềm Problem.
+- **LRN-001 đã triển khai:** `TransactionRunner`, cơ chế principal tin cậy
+  (`@TrustedPrincipal()`/`TrustedPrincipalGuard`), xoá mềm Problem.
 - **LRN-003 đã triển khai:** `chapter_problems`, trạng thái và xoá mềm Course, phép chiếu người học.
 - **LRN-004 đã triển khai:** Class có `lecturer_id`, trạng thái (`ACTIVE`/`ARCHIVED`), Enrollment của
   sinh viên đang đăng ký, quyền `class:read-managed` đã seed ở Identity.

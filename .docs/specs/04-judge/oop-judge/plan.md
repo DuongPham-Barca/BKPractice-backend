@@ -6,7 +6,7 @@
 
 ## Service đích và kiến trúc bắt buộc
 
-Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md). OOP là chiến lược prepare/evaluate của Judge core, dùng lại LanguageRunner/Sandbox; không tạo service, database, entity hoặc repository.
+Judge — **Hexagonal Architecture (Ports & Adapters) + Pipeline** theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md). OOP là chiến lược prepare/evaluate của Judge core, dùng lại LanguageRunner/Sandbox; không tạo service, database, entity hoặc repository.
 
 ## Hiện trạng và phạm vi thay đổi
 

@@ -282,9 +282,9 @@ COM-001 không đưa vào cấu trúc lỗi mới.
 
 ## Phụ thuộc
 
-- [Kiến trúc Community Service](../../../docs/architecture/community-service.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)
+- [Kiến trúc Community Service](../../../architecture/community-service.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)
 - [Ranh giới service](../../00-system/service-boundaries.md)
 - [Vai trò và quyền](../../00-system/roles-permissions.md)
 - [Chiến lược cơ sở dữ liệu](../../00-system/database-strategy.md)

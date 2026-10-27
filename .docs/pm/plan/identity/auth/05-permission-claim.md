@@ -1,6 +1,6 @@
 # ID-001 / 5 — Claim quyền hiệu lực trong access token
 
-- Nguồn: [ID-001 1.1](../../../../../specs/01-identity/authentication/spec.md#bản-sửa-đổi-11--claim-quyền), [plan Authentication](../../../../../specs/01-identity/authentication/plan.md#bổ-sung-cho-bản-sửa-đổi-11), [tasks](../../../../../specs/01-identity/authentication/tasks.md#bản-sửa-đổi-11--claim-quyền), [ID-003 0.4](../../../../../specs/01-identity/rbac/spec.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực).
+- Nguồn: [ID-001 1.1](../../../../specs/01-identity/authentication/spec.md#bản-sửa-đổi-11--claim-quyền), [plan Authentication](../../../../specs/01-identity/authentication/plan.md#bổ-sung-cho-bản-sửa-đổi-11), [tasks](../../../../specs/01-identity/authentication/tasks.md#bản-sửa-đổi-11--claim-quyền), [ID-003 0.4](../../../../specs/01-identity/rbac/spec.md#bản-sửa-đổi-04--truyền-quyền-hiệu-lực).
 - Task: ID-001-T045–T047; phụ thuộc ID-003-T046 của [RBAC reader](../rbac/03-permission-catalog-and-claims.md).
 
 ## Trình tự thực hiện

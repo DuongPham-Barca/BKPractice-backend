@@ -424,11 +424,11 @@ duyệt sau này.
 
 ## Phụ thuộc
 
-- [Kiến trúc hệ thống BKPractice](../../../docs/architecture/system-architecture.md)
-- [Kiến trúc Identity Service](../../../docs/architecture/identity-service.md)
-- [Ma trận kiến trúc service](../../../docs/architecture/service-architectures.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [ADR 0001: Kiến trúc nội bộ riêng theo từng service](../../../docs/adr/0001-service-specific-internal-architectures.md)
+- [Kiến trúc hệ thống BKPractice](../../../architecture/system-architecture.md)
+- [Kiến trúc Identity Service](../../../architecture/identity-service.md)
+- [Ma trận kiến trúc service](../../../architecture/service-architectures.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [ADR 0001: Kiến trúc nội bộ riêng theo từng service](../../../adr/0001-service-specific-internal-architectures.md)
 - [Quy trình SDD](../../README.md)
 - [Tham chiếu kiến trúc cho SDD](../../00-system/architecture-reference.md)
 - [Ranh giới service](../../00-system/service-boundaries.md)

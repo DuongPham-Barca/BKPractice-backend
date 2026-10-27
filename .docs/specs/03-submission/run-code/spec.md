@@ -116,7 +116,7 @@ PENDING -> QUEUED -> (kết quả phán quyết cuối cùng)
 ```
 
 - Run và nộp bài chính thức dùng chung một khái niệm trạng thái vòng đời nhưng là hai thao tác tách
-  biệt, theo [`docs/architecture/submission-service.md`](../../../docs/architecture/submission-service.md).
+  biệt, theo [`docs/architecture/submission-service.md`](../../../architecture/submission-service.md).
 - Run không có trạng thái trung gian báo rằng Judge đã bắt đầu. Một Run đang chờ kết quả vẫn ở
   `QUEUED`.
 - Judge báo chạy thành công theo contract hiện có; Submission ánh xạ kết quả thành `EXECUTED` cho
@@ -325,11 +325,11 @@ Gateway/Submission/NestJS hiện có.
 
 ## Phụ thuộc
 
-- [Kiến trúc hệ thống BKPractice](../../../docs/architecture/system-architecture.md)
-- [Kiến trúc Submission Service](../../../docs/architecture/submission-service.md)
-- [Ma trận kiến trúc service](../../../docs/architecture/service-architectures.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [ADR 0002: Kiến trúc nội bộ riêng theo từng service](../../../docs/adr/0002-revised-service-internal-architectures.md)
+- [Kiến trúc hệ thống BKPractice](../../../architecture/system-architecture.md)
+- [Kiến trúc Submission Service](../../../architecture/submission-service.md)
+- [Ma trận kiến trúc service](../../../architecture/service-architectures.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [ADR 0002: Kiến trúc nội bộ riêng theo từng service](../../../adr/0002-revised-service-internal-architectures.md)
 - [Quy trình SDD](../../README.md)
 - [Tham chiếu kiến trúc](../../00-system/architecture-reference.md)
 - [Ranh giới service](../../00-system/service-boundaries.md)

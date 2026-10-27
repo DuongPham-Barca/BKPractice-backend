@@ -29,7 +29,7 @@ ID-003-FR-017. Gateway đã chuyển `/api/courses*` tới Learning.
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation -> application -> domain
@@ -61,12 +61,12 @@ infrastructure ----implements----^ các port của application/domain
 
 ### Phân loại thay đổi
 
-| Phân loại | Nội dung                                                                                                                                                                                                                |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REUSE     | Bảng `courses`, `chapters`; `PrincipalProvider` và `TransactionRunner` của LRN-001; bộ kiểm tra Markdown hạn chế của LRN-001; `ValidationPipe` toàn cục; định tuyến Gateway                                             |
-| MODIFY    | Entity `Course`, `Chapter`; `learning.entities.ts`; `learning-service.module.ts` (nạp `CoursesModule`); module `problems` (export port đọc tham chiếu Problem)                                                          |
-| CREATE    | Domain `Course` aggregate và value object; port, use case; entity `ChapterProblem`; adapter TypeORM; controller, DTO; `CoursesModule`; migration Learning `Lrn003CourseManagement`; migration Identity seed quyền; test |
-| REMOVE    | Không có                                                                                                                                                                                                                |
+| Phân loại | Nội dung                                                                                                                                                                                                                         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REUSE     | Bảng `courses`, `chapters`; `TransactionRunner` và cơ chế principal tin cậy (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) của LRN-001; bộ kiểm tra Markdown hạn chế của LRN-001; `ValidationPipe` toàn cục; định tuyến Gateway |
+| MODIFY    | Entity `Course`, `Chapter`; `learning.entities.ts`; `learning-service.module.ts` (nạp `CoursesModule`); module `problems` (export port đọc tham chiếu Problem)                                                                   |
+| CREATE    | Domain `Course` aggregate và value object; port, use case; entity `ChapterProblem`; adapter TypeORM; controller, DTO; `CoursesModule`; migration Learning `Lrn003CourseManagement`; migration Identity seed quyền; test          |
+| REMOVE    | Không có                                                                                                                                                                                                                         |
 
 ## Thay đổi ở tầng domain
 
@@ -155,11 +155,11 @@ principal.userId`. `ADMIN` không có ngoại lệ.
 | `CourseRepository`       | Nạp/lưu aggregate; `loadForUpdate`; tìm theo slug/id; liệt kê đã xuất bản; liệt kê của chủ sở hữu                     | TypeORM (`courses`, `chapters`, `chapter_problems`) |
 | `CourseReferenceChecker` | Có Class hay Assignment nào tham chiếu Course không                                                                   | TypeORM (`classes`, `assignments`)                  |
 | `ProblemReferenceReader` | Đọc `id`, `slug`, `title`, `problemType`, `difficulty`, `publishStatus`, `deletedAt`, `createdBy` của một tập Problem | Provider do module `problems` export                |
-| `PrincipalProvider`      | (LRN-001) principal gồm `userId`, `roles`, `permissions`                                                              | Header Gateway                                      |
 | `TransactionRunner`      | (LRN-001)                                                                                                             | `DataSource`                                        |
 
 `ProblemReferenceReader` là API công khai duy nhất của module `problems` mà `courses` dùng; nó chỉ
-đọc và không trả Test Case, harness hay nội dung đề.
+đọc và không trả Test Case, harness hay nội dung đề. Principal tin cậy không phải port: controller
+dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 và truyền `Principal` vào use case.
 
 ## Lưu trữ
 
@@ -248,7 +248,8 @@ Swagger mô tả mọi route, DTO, yêu cầu Bearer và mã lỗi.
 
 ## Phân quyền
 
-- Principal từ `PrincipalProvider` (LRN-001), gồm `permissions` từ `x-auth-permissions`.
+- Principal từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` (LRN-001) tại presentation, gồm
+  `permissions` từ `x-auth-permissions`.
 - Bảng quyền theo thao tác như mục Quy tắc phân quyền của đặc tả; quyền sở hữu so `createdBy`.
 - Xem Course đã xuất bản chỉ cần đã xác thực.
 - Thiếu principal hoặc thiếu quyền thì từ chối trước khi đọc dữ liệu quản lý.
@@ -338,8 +339,8 @@ Không thêm metric.
 
 ## Thứ tự triển khai
 
-1. Xác nhận LRN-001 đã triển khai (`PrincipalProvider`, `TransactionRunner`, bộ kiểm Markdown, entity
-   Problem có `deleted_at`) và ID-003-T045 tới T048 đã có.
+1. Xác nhận LRN-001 đã triển khai (`TransactionRunner`, `@TrustedPrincipal()`/`TrustedPrincipalGuard`,
+   bộ kiểm Markdown, entity Problem có `deleted_at`) và ID-003-T045 tới T048 đã có.
 2. Migration seed quyền `course:*` ở Identity.
 3. Domain và unit test.
 4. Migration Learning và entity.

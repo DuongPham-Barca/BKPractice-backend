@@ -38,5 +38,6 @@ export async function configureHttpApp(
   SwaggerModule.setup('docs', app, document);
 
   await app.listen(options.port, '0.0.0.0');
-  Logger.log(`Listening on port ${options.port}`, options.serviceName);
+  Logger.log(`Listening on http://localhost:${options.port}`, options.serviceName);
+  Logger.log(`Swagger UI at http://localhost:${options.port}/docs`, options.serviceName);
 }

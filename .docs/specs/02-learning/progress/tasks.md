@@ -18,8 +18,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-006-T001 — Xác nhận nền tảng.** Khảo sát trạng thái Git, `spec.md` 1.0 Approved,
       `plan.md` Approved, kiến trúc Learning (DDD + Hexagonal, ADR 0002). Xác nhận LRN-001 đã triển
-      khai `PrincipalProvider`, `TransactionRunner` và `deleted_at` của Problem. Nếu chưa, **DỪNG và
-      BÁO CÁO**.
+      khai `TransactionRunner`, `@TrustedPrincipal()`/`TrustedPrincipalGuard` và `deleted_at` của
+      Problem. Nếu chưa, **DỪNG và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Quy trình SDD; bước 1 mục Thứ tự triển khai của kế hoạch.
 
@@ -76,7 +76,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-006-T009 — Định nghĩa port.** `ProgressRepository`, `CourseStructureReader`,
       `ClassMembershipReader`, `AssignmentReader`, `PublishedProblemFilter`, `Clock`; dùng lại
-      `PrincipalProvider`, `TransactionRunner` của LRN-001. Không port nào khác.
+      `TransactionRunner` của LRN-001. Principal lấy qua
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard`, không phải port. Không port nào khác.
       **Phụ thuộc:** LRN-006-T005.
       **Truy vết:** Mục Port của kế hoạch.
 
@@ -215,7 +216,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Truy vết:** Định nghĩa Hoàn thành.
 
 - [ ] **LRN-006-T027 — Nối dây module `progress`.** Đăng ký use case, gắn port với adapter, consumer,
-      controller trong `progress.module.ts`; import `PrincipalProvider`/`TransactionRunner` của LRN-001.
+      controller trong `progress.module.ts`; import `TransactionRunner` của LRN-001 và dùng
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở controller.
       Không đụng module khác ngoài việc dùng truy vấn chúng export.
       **Phụ thuộc:** LRN-006-T010 tới LRN-006-T012, LRN-006-T015, LRN-006-T017, LRN-006-T021,
       LRN-006-T024.

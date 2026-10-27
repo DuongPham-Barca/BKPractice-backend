@@ -32,8 +32,8 @@ Learning của API Gateway. Không có thay đổi ở Identity (không có quy�
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md) và
-[`learning-service.md`](../../../docs/architecture/learning-service.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md) và
+[`learning-service.md`](../../../architecture/learning-service.md)).
 
 ```text
 presentation -> application -> domain
@@ -76,12 +76,12 @@ infrastructure ----implements----^ các port của application/domain
 
 ### Phân loại thay đổi
 
-| Phân loại | Nội dung                                                                                                                                                                                                                    |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REUSE     | Bảng `problems`, `topics`, `tags`, `problem_topics`, `problem_tags`, `progress`, `courses`, `chapters`, `chapter_problems` (chỉ đọc); `PrincipalProvider` của LRN-001; `ValidationPipe`, Swagger, correlation ID dùng chung |
-| MODIFY    | `learning-service.module.ts` (nạp `RecommendationModule`); `apps/api-gateway/src/proxy/gateway-proxy.service.ts` (thêm tiền tố `/api/recommendations` vào nhóm Learning)                                                    |
-| CREATE    | Module `recommendation` (domain, application, infrastructure, presentation); migration `Lrn007RecommendationIndexes`; test unit/integration/API                                                                             |
-| REMOVE    | Không có                                                                                                                                                                                                                    |
+| Phân loại | Nội dung                                                                                                                                                                                                                                                                         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REUSE     | Bảng `problems`, `topics`, `tags`, `problem_topics`, `problem_tags`, `progress`, `courses`, `chapters`, `chapter_problems` (chỉ đọc); cơ chế principal tin cậy (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) của LRN-001; `ValidationPipe`, Swagger, correlation ID dùng chung |
+| MODIFY    | `learning-service.module.ts` (nạp `RecommendationModule`); `apps/api-gateway/src/proxy/gateway-proxy.service.ts` (thêm tiền tố `/api/recommendations` vào nhóm Learning)                                                                                                         |
+| CREATE    | Module `recommendation` (domain, application, infrastructure, presentation); migration `Lrn007RecommendationIndexes`; test unit/integration/API                                                                                                                                  |
+| REMOVE    | Không có                                                                                                                                                                                                                                                                         |
 
 Hành vi cần giữ tương thích: mọi route và bảng hiện có không đổi; migration chỉ thêm index.
 
@@ -102,9 +102,9 @@ FR-006, và policy giữ nguyên thứ tự đó (xác định theo FR-012).
 
 ## Tầng application / Use case
 
-| Use case               | Quyền               | Luồng chính                                                                                                                                                                                                                                                                                                        | Truy vết                     |
-| ---------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
-| `GetMyRecommendations` | Chỉ cần đã xác thực | 1. Lấy principal từ `PrincipalProvider`; thiếu `userId` hợp lệ thì `Unauthenticated`. 2. `reader.findNextInFollowedCourses(userId)`. 3. `policy` loại trùng luật 1; nếu còn chỗ, `reader.findSimilarCandidates(userId, { excludeProblemIds, limit: 10 − n, ladder })`. 4. `policy.compose(...)`. 5. Trả danh sách. | FR-001–FR-015; AC-001–AC-017 |
+| Use case               | Quyền               | Luồng chính                                                                                                                                                                                                                                                                                                            | Truy vết                     |
+| ---------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `GetMyRecommendations` | Chỉ cần đã xác thực | 1. Lấy principal từ decorator/guard tin cậy; thiếu `userId` hợp lệ thì `Unauthenticated`. 2. `reader.findNextInFollowedCourses(userId)`. 3. `policy` loại trùng luật 1; nếu còn chỗ, `reader.findSimilarCandidates(userId, { excludeProblemIds, limit: 10 − n, ladder })`. 4. `policy.compose(...)`. 5. Trả danh sách. | FR-001–FR-015; AC-001–AC-017 |
 
 - Use case không ghi gì và không mở transaction ghi (FR-011, FR-015).
 - Hai lần đọc chạy tuần tự, không chung snapshot. Chấp nhận được vì tính năng chỉ đọc và đặc tả đã
@@ -117,9 +117,10 @@ FR-006, và policy giữ nguyên thứ tự đó (xác định theo FR-012).
 | Port                            | Trách nhiệm                                                                                                                                                                                                                                                                                   | Adapter                                                            |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `RecommendationCandidateReader` | `findNextInFollowedCourses(userId)`: một ứng viên mỗi Course đang theo, sắp theo FR-004. `findSimilarCandidates(userId, { excludeProblemIds, limit, ladder })`: ứng viên luật 2 đã lọc độ khó và sắp theo FR-006, kèm Topic/Tag chung. Cả hai chỉ trả Problem/Course hiển thị được, chưa giải | Adapter truy vấn đọc TypeORM trong `recommendation/infrastructure` |
-| `PrincipalProvider`             | (LRN-001) principal từ header Gateway tin cậy                                                                                                                                                                                                                                                 | Adapter của LRN-001                                                |
 
-Không thêm port nào khác. Không có port ghi, port cache hay port event.
+Không thêm port nào khác. Không có port ghi, port cache hay port event. Principal tin cậy không
+phải port: controller dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 và truyền
+`Principal` vào use case.
 
 ## Lưu trữ
 
@@ -227,7 +228,8 @@ index `(chapter_id, display_order)` và `(problem_id)` trên `chapter_problems` 
 
 ## Phân quyền
 
-- Principal từ `PrincipalProvider` của LRN-001 (header `x-auth-user-id` do Gateway đặt lại).
+- Principal từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 tại presentation (header
+  `x-auth-user-id` do Gateway đặt lại).
 - Không kiểm mã quyền; không thêm quyền. **Không có task seed quyền ở Identity** vì LRN-007 không
   có quyền mới (quyết định 3 của đặc tả).
 - `userId` truyền cho reader luôn là `principal.userId`; không có đường nào khác cấp giá trị này
@@ -250,8 +252,8 @@ N/A. Đặc tả loại trừ đẩy gợi ý realtime.
 - `TypeOrmRecommendationCandidateReader` (driven): hiện thực `RecommendationCandidateReader` bằng
   `DataSource.query` với tham số, ánh xạ dòng sang value object domain.
 - `RecommendationsController` (driving): gọi `GetMyRecommendations`, ánh xạ sang DTO.
-- `RecommendationModule`: composition root, gắn port với adapter, import provider `PrincipalProvider`
-  theo cách LRN-001 export. Không export gì ra module khác.
+- `RecommendationModule`: composition root, gắn port với adapter, dùng
+  `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001. Không export gì ra module khác.
 
 ## Cấu hình
 
@@ -276,7 +278,7 @@ cấu trúc lỗi mới.
 
 | Yêu cầu | Cách thực thi                                                                                                                                 |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| SR-001  | `userId` chỉ từ `PrincipalProvider`; DTO query rỗng chặn `userId`                                                                             |
+| SR-001  | `userId` chỉ từ decorator/guard tin cậy của LRN-001; DTO query rỗng chặn `userId`                                                             |
 | SR-002  | Mọi SQL lọc `progress.user_id = $principal`; log không chứa danh sách Problem hay tiến độ                                                     |
 | SR-003  | Điều kiện hiển thị được cho cả Problem và Course nằm trong mọi nhánh SQL, kể cả bài nền; lý do chỉ gồm Course/Topic/Tag từ dòng hiển thị được |
 | SR-004  | SQL chỉ chọn cột tóm tắt; không join `test_cases`, `starter_codes`, `problem_harnesses`                                                       |
@@ -314,24 +316,25 @@ SQL chỉ dùng tham số ràng buộc, không nối chuỗi từ đầu vào.
 
 ## Truy vết yêu cầu
 
-| Yêu cầu        | Đường triển khai                                              | Kiểm chứng                               |
-| -------------- | ------------------------------------------------------------- | ---------------------------------------- |
-| FR-001         | `GetMyRecommendations` + `PrincipalProvider`; DTO query rỗng  | API; AC-001, AC-012, AC-013              |
-| FR-002         | Điều kiện hiển thị được + chưa giải trong cả hai SQL          | Integration; AC-009, AC-010              |
-| FR-003, FR-004 | SQL luật 1 (`DISTINCT ON`, `ORDER BY last_solved_at`)         | Integration; AC-002–AC-004, AC-017       |
-| FR-005, FR-006 | `DifficultyLadder` + SQL luật 2                               | Unit/Integration; AC-005, AC-006, AC-015 |
-| FR-007, FR-008 | `RecommendationPolicy.compose`                                | Unit; AC-007, AC-008                     |
-| FR-009, FR-010 | `RecommendationReason`, `RecommendedProblem`, mapper DTO      | API; AC-015, AC-016                      |
-| FR-011, FR-015 | Không có bảng/port ghi                                        | Integration; AC-014                      |
-| FR-012         | Thứ tự toàn phần trong SQL (có tie-break) + policy giữ thứ tự | Unit/API; AC-014                         |
-| FR-013         | `items: []`                                                   | API; AC-011                              |
-| FR-014         | SQL chỉ đọc tiến độ của principal; không mô hình              | Rà soát; AC-013                          |
-| SR-001–SR-006  | Mục Bảo mật                                                   | Test bảo mật; AC-012, AC-016             |
+| Yêu cầu        | Đường triển khai                                                 | Kiểm chứng                               |
+| -------------- | ---------------------------------------------------------------- | ---------------------------------------- |
+| FR-001         | `GetMyRecommendations` + decorator/guard tin cậy; DTO query rỗng | API; AC-001, AC-012, AC-013              |
+| FR-002         | Điều kiện hiển thị được + chưa giải trong cả hai SQL             | Integration; AC-009, AC-010              |
+| FR-003, FR-004 | SQL luật 1 (`DISTINCT ON`, `ORDER BY last_solved_at`)            | Integration; AC-002–AC-004, AC-017       |
+| FR-005, FR-006 | `DifficultyLadder` + SQL luật 2                                  | Unit/Integration; AC-005, AC-006, AC-015 |
+| FR-007, FR-008 | `RecommendationPolicy.compose`                                   | Unit; AC-007, AC-008                     |
+| FR-009, FR-010 | `RecommendationReason`, `RecommendedProblem`, mapper DTO         | API; AC-015, AC-016                      |
+| FR-011, FR-015 | Không có bảng/port ghi                                           | Integration; AC-014                      |
+| FR-012         | Thứ tự toàn phần trong SQL (có tie-break) + policy giữ thứ tự    | Unit/API; AC-014                         |
+| FR-013         | `items: []`                                                      | API; AC-011                              |
+| FR-014         | SQL chỉ đọc tiến độ của principal; không mô hình                 | Rà soát; AC-013                          |
+| SR-001–SR-006  | Mục Bảo mật                                                      | Test bảo mật; AC-012, AC-016             |
 
 ## Thứ tự triển khai
 
-1. Xác nhận LRN-001 (`PrincipalProvider`, `deleted_at`, `ON_HOLD`), LRN-003 (`courses.status`,
-   `courses.deleted_at`, `chapter_problems`) và LRN-006 (định nghĩa đã giải) đã triển khai.
+1. Xác nhận LRN-001 (`@TrustedPrincipal()`/`TrustedPrincipalGuard`, `deleted_at`, `ON_HOLD`), LRN-003
+   (`courses.status`, `courses.deleted_at`, `chapter_problems`) và LRN-006 (định nghĩa đã giải) đã
+   triển khai.
 2. Domain: `DifficultyLadder`, value object, `RecommendationPolicy`; unit test.
 3. Port `RecommendationCandidateReader` và use case `GetMyRecommendations`; unit test.
 4. Migration index; kiểm chứng up/down.
@@ -342,8 +345,8 @@ SQL chỉ dùng tham số ràng buộc, không nối chuỗi từ đầu vào.
 
 ## Phụ thuộc
 
-- **LRN-001 đã triển khai:** `PrincipalProvider`, cột `deleted_at`, trạng thái `ON_HOLD`, liên kết
-  Topic/Tag.
+- **LRN-001 đã triển khai:** cơ chế `@TrustedPrincipal()`/`TrustedPrincipalGuard`, cột `deleted_at`,
+  trạng thái `ON_HOLD`, liên kết Topic/Tag.
 - **LRN-003 đã triển khai:** trạng thái và dấu xoá của Course, bảng `chapter_problems` với thứ tự.
   Nếu tên bảng/cột trong bản triển khai LRN-003 khác kế hoạch LRN-003 hiện tại, cập nhật SQL theo bản
   thật, không đổi luật.

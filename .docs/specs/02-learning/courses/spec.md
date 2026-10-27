@@ -282,9 +282,9 @@ LRN-003 không đưa vào cấu trúc lỗi mới.
 
 ## Phụ thuộc
 
-- [Kiến trúc Learning Service](../../../docs/architecture/learning-service.md)
-- [Quy tắc phụ thuộc](../../../docs/architecture/dependency-rules.md)
-- [ADR 0002: Sửa lại kiến trúc nội bộ của các service](../../../docs/adr/0002-revised-service-internal-architectures.md)
+- [Kiến trúc Learning Service](../../../architecture/learning-service.md)
+- [Quy tắc phụ thuộc](../../../architecture/dependency-rules.md)
+- [ADR 0002: Sửa lại kiến trúc nội bộ của các service](../../../adr/0002-revised-service-internal-architectures.md)
 - [Ranh giới service](../../00-system/service-boundaries.md)
 - [Vai trò và quyền](../../00-system/roles-permissions.md)
 - [Chiến lược cơ sở dữ liệu](../../00-system/database-strategy.md)

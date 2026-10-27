@@ -29,14 +29,14 @@ Service: Learning Service
 
 Class và Enrollment chuyển từ module `courses` sang một module mới `enrollments`
 (`apps/learning-service/src/modules/enrollments/`), trong `bkpractice_learning`. Tên module lấy theo
-bố cục module ưu tiên của [`learning-service.md`](../../../docs/architecture/learning-service.md)
+bố cục module ưu tiên của [`learning-service.md`](../../../architecture/learning-service.md)
 (`modules/enrollments/`) và thư mục tính năng `specs/02-learning/enrollments/`. Không tạo
 microservice mới. Identity cần một migration seed quyền (xem mục Phân quyền). API Gateway không đổi.
 
 ## Kiến trúc service bắt buộc
 
 Kiến trúc: **DDD + Hexagonal Architecture** (theo
-[ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md)).
+[ADR 0002](../../../adr/0002-revised-service-internal-architectures.md)).
 
 ```text
 presentation -> application -> domain
@@ -48,7 +48,8 @@ infrastructure ----implements----^ các port của application/domain
   thành viên, không phụ thuộc vòng đời Course; đó là hành vi đủ để tách module. Module mới có đủ bốn
   tầng vì mỗi tầng đều có nội dung thật (aggregate + policy, use case + port, adapter TypeORM,
   controller).
-- LRN-004 dùng lại `PrincipalProvider` và `TransactionRunner` của LRN-001 và đọc trạng thái Course do
+- LRN-004 dùng lại `TransactionRunner` và cơ chế principal tin cậy
+  (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) của LRN-001, đồng thời đọc trạng thái Course do
   LRN-003 thêm. **LRN-001 và LRN-003 phải được triển khai trước.**
 - Chỉ dùng DDD tactical. Không thêm bounded context, CQRS, event store hay base repository chung.
 
@@ -85,12 +86,12 @@ infrastructure ----implements----^ các port của application/domain
 
 ### Phân loại thay đổi
 
-| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                  |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| REUSE     | Bảng `classes`, `enrollments` và cột hiện có; `UNIQUE (class_id, student_id)`; `UNIQUE (join_code)`; `PrincipalProvider`, `TransactionRunner` của LRN-001; trạng thái Course và phép chiếu người học của LRN-003; `ValidationPipe` toàn cục; định tuyến `/api/classes` của Gateway                        |
-| MODIFY    | Entity `Classroom` (thêm `status`, mốc thời gian; `onDelete: 'RESTRICT'`) và `Enrollment` — chuyển file sang module `enrollments`; `course.entity.ts` (bỏ hai entity này); `learning.entities.ts` và `assignment.entity.ts` (đổi đường import); `learning-service.module.ts` (import `EnrollmentsModule`) |
-| CREATE    | Module `enrollments`: aggregate `Classroom`, entity `Enrollment`, value object, `EnrollmentPolicy`; port và use case; adapter TypeORM, adapter sinh mã; controller và DTO; migration Learning `Lrn004ClassEnrollment`; migration Identity `Lrn004ClassPermissions`; test                                  |
-| REMOVE    | Không có. Không bỏ bảng hay cột nào                                                                                                                                                                                                                                                                       |
+| Phân loại | Nội dung                                                                                                                                                                                                                                                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| REUSE     | Bảng `classes`, `enrollments` và cột hiện có; `UNIQUE (class_id, student_id)`; `UNIQUE (join_code)`; `TransactionRunner` và cơ chế principal tin cậy (`@TrustedPrincipal()`/`TrustedPrincipalGuard`) của LRN-001; trạng thái Course và phép chiếu người học của LRN-003; `ValidationPipe` toàn cục; định tuyến `/api/classes` của Gateway |
+| MODIFY    | Entity `Classroom` (thêm `status`, mốc thời gian; `onDelete: 'RESTRICT'`) và `Enrollment` — chuyển file sang module `enrollments`; `course.entity.ts` (bỏ hai entity này); `learning.entities.ts` và `assignment.entity.ts` (đổi đường import); `learning-service.module.ts` (import `EnrollmentsModule`)                                 |
+| CREATE    | Module `enrollments`: aggregate `Classroom`, entity `Enrollment`, value object, `EnrollmentPolicy`; port và use case; adapter TypeORM, adapter sinh mã; controller và DTO; migration Learning `Lrn004ClassEnrollment`; migration Identity `Lrn004ClassPermissions`; test                                                                  |
+| REMOVE    | Không có. Không bỏ bảng hay cột nào                                                                                                                                                                                                                                                                                                       |
 
 ## Thay đổi ở tầng domain
 
@@ -143,8 +144,8 @@ Domain không import NestJS hay TypeORM.
 ## Tầng application / Use case
 
 Mọi use case thay đổi dữ liệu chạy trong `TransactionRunner` và nạp Class bằng `loadForUpdate`.
-Kiểm tra quyền và sở hữu qua `ClassAuthorization` (một service application nhỏ dùng principal từ
-`PrincipalProvider`) trước khi đọc hay ghi dữ liệu nghiệp vụ.
+Kiểm tra quyền và sở hữu qua `ClassAuthorization` (một service application nhỏ dùng `Principal` do
+controller truyền vào) trước khi đọc hay ghi dữ liệu nghiệp vụ.
 
 | Use case              | Người gọi / Quyền                    | Luồng chính                                                                                                                                                                                                                                          | Truy vết                                             |
 | --------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -178,10 +179,10 @@ theo mã (`404`) → Class phải `ACTIVE` (`409`) → đã là thành viên (th
 | `EnrollmentRepository`     | `find(classId, studentId)`, `insert`, `delete`, `countByClass(classId)`, `countByClasses(ids)`, `listByClass(classId, page)`, `listClassesForStudent(studentId, page)`                                           |
 | `CourseAvailabilityReader` | `isOpenForClasses(courseId)`: Course tồn tại, `PUBLISHED`, chưa xoá mềm, khoá `SELECT ... FOR SHARE` tới hết transaction; `loadLearnerSummaries(courseIds)`: tóm tắt (id, slug, tiêu đề) chỉ cho Course khả dụng |
 | `JoinCodeGenerator`        | `generate(): JoinCode` bằng CSPRNG; là port để test domain/application xác định được                                                                                                                             |
-| `PrincipalProvider`        | (LRN-001) `userId`, `roles`, `permissions` từ header Gateway                                                                                                                                                     |
 | `TransactionRunner`        | (LRN-001) transaction bao quanh nạp + kiểm tra + lưu                                                                                                                                                             |
 
-Không thêm port nào khác.
+Principal tin cậy không phải port: controller dùng `@TrustedPrincipal()`/`TrustedPrincipalGuard` của
+LRN-001 và truyền `Principal` vào use case. Không thêm port nào khác.
 
 ## Lưu trữ
 
@@ -301,9 +302,9 @@ Tiền tố `/api/classes` đã được Gateway chuyển tới Learning. Tất 
 
 ## Phân quyền
 
-- Principal lấy từ `PrincipalProvider` của LRN-001: `x-auth-user-id`, `x-auth-roles`,
-  `x-auth-permissions` do Gateway đặt; header thiếu thì coi là tập rỗng (ID-003-FR-022).
-  `PrincipalProvider` được export từ module sở hữu nó để `EnrollmentsModule` import, không sao chép.
+- Principal lấy từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 tại presentation:
+  `x-auth-user-id`, `x-auth-roles`, `x-auth-permissions` do Gateway đặt; header thiếu thì coi là tập
+  rỗng (ID-003-FR-022). Dùng lại decorator/guard của module sở hữu, không sao chép.
 - `ClassAuthorization`:
   - `requirePermission(code)`: thiếu → `403`.
   - `requireOwner(classroom)`: `ownerId` ≠ principal → `403` (theo quy ước LRN-001/LRN-003 cho thao tác
@@ -371,7 +372,7 @@ Không đưa vào cấu trúc lỗi mới; dùng các exception HTTP chuẩn c�
 | Yêu cầu | Cách thực thi                                                                                                                               |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | SR-001  | Quyền, vai trò, sở hữu, thành viên và trạng thái kiểm tra trong use case, không ở controller                                                |
-| SR-002  | Principal chỉ từ `PrincipalProvider`; DTO không có trường chủ sở hữu/sinh viên                                                              |
+| SR-002  | Principal chỉ từ decorator/guard tin cậy của LRN-001; DTO không có trường chủ sở hữu/sinh viên                                              |
 | SR-003  | `MemberClassResponseDto` không có sĩ số; danh sách sinh viên chỉ qua route quản lý có `requireOwner`                                        |
 | SR-004  | Mã chỉ trong phản hồi quản lý; không log body `JoinClass` hay mã; mã sai và mã cũ cùng `404`; throttling toàn cục của Gateway hạn chế dò mã |
 | SR-005  | DTO danh sách cho phép + `forbidNonWhitelisted`                                                                                             |
@@ -430,8 +431,9 @@ không khả thi trong thực tế.
 
 ## Thứ tự triển khai
 
-1. Xác nhận LRN-001 (`PrincipalProvider`, `TransactionRunner`) và LRN-003 (trạng thái và dấu xoá mềm
-   của Course) đã triển khai; xác nhận ID-003 0.4 (`x-auth-permissions`) đã có.
+1. Xác nhận LRN-001 (`TransactionRunner`, `@TrustedPrincipal()`/`TrustedPrincipalGuard`) và LRN-003
+   (trạng thái và dấu xoá mềm của Course) đã triển khai; xác nhận ID-003 0.4
+   (`x-auth-permissions`) đã có.
 2. Domain: value object, aggregate `Classroom`, `Enrollment`, `EnrollmentPolicy`; unit test.
 3. Chuyển entity sang module `enrollments`, cập nhật import; migration LRN-004; kiểm chứng up/down.
 4. Migration seed quyền ở Identity; kiểm chứng up/down và token.
@@ -442,7 +444,8 @@ không khả thi trong thực tế.
 
 ## Phụ thuộc
 
-- **LRN-001 đã triển khai**: `PrincipalProvider`, `TransactionRunner`, quy ước lỗi.
+- **LRN-001 đã triển khai**: `TransactionRunner`, cơ chế `@TrustedPrincipal()`/`TrustedPrincipalGuard`,
+  quy ước lỗi.
 - **LRN-003 đã triển khai**: cột trạng thái và dấu xoá mềm của `courses`, phép chiếu người học. Việc
   kiểm tra "không bị Class tham chiếu" của LRN-003-FR-018 đọc bảng `classes`; khi LRN-003 viết
   `plan.md`, kiểm tra đó nên đi qua một truy vấn đếm tường minh trên `classes` và bắt lỗi `23503` từ

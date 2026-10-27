@@ -1,6 +1,6 @@
 # ID-001 / 3 — Đăng nhập Microsoft của trường
 
-- Nguồn: [spec](../../../../../specs/01-identity/authentication/spec.md), [plan](../../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../../specs/01-identity/authentication/tasks.md).
+- Nguồn: [spec](../../../../specs/01-identity/authentication/spec.md), [plan](../../../../specs/01-identity/authentication/plan.md), [tasks](../../../../specs/01-identity/authentication/tasks.md).
 - Task: ID-001-T015–T016, T019–T021; phụ thuộc model/port/migration ở [phần 1](01-foundation-and-storage.md) và phát hành phiên ở [phần 2](02-student-login-and-sessions.md).
 
 ## Trình tự thực hiện

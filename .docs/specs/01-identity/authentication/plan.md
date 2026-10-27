@@ -25,7 +25,7 @@ Gateway sẽ không chứa quy tắc nghiệp vụ về tài khoản, liên kế
 
 ## Kiến trúc service bắt buộc
 
-Kiến trúc: Clean Architecture (theo [ADR 0002](../../../docs/adr/0002-revised-service-internal-architectures.md))
+Kiến trúc: Clean Architecture (theo [ADR 0002](../../../adr/0002-revised-service-internal-architectures.md))
 
 Tính năng Authentication tuân theo chiều phụ thuộc feature-first đã phê duyệt:
 

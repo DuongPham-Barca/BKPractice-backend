@@ -9,6 +9,9 @@ Approved — Sẵn sàng triển khai
 Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản Approved `1.1`
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved ngày `2026-09-23`
 
+Bản sửa đổi `2026-10-24`: T011 đặt `ProblemRepository` tại `domain/repositories/`; các out port còn
+lại ở `application/ports/out/`; T021 đặt response mapper ở `presentation/http/mappers/`.
+
 Mọi công việc triển khai đều bắt đầu ở trạng thái chưa hoàn thành. Chỉ đánh dấu `[x]` sau khi cả
 phần triển khai lẫn phần kiểm chứng được liệt kê đều hoàn tất. Các mục N/A là những mục duy nhất
 được tích sẵn một cách có chủ đích. Danh sách này không thêm hành vi nào vượt ngoài `spec.md` đã
@@ -16,7 +19,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Chuẩn bị
 
-- [ ] **LRN-001-T001 — Xác nhận lại nền tảng triển khai.** Khảo sát trạng thái Git, `spec.md` phiên
+- [x] **LRN-001-T001 — Xác nhận lại nền tảng triển khai.** Khảo sát trạng thái Git, `spec.md` phiên
       bản `1.1` `Approved`, `plan.md` `Approved`, kiến trúc Learning (DDD + Hexagonal theo ADR 0002),
       các quy tắc phụ thuộc, schema `bkpractice_learning` hiện có, contract ngữ cảnh Gateway, và nền
       tảng RBAC của Identity. Báo cáo mọi xung đột trước khi thay đổi mã nguồn.
@@ -39,7 +42,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** Mục Phân quyền và Rủi ro của kế hoạch; LRN-001-SR-001, LRN-001-SR-002;
       LRN-001-AC-005, LRN-001-AC-006, LRN-001-AC-030.
 
-- [ ] **LRN-001-T003 — Xác nhận các ranh giới service và loại trừ.** Ghi nhận rằng vòng đời Test
+- [x] **LRN-001-T003 — Xác nhận các ranh giới service và loại trừ.** Ghi nhận rằng vòng đời Test
       Case, hành vi Judge, dữ liệu Submission, điểm số và tiến độ đều nằm ngoài LRN-001; rằng không
       công việc nào tạo khoá ngoại, truy vấn cơ sở dữ liệu hay thực thể nghiệp vụ dùng chung xuyên
       service; và rằng không có microservice Problem/Topic/Recommendation nào được thêm.
@@ -49,7 +52,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Domain
 
-- [ ] **LRN-001-T004 — Thêm từ vựng domain và các value object.** Tạo các kiểu độc lập với framework
+- [x] **LRN-001-T004 — Thêm từ vựng domain và các value object.** Tạo các kiểu độc lập với framework
       cho `ProblemId`, `Slug`, `ProblemTitle`, `ProblemType`, `Difficulty`, `PublishStatus`,
       `DeletedMarker`, `ProblemStatement`, `InputSpecification`, `OutputSpecification`,
       `VisibleExample`, `Constraints`, `ExecutionLimits`, `TopicReference`, `TagReference`,
@@ -61,7 +64,7 @@ Approved và không thay đổi `plan.md`.
       LRN-001-FR-020, LRN-001-FR-021, LRN-001-FR-022; LRN-001-AC-010, LRN-001-AC-011,
       LRN-001-AC-012, LRN-001-AC-017.
 
-- [ ] **LRN-001-T005 — Hiện thực aggregate root `Problem`.** Aggregate sở hữu state/vòng đời,
+- [x] **LRN-001-T005 — Hiện thực aggregate root `Problem`.** Aggregate sở hữu state/vòng đời,
       metadata, đề bài, cấu hình theo loại, ngôn ngữ/giới hạn và starter code, dưới dạng một ranh
       giới nhất quán được nạp và lưu như một khối. Aggregate KHÔNG bao gồm vòng đời `TestCase`,
       state của Submission/JudgeResult/Progress, vòng đời Assignment, hay điểm số. Không import
@@ -70,7 +73,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-001, LRN-001-FR-002, LRN-001-FR-014, LRN-001-FR-019,
       LRN-001-FR-023; mục Aggregate root của kế hoạch.
 
-- [ ] **LRN-001-T006 — Hiện thực máy trạng thái vòng đời.** Chỉ các bước chuyển đã phê duyệt: tạo ->
+- [x] **LRN-001-T006 — Hiện thực máy trạng thái vòng đời.** Chỉ các bước chuyển đã phê duyệt: tạo ->
       `DRAFT`; `DRAFT -> PUBLISHED`; `PUBLISHED -> ON_HOLD`; `ON_HOLD -> PUBLISHED`; xoá mềm từ
       `PUBLISHED` hoặc `ON_HOLD` (giữ nguyên `publishStatus`); khôi phục về đúng trạng thái đã bảo
       toàn. Các bước chuyển bị cấm trả về lỗi nghiệp vụ `InvalidProblemState` mà không thay đổi
@@ -82,7 +85,7 @@ Approved và không thay đổi `plan.md`.
       LRN-001-FR-032, LRN-001-FR-033, LRN-001-FR-034; LRN-001-AC-008, LRN-001-AC-025,
       LRN-001-AC-026, LRN-001-AC-027, LRN-001-AC-028, LRN-001-AC-029.
 
-- [ ] **LRN-001-T007 — Hiện thực bộ kiểm tra contract theo từng loại.** `STANDARD` cần đặc tả đầu
+- [x] **LRN-001-T007 — Hiện thực bộ kiểm tra contract theo từng loại.** `STANDARD` cần đặc tả đầu
       vào/đầu ra; `FUNCTION` cần contract khả gọi theo từng ngôn ngữ (tên hàm, tham số, kiểu trả về)
       cho mọi ngôn ngữ đang bật; `OOP` cần contract cấu trúc theo từng ngôn ngữ (class/interface,
       constructor, phương thức, mức truy cập) cho mọi ngôn ngữ đang bật. Với `FUNCTION`/`OOP`,
@@ -92,7 +95,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-003, LRN-001-FR-014, LRN-001-FR-019; LRN-001-AC-013,
       LRN-001-AC-014, LRN-001-AC-016.
 
-- [ ] **LRN-001-T008 — Hiện thực `PublishValidator` như một domain service.** Kiểm tra tiêu đề và đề
+- [x] **LRN-001-T008 — Hiện thực `PublishValidator` như một domain service.** Kiểm tra tiêu đề và đề
       bài không rỗng, loại và độ khó hợp lệ, slug duy nhất và hợp lệ, giới hạn thực thi dương trong
       biên nền tảng, ít nhất một ngôn ngữ được phê duyệt đang bật, và contract bắt buộc theo loại.
       LRN-001 **không** chặn xuất bản theo mức độ sẵn sàng của Test Case — đó là phụ thuộc LRN-002.
@@ -103,7 +106,7 @@ Approved và không thay đổi `plan.md`.
       LRN-001-AC-008, LRN-001-AC-009, LRN-001-AC-012, LRN-001-AC-013, LRN-001-AC-014,
       LRN-001-AC-016, LRN-001-AC-017, LRN-001-AC-027.
 
-- [ ] **LRN-001-T009 — Hiện thực quy tắc định dạng nội dung.** Đề bài và các phần phù hợp với loại
+- [x] **LRN-001-T009 — Hiện thực quy tắc định dạng nội dung.** Đề bài và các phần phù hợp với loại
       dùng Markdown hạn chế. Kiểm tra giới hạn độ dài và tính không rỗng, từ chối payload HTML/script
       thô và nội dung không an toàn tương đương trước khi lưu. Backend lưu Markdown thô đã kiểm tra
       và không bao giờ thực thi nó; việc làm sạch để render an toàn do frontend sở hữu. Không cài đặt
@@ -111,7 +114,7 @@ Approved và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-001-T004.
       **Truy vết:** LRN-001-FR-029; LRN-001-SR-007; LRN-001-AC-024.
 
-- [ ] **LRN-001-T010 — Thêm unit test cho tầng domain.** Kiểm thử các bất biến của aggregate, việc
+- [x] **LRN-001-T010 — Thêm unit test cho tầng domain.** Kiểm thử các bất biến của aggregate, việc
       kiểm tra từ vựng, toàn bộ máy trạng thái vòng đời gồm cả các bước chuyển bị cấm, mức độ sẵn
       sàng xuất bản theo từng loại, giới hạn thực thi, ranh giới starter code, và quy tắc định dạng
       nội dung. **Các test này phải chạy được mà không cần PostgreSQL** — đó là mục đích chính của
@@ -122,16 +125,23 @@ Approved và không thay đổi `plan.md`.
       LRN-001-AC-017, LRN-001-AC-024, LRN-001-AC-025, LRN-001-AC-026, LRN-001-AC-027,
       LRN-001-AC-028, LRN-001-AC-029.
 
-## Tầng application — port
+## Port và ranh giới
 
-- [ ] **LRN-001-T011 — Định nghĩa sáu port của tầng application.** Chỉ thêm `ProblemRepository`,
-      `TopicTagReader`, `PublishValidator` (ranh giới), `ProblemAuthorizationService` (ranh giới),
-      `PrincipalProvider` và `TransactionRunner`. Các port không chứa TypeORM, NestJS, HTTP hay kiểu
-      phản hồi của Gateway. Không thêm base repository chung, bus CQRS, policy engine hay event store.
+- [x] **LRN-001-T011 — Định nghĩa các port/ranh giới.** Chỉ thêm `ProblemRepository` (domain
+      repository port tại `domain/repositories/`), `TopicTagReader`, `TransactionRunner`
+      (application out port tại `application/ports/out/`), `PublishValidator`
+      (domain service tại `domain/services/`), `ProblemAuthorizationService` (application service
+      tại `application/services/`) và inbound port cho từng use case. Mỗi use case implement
+      `I...PortIn` tại `application/ports/in/`; controller inject qua token `..._PORT_IN`. File
+      outbound port dùng hậu tố `.port.out.ts`; inbound port dùng `.port.in.ts`; không dùng
+      `.port.ts`. Các port không chứa TypeORM, NestJS, HTTP hay kiểu phản hồi của Gateway. Không thêm
+      base repository chung, bus CQRS, policy engine hay event store. Principal tin cậy không phải
+      out port: `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở presentation đọc header Gateway và
+      controller truyền `Principal` vào use case.
       **Phụ thuộc:** LRN-001-T005, LRN-001-T008.
-      **Truy vết:** Mục Các port của tầng application và Tuân thủ kiến trúc của kế hoạch.
+      **Truy vết:** Mục Các port và ranh giới và Tuân thủ kiến trúc của kế hoạch.
 
-- [ ] **LRN-001-T012 — Hiện thực chính sách phân quyền và sở hữu Problem.** Đánh giá quyền
+- [x] **LRN-001-T012 — Hiện thực chính sách phân quyền và sở hữu Problem.** Đánh giá quyền
       `problem:*` cần thiết cộng với quyền sở hữu, dựa trên principal tin cậy. Một Giảng viên chỉ
       quản lý các Problem do chính mình tạo; `createdBy` luôn là principal tin cậy tại thời điểm tạo;
       quyền sở hữu được thực thi bằng cách so sánh `record.createdBy` với principal ở tầng
@@ -141,9 +151,9 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-004, LRN-001-FR-009, LRN-001-FR-010; LRN-001-SR-001,
       LRN-001-SR-002, LRN-001-SR-006; LRN-001-AC-005, LRN-001-AC-006, LRN-001-AC-030.
 
-## Tầng application — use case
+## Tầng application — use case và đầu ra
 
-- [ ] **LRN-001-T013 — Hiện thực `CreateProblem`.** Phân quyền tác nhân với `problem:create`; kiểm
+- [x] **LRN-001-T013 — Hiện thực `CreateProblem`.** Phân quyền tác nhân với `problem:create`; kiểm
       tra từ vựng; kiểm tra tính duy nhất của slug; suy ra `createdBy` từ principal tin cậy; dựng
       aggregate ở `DRAFT`; lưu nguyên tử. Không nhận `createdBy`, mốc thời gian, trạng thái, trường
       ẩn/judge, vai trò hay quyền từ client.
@@ -151,7 +161,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-004, LRN-001-FR-021, LRN-001-FR-022; LRN-001-SR-006;
       LRN-001-AC-001, LRN-001-AC-007, LRN-001-AC-018.
 
-- [ ] **LRN-001-T014 — Hiện thực `UpdateProblem`.** Phân quyền theo quyền sở hữu và trạng thái
+- [x] **LRN-001-T014 — Hiện thực `UpdateProblem`.** Phân quyền theo quyền sở hữu và trạng thái
       (`DRAFT` hoặc `PUBLISHED` chỉnh sửa được tại chỗ; `ON_HOLD` và đã xoá mềm thì không); chỉ áp
       dụng các trường trong danh sách cho phép; chạy kiểm tra theo loại. `problemType` chỉ đổi được
       khi Problem ở `DRAFT`; đổi loại ở trạng thái khác là `InvalidProblemState`, và `type_config`
@@ -162,7 +172,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-010, LRN-001-FR-017, LRN-001-FR-018, LRN-001-FR-019,
       LRN-001-FR-021; LRN-001-SR-006; LRN-001-AC-007, LRN-001-AC-016.
 
-- [ ] **LRN-001-T015 — Hiện thực `PublishProblem`.** Phân quyền theo quyền sở hữu; nạp state hiện
+- [x] **LRN-001-T015 — Hiện thực `PublishProblem`.** Phân quyền theo quyền sở hữu; nạp state hiện
       tại; chạy toàn bộ kiểm tra mức độ sẵn sàng dựa trên state đã lưu, không dựa trên khẳng định
       của người gọi; chuyển `DRAFT -> PUBLISHED` nguyên tử. Thất bại thì giữ `DRAFT` và trả về tập
       điều kiện còn thiếu/không hợp lệ.
@@ -170,7 +180,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-011, LRN-001-FR-012, LRN-001-FR-030; LRN-001-AC-008,
       LRN-001-AC-009, LRN-001-AC-025.
 
-- [ ] **LRN-001-T016 — Hiện thực `HoldProblem` và `RepublishProblem`.** Tạm giữ thực hiện bước
+- [x] **LRN-001-T016 — Hiện thực `HoldProblem` và `RepublishProblem`.** Tạm giữ thực hiện bước
       chuyển `PUBLISHED` sang `ON_HOLD`: Problem bị loại khỏi khám phá của người học nhưng giữ định
       danh ổn định, và không message nào được gửi tới Submission/Judge. Xuất bản lại kiểm tra lại mức
       độ sẵn sàng dựa trên state đã lưu, rồi thực hiện bước chuyển `ON_HOLD` sang `PUBLISHED` một
@@ -179,7 +189,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-013, LRN-001-FR-031, LRN-001-FR-032; LRN-001-AC-026,
       LRN-001-AC-027, LRN-001-AC-030.
 
-- [ ] **LRN-001-T017 — Hiện thực `SoftDeleteProblem` và `RestoreProblem`.** Xoá mềm: yêu cầu
+- [x] **LRN-001-T017 — Hiện thực `SoftDeleteProblem` và `RestoreProblem`.** Xoá mềm: yêu cầu
       `PUBLISHED` hoặc `ON_HOLD`; đặt `deletedAt`; giữ bản ghi, ID ổn định và `publishStatus` đã lưu;
       không đụng lịch sử Submission; không xoá cứng, không purge. Khôi phục: yêu cầu dấu xoá đang
       được đặt; gỡ dấu xoá; Problem trở về đúng trạng thái đã bảo toàn mà không kiểm tra lại nội
@@ -188,7 +198,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-013, LRN-001-FR-033, LRN-001-FR-034; LRN-001-AC-028,
       LRN-001-AC-029, LRN-001-AC-030, LRN-001-AC-031.
 
-- [ ] **LRN-001-T018 — Hiện thực `GetPublishedProblem` và `ListPublishedProblems`.** Chỉ nội dung
+- [x] **LRN-001-T018 — Hiện thực `GetPublishedProblem` và `ListPublishedProblems`.** Chỉ nội dung
       `PUBLISHED` và chưa bị xoá. Tra cứu theo ID ổn định hoặc slug; liệt kê có phân trang, lọc theo
       `problemType`/`difficulty`/`topic`/`tag`, tìm theo tiêu đề bằng `ILIKE` không phân biệt hoa
       thường, sắp xếp mặc định mới nhất trước. Kết quả rỗng là thành công. Problem bản nháp, tạm giữ
@@ -198,7 +208,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-005, LRN-001-FR-006, LRN-001-FR-007, LRN-001-FR-008;
       LRN-001-SR-003; LRN-001-AC-002, LRN-001-AC-003, LRN-001-AC-004.
 
-- [ ] **LRN-001-T019 — Hiện thực `GetManagedProblem` và `ListManagedProblems`.** Kiểm tra quyền sở
+- [x] **LRN-001-T019 — Hiện thực `GetManagedProblem` và `ListManagedProblems`.** Kiểm tra quyền sở
       hữu; mọi trạng thái đang hoạt động gồm bản nháp và `ON_HOLD`; kèm thông tin mức độ sẵn sàng
       xuất bản. Không nhận `lecturerId` từ client. Hỗ trợ cờ `includeDeleted` giới hạn trong phạm vi
       chủ sở hữu (mặc định `false`); Problem đã xoá mềm chỉ xuất hiện qua cờ này. Không trả về đáp án
@@ -206,42 +216,44 @@ Approved và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-001-T012, LRN-001-T023.
       **Truy vết:** LRN-001-FR-009, LRN-001-FR-023; LRN-001-SR-003; LRN-001-AC-031.
 
-- [ ] **LRN-001-T020 — Hiện thực `PreviewProblem`.** Kiểm tra quyền sở hữu; chiếu ra biểu diễn hướng
+- [x] **LRN-001-T020 — Hiện thực `PreviewProblem`.** Kiểm tra quyền sở hữu; chiếu ra biểu diễn hướng
       người học của bản nháp hiện tại mà không xuất bản, không thực thi mã, không thay đổi
       state/mốc thời gian, và không làm Problem khám phá được qua danh mục công khai.
       **Phụ thuộc:** LRN-001-T012, LRN-001-T021.
       **Truy vết:** LRN-001-FR-024, LRN-001-FR-028; LRN-001-AC-019.
 
-- [ ] **LRN-001-T021 — Hiện thực các mapper phản hồi.** Phép chiếu công khai và phép chiếu quản lý
-      là hai danh sách cho phép tách biệt, được ánh xạ tường minh. Entity TypeORM không bao giờ được
-      trả về trực tiếp. Phản hồi công khai không chứa `publishStatus`, `deletedAt`, Test Case ẩn, kết
-      quả ẩn mong đợi, harness, lời giải nội bộ, lệnh biên dịch/Docker hay thông tin xác thực nội bộ;
-      starter code chỉ phơi bày cho các ngôn ngữ đang bật.
+- [x] **LRN-001-T021 — Hiện thực result model và mapper phản hồi.** Application trả result model;
+      `presentation/http/mappers/` chuyển result model sang response DTO. Phép chiếu công khai và
+      phép chiếu quản lý là hai danh sách cho phép tách biệt, được ánh xạ tường minh. Entity TypeORM
+      không bao giờ được trả về trực tiếp. Phản hồi công khai không chứa `publishStatus`, `deletedAt`,
+      Test Case ẩn, kết quả ẩn mong đợi, harness, lời giải nội bộ, lệnh biên dịch/Docker hay thông tin
+      xác thực nội bộ; starter code chỉ phơi bày cho các ngôn ngữ đang bật.
       **Phụ thuộc:** LRN-001-T005.
       **Truy vết:** LRN-001-FR-015, LRN-001-FR-019, LRN-001-FR-023, LRN-001-FR-025;
       LRN-001-SR-004, LRN-001-SR-010; LRN-001-AC-015, LRN-001-AC-020.
 
 ## Lưu trữ
 
-- [ ] **LRN-001-T022 — Mở rộng model lưu trữ Problem.** Thêm ánh xạ cột `type_config` (jsonb, cho
+- [x] **LRN-001-T022 — Mở rộng model lưu trữ Problem.** Thêm ánh xạ cột `type_config` (jsonb, cho
       phép null) và `deleted_at` (timestamptz, cho phép null) vào entity TypeORM hiện có. Đổi giá trị
       enum `PublishStatus` từ `ARCHIVED` sang `ON_HOLD`. Giữ `hidden_harness` ở chế độ
       `select: false`. Không chuyển entity vào `libs/`.
       **Phụ thuộc:** LRN-001-T005.
       **Truy vết:** LRN-001-FR-013, LRN-001-FR-033; mục Lưu trữ của kế hoạch.
 
-- [ ] **LRN-001-T023 — Hiện thực adapter TypeORM `ProblemRepository`.** Sở hữu các query builder cho
-      liệt kê/tìm/lọc/phân trang nội dung đã xuất bản (luôn kèm `deleted_at IS NULL`), tra cứu theo
-      slug/id, chèn slug duy nhất với xung đột ràng buộc duy nhất ánh xạ thành lỗi nghiệp vụ
-      `DuplicateSlug`, truy vấn quản lý theo phạm vi chủ sở hữu với cờ `includeDeleted`, các bước
-      chuyển xoá mềm và khôi phục nguyên tử, và lưu aggregate nguyên tử qua `TransactionRunner`. Chỉ
-      dùng datasource của Learning. Ánh xạ hai chiều giữa aggregate domain và model lưu trữ tại ranh
-      giới hạ tầng.
+- [x] **LRN-001-T023 — Hiện thực adapter TypeORM cho domain repository `ProblemRepository`.** Đặt
+      adapter tại `infrastructure/persistence/`; nó hiện thực interface ở `domain/repositories/` và
+      không được import ngược vào domain. Sở hữu các query builder cho liệt kê/tìm/lọc/phân trang nội
+      dung đã xuất bản (luôn kèm `deleted_at IS NULL`), tra cứu theo slug/id, chèn slug duy nhất với
+      xung đột ràng buộc duy nhất ánh xạ thành lỗi nghiệp vụ `DuplicateSlug`, truy vấn quản lý theo
+      phạm vi chủ sở hữu với cờ `includeDeleted`, các bước chuyển xoá mềm và khôi phục nguyên tử, và
+      lưu aggregate nguyên tử qua `TransactionRunner`. Chỉ dùng datasource của Learning. Ánh xạ hai
+      chiều giữa aggregate domain và model lưu trữ tại ranh giới hạ tầng.
       **Phụ thuộc:** LRN-001-T011, LRN-001-T022.
       **Truy vết:** LRN-001-FR-005, LRN-001-FR-007, LRN-001-FR-008, LRN-001-FR-021,
       LRN-001-FR-033, LRN-001-FR-034; LRN-001-SR-009; LRN-001-AC-018, LRN-001-AC-022.
 
-- [ ] **LRN-001-T024 — Hiện thực `TopicTagReader`.** Kiểm tra sự tồn tại của từng ID Topic/Tag được
+- [x] **LRN-001-T024 — Hiện thực `TopicTagReader`.** Kiểm tra sự tồn tại của từng ID Topic/Tag được
       tham chiếu khi tạo/cập nhật và từ chối các tham chiếu không tồn tại mà không âm thầm tạo ra
       chúng. Tái dùng các bảng nối `problem_topics`/`problem_tags` hiện có. Các phép join khi khám
       phá có tính phòng thủ, coi tham chiếu thiếu là vắng mặt/rỗng. LRN-001 không triển khai CRUD
@@ -249,13 +261,13 @@ Approved và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-001-T011.
       **Truy vết:** LRN-001-FR-017; LRN-001-AC-005.
 
-- [ ] **LRN-001-T025 — Hiện thực `TransactionRunner`.** Adapter dùng `DataSource` của TypeORM, điều
+- [x] **LRN-001-T025 — Hiện thực `TransactionRunner`.** Adapter dùng `DataSource` của TypeORM, điều
       phối nạp aggregate, kiểm tra và lưu một cách nguyên tử, để một lần kiểm tra dữ liệu, phân quyền
       hay chuyển trạng thái thất bại không commit thay đổi dở dang nào.
       **Phụ thuộc:** LRN-001-T011.
       **Truy vết:** LRN-001-FR-011, LRN-001-FR-030; LRN-001-AC-025.
 
-- [ ] **LRN-001-T026 — Thêm test lưu trữ và đồng thời.** Kiểm chứng tính đúng đắn của truy vấn
+- [x] **LRN-001-T026 — Thêm test lưu trữ và đồng thời.** Kiểm chứng tính đúng đắn của truy vấn
       liệt kê/lọc/tìm/phân trang kèm `deleted_at IS NULL`; bộ lọc rỗng và kết quả rỗng vẫn hợp lệ;
       JSONB `type_config` round-trip đúng; các bước chuyển xoá mềm/khôi phục là nguyên tử và bị ẩn
       khỏi truy vấn mặc định; một cuộc đua giữa xoá và khôi phục để lại đúng một kết quả nhất quán;
@@ -267,7 +279,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Cơ sở dữ liệu / Migration
 
-- [ ] **LRN-001-T027 — Viết migration LRN-001.** Tạo
+- [x] **LRN-001-T027 — Viết migration LRN-001.** Tạo
       `apps/learning-service/src/database/migrations/<timestamp>-Lrn001ProblemManagement.ts` mà không
       sửa migration nền tảng và giữ `synchronize: false`. Phần up phải: thêm cột `type_config` jsonb
       cho phép null; thêm cột `deleted_at` timestamptz cho phép null; tạo lại enum `publish_status`
@@ -283,7 +295,7 @@ Approved và không thay đổi `plan.md`.
       LRN-001-FR-020, LRN-001-FR-021, LRN-001-FR-033; mục Thay đổi cơ sở dữ liệu/Migration của kế
       hoạch.
 
-- [ ] **LRN-001-T028 — Kiểm chứng vòng đời migration.** Trên một cơ sở dữ liệu `bkpractice_learning`
+- [x] **LRN-001-T028 — Kiểm chứng vòng đời migration.** Trên một cơ sở dữ liệu `bkpractice_learning`
       cách ly, chạy `pnpm migration:run:learning`, kiểm tra schema và dữ liệu đã chuyển đổi, chạy
       `pnpm migration:revert:learning`, kiểm chứng phần down, rồi chạy lại migration. Xác nhận
       `synchronize` vẫn tắt và không schema của service nào khác bị tạo hay thay đổi. Kiểm chứng
@@ -294,17 +306,19 @@ Approved và không thay đổi `plan.md`.
 
 ## Infrastructure
 
-- [ ] **LRN-001-T029 — Hiện thực `PrincipalProvider`.** Đọc các header tin cậy do Gateway thiết lập
-      (`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`) và dịch chúng thành một principal độc
-      lập với framework; header quyền thiếu thì coi là tập rỗng (ID-003-FR-022). Từ
-      chối ngữ cảnh bị thiếu hoặc không nhất quán như phòng thủ nhiều lớp cho các lời gọi trực tiếp
-      hoặc định tuyến sai. Phải từ chối header định danh/vai trò giả mạo do client gửi và không bao
-      giờ chấp nhận một token của nhà cung cấp Microsoft hay một refresh token như một principal.
+- [x] **LRN-001-T029 — Hiện thực cơ chế principal tin cậy.** (Điều chỉnh 2026-10-27: thay
+      `RequestPrincipalProvider` bằng `@TrustedPrincipal()` + `TrustedPrincipalGuard`.) Đọc các
+      header tin cậy do Gateway thiết lập (`x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`)
+      và dịch chúng thành một principal độc lập với framework; header quyền thiếu thì coi là tập
+      rỗng (ID-003-FR-022). Từ chối ngữ cảnh bị thiếu hoặc không nhất quán như phòng thủ nhiều lớp
+      cho các lời gọi trực tiếp hoặc định tuyến sai. Phải từ chối header định danh/vai trò giả mạo
+      do client gửi và không bao giờ chấp nhận một token của nhà cung cấp Microsoft hay một refresh
+      token như một principal.
       **Phụ thuộc:** LRN-001-T011.
       **Truy vết:** LRN-001-FR-004; LRN-001-SR-002, LRN-001-SR-012; LRN-001-AC-005,
       LRN-001-AC-007.
 
-- [ ] **LRN-001-T030 — Hiện thực adapter quyền `problem:*`.** Theo kết quả của LRN-001-T002, đánh
+- [x] **LRN-001-T030 — Hiện thực adapter quyền `problem:*`.** Theo kết quả của LRN-001-T002, đánh
       giá tám quyền `problem:*` qua seam đã phê duyệt: kiểm mã quyền cần thiết có trong tập quyền của
       principal (từ `x-auth-permissions`). Không dùng phương án tạm ánh xạ theo vai trò. Không bao giờ
       rơi về dữ liệu do client cung cấp.
@@ -312,17 +326,17 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-SR-001, LRN-001-SR-002, LRN-001-SR-012; LRN-001-AC-005,
       LRN-001-AC-006, LRN-001-AC-030.
 
-- [ ] **LRN-001-T031 — Thêm test cho các adapter hạ tầng.** Kiểm thử việc ánh xạ giữa lớp lưu trữ và
+- [x] **LRN-001-T031 — Thêm test cho các adapter hạ tầng.** Kiểm thử việc ánh xạ giữa lớp lưu trữ và
       domain, việc chuyển đổi xung đột ràng buộc duy nhất thành lỗi nghiệp vụ, hành vi của
-      `TransactionRunner` khi rollback, việc từ chối header giả mạo ở `PrincipalProvider`, và việc
-      adapter quyền không bao giờ đọc dữ liệu từ client.
+      `TransactionRunner` khi rollback, việc từ chối header giả mạo ở decorator/guard principal, và
+      việc kiểm tra quyền không bao giờ đọc dữ liệu từ client.
       **Phụ thuộc:** LRN-001-T023, LRN-001-T024, LRN-001-T025, LRN-001-T029, LRN-001-T030.
       **Truy vết:** LRN-001-SR-002, LRN-001-SR-009, LRN-001-SR-012; LRN-001-AC-007,
       LRN-001-AC-018.
 
 ## API / Presentation
 
-- [ ] **LRN-001-T032 — Tạo các DTO request.** Thêm `CreateProblemRequestDto`,
+- [x] **LRN-001-T032 — Tạo các DTO request.** Thêm `CreateProblemRequestDto`,
       `UpdateProblemRequestDto` (dạng partial), các contract payload theo từng loại, và các DTO query
       cho bộ lọc. Bộ lọc danh sách quản lý bổ sung cờ `includeDeleted` giới hạn trong phạm vi chủ sở
       hữu (mặc định `false`). Ngữ nghĩa `PATCH`: trường bị bỏ qua thì giữ nguyên, `null` xoá một
@@ -333,7 +347,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-003, LRN-001-FR-010, LRN-001-FR-016, LRN-001-FR-018;
       LRN-001-SR-006, LRN-001-SR-008; LRN-001-AC-007, LRN-001-AC-010, LRN-001-AC-011.
 
-- [ ] **LRN-001-T033 — Tạo các DTO response.** `ProblemSummaryResponseDto` và
+- [x] **LRN-001-T033 — Tạo các DTO response.** `ProblemSummaryResponseDto` và
       `ProblemDetailResponseDto` cho phía công khai; `ManagedProblemResponseDto` cho phía quản lý,
       bổ sung `publishStatus`, `createdAt`/`updatedAt`, các lỗi về mức độ sẵn sàng xuất bản, và — chỉ
       trong luồng `includeDeleted` — dấu `deletedAt`. Tất cả đều là phép chiếu tường minh.
@@ -341,7 +355,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-023, LRN-001-FR-025; LRN-001-SR-004, LRN-001-SR-010;
       LRN-001-AC-015, LRN-001-AC-020.
 
-- [ ] **LRN-001-T034 — Hiện thực các route công khai.** `GET /api/problems` và
+- [x] **LRN-001-T034 — Hiện thực các route công khai.** `GET /api/problems` và
       `GET /api/problems/:idOrSlug`, đều yêu cầu Bearer token vì danh mục chỉ dành cho người đã xác
       thực. Bản nháp, tạm giữ và đã xoá mềm trả về `404` mà không lộ state. Thay thế hành vi liệt kê
       entity thô hiện có. Thứ tự sắp xếp là mặc định cố định; không nhận trường sắp xếp do client
@@ -351,7 +365,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-005, LRN-001-FR-006, LRN-001-FR-007, LRN-001-FR-008;
       LRN-001-AC-002, LRN-001-AC-003, LRN-001-AC-004.
 
-- [ ] **LRN-001-T035 — Hiện thực các route quản lý và chuyển trạng thái.** `POST /api/problems`,
+- [x] **LRN-001-T035 — Hiện thực các route quản lý và chuyển trạng thái.** `POST /api/problems`,
       `PATCH /api/problems/:id`, `POST /api/problems/:id/publish`, `POST /api/problems/:id/hold`,
       `POST /api/problems/:id/republish`, `DELETE /api/problems/:id` (chỉ xoá mềm),
       `POST /api/problems/:id/restore`, `GET /api/problems/managed`,
@@ -365,14 +379,14 @@ Approved và không thay đổi `plan.md`.
       LRN-001-AC-001, LRN-001-AC-009, LRN-001-AC-019, LRN-001-AC-026, LRN-001-AC-027,
       LRN-001-AC-028, LRN-001-AC-029.
 
-- [ ] **LRN-001-T036 — Giữ nguyên route judge-package nội bộ.** Bảo toàn
+- [x] **LRN-001-T036 — Giữ nguyên route judge-package nội bộ.** Bảo toàn
       `GET internal/problems/:id/judge-package/:language` cùng `InternalServiceGuard` và
       `@ApiExcludeEndpoint`. Contract dữ liệu judge được bảo vệ không đổi và không thuộc phạm vi
       LRN-001; không tạo endpoint công khai tương đương.
       **Phụ thuộc:** LRN-001-T035.
       **Truy vết:** LRN-001-FR-026; LRN-001-SR-005; LRN-001-AC-021.
 
-- [ ] **LRN-001-T037 — Cập nhật Swagger.** Mô tả các endpoint công khai và quản lý, các DTO, yêu cầu
+- [x] **LRN-001-T037 — Cập nhật Swagger.** Mô tả các endpoint công khai và quản lý, các DTO, yêu cầu
       Bearer, ngữ nghĩa `PATCH`, và các mã lỗi. Route judge-package nội bộ vẫn giữ
       `@ApiExcludeEndpoint`. Các ví dụ Swagger không chứa Test Case ẩn, kết quả ẩn mong đợi, harness,
       lời giải nội bộ, thông tin xác thực hay lệnh runtime.
@@ -380,14 +394,24 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** Phần tài liệu API của Định nghĩa Hoàn thành; LRN-001-SR-004;
       LRN-001-AC-020.
 
-- [ ] **LRN-001-T038 — Nối dây composition root của module Problems.** Đăng ký các use case làm
-      provider của Nest, gắn sáu port với các adapter TypeORM, principal và quyền của chúng, và chỉ
-      phơi bày những provider mà tầng presentation cần. Giữ phần nối dây module không chứa hành vi
-      nghiệp vụ và không có trừu tượng hoá trùng lặp. Không đụng các module
-      Courses/Assignments/Progress.
+- [x] **LRN-001-T038 — Nối dây composition root của module Problems.** Đăng ký các use case,
+      `PublishValidator` và `ProblemAuthorizationService` làm provider của Nest; bind
+      `ProblemRepository`, `TopicTagReader`, `TransactionRunner` với adapter tương ứng; dùng
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở presentation; bind 12 inbound port token tới
+      use case class bằng `useExisting`; chỉ phơi bày
+      những provider mà tầng presentation cần. Giữ phần nối dây module không chứa hành vi nghiệp vụ
+      và không có trừu tượng hoá trùng lặp. Không đụng các module Courses/Assignments/Progress.
       **Phụ thuộc:** LRN-001-T013 tới LRN-001-T021, LRN-001-T023 tới LRN-001-T025,
       LRN-001-T029, LRN-001-T030, LRN-001-T034, LRN-001-T035.
       **Truy vết:** Mục Adapter hạ tầng và Tuân thủ kiến trúc của kế hoạch; LRN-001-FR-001.
+      **Kết quả kiểm chứng:** boot thật trước đó fail DI (`design:paramtypes` emit `Object` cho
+      param interface do `import type`). Đã sửa: thêm `@Inject(TOKEN)` cho mọi constructor nhận
+      interface port, chuyển import của 4 class cụ thể (`ProblemAuthorizationService`,
+      `ContentFormatValidator`, `PublishValidator`, `ProblemResultMapper`) sang value import, thêm
+      `@Injectable()` cho 3 domain service. Kiểm chứng: `pnpm typecheck`, `eslint`,
+      `pnpm build:learning`, boot với Postgres/RabbitMQ thật (14 route map, "successfully started"),
+      HTTP smoke test đúng hành vi (401 thiếu xác thực, 401 duplicate header, 403 thiếu quyền/role,
+      200 list công khai và managed, 400 validation Nest shape), 12/12 test suite (159 test) pass.
 
 ## Tích hợp API Gateway
 
@@ -414,7 +438,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Phân quyền và Bảo mật
 
-- [ ] **LRN-001-T040 — Hiện thực việc ánh xạ lỗi chuẩn hoá.** Giữ lỗi domain/application độc lập với
+- [x] **LRN-001-T040 — Hiện thực việc ánh xạ lỗi chuẩn hoá.** Giữ lỗi domain/application độc lập với
       framework và ánh xạ ở tầng Presentation về quy ước hiện có: `401` khi thiếu/sai token; `403`
       khi thiếu quyền hoặc quyền sở hữu; `404` khi không tồn tại hoặc không hiển thị, không lộ sự tồn
       tại của nội dung bản nháp/tạm giữ/đã xoá mềm; `400` cho lỗi kiểm tra dữ liệu; `409` cho slug
@@ -425,7 +449,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-FR-030; LRN-001-SR-003, LRN-001-SR-012; LRN-001-AC-003,
       LRN-001-AC-005, LRN-001-AC-025, LRN-001-AC-030.
 
-- [ ] **LRN-001-T041 — Thực hiện rà soát bảo mật tập trung.** Kiểm chứng rằng đầu vào công khai không
+- [x] **LRN-001-T041 — Thực hiện rà soát bảo mật tập trung.** Kiểm chứng rằng đầu vào công khai không
       thể đặt người tạo, trạng thái, dấu xoá, mốc thời gian, vai trò hay quyền; rằng nội dung bản
       nháp, tạm giữ và đã xoá mềm không bị lộ qua liệt kê/tìm/lọc/chi tiết/lỗi/đếm; rằng tài liệu
       judge ẩn không xuất hiện trong phản hồi, log hay ví dụ Swagger; rằng đầu vào ngôn ngữ/giới
