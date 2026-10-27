@@ -20,8 +20,8 @@ async function makeFile(
 describe('Account Excel import boundaries', () => {
   const parser = new XlsxAccountParser();
   const admin = { userId: 'admin', roles: [RoleName.Admin], permissions: ['user:import'] };
-  const student = ['00123', ' Nguyễn An ', ' STUDENT@school.edu ', 'STUDENT'];
-  const lecturer = [null, 'Lecturer', 'lecturer@school.edu', 'LECTURER'];
+  const student = ['00123', ' Nguyễn An ', ' STUDENT@SV1.DUT.UDN.VN ', 'STUDENT'];
+  const lecturer = [null, 'Lecturer', 'lecturer@dut.udn.vn', 'LECTURER'];
 
   it('reads actual .xlsx data, preserves leading zeros and normalizes name/email', async () => {
     const rows = validateAccountImport(await parser.parse(await makeFile([student, [], lecturer])));
@@ -30,26 +30,65 @@ describe('Account Excel import boundaries', () => {
         row: 2,
         studentId: '00123',
         officialName: 'Nguyễn An',
-        email: 'student@school.edu',
+        email: 'student@sv1.dut.udn.vn',
         role: 'STUDENT',
       },
       {
         row: 4,
         studentId: null,
         officialName: 'Lecturer',
-        email: 'lecturer@school.edu',
+        email: 'lecturer@dut.udn.vn',
         role: 'LECTURER',
       },
     ]);
+  });
+
+  it('imports the visible email text from Excel hyperlink cells', async () => {
+    const book = new Workbook();
+    const sheet = book.addWorksheet('Accounts');
+    sheet.addRow(['mssv', 'name', 'email', 'role']);
+    sheet.addRow(['00123', 'Student', null, 'STUDENT']);
+    sheet.getCell('C2').value = {
+      text: 'student@sv1.dut.udn.vn',
+      hyperlink: 'https://other.example/path',
+    };
+    const rows = validateAccountImport(
+      await parser.parse(Buffer.from(await book.xlsx.writeBuffer())),
+    );
+    expect(rows).toMatchObject([{ email: 'student@sv1.dut.udn.vn', role: 'STUDENT' }]);
+  });
+
+  it('requires the school email domain for each imported role', async () => {
+    const rows = await parser.parse(
+      await makeFile([
+        ['1', 'Student', 'student@dut.udn.vn', 'STUDENT'],
+        [null, 'Lecturer', 'lecturer@sv1.dut.udn.vn', 'LECTURER'],
+        ['2', 'Student', 'student@other.edu.vn', 'STUDENT'],
+        ['3', 'Student', 'sv1.dut.udn.vn', 'STUDENT'],
+      ]),
+    );
+    try {
+      validateAccountImport(rows);
+      throw new Error('Expected invalid email domains');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AccountImportFailure);
+      if (!(error instanceof AccountImportFailure)) throw error;
+      expect(error.issues).toEqual([
+        { row: 2, field: 'email', code: 'invalid_email' },
+        { row: 3, field: 'email', code: 'invalid_email' },
+        { row: 4, field: 'email', code: 'invalid_email' },
+        { row: 5, field: 'email', code: 'invalid_email' },
+      ]);
+    }
   });
 
   it('reports duplicate and invalid rows without returning cell data', async () => {
     const file = await makeFile([
       student,
       student,
-      ['', 'Name', 'valid@school.edu', 'STUDENT'],
-      ['99', 'Name', 'other@school.edu', 'LECTURER'],
-      ['', 'Name', 'admin@school.edu', 'ADMIN'],
+      ['', 'Name', 'valid@sv1.dut.udn.vn', 'STUDENT'],
+      ['99', 'Name', 'other@dut.udn.vn', 'LECTURER'],
+      ['', 'Name', 'admin@dut.udn.vn', 'ADMIN'],
     ]);
     try {
       validateAccountImport(await parser.parse(file));
@@ -66,13 +105,13 @@ describe('Account Excel import boundaries', () => {
           { row: 6, field: 'role', code: 'invalid_role' },
         ]),
       );
-      expect(JSON.stringify(error)).not.toContain('@school.edu');
+      expect(JSON.stringify(error)).not.toContain('@sv1.dut.udn.vn');
     }
   });
 
   it('rejects formulas, arbitrary files, wrong headers, extra sheets and oversized row counts', async () => {
     const formula = await parser.parse(
-      await makeFile([['1', { formula: '1+1', result: 'Name' }, 'a@school.edu', 'STUDENT']]),
+      await makeFile([['1', { formula: '1+1', result: 'Name' }, 'a@sv1.dut.udn.vn', 'STUDENT']]),
     );
     expect(() => validateAccountImport(formula)).toThrow('invalid_rows');
     await expect(parser.parse(Buffer.from('not an Excel file'))).rejects.toThrow('invalid_file');

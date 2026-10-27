@@ -1,4 +1,4 @@
-import { Workbook } from 'exceljs';
+import { ValueType, Workbook } from 'exceljs';
 import { fromBufferPromise } from 'yauzl';
 
 import type { AccountImportParser } from '@/modules/auth/application/ports';
@@ -72,7 +72,17 @@ export class XlsxAccountParser implements AccountImportParser {
         throw rejectFile('invalid_headers', 1);
       const rows: RawAccountImportRow[] = [];
       for (let row = 2; row <= sheet.rowCount; row++) {
-        const values = [1, 2, 3, 4].map((column) => sheet.getRow(row).getCell(column).value);
+        const values = [1, 2, 3, 4].map((column) => {
+          const cell = sheet.getRow(row).getCell(column);
+          const value = cell.value;
+          return column === 3 &&
+            cell.type === ValueType.Hyperlink &&
+            value &&
+            typeof value === 'object' &&
+            'text' in value
+            ? value.text
+            : value;
+        });
         if (values.every((value) => value === null || value === undefined || value === ''))
           continue;
         rows.push({ row, values });

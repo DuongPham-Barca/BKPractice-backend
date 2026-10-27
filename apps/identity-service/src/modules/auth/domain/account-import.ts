@@ -56,13 +56,23 @@ export function validateAccountImport(input: RawAccountImportRow[]): AccountImpo
           : '';
     const officialName = typeof rawName === 'string' ? rawName.trim() : '';
     const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
+    const emailDomain =
+      role === RoleName.Student
+        ? 'sv1.dut.udn.vn'
+        : role === RoleName.Lecturer
+          ? 'dut.udn.vn'
+          : null;
     const invalid = (field: ImportIssue['field'], code: string): void => {
       issues.push({ row, field, code });
     };
     if (values.length > 4) invalid('row', 'unexpected_columns');
     if (!officialName || officialName.length > 100 || /\p{Cc}/u.test(officialName))
       invalid('name', 'invalid_name');
-    if (email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    if (
+      email.length > 320 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      (emailDomain !== null && !email.endsWith(`@${emailDomain}`))
+    )
       invalid('email', 'invalid_email');
     if (role !== RoleName.Student && role !== RoleName.Lecturer) invalid('role', 'invalid_role');
     if (role === RoleName.Student && (!studentId || studentId.length > 64 || /\s/.test(studentId)))
