@@ -39,9 +39,9 @@ infrastructure ----implements----^ các port của application/domain
 ```
 
 - LRN-002 dựng trên các tầng mà LRN-001 tạo trong module `problems`: aggregate `Problem`,
-  `PublishValidator`, các port `ProblemRepository`, `PrincipalProvider`, `TransactionRunner`,
-  `ProblemAuthorizationService`, và phép chiếu công khai/quản lý. **LRN-001 phải được triển khai
-  trước.**
+  `PublishValidator`, `ProblemRepository`, `TransactionRunner`, `ProblemAuthorizationService`, cơ chế
+  `@TrustedPrincipal()`/`TrustedPrincipalGuard`, và phép chiếu công khai/quản lý. **LRN-001 phải được
+  triển khai trước.**
 - Chỉ dùng DDD tactical. Không thêm bounded context, CQRS, event store hay base repository chung.
 
 ## Ảnh hưởng tới mã nguồn hiện có
@@ -245,7 +245,8 @@ Tiền tố `/api/problems` đã được Gateway chuyển tới Learning. Tất
 
 ## Phân quyền
 
-- Principal lấy từ `PrincipalProvider` của LRN-001 (header Gateway đã làm sạch).
+- Principal lấy từ `@TrustedPrincipal()`/`TrustedPrincipalGuard` của LRN-001 tại presentation
+  (header Gateway đã làm sạch).
 - `ProblemAuthorizationService` của LRN-001 đánh giá `problem:update` / `problem:read-managed` cộng
   với quyền sở hữu (`createdBy` = principal). `ADMIN` không có quyền ngầm.
 - Cùng phụ thuộc LRN-001-T002: nếu vẫn dùng phương án tạm ánh xạ theo vai trò `LECTURER`, LRN-002
@@ -297,7 +298,7 @@ Không đưa vào cấu trúc lỗi mới.
 | Yêu cầu | Cách thực thi                                                                                                          |
 | ------- | ---------------------------------------------------------------------------------------------------------------------- |
 | SR-001  | Quyền, sở hữu, trạng thái kiểm tra trong use case, không ở controller                                                  |
-| SR-002  | Principal chỉ từ `PrincipalProvider`                                                                                   |
+| SR-002  | Principal chỉ từ decorator/guard tin cậy của LRN-001                                                                   |
 | SR-003  | Phép chiếu công khai chỉ đọc dòng `SAMPLE`; harness không có trong phép chiếu công khai; test soi phản hồi/log/Swagger |
 | SR-004  | Gói judge giữ `InternalServiceGuard`; không có route công khai tương đương                                             |
 | SR-005  | DTO danh sách cho phép + `forbidNonWhitelisted`                                                                        |

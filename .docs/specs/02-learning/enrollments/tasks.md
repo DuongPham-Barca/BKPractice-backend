@@ -18,8 +18,9 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-004-T001 — Xác nhận nền tảng.** Khảo sát trạng thái Git, `spec.md` 1.0 Approved,
       `plan.md` Approved, kiến trúc Learning (DDD + Hexagonal, ADR 0002). Xác nhận LRN-001 đã triển
-      khai `PrincipalProvider` và `TransactionRunner`, và LRN-003 đã triển khai trạng thái vòng đời
-      cùng dấu xoá mềm của `courses`. Nếu một trong hai chưa xong, **DỪNG và BÁO CÁO**.
+      khai `TransactionRunner` và `@TrustedPrincipal()`/`TrustedPrincipalGuard`, và LRN-003 đã triển
+      khai trạng thái vòng đời cùng dấu xoá mềm của `courses`. Nếu một trong hai chưa xong, **DỪNG
+      và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Quy trình SDD; mục Thứ tự triển khai bước 1 của kế hoạch.
 
@@ -72,8 +73,9 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 ## Tầng application
 
 - [ ] **LRN-004-T009 — Định nghĩa port.** Chỉ thêm `ClassroomRepository`, `EnrollmentRepository`,
-      `CourseAvailabilityReader`, `JoinCodeGenerator`; dùng lại `PrincipalProvider` và
-      `TransactionRunner` của LRN-001. Không port nào khác.
+      `CourseAvailabilityReader`, `JoinCodeGenerator`; dùng lại `TransactionRunner` của LRN-001.
+      Principal lấy qua `@TrustedPrincipal()`/`TrustedPrincipalGuard`, không phải port. Không port
+      nào khác.
       **Phụ thuộc:** LRN-004-T006, LRN-004-T007.
       **Truy vết:** Mục Port của kế hoạch.
 
@@ -218,7 +220,8 @@ isOpenForClasses` (trong transaction, khoá `FOR SHARE` dòng `courses`) sai th�
       **Truy vết:** Định nghĩa Hoàn thành.
 
 - [ ] **LRN-004-T031 — Gắn module.** Tạo `EnrollmentsModule` gắn adapter vào port tại composition
-      root, import module export `PrincipalProvider`/`TransactionRunner`; đăng ký trong
+      root, import `TransactionRunner` của LRN-001 và dùng
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở controller; đăng ký trong
       `learning-service.module.ts`.
       **Phụ thuộc:** LRN-004-T020 tới LRN-004-T022, LRN-004-T028.
       **Truy vết:** Mục Kiến trúc service bắt buộc của kế hoạch.

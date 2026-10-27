@@ -17,9 +17,9 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-002-T001 — Xác nhận nền tảng.** Khảo sát trạng thái Git, `spec.md` 1.1 Approved,
       `plan.md` Approved, kiến trúc Learning (DDD + Hexagonal, ADR 0002). Xác nhận LRN-001 đã triển
-      khai: aggregate `Problem`, `PublishValidator`, `ProblemRepository`, `PrincipalProvider`,
-      `ProblemAuthorizationService`, `TransactionRunner`, các phép chiếu công khai/quản lý, và
-      migration LRN-001. Nếu LRN-001 chưa xong, **DỪNG và BÁO CÁO**.
+      khai: aggregate `Problem`, `PublishValidator`, `ProblemRepository`, `TransactionRunner`,
+      `ProblemAuthorizationService`, `@TrustedPrincipal()`/`TrustedPrincipalGuard`, các phép chiếu
+      công khai/quản lý, và migration LRN-001. Nếu LRN-001 chưa xong, **DỪNG và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Quy trình SDD; mục Thứ tự triển khai bước 1 của kế hoạch.
 

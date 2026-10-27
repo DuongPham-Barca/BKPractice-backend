@@ -18,8 +18,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 - [ ] **LRN-005-T001 — Xác nhận nền tảng.** Khảo sát trạng thái Git, `spec.md` 1.0 Approved,
       `plan.md` Approved, kiến trúc Learning (DDD + Hexagonal, ADR 0002). Xác nhận LRN-001 đã có
-      `PrincipalProvider`, `TransactionRunner`, bộ kiểm Markdown hạn chế và xoá mềm Problem. Nếu chưa,
-      **DỪNG và BÁO CÁO**.
+      `TransactionRunner`, `@TrustedPrincipal()`/`TrustedPrincipalGuard`, bộ kiểm Markdown hạn chế và
+      xoá mềm Problem. Nếu chưa, **DỪNG và BÁO CÁO**.
       **Phụ thuộc:** Không có.
       **Truy vết:** Quy trình SDD; mục Thứ tự triển khai bước 1 của kế hoạch.
 
@@ -94,8 +94,9 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 ## Tầng application
 
 - [ ] **LRN-005-T010 — Định nghĩa port.** Chỉ thêm `AssignmentRepository`, `ClassAccessReader`,
-      `ProblemCatalogReader`, `Clock`; tái dùng `PrincipalProvider` và
-      `TransactionRunner` của LRN-001. Không port nào khác.
+      `ProblemCatalogReader`, `Clock`; tái dùng `TransactionRunner` của LRN-001. Principal lấy qua
+      `@TrustedPrincipal()`/`TrustedPrincipalGuard` ở presentation, không phải port. Không port nào
+      khác.
       **Phụ thuộc:** LRN-005-T006.
       **Truy vết:** Mục Port của kế hoạch.
 

@@ -1,0 +1,159 @@
+import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
+import {
+  TEST_NOW,
+  TEST_USER_ID,
+  buildProblem,
+} from '@learning/modules/problems/domain/testing/problem-test.factory';
+
+import type { ProblemResultMapper } from '../results/problem-result.mapper';
+import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
+
+import { HoldProblemUseCase } from './hold-problem.use-case';
+
+const PRINCIPAL = {
+  userId: TEST_USER_ID,
+  roles: ['LECTURER'],
+  permissions: ['problem:hold'],
+};
+
+describe('HoldProblemUseCase', () => {
+  it('moves a published problem on hold, saves it and returns readiness', async () => {
+    const repository = repositoryMock();
+    const publishValidator = publishValidatorMock();
+    const transactionRunner = transactionRunnerMock();
+    const resultMapper = resultMapperMock();
+    const useCase = createUseCase({
+      repository,
+      publishValidator,
+      transactionRunner,
+      resultMapper,
+    });
+    const problem = buildProblem();
+
+    problem.publish(TEST_NOW);
+    const expectedUpdatedAt = problem.updatedAt;
+    const readiness = { ready: true, issues: [] };
+    const detail = { id: problem.id.value };
+
+    repository.findById.mockResolvedValue(problem);
+    publishValidator.validate.mockReturnValue(readiness);
+    resultMapper.toManagedDetail.mockResolvedValue(detail);
+
+    await expect(useCase.execute(PRINCIPAL, problem.id.value)).resolves.toBe(detail);
+
+    expect(problem.publishStatus).toBe('ON_HOLD');
+    expect(repository.save).toHaveBeenCalledWith(problem, expectedUpdatedAt);
+    expect(publishValidator.validate).toHaveBeenCalledWith(problem, { slugAvailable: true });
+    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness);
+  });
+
+  it('throws when the problem does not exist', async () => {
+    const repository = repositoryMock();
+    const authorization = authorizationMock();
+    const useCase = createUseCase({ repository, authorization });
+
+    repository.findById.mockResolvedValue(null);
+
+    await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
+      ProblemNotFoundError,
+    );
+    expect(authorization.requireOwned).not.toHaveBeenCalled();
+  });
+
+  it('rejects holding a draft problem before saving', async () => {
+    const repository = repositoryMock();
+    const useCase = createUseCase({ repository });
+    const problem = buildProblem();
+
+    repository.findById.mockResolvedValue(problem);
+
+    await expect(useCase.execute(PRINCIPAL, problem.id.value)).rejects.toMatchObject({
+      code: 'INVALID_PROBLEM_STATE',
+    });
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it('does not save when the ownership check fails', async () => {
+    const authorization = authorizationMock();
+    const repository = repositoryMock();
+    const useCase = createUseCase({ authorization, repository });
+    const problem = buildProblem();
+
+    problem.publish(TEST_NOW);
+    repository.findById.mockResolvedValue(problem);
+    authorization.requireOwned.mockImplementation(() => {
+      throw new Error('forbidden');
+    });
+
+    await expect(useCase.execute(PRINCIPAL, problem.id.value)).rejects.toThrow('forbidden');
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+});
+
+function createUseCase(dependencies: {
+  authorization?: ReturnType<typeof authorizationMock>;
+  repository?: ReturnType<typeof repositoryMock>;
+  publishValidator?: ReturnType<typeof publishValidatorMock>;
+  transactionRunner?: ReturnType<typeof transactionRunnerMock>;
+  resultMapper?: ReturnType<typeof resultMapperMock>;
+}): HoldProblemUseCase {
+  const {
+    authorization = authorizationMock(),
+    repository = repositoryMock(),
+    publishValidator = publishValidatorMock(),
+    transactionRunner = transactionRunnerMock(),
+    resultMapper = resultMapperMock(),
+  } = dependencies;
+
+  return new HoldProblemUseCase(
+    authorization as unknown as ProblemAuthorizationService,
+    repository,
+    publishValidator as unknown as PublishValidator,
+    transactionRunner as unknown as TransactionRunner,
+    resultMapper as unknown as ProblemResultMapper,
+  );
+}
+
+function authorizationMock() {
+  return {
+    requireCreate: jest.fn(),
+    requireManagedList: jest.fn(),
+    requireOwned: jest.fn(),
+  };
+}
+
+function repositoryMock() {
+  return {
+    findById: jest.fn(),
+    findByIdIncludingDeleted: jest.fn(),
+    findPublishedByIdOrSlug: jest.fn(),
+    findManagedById: jest.fn(),
+    listPublished: jest.fn(),
+    listManaged: jest.fn(),
+    isSlugAvailable: jest.fn(),
+    save: jest.fn().mockResolvedValue(undefined),
+    softDelete: jest.fn(),
+    restore: jest.fn(),
+  };
+}
+
+function publishValidatorMock() {
+  return { validate: jest.fn().mockReturnValue({ ready: true, issues: [] }) };
+}
+
+function transactionRunnerMock() {
+  return { run: jest.fn((work: () => Promise<unknown>) => work()) };
+}
+
+function resultMapperMock() {
+  return {
+    toSummary: jest.fn(),
+    toDetail: jest.fn(),
+    toManagedSummary: jest.fn(),
+    toManagedDetail: jest.fn().mockResolvedValue({ id: 'problem' }),
+    toPage: jest.fn(),
+    toManagedPage: jest.fn(),
+  };
+}
