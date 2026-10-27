@@ -1,8 +1,10 @@
 import { ApplicationError } from '@learning/modules/problems/application/errors/application.error';
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
+import { HarnessNotFoundError } from '@learning/modules/problems/application/errors/harness-not-found.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
+import { TestCaseNotFoundError } from '@learning/modules/problems/application/errors/test-case-not-found.error';
 import { UnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
@@ -62,6 +64,8 @@ describe('ProblemExceptionFilter', () => {
     [new UnauthorizedError(), HttpStatus.UNAUTHORIZED],
     [new ForbiddenError(), HttpStatus.FORBIDDEN],
     [new ProblemNotFoundError('id'), HttpStatus.NOT_FOUND],
+    [new TestCaseNotFoundError('case-1'), HttpStatus.NOT_FOUND],
+    [new HarnessNotFoundError('problem-1', 'python'), HttpStatus.NOT_FOUND],
     [new DuplicateSlugError('slug'), HttpStatus.CONFLICT],
     [new InvalidProblemState('field', 'message'), HttpStatus.CONFLICT],
     [new ConcurrentModificationError(), HttpStatus.CONFLICT],
@@ -82,7 +86,11 @@ describe('ProblemExceptionFilter', () => {
     filter.catch(exception, host);
 
     expect(response.statusCode).toBe(HttpStatus.BAD_REQUEST);
-    expect(response.body).toHaveProperty('issues', issues);
+    expect(response.body).toMatchObject({
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: 'Problem is not ready to publish',
+      issues,
+    });
   });
 
   it('unknown ApplicationError subclass maps to 500', () => {

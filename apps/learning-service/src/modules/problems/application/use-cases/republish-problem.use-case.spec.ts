@@ -7,6 +7,7 @@ import {
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -38,7 +39,7 @@ describe('RepublishProblemUseCase', () => {
     const expectedUpdatedAt = problem.updatedAt;
     const detail = { id: problem.id.value };
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
     resultMapper.toManagedDetail.mockResolvedValue(detail);
 
@@ -54,7 +55,7 @@ describe('RepublishProblemUseCase', () => {
     const authorization = authorizationMock();
     const useCase = createUseCase({ repository, authorization });
 
-    repository.findById.mockResolvedValue(null);
+    repository.loadForUpdate.mockResolvedValue(null);
 
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
@@ -70,7 +71,7 @@ describe('RepublishProblemUseCase', () => {
 
     problem.publish(TEST_NOW);
     problem.hold(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(false);
     publishValidator.validate.mockReturnValue({
       ready: false,
@@ -89,7 +90,7 @@ describe('RepublishProblemUseCase', () => {
     const useCase = createUseCase({ repository });
     const problem = buildProblem();
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await expect(useCase.execute(PRINCIPAL, problem.id.value)).rejects.toMatchObject({
       code: 'INVALID_PROBLEM_STATE',
@@ -133,6 +134,8 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

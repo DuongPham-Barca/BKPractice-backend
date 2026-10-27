@@ -36,6 +36,7 @@ export class GetManagedProblemUseCase implements IGetManagedProblemPortIn {
       throw new ProblemNotFoundError(id);
     }
 
+    problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
     const slugAvailable = await this.repository.isSlugAvailable(
       problem.slug.value,
       problem.id.value,

@@ -1,7 +1,9 @@
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import type { ProblemPage } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { SampleTestCase } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishReadiness } from '@learning/modules/problems/domain/services/publish.validator';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 import { TOPIC_TAG_READER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -10,6 +12,7 @@ import type {
   ManagedProblemDetailResult,
   ManagedProblemSummaryResult,
   OopContractResult,
+  PreviewProblemResult,
   ProblemDetailResult,
   ProblemReadinessIssueResult,
   ProblemReadinessResult,
@@ -19,6 +22,7 @@ import type {
   TopicResult,
   VisibleExampleResult,
 } from './problem.results';
+import { toSampleTestCaseResults, toTestSuiteSummaryResult } from './test-case.results';
 
 interface ResolvedNames {
   readonly topicNames: ReadonlyMap<string, string>;
@@ -33,8 +37,11 @@ export class ProblemResultMapper {
     return this.summary(problem, await this.loadNames([problem]));
   }
 
-  async toDetail(problem: Problem): Promise<ProblemDetailResult> {
-    return this.detail(problem, await this.loadNames([problem]));
+  async toDetail(
+    problem: Problem,
+    samples: readonly SampleTestCase[] = [],
+  ): Promise<ProblemDetailResult> {
+    return this.detail(problem, await this.loadNames([problem]), samples);
   }
 
   async toManagedSummary(
@@ -48,17 +55,32 @@ export class ProblemResultMapper {
       publishStatus: problem.publishStatus,
       deletedAt: problem.deletedAt,
       readiness: toReadinessResult(readiness),
+      testSuiteSummary: toTestSuiteSummaryResult(
+        problem.testSuiteSummary ?? TestSuiteSummary.empty(),
+      ),
     };
   }
 
   async toManagedDetail(
     problem: Problem,
     readiness: PublishReadiness,
+    samples: readonly SampleTestCase[] = [],
   ): Promise<ManagedProblemDetailResult> {
-    const detail = await this.toDetail(problem);
-
     return {
-      ...detail,
+      ...(await this.toPreviewDetail(problem, readiness, samples)),
+      testSuiteSummary: toTestSuiteSummaryResult(
+        problem.testSuiteSummary ?? TestSuiteSummary.empty(),
+      ),
+    };
+  }
+
+  async toPreviewDetail(
+    problem: Problem,
+    readiness: PublishReadiness,
+    samples: readonly SampleTestCase[] = [],
+  ): Promise<PreviewProblemResult> {
+    return {
+      ...(await this.toDetail(problem, samples)),
       publishStatus: problem.publishStatus,
       deletedAt: problem.deletedAt,
       readiness: toReadinessResult(readiness),
@@ -103,6 +125,9 @@ export class ProblemResultMapper {
           publishStatus: problem.publishStatus,
           deletedAt: problem.deletedAt,
           readiness: toReadinessResult(readiness),
+          testSuiteSummary: toTestSuiteSummaryResult(
+            problem.testSuiteSummary ?? TestSuiteSummary.empty(),
+          ),
         };
       }),
       total,
@@ -146,7 +171,11 @@ export class ProblemResultMapper {
     };
   }
 
-  private detail(problem: Problem, names: ResolvedNames): ProblemDetailResult {
+  private detail(
+    problem: Problem,
+    names: ResolvedNames,
+    samples: readonly SampleTestCase[],
+  ): ProblemDetailResult {
     return {
       ...this.summary(problem, names),
       statement: problem.statement.value,
@@ -178,6 +207,7 @@ export class ProblemResultMapper {
           returnType: contract.returnType,
         }),
       ),
+      sampleTestCases: toSampleTestCaseResults(samples),
       oopContracts: Array.from(
         problem.oopContracts.entries(),
         ([language, contract]): OopContractResult => ({

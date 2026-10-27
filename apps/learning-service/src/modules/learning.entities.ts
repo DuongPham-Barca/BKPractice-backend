@@ -2,6 +2,7 @@ import { Assignment, AssignmentProblem } from './assignments/entities/assignment
 import { Chapter, Classroom, Course, Enrollment } from './courses/entities/course.entity';
 import {
   Problem,
+  ProblemHarness,
   ProblemLanguage,
   StarterCode,
   Tag,
@@ -12,6 +13,7 @@ import { Progress } from './progress/entities/progress.entity';
 
 export const learningEntities = [
   Problem,
+  ProblemHarness,
   TestCase,
   StarterCode,
   ProblemLanguage,

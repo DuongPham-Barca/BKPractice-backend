@@ -82,6 +82,29 @@ describe('ProblemTypeOrmRepository unit', () => {
     );
   });
 
+  it('aggregates test case and harness bytes in loadTestSuiteSummary', async () => {
+    const manager = {
+      query: jest
+        .fn()
+        .mockResolvedValueOnce([
+          { totalCount: 2, hiddenCount: 1, totalScore: '15', testCaseBytes: '10' },
+        ])
+        .mockResolvedValueOnce([{ languages: ['python'], harnessBytes: '5' }]),
+    };
+    const repository = new ProblemTypeOrmRepository(contextWith(manager), mapper);
+
+    const summary = await repository.loadTestSuiteSummary(PROBLEM_ID);
+
+    expect(summary).toMatchObject({
+      totalCount: 2,
+      hiddenCount: 1,
+      totalScore: 15,
+      totalBytes: 15,
+      harnessLanguages: ['python'],
+    });
+    expect(manager.query).toHaveBeenCalledTimes(2);
+  });
+
   it('filters deleted rows in findById and published lookups', async () => {
     const { manager, builder } = lookupManager(null);
     const repository = new ProblemTypeOrmRepository(contextWith(manager), mapper);

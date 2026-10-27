@@ -15,6 +15,7 @@ import type {
   ProblemTitle,
   Slug,
 } from '@learning/modules/problems/domain/value-objects';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import { ProblemContractValidator } from './problem-contract.validator';
 import { PublishValidator } from './publish.validator';
@@ -121,6 +122,68 @@ describe('PublishValidator', () => {
       'TITLE_REQUIRED',
       'STATEMENT_REQUIRED',
       'SLUG_INVALID',
+    ]);
+  });
+
+  it('requires at least one hidden test case and a positive total score', () => {
+    const base = buildProblem({ enabledLanguages: languages('python') });
+    const noHidden = Problem.rehydrate({
+      ...snapshotOf(base),
+      testSuiteSummary: new TestSuiteSummary({
+        totalCount: 1,
+        hiddenCount: 0,
+        totalScore: 10,
+        totalBytes: 10,
+      }),
+    });
+    const noScore = Problem.rehydrate({
+      ...snapshotOf(base),
+      testSuiteSummary: new TestSuiteSummary({
+        totalCount: 1,
+        hiddenCount: 1,
+        totalScore: 0,
+        totalBytes: 10,
+      }),
+    });
+
+    expect(
+      validator.validate(noHidden, { slugAvailable: true }).issues.map((issue) => issue.code),
+    ).toEqual(['TEST_CASE_HIDDEN_REQUIRED']);
+    expect(
+      validator.validate(noScore, { slugAvailable: true }).issues.map((issue) => issue.code),
+    ).toEqual(['TEST_CASE_SCORE_REQUIRED']);
+  });
+
+  it('requires a harness per enabled language for FUNCTION and OOP problems', () => {
+    const problem = buildProblem({
+      problemType: 'FUNCTION',
+      inputSpecification: null,
+      outputSpecification: null,
+      enabledLanguages: languages('python', 'java'),
+      starterCodes: [starterCode('python'), starterCode('java')],
+      functionContracts: new Map([
+        ['python', functionContract()],
+        ['java', functionContract()],
+      ]),
+    });
+    const snapshot = {
+      ...snapshotOf(problem),
+      testSuiteSummary: new TestSuiteSummary({
+        totalCount: 1,
+        hiddenCount: 1,
+        totalScore: 10,
+        totalBytes: 10,
+        harnessLanguages: ['python'],
+      }),
+    };
+    const readiness = validator.validate(Problem.rehydrate(snapshot), { slugAvailable: true });
+
+    expect(readiness.issues).toEqual([
+      {
+        code: 'HARNESS_REQUIRED',
+        field: 'harnesses.java',
+        message: 'A FUNCTION problem requires a harness for java',
+      },
     ]);
   });
 

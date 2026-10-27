@@ -48,6 +48,7 @@ export class RestoreProblemUseCase implements IRestoreProblemPortIn {
       throw new ConcurrentModificationError();
     }
 
+    problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
     const slugAvailable = await this.repository.isSlugAvailable(
       problem.slug.value,
       problem.id.value,

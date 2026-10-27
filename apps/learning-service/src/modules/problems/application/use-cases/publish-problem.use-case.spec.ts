@@ -7,6 +7,7 @@ import {
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -35,7 +36,7 @@ describe('PublishProblemUseCase', () => {
     const expectedUpdatedAt = problem.updatedAt;
     const detail = { id: problem.id.value };
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
     publishValidator.validate.mockReturnValue({ ready: true, issues: [] });
     resultMapper.toManagedDetail.mockResolvedValue(detail);
@@ -56,7 +57,7 @@ describe('PublishProblemUseCase', () => {
     const authorization = authorizationMock();
     const useCase = createUseCase({ repository, authorization });
 
-    repository.findById.mockResolvedValue(null);
+    repository.loadForUpdate.mockResolvedValue(null);
 
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
@@ -70,7 +71,7 @@ describe('PublishProblemUseCase', () => {
     const useCase = createUseCase({ repository, publishValidator });
     const problem = buildProblem();
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
     publishValidator.validate.mockReturnValue({
       ready: false,
@@ -90,7 +91,7 @@ describe('PublishProblemUseCase', () => {
     const useCase = createUseCase({ authorization, repository });
     const problem = buildProblem();
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     authorization.requireOwned.mockImplementation(() => {
       throw new Error('forbidden');
     });
@@ -105,7 +106,7 @@ describe('PublishProblemUseCase', () => {
     const problem = buildProblem();
 
     problem.publish(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
 
     await expect(useCase.execute(PRINCIPAL, problem.id.value)).rejects.toMatchObject({
@@ -150,6 +151,8 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

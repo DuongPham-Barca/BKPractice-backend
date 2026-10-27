@@ -3,7 +3,11 @@ import type { IGetPublicProblemPortIn } from '@learning/modules/problems/applica
 import { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { ProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
-import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
+import {
+  PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
+} from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -11,6 +15,8 @@ export class GetPublicProblemUseCase implements IGetPublicProblemPortIn {
   constructor(
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly resultMapper: ProblemResultMapper,
   ) {}
 
@@ -21,6 +27,8 @@ export class GetPublicProblemUseCase implements IGetPublicProblemPortIn {
       throw new ProblemNotFoundError(idOrSlug);
     }
 
-    return this.resultMapper.toDetail(problem);
+    const samples = await this.testCaseRepository.listSamples(problem.id.value);
+
+    return this.resultMapper.toDetail(problem, samples);
   }
 }

@@ -493,16 +493,12 @@ describeIntegration('ProblemTypeOrmRepository', () => {
   });
 
   describe('starter codes and enabled languages', () => {
-    it('updates source_code without losing hidden_harness and removes deleted starter rows', async () => {
+    it('updates source_code and removes deleted starter rows', async () => {
       const problem = draftProblem({
         enabledLanguages: [new EnabledLanguage('python')],
         starterCodes: [new StarterCode({ language: 'python', sourceCode: 'print("old")' })],
       });
       await persist(problem);
-      await dataSource.query(
-        'UPDATE "starter_codes" SET "hidden_harness" = $1 WHERE "problem_id" = $2',
-        ['secret-harness', problem.id.value],
-      );
 
       const loaded = requireProblem(await repository.findById(problem.id.value));
       const token = loaded.updatedAt;
@@ -514,17 +510,12 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       );
       await runner.run(() => repository.save(loaded, token));
 
-      const starterRows: {
-        sourceCode: string;
-        hiddenHarness: string | null;
-      }[] = await dataSource.query(
-        `SELECT "source_code" AS "sourceCode", "hidden_harness" AS "hiddenHarness"
+      const starterRows: { sourceCode: string }[] = await dataSource.query(
+        `SELECT "source_code" AS "sourceCode"
          FROM "starter_codes" WHERE "problem_id" = $1`,
         [problem.id.value],
       );
-      expect(starterRows).toEqual([
-        { sourceCode: 'print("new")', hiddenHarness: 'secret-harness' },
-      ]);
+      expect(starterRows).toEqual([{ sourceCode: 'print("new")' }]);
 
       const loadedAgain = requireProblem(await repository.findById(problem.id.value));
       const secondToken = loadedAgain.updatedAt;

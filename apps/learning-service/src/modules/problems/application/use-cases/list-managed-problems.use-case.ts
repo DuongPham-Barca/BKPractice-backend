@@ -44,6 +44,7 @@ export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
     const readinessByProblemId = new Map<string, PublishReadiness>();
 
     for (const problem of result.items) {
+      problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
       readinessByProblemId.set(
         problem.id.value,
         this.publishValidator.validate(problem, { slugAvailable: true }),

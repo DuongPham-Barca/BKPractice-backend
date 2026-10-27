@@ -4,6 +4,7 @@ import {
   TEST_NOW,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -112,6 +113,8 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

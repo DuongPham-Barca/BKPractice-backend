@@ -3,13 +3,16 @@ import { PublishNotReadyError } from '@learning/modules/problems/application/err
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import type { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
-import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
+import { ProblemContractValidator } from '@learning/modules/problems/domain/services/problem-contract.validator';
+import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
   TEST_USER_ID,
   buildProblem,
+  languages,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { ProblemTitle } from '@learning/modules/problems/domain/value-objects';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -40,7 +43,7 @@ describe('UpdateProblemUseCase', () => {
     const expectedUpdatedAt = problem.updatedAt;
     const detail = { id: problem.id.value };
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     resultMapper.toManagedDetail.mockResolvedValue(detail);
 
     await expect(
@@ -59,7 +62,7 @@ describe('UpdateProblemUseCase', () => {
     const problem = buildProblem();
 
     expect(problem.inputSpecification).not.toBeNull();
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await useCase.execute(PRINCIPAL, problem.id.value, { inputSpecification: null });
 
@@ -71,7 +74,7 @@ describe('UpdateProblemUseCase', () => {
     const authorization = authorizationMock();
     const useCase = createUseCase({ repository, authorization });
 
-    repository.findById.mockResolvedValue(null);
+    repository.loadForUpdate.mockResolvedValue(null);
 
     await expect(useCase.execute(PRINCIPAL, 'missing', {})).rejects.toBeInstanceOf(
       ProblemNotFoundError,
@@ -86,7 +89,7 @@ describe('UpdateProblemUseCase', () => {
 
     problem.publish(TEST_NOW);
     problem.hold(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await expect(
       useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') }),
@@ -100,7 +103,7 @@ describe('UpdateProblemUseCase', () => {
     const problem = buildProblem();
 
     problem.publish(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await expect(
       useCase.execute(PRINCIPAL, problem.id.value, { problemType: 'FUNCTION' }),
@@ -114,7 +117,7 @@ describe('UpdateProblemUseCase', () => {
     const useCase = createUseCase({ repository, topicTagReader });
     const problem = buildProblem();
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     topicTagReader.findMissingTopicIds.mockResolvedValue(['missing-topic']);
     topicTagReader.findMissingTagIds.mockResolvedValue(['missing-tag']);
 
@@ -134,7 +137,7 @@ describe('UpdateProblemUseCase', () => {
     const problem = buildProblem();
 
     problem.publish(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     publishValidator.validate.mockReturnValue({
       ready: false,
       issues: [{ code: 'ENABLED_LANGUAGE_REQUIRED', message: 'no language' }],
@@ -142,6 +145,28 @@ describe('UpdateProblemUseCase', () => {
 
     await expect(
       useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') }),
+    ).rejects.toBeInstanceOf(PublishNotReadyError);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects enabling a FUNCTION language on a published problem without a harness', async () => {
+    const repository = repositoryMock();
+    const publishValidator = new PublishValidator(new ProblemContractValidator());
+    const useCase = createUseCase({ repository, publishValidator });
+    const problem = buildProblem({
+      problemType: 'FUNCTION',
+      inputSpecification: null,
+      outputSpecification: null,
+      enabledLanguages: languages('python'),
+    });
+
+    problem.publish(TEST_NOW);
+    repository.loadForUpdate.mockResolvedValue(problem);
+
+    await expect(
+      useCase.execute(PRINCIPAL, problem.id.value, {
+        enabledLanguages: languages('python', 'java'),
+      }),
     ).rejects.toBeInstanceOf(PublishNotReadyError);
     expect(repository.save).not.toHaveBeenCalled();
   });
@@ -154,7 +179,7 @@ describe('UpdateProblemUseCase', () => {
     const problem = buildProblem();
 
     problem.publish(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') });
 
@@ -172,7 +197,7 @@ function createUseCase(dependencies: {
   topicTagReader?: ReturnType<typeof topicTagReaderMock>;
   repository?: ReturnType<typeof repositoryMock>;
   contentValidator?: ReturnType<typeof contentValidatorMock>;
-  publishValidator?: ReturnType<typeof publishValidatorMock>;
+  publishValidator?: Pick<PublishValidator, 'validate'>;
   transactionRunner?: ReturnType<typeof transactionRunnerMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
 }): UpdateProblemUseCase {
@@ -217,6 +242,8 @@ function topicTagReaderMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

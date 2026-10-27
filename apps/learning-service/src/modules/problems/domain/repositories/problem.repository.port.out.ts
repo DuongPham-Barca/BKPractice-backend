@@ -1,6 +1,6 @@
 import type { ProblemType } from '@app/contracts';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
-import type { Difficulty } from '@learning/modules/problems/domain/value-objects';
+import type { Difficulty, TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 export interface ProblemListFilter {
   readonly search?: string;
@@ -31,6 +31,8 @@ export interface ProblemRepository {
   findByIdIncludingDeleted(id: string): Promise<Problem | null>;
   findPublishedByIdOrSlug(idOrSlug: string): Promise<Problem | null>;
   findManagedById(id: string, ownerId: string, includeDeleted: boolean): Promise<Problem | null>;
+  loadForUpdate(id: string, includeDeleted?: boolean): Promise<Problem | null>;
+  loadTestSuiteSummary(problemId: string): Promise<TestSuiteSummary>;
   listPublished(filter: ProblemListFilter): Promise<ProblemPage<Problem>>;
   listManaged(filter: ManagedProblemListFilter): Promise<ProblemPage<Problem>>;
   isSlugAvailable(slug: string, excludeProblemId?: string): Promise<boolean>;

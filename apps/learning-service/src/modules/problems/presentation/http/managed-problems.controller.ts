@@ -354,6 +354,6 @@ export class ManagedProblemsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManagedProblemResponseDto> {
     const result = await this.previewProblem.execute(principal, id);
-    return this.responseMapper.toManagedDetail(result, true);
+    return this.responseMapper.toPreviewDetail(result, true);
   }
 }

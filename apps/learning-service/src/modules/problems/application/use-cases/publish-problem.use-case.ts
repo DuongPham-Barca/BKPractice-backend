@@ -24,32 +24,33 @@ export class PublishProblemUseCase implements IPublishProblemPortIn {
   ) {}
 
   async execute(principal: Principal, id: string): Promise<ManagedProblemDetailResult> {
-    const problem = await this.repository.findById(id);
+    const result = await this.transactionRunner.run(async () => {
+      const problem = await this.repository.loadForUpdate(id);
 
-    if (problem === null) {
-      throw new ProblemNotFoundError(id);
-    }
+      if (problem === null) {
+        throw new ProblemNotFoundError(id);
+      }
 
-    this.authorization.requireOwned(principal, problem, 'publish');
+      this.authorization.requireOwned(principal, problem, 'publish');
+      problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(id));
 
-    const expectedUpdatedAt = problem.updatedAt;
-    const slugAvailable = await this.repository.isSlugAvailable(
-      problem.slug.value,
-      problem.id.value,
-    );
-    const readiness = this.publishValidator.validate(problem, { slugAvailable });
+      const expectedUpdatedAt = problem.updatedAt;
+      const slugAvailable = await this.repository.isSlugAvailable(
+        problem.slug.value,
+        problem.id.value,
+      );
+      const readiness = this.publishValidator.validate(problem, { slugAvailable });
 
-    if (!readiness.ready) {
-      throw new PublishNotReadyError(readiness.issues);
-    }
+      if (!readiness.ready) {
+        throw new PublishNotReadyError(readiness.issues);
+      }
 
-    problem.publish();
+      problem.publish();
+      await this.repository.save(problem, expectedUpdatedAt);
 
-    await this.transactionRunner.run(() => this.repository.save(problem, expectedUpdatedAt));
-
-    return this.resultMapper.toManagedDetail(problem, {
-      ready: true,
-      issues: readiness.issues,
+      return { problem, readiness };
     });
+
+    return this.resultMapper.toManagedDetail(result.problem, result.readiness);
   }
 }

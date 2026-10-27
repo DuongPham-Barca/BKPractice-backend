@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import type { SupportedLanguage } from '@app/contracts';
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
@@ -9,6 +10,7 @@ import type {
   ProblemPage,
   ProblemRepository,
 } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 import {
   Problem as ProblemEntity,
   PublishStatus as EntityPublishStatus,
@@ -19,6 +21,18 @@ import { QueryFailedError } from 'typeorm';
 
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 import { TypeOrmTransactionContext } from './typeorm-transaction-context';
+
+interface TestCaseSummaryRow {
+  readonly totalCount: number;
+  readonly hiddenCount: number;
+  readonly totalScore: string;
+  readonly testCaseBytes: string;
+}
+
+interface HarnessSummaryRow {
+  readonly languages: SupportedLanguage[];
+  readonly harnessBytes: string;
+}
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -76,6 +90,61 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     const entity = await query.getOne();
 
     return entity === null ? null : this.mapper.toDomain(entity);
+  }
+
+  async loadForUpdate(id: string, includeDeleted = false): Promise<Problem | null> {
+    const manager = this.transactionContext.requireManager();
+    const lockQuery = manager
+      .getRepository(ProblemEntity)
+      .createQueryBuilder('p')
+      .select('p.id', 'id')
+      .where('p.id = :id', { id });
+
+    if (!includeDeleted) {
+      lockQuery.andWhere('p.deletedAt IS NULL');
+    }
+
+    const locked = await lockQuery.setLock('pessimistic_write').getRawOne<{ id: string }>();
+
+    if (locked === undefined) {
+      return null;
+    }
+
+    const entity = await this.baseQuery(manager).where('p.id = :id', { id }).getOne();
+
+    return entity === null ? null : this.mapper.toDomain(entity);
+  }
+
+  async loadTestSuiteSummary(problemId: string): Promise<TestSuiteSummary> {
+    const manager = this.transactionContext.getManager();
+    const testRows = await manager.query<TestCaseSummaryRow[]>(
+      `SELECT
+         COUNT(*)::int AS "totalCount",
+         COUNT(*) FILTER (WHERE "is_hidden")::int AS "hiddenCount",
+         COALESCE(SUM("score"), 0)::bigint AS "totalScore",
+         COALESCE(SUM(octet_length("input") + octet_length("expected_output")), 0)::bigint AS "testCaseBytes"
+       FROM "test_cases"
+       WHERE "problem_id" = $1`,
+      [problemId],
+    );
+    const harnessRows = await manager.query<HarnessSummaryRow[]>(
+      `SELECT
+         COALESCE(array_agg("language" ORDER BY "language"), ARRAY[]::varchar[]) AS "languages",
+         COALESCE(SUM(octet_length("source")), 0)::bigint AS "harnessBytes"
+       FROM "problem_harnesses"
+       WHERE "problem_id" = $1`,
+      [problemId],
+    );
+    const tests = testRows[0];
+    const harnesses = harnessRows[0];
+
+    return new TestSuiteSummary({
+      totalCount: Number(tests?.totalCount ?? 0),
+      hiddenCount: Number(tests?.hiddenCount ?? 0),
+      totalScore: Number(tests?.totalScore ?? 0),
+      totalBytes: Number(tests?.testCaseBytes ?? 0) + Number(harnesses?.harnessBytes ?? 0),
+      harnessLanguages: harnesses?.languages ?? [],
+    });
   }
 
   async listPublished(filter: ProblemListFilter): Promise<ProblemPage<Problem>> {

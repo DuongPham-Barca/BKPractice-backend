@@ -18,6 +18,7 @@ import {
   ProblemTitle,
   Slug,
   StarterCode,
+  TestSuiteSummary,
   VisibleExample,
 } from '@learning/modules/problems/domain/value-objects';
 
@@ -39,10 +40,24 @@ export function buildProblem(overrides: Partial<CreateProblemInput> = {}): Probl
     ...overrides,
   };
 
-  return Problem.create(input, {
+  const problem = Problem.create(input, {
     id: ProblemId.from(TEST_PROBLEM_ID),
     now: TEST_NOW,
   });
+  problem.attachTestSuiteSummary(
+    new TestSuiteSummary({
+      totalCount: 1,
+      hiddenCount: 1,
+      totalScore: 1,
+      totalBytes: 0,
+      harnessLanguages:
+        input.problemType === 'STANDARD'
+          ? []
+          : (input.enabledLanguages ?? []).map((language) => language.value),
+    }),
+  );
+
+  return problem;
 }
 
 export function languages(...values: SupportedLanguage[]): readonly EnabledLanguage[] {
@@ -98,6 +113,7 @@ export function snapshotOf(problem: Problem): ProblemSnapshot {
     starterCodes: problem.starterCodes,
     functionContracts: problem.functionContracts,
     oopContracts: problem.oopContracts,
+    testSuiteSummary: problem.testSuiteSummary,
     publishStatus: problem.publishStatus,
     deletedMarker: DeletedMarker.from(problem.deletedAt),
     createdBy: problem.createdBy,

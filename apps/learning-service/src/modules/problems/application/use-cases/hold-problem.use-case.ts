@@ -32,6 +32,7 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     this.authorization.requireOwned(principal, problem, 'hold');
 
     const expectedUpdatedAt = problem.updatedAt;
+    problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
     problem.hold();
 
     await this.transactionRunner.run(() => this.repository.save(problem, expectedUpdatedAt));

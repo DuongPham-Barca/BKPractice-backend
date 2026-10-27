@@ -38,6 +38,18 @@ export function assertMaxLength(value: string, field: string, max: number): stri
   return value;
 }
 
+export function utf8ByteLength(value: string): number {
+  return Buffer.byteLength(value, 'utf8');
+}
+
+export function assertUtf8ByteLength(value: string, field: string, max: number): string {
+  if (utf8ByteLength(value) > max) {
+    throw new DomainValidationError(field, `${field} must be at most ${max} UTF-8 bytes`);
+  }
+
+  return value;
+}
+
 export function assertCanonicalUuid(value: unknown, field: string): string {
   const text = assertString(value, field);
 

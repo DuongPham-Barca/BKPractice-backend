@@ -43,85 +43,92 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
     id: string,
     command: UpdateProblemCommand,
   ): Promise<ManagedProblemDetailResult> {
-    const existing = await this.repository.findById(id);
+    const result = await this.transactionRunner.run(async () => {
+      const existing = await this.repository.loadForUpdate(id);
 
-    if (existing === null) {
-      throw new ProblemNotFoundError(id);
-    }
+      if (existing === null) {
+        throw new ProblemNotFoundError(id);
+      }
 
-    this.authorization.requireOwned(principal, existing, 'update');
+      this.authorization.requireOwned(principal, existing, 'update');
+      existing.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(id));
 
-    const expectedUpdatedAt = existing.updatedAt;
+      const expectedUpdatedAt = existing.updatedAt;
 
-    if (existing.isOnHold) {
-      throw new InvalidProblemState('publishStatus', 'A problem on hold cannot be updated');
-    }
+      if (existing.isOnHold) {
+        throw new InvalidProblemState('publishStatus', 'A problem on hold cannot be updated');
+      }
 
-    if (
-      command.problemType !== undefined &&
-      command.problemType !== existing.problemType &&
-      !existing.isDraft
-    ) {
-      throw new InvalidProblemState(
-        'problemType',
-        'The problem type can only be changed while the problem is a draft',
-      );
-    }
+      if (
+        command.problemType !== undefined &&
+        command.problemType !== existing.problemType &&
+        !existing.isDraft
+      ) {
+        throw new InvalidProblemState(
+          'problemType',
+          'The problem type can only be changed while the problem is a draft',
+        );
+      }
 
-    const references: UnknownReference[] = [];
+      const references: UnknownReference[] = [];
 
-    if (command.topicIds !== undefined) {
-      const missingTopicIds = await this.topicTagReader.findMissingTopicIds(command.topicIds);
-      references.push(...missingTopicIds.map((id): UnknownReference => ({ kind: 'topic', id })));
-    }
+      if (command.topicIds !== undefined) {
+        const missingTopicIds = await this.topicTagReader.findMissingTopicIds(command.topicIds);
+        references.push(
+          ...missingTopicIds.map((topicId): UnknownReference => ({ kind: 'topic', id: topicId })),
+        );
+      }
 
-    if (command.tagIds !== undefined) {
-      const missingTagIds = await this.topicTagReader.findMissingTagIds(command.tagIds);
-      references.push(...missingTagIds.map((id): UnknownReference => ({ kind: 'tag', id })));
-    }
+      if (command.tagIds !== undefined) {
+        const missingTagIds = await this.topicTagReader.findMissingTagIds(command.tagIds);
+        references.push(
+          ...missingTagIds.map((tagId): UnknownReference => ({ kind: 'tag', id: tagId })),
+        );
+      }
 
-    if (references.length > 0) {
-      throw new UnknownReferenceError(references);
-    }
+      if (references.length > 0) {
+        throw new UnknownReferenceError(references);
+      }
 
-    const update: UpdateProblemInput = {
-      title: command.title,
-      statement: command.statement,
-      inputSpecification: command.inputSpecification,
-      outputSpecification: command.outputSpecification,
-      problemType: command.problemType,
-      difficulty: command.difficulty,
-      examples: command.examples,
-      constraints: command.constraints,
-      executionLimits: command.executionLimits,
-      topics: command.topicIds?.map((id) => new TopicReference(id)),
-      tags: command.tagIds?.map((id) => new TagReference(id)),
-      enabledLanguages: command.enabledLanguages,
-      starterCodes: command.starterCodes,
-      functionContracts: command.functionContracts,
-      oopContracts: command.oopContracts,
-    };
+      const update: UpdateProblemInput = {
+        title: command.title,
+        statement: command.statement,
+        inputSpecification: command.inputSpecification,
+        outputSpecification: command.outputSpecification,
+        problemType: command.problemType,
+        difficulty: command.difficulty,
+        examples: command.examples,
+        constraints: command.constraints,
+        executionLimits: command.executionLimits,
+        topics: command.topicIds?.map((topicId) => new TopicReference(topicId)),
+        tags: command.tagIds?.map((tagId) => new TagReference(tagId)),
+        enabledLanguages: command.enabledLanguages,
+        starterCodes: command.starterCodes,
+        functionContracts: command.functionContracts,
+        oopContracts: command.oopContracts,
+      };
 
-    existing.update(update, new Date());
+      existing.update(update, new Date());
+      this.contentValidator.assertSafe(existing);
 
-    this.contentValidator.assertSafe(existing);
+      if (existing.isPublished) {
+        const readiness = this.publishValidator.validate(existing, {
+          slugAvailable: true,
+        });
 
-    if (existing.isPublished) {
+        if (!readiness.ready) {
+          throw new PublishNotReadyError(readiness.issues);
+        }
+      }
+
+      await this.repository.save(existing, expectedUpdatedAt);
       const readiness = this.publishValidator.validate(existing, {
         slugAvailable: true,
       });
 
-      if (!readiness.ready) {
-        throw new PublishNotReadyError(readiness.issues);
-      }
-    }
-
-    await this.transactionRunner.run(() => this.repository.save(existing, expectedUpdatedAt));
-
-    const readiness = this.publishValidator.validate(existing, {
-      slugAvailable: true,
+      return { problem: existing, readiness };
     });
 
-    return this.resultMapper.toManagedDetail(existing, readiness);
+    return this.resultMapper.toManagedDetail(result.problem, result.readiness);
   }
 }

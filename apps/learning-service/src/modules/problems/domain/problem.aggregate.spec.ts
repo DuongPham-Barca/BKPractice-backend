@@ -13,6 +13,7 @@ import {
   EnabledLanguage,
   ProblemTitle,
   TagReference,
+  TestSuiteSummary,
   TopicReference,
 } from './value-objects';
 
@@ -286,5 +287,69 @@ describe('Problem lifecycle', () => {
 
     expect(() => problem.softDelete(new Date(Number.NaN))).toThrow(DomainValidationError);
     expect(problem.isDeleted).toBe(false);
+  });
+});
+
+describe('Problem test suite and harness rules', () => {
+  it('allows test case and harness changes only for DRAFT or PUBLISHED', () => {
+    const draft = buildProblem({
+      problemType: 'FUNCTION',
+      enabledLanguages: languages('python'),
+    });
+
+    expect(() => draft.assertCanManageTestCases()).not.toThrow();
+    expect(() => draft.assertCanManageHarnesses()).not.toThrow();
+
+    draft.publish();
+
+    expect(() => draft.assertCanManageTestCases()).not.toThrow();
+    expect(() => draft.assertCanManageHarnesses()).not.toThrow();
+
+    draft.hold();
+
+    expect(() => draft.assertCanManageTestCases()).toThrow(InvalidProblemState);
+    expect(() => draft.assertCanManageHarnesses()).toThrow(InvalidProblemState);
+
+    const deleted = buildProblem({
+      problemType: 'FUNCTION',
+      enabledLanguages: languages('python'),
+    });
+    deleted.publish();
+    deleted.softDelete();
+
+    expect(() => deleted.assertCanManageTestCases()).toThrow(InvalidProblemState);
+    expect(() => deleted.assertCanManageHarnesses()).toThrow(InvalidProblemState);
+  });
+
+  it('rejects harnesses for STANDARD problems and disabled languages', () => {
+    const standard = buildProblem({ enabledLanguages: languages('python') });
+
+    expect(() => standard.assertCanManageHarnesses()).toThrow(DomainValidationError);
+
+    const functional = buildProblem({
+      problemType: 'FUNCTION',
+      enabledLanguages: languages('python'),
+    });
+
+    expect(() => functional.assertHarnessLanguageIsEnabled('python')).not.toThrow();
+    expect(() => functional.assertHarnessLanguageIsEnabled('java')).toThrow(DomainValidationError);
+  });
+
+  it('attaches a derived summary without changing updatedAt', () => {
+    const problem = buildProblem();
+    const updatedAt = problem.updatedAt;
+
+    problem.attachTestSuiteSummary(
+      new TestSuiteSummary({
+        totalCount: 3,
+        hiddenCount: 1,
+        totalScore: 10,
+        totalBytes: 100,
+        harnessLanguages: ['python'],
+      }),
+    );
+
+    expect(problem.testSuiteSummary).toMatchObject({ totalCount: 3, hiddenCount: 1 });
+    expect(problem.updatedAt).toEqual(updatedAt);
   });
 });

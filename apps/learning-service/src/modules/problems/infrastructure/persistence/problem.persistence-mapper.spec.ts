@@ -169,7 +169,7 @@ describe('ProblemPersistenceMapper', () => {
     expect(loaded?.methods[0]?.parameters).toEqual([{ name: 'value', type: 'string' }]);
   });
 
-  it('excludes disabled languages and hidden harness from the domain', () => {
+  it('excludes disabled languages from the domain', () => {
     const problem = buildProblem({
       enabledLanguages: [new EnabledLanguage('python')],
       starterCodes: [starterCode('python', 'print(1)')],
@@ -180,19 +180,11 @@ describe('ProblemPersistenceMapper', () => {
       enabled: false,
     });
     entity.languages.push(disabled);
-    const starter = entity.starterCodes[0];
-
-    if (starter === undefined) {
-      throw new Error('expected starter code');
-    }
-
-    starter.hiddenHarness = 'super-secret';
     const restored = mapper.toDomain(entity);
 
     expect(restored.enabledLanguages.map((language) => language.value)).toEqual(['python']);
     expect(restored.starterCodes).toHaveLength(1);
     expect(restored.starterCodes[0]?.sourceCode).toBe('print(1)');
-    expect(restored.starterCodes[0]).not.toHaveProperty('hiddenHarness');
   });
 
   it('rejects malformed JSONB and unsupported language keys', () => {
@@ -249,7 +241,6 @@ function toEntity(problem: Problem, mapper: ProblemPersistenceMapper): ProblemEn
     Object.assign(new StarterCodeEntity(), {
       language: starter.language,
       sourceCode: starter.sourceCode,
-      hiddenHarness: null,
     }),
   );
 
