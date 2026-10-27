@@ -36,6 +36,29 @@ Recommended growth areas are `modules/submissions`, `modules/run-code` and `modu
 technical adapters under their feature or a shallow service-level `infrastructure` directory. Run
 and Submit may share the Submission aggregate/lifecycle while remaining separate use cases.
 
+Current layout:
+
+```text
+modules/submissions/          shared aggregate, Submit, judge results, history
+├── domain/                   SubmissionRecord, transition rules, ports
+├── application/              use cases
+├── infrastructure/
+│   ├── persistence/          TypeORM entities and repository (also the outbox port)
+│   ├── messaging/            RabbitMQ judge-job and accepted-event adapters
+│   ├── http/                 Learning judge-package adapter
+│   ├── realtime/             Redis publisher
+│   └── scheduling/           watchdog and outbox relay
+├── presentation/             controller, judge-result consumer and parser, DTOs
+└── submissions.module.ts     exports only the repository and judge-job ports
+modules/run-code/             Run feature
+├── application/
+├── presentation/             POST /api/run controller and DTOs
+└── run-code.module.ts        imports SubmissionsModule
+```
+
+`run-code` reaches the shared aggregate only through the two exported ports. The Learning
+judge-package port is not exported, so Run cannot inject hidden judge data (SUB-001-FR-004).
+
 ## Domain and event rules
 
 - Submission status transitions and official scoring/progress eligibility are domain decisions.
@@ -51,10 +74,21 @@ Submission owns its database, keeps Run/Submit distinct, obtains hidden judge da
 REST, publishes jobs/results through RabbitMQ, and sends realtime data through Redis to the Gateway.
 The accepted-event ID/publication marker supports safe redelivery.
 
-Status: **PARTIALLY ALIGNED**. The event-driven flow is aligned, but `SubmissionsService` and
-`JudgeResultConsumer` directly coordinate TypeORM, RabbitMQ, HTTP and Redis implementations instead
-of application ports. TypeORM entities currently carry the lifecycle state without a separate
-framework-independent aggregate.
+Status: **ALIGNED** (2026-10-27). Every flow goes through an application use case and focused ports:
+
+- Run: `RunCodeUseCase` in its own `run-code` module.
+- Submit: `SubmitCodeUseCase`, using the `LearningJudgePackagePort`.
+- Judge results: `JudgeResultConsumer` only parses each result and hands it to
+  `ApplyRunJudgeResultUseCase` or `ApplySubmitJudgeResultUseCase`.
+- Progress events: `submission.accepted` is written to the transactional outbox
+  (`submission_accepted_outbox`) and published by `AcceptedEventRelay` through the
+  `AcceptedEventPort`.
+- Stale records: `SubmissionWatchdog` expires Run and Submit records that are still waiting.
+- History and detail: `ListSubmissionHistoryUseCase` and `GetSubmissionDetailUseCase` map records
+  to allow-listed DTOs.
+
+TypeORM entities are persistence models only. The domain works on the framework-free
+`SubmissionRecord`.
 
 ## Incremental alignment
 
