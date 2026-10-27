@@ -1,11 +1,11 @@
-import type { SubmissionKind, SubmissionStatus } from '../submission-record';
+import type { SubmissionKind, TerminalSubmissionStatus } from '../submission-record';
 
 export const REALTIME_PORT = Symbol('RealtimePort');
 
 export interface SubmissionRealtimeNotification {
   readonly submissionId: string;
   readonly kind: SubmissionKind;
-  readonly status: SubmissionStatus;
+  readonly status: TerminalSubmissionStatus;
   readonly ready: true;
 }
 
