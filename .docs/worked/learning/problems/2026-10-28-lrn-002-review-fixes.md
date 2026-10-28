@@ -9,7 +9,7 @@
 - Spec: `.docs/specs/02-learning/test-cases/spec.md` — LRN-002 phiên bản 1.1, `Approved`.
 - Plan: `.docs/specs/02-learning/test-cases/plan.md` — Approved 2026-09-29.
 - Tasks: `.docs/specs/02-learning/test-cases/tasks.md`.
-- Spec status at start: `Approved`. **Spec/plan chưa được sửa** (xem mục Spec cross-check).
+- Spec status at start: `Approved`. Spec nâng lên `1.2` cùng ngày để khớp quyết định bên dưới (xem Spec cross-check).
 
 ## Questions clarified
 
@@ -46,12 +46,15 @@
 
 ## Spec cross-check
 
-| Điểm                                                    | Trạng thái                                                                                                                                 |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| FR-012 "harness theo từng ngôn ngữ **đang bật**"        | **Code lệch spec** theo quyết định mục 4. Cần chủ sở hữu sản phẩm duyệt đổi spec/plan.                                                     |
-| FR-011 trần 8 MiB tính "mọi harness của một Problem"    | **Code lệch spec** theo quyết định mục 6 (chỉ harness đang hiệu lực). Cần duyệt đổi spec/plan (plan mục Lưu trữ định nghĩa `SUM(source)`). |
-| FR-015 judge-package từ chối ON_HOLD/DRAFT/ngôn ngữ tắt | Khớp.                                                                                                                                      |
-| FR-019 samples ở chi tiết public và preview             | Khớp; response managed trả thêm samples (spec không cấm).                                                                                  |
+| Điểm                                                    | Trạng thái                                                                                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-012 đặt harness theo ngôn ngữ đang bật               | Đã sửa trong spec `1.2`: cho đặt trước, chỉ có hiệu lực khi ngôn ngữ bật; thêm AC-025. Plan (Use case, Quy tắc khả năng chỉnh sửa) đồng bộ. |
+| FR-011 trần 8 MiB tính mọi harness                      | Đã sửa trong spec `1.2`: chỉ tính harness đang có hiệu lực, chỉ chặn khi tổng tăng; thêm AC-026. Plan (Lưu trữ) đồng bộ truy vấn summary.   |
+| FR-015 judge-package từ chối ON_HOLD/DRAFT/ngôn ngữ tắt | Khớp.                                                                                                                                       |
+| FR-019 samples ở chi tiết public và preview             | Khớp; response managed trả thêm samples (spec không cấm). Plan ghi rõ các use case managed nạp samples.                                     |
+
+Các thay đổi `1.2` do DuongPham-Barca sửa, **chưa có xác nhận của chủ sở hữu sản phẩm**; spec/plan/tasks
+ghi rõ điều này.
 
 ## Verification
 
@@ -64,7 +67,7 @@
 
 ## Remaining
 
-- Duyệt và cập nhật spec/plan cho FR-011, FR-012 (hai điểm lệch ở trên), rồi đồng bộ `tasks.md`.
+- Chủ sở hữu sản phẩm xác nhận spec `1.2` (FR-011, FR-012, AC-025, AC-026).
 - Chạy câu SQL summary và luồng "đặt harness trước, bật ngôn ngữ sau" trên PostgreSQL cách ly.
 - Chưa xử lý các mục review 7–11 (body limit toàn cục, N+1 ở list managed, displayOrder trùng, truy
   vấn thừa ở hold, hợp nhất đường merge ở update test case).

@@ -14,7 +14,8 @@ T023, T031 và T038 còn mở vì phụ thuộc bên ngoài: seam quyền Identi
 người. T034 đã ghi cảnh báo migration dù T023 chưa chạy; T032–T037 chỉ phản ánh phần kiểm chứng đã
 thực hiện, không thay thế T021/T023/T031.
 
-Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản Approved `1.1`
+Đặc tả liên quan: [`./spec.md`](./spec.md) — phiên bản `1.2` (thay đổi 1.2 về harness chờ chủ sở hữu
+xác nhận; bản `1.1` Approved)
 Kế hoạch liên quan: [`./plan.md`](./plan.md) — Approved ngày `2026-09-29`
 
 Mọi công việc bắt đầu ở trạng thái chưa hoàn thành. Chỉ đánh dấu `[x]` khi cả phần triển khai lẫn

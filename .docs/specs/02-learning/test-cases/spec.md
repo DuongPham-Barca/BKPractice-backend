@@ -4,7 +4,9 @@
 
 Approved
 
-Phiên bản `1.1`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
+Phiên bản `1.2`. Bản `1.1` được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`; các thay đổi của
+`1.2` (FR-011, FR-012, AC-025, AC-026) do DuongPham-Barca sửa ngày `2026-10-28` sau review code và
+chờ chủ sở hữu sản phẩm xác nhận.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -89,13 +91,19 @@ Mã nguồn hiện tại là hành vi nền tảng, không phải bản triển 
   JDG-001.
 - **LRN-002-FR-011 — Giới hạn kích thước:** Một Problem MUST có tối đa 100 Test Case. Đầu vào và kết
   quả mong đợi của mỗi Test Case MUST có kích thước tối đa 1 MiB (1.048.576 byte UTF-8) mỗi trường.
-  Tổng dung lượng đầu vào, kết quả mong đợi của mọi Test Case và mọi harness của một Problem MUST
-  không vượt 8 MiB (8.388.608 byte UTF-8), để gói dữ liệu judge luôn gửi được qua luồng chấm hiện
-  có.
+  Tổng dung lượng đầu vào, kết quả mong đợi của mọi Test Case và mọi harness đang có hiệu lực của
+  một Problem MUST không vượt 8 MiB (8.388.608 byte UTF-8), để gói dữ liệu judge luôn gửi được qua
+  luồng chấm hiện có. Harness đang có hiệu lực là harness của ngôn ngữ đang bật trên Problem
+  `FUNCTION`/`OOP`; harness của ngôn ngữ chưa bật, đã tắt hoặc của Problem `STANDARD` không tính.
+  Giới hạn chỉ chặn việc thêm dữ liệu làm tổng tăng và vượt trần; Problem đã vượt trần từ trước vẫn
+  đọc và sửa các trường không liên quan được.
 - **LRN-002-FR-012 — Harness ẩn:** Với Problem `FUNCTION` và `OOP`, chủ sở hữu có thẩm quyền MUST
-  có thể thiết lập, thay thế và gỡ harness ẩn theo từng ngôn ngữ đang bật khi Problem chỉnh sửa được.
-  Problem `STANDARD` MUST NOT có harness. Harness MUST NOT xuất hiện trong phản hồi hướng tới người
-  học; chủ sở hữu đọc được harness trong luồng quản lý của mình.
+  có thể thiết lập, thay thế và gỡ harness ẩn theo từng ngôn ngữ được hỗ trợ khi Problem chỉnh sửa
+  được, kể cả ngôn ngữ chưa bật để đặt trước. Harness chỉ có hiệu lực (tính vào FR-011, FR-013 và
+  gói judge) khi ngôn ngữ của nó đang bật. Tắt ngôn ngữ hoặc đổi Problem sang `STANDARD` MUST NOT
+  xoá harness đã lưu; harness đó chỉ ngừng có hiệu lực và có hiệu lực lại khi ngôn ngữ được bật lại.
+  Problem `STANDARD` MUST NOT thiết lập thêm harness. Harness MUST NOT xuất hiện trong phản hồi
+  hướng tới người học; chủ sở hữu đọc được harness trong luồng quản lý của mình.
 - **LRN-002-FR-013 — Mức độ sẵn sàng khi xuất bản:** Ngoài các điều kiện của LRN-001, một Problem
   chỉ được xuất bản hoặc xuất bản lại khi: có ít nhất một Test Case `HIDDEN`; tổng điểm của mọi Test
   Case lớn hơn 0; và, với `FUNCTION`/`OOP`, có harness cho mọi ngôn ngữ đang bật. Các điều kiện này
@@ -131,7 +139,8 @@ thì không. Quy tắc tương tự áp dụng cho Test Case:
   bản (ví dụ gỡ Test Case `HIDDEN` cuối cùng, đưa tổng điểm về 0, hay gỡ harness của một ngôn ngữ
   đang bật).
 - Một cập nhật LRN-001 bật thêm ngôn ngữ cho Problem `FUNCTION`/`OOP` đã xuất bản MUST bị từ chối nếu
-  ngôn ngữ đó chưa có harness, vì nó làm Problem mất điều kiện sẵn sàng.
+  ngôn ngữ đó chưa có harness (đã đặt trước theo FR-012), vì nó làm Problem mất điều kiện sẵn sàng.
+  Việc kiểm tra dùng trạng thái sau cập nhật, gồm cả harness vừa trở nên có hiệu lực.
 - Sửa Test Case của Problem `PUBLISHED` là chỉnh sửa tại chỗ, không có versioning và không chấm lại.
 - Xoá mềm và khôi phục Problem không tạo, sửa hay xoá Test Case nào.
 
@@ -194,8 +203,8 @@ Test Case hiện có của Problem.
 
 ### Harness
 
-Chấp nhận định danh Problem `FUNCTION`/`OOP`, một ngôn ngữ đang bật trên Problem và nội dung harness
-(khi thiết lập/thay thế). Harness có cùng giới hạn kích thước 1 MiB.
+Chấp nhận định danh Problem `FUNCTION`/`OOP`, một ngôn ngữ được hỗ trợ (không nhất thiết đang bật)
+và nội dung harness (khi thiết lập/thay thế). Harness có cùng giới hạn kích thước 1 MiB.
 
 ### Gói dữ liệu judge (nội bộ)
 
@@ -224,7 +233,7 @@ Chấp nhận định danh Problem, một ngôn ngữ được hỗ trợ và th
 | Thiếu kết quả mong đợi, điểm âm, vượt giới hạn kích thước/số lượng      | Lỗi kiểm tra dữ liệu; không thay đổi state                          |
 | Thứ tự mới không khớp tập Test Case hiện có                             | Lỗi kiểm tra dữ liệu; thứ tự cũ giữ nguyên                          |
 | Thay đổi làm Problem `PUBLISHED` mất điều kiện sẵn sàng                 | Lỗi mức độ sẵn sàng; không thay đổi state                           |
-| Harness cho ngôn ngữ đang tắt hoặc không được hỗ trợ                    | Lỗi kiểm tra dữ liệu; không lưu harness                             |
+| Harness cho ngôn ngữ không được hỗ trợ                                  | Lỗi kiểm tra dữ liệu; không lưu harness                             |
 | Gói judge không kèm hoặc sai thông tin xác thực nội bộ                  | Từ chối; không trả về dữ liệu ẩn nào                                |
 | Gói judge cho Problem không đủ điều kiện nộp bài hoặc ngôn ngữ đang tắt | Từ chối theo quy ước hiện có; không trả về dữ liệu ẩn               |
 | Lỗi lưu trữ hoặc phụ thuộc ngoài dự kiến                                | Lỗi chuẩn hoá hiện có, không kèm nội dung ẩn hay thông tin xác thực |
@@ -321,7 +330,14 @@ LRN-002 không đưa vào cấu trúc lỗi mới.
   hoặc sửa Test Case, thì bị từ chối và state không đổi.
 - **LRN-002-AC-024:** Cho trước một Problem mà việc thêm/sửa Test Case hoặc đặt harness sẽ làm tổng
   dung lượng vượt 8 MiB, khi thao tác chạy, thì bị từ chối với lỗi kiểm tra dữ liệu và state không
-  đổi.
+  đổi. Điều này gồm cả cập nhật bật ngôn ngữ làm harness đã đặt trước bắt đầu có hiệu lực.
+- **LRN-002-AC-025:** Cho trước một Problem `FUNCTION`/`OOP` đã xuất bản đang bật `python`, khi chủ
+  sở hữu đặt harness `java` rồi bật `java` qua cập nhật Problem, thì Problem vẫn `PUBLISHED` và gói
+  judge `java` khả dụng; nếu bật `java` khi chưa có harness `java` thì bị từ chối bằng lỗi mức độ sẵn
+  sàng và state không đổi.
+- **LRN-002-AC-026:** Cho trước một Problem `FUNCTION`/`OOP` có harness `python`, khi chủ sở hữu tắt
+  `python` hoặc đổi Problem sang `STANDARD`, thì harness vẫn được lưu nhưng không tính vào tổng 8 MiB
+  hay điều kiện sẵn sàng; bật lại `python` thì harness có hiệu lực trở lại.
 
 ## Ngoài phạm vi
 
@@ -382,12 +398,13 @@ Không còn. Các quyết định sản phẩm đã được chủ sở hữu s�
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                                                                     |
-| ---------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                                                                  |
-| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case)                                              |
-| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002                                                           |
-| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm trần tổng 8 MiB mỗi Problem vào FR-011 và AC-024, vì gói judge phải vừa một message RabbitMQ (giới hạn mặc định 16 MiB). Đã phê duyệt. |
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                                                                                                    |
+| ---------- | --------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                                                                                                 |
+| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case)                                                                             |
+| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002                                                                                          |
+| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm trần tổng 8 MiB mỗi Problem vào FR-011 và AC-024, vì gói judge phải vừa một message RabbitMQ (giới hạn mặc định 16 MiB). Đã phê duyệt.                                |
+| 2026-10-28 | 1.2       | DuongPham-Barca      | Sau review code: cho đặt harness trước khi bật ngôn ngữ (FR-012), chỉ tính harness đang có hiệu lực vào trần 8 MiB (FR-011), thêm AC-025, AC-026. Chờ chủ sở hữu xác nhận. |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository và thứ tự thực thi
 > thuộc về `plan.md`, trừ khi một ràng buộc kiến trúc bắt buộc phải nêu ở đây.
