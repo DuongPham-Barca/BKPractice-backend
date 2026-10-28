@@ -6,8 +6,8 @@ Approved
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
 
-Kế hoạch này bám theo phiên bản `1.2` của đặc tả LRN-002 (các thay đổi 1.2 về harness, ngày
-`2026-10-28`, chờ chủ sở hữu sản phẩm xác nhận). Nó là tài liệu thiết kế, không
+Kế hoạch này bám theo phiên bản `1.2` của đặc tả LRN-002 (các thay đổi 1.2 về harness đã được
+phê duyệt ngày `2026-10-28`). Nó là tài liệu thiết kế, không
 triển khai code và không thay đổi đặc tả. Các quyết định lúc review nằm ở mục
 [Quyết định đã phê duyệt](#quyết-định-đã-phê-duyệt).
 

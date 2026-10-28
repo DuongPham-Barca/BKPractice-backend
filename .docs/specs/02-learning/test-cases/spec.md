@@ -5,8 +5,8 @@
 Approved
 
 Phiên bản `1.2`. Bản `1.1` được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`; các thay đổi của
-`1.2` (FR-011, FR-012, AC-025, AC-026) do DuongPham-Barca sửa ngày `2026-10-28` sau review code và
-chờ chủ sở hữu sản phẩm xác nhận.
+`1.2` (FR-011, FR-012, AC-025, AC-026) do DuongPham-Barca sửa sau review code và phê duyệt ngày
+`2026-10-28`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
@@ -398,13 +398,13 @@ Không còn. Các quyết định sản phẩm đã được chủ sở hữu s�
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                                                                                                    |
-| ---------- | --------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                                                                                                 |
-| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case)                                                                             |
-| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002                                                                                          |
-| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm trần tổng 8 MiB mỗi Problem vào FR-011 và AC-024, vì gói judge phải vừa một message RabbitMQ (giới hạn mặc định 16 MiB). Đã phê duyệt.                                |
-| 2026-10-28 | 1.2       | DuongPham-Barca      | Sau review code: cho đặt harness trước khi bật ngôn ngữ (FR-012), chỉ tính harness đang có hiệu lực vào trần 8 MiB (FR-011), thêm AC-025, AC-026. Chờ chủ sở hữu xác nhận. |
+| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                                                                                                                                                                         |
+| ---------- | --------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-29 | 0.1       | DuongPham-Barca      | Đặc tả Quản lý Test Case ban đầu, Proposed                                                                                                                                                                                      |
+| 2026-09-29 | 0.2       | DuongPham-Barca      | Chốt câu 2 (có Test Case mẫu, thêm FR-019, AC-016, AC-017) và câu 10 (chỉ nhập từng Test Case)                                                                                                                                  |
+| 2026-09-29 | 1.0       | Chủ sở hữu sản phẩm  | Chốt toàn bộ câu hỏi mở theo đề xuất, thêm AC-018 tới AC-023 và phê duyệt LRN-002                                                                                                                                               |
+| 2026-09-29 | 1.1       | Chủ sở hữu sản phẩm  | Thêm trần tổng 8 MiB mỗi Problem vào FR-011 và AC-024, vì gói judge phải vừa một message RabbitMQ (giới hạn mặc định 16 MiB). Đã phê duyệt.                                                                                     |
+| 2026-10-28 | 1.2       | DuongPham-Barca      | Sau review code: cho đặt harness trước khi bật ngôn ngữ (FR-012), chỉ tính harness đang có hiệu lực vào trần 8 MiB (FR-011), thêm AC-025, AC-026. Đã phê duyệt ngày 2026-10-28 (DuongPham-Barca xác nhận trong phiên làm việc). |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository và thứ tự thực thi
 > thuộc về `plan.md`, trừ khi một ràng buộc kiến trúc bắt buộc phải nêu ở đây.

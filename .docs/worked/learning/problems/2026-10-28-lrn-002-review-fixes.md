@@ -53,8 +53,8 @@
 | FR-015 judge-package từ chối ON_HOLD/DRAFT/ngôn ngữ tắt | Khớp.                                                                                                                                       |
 | FR-019 samples ở chi tiết public và preview             | Khớp; response managed trả thêm samples (spec không cấm). Plan ghi rõ các use case managed nạp samples.                                     |
 
-Các thay đổi `1.2` do DuongPham-Barca sửa, **chưa có xác nhận của chủ sở hữu sản phẩm**; spec/plan/tasks
-ghi rõ điều này.
+Các thay đổi `1.2` do DuongPham-Barca sửa và phê duyệt ngày 2026-10-28 (xác nhận trực tiếp trong phiên
+làm việc); spec/plan/tasks ghi rõ điều này.
 
 ## Verification
 
@@ -67,7 +67,6 @@ ghi rõ điều này.
 
 ## Remaining
 
-- Chủ sở hữu sản phẩm xác nhận spec `1.2` (FR-011, FR-012, AC-025, AC-026).
 - Chạy câu SQL summary và luồng "đặt harness trước, bật ngôn ngữ sau" trên PostgreSQL cách ly.
 - Chưa xử lý các mục review 7–11 (body limit toàn cục, N+1 ở list managed, displayOrder trùng, truy
   vấn thừa ở hold, hợp nhất đường merge ở update test case).
