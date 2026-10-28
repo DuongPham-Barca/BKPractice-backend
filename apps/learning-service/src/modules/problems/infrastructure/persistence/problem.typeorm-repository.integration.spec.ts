@@ -1,6 +1,7 @@
 import type { SupportedLanguage } from '@app/contracts';
 import { InitialLearningSchema1700000003000 } from '@learning/database/migrations/1700000003000-InitialLearningSchema';
 import { Lrn001ProblemManagement1700000004000 } from '@learning/database/migrations/1700000004000-Lrn001ProblemManagement';
+import { Lrn002TestCaseManagement1700000007000 } from '@learning/database/migrations/1700000007000-Lrn002TestCaseManagement';
 import { learningEntities } from '@learning/modules/learning.entities';
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
@@ -61,7 +62,11 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       type: 'postgres',
       url: TEST_DATABASE_URL,
       entities: learningEntities,
-      migrations: [InitialLearningSchema1700000003000, Lrn001ProblemManagement1700000004000],
+      migrations: [
+        InitialLearningSchema1700000003000,
+        Lrn001ProblemManagement1700000004000,
+        Lrn002TestCaseManagement1700000007000,
+      ],
       synchronize: false,
     });
 
@@ -78,7 +83,7 @@ describeIntegration('ProblemTypeOrmRepository', () => {
     clock = TEST_NOW.getTime();
     await dataSource.query(
       `TRUNCATE "problems", "topics", "tags", "problem_topics", "problem_tags",
-        "problem_languages", "starter_codes" RESTART IDENTITY CASCADE`,
+        "problem_languages", "starter_codes", "test_cases", "problem_harnesses" RESTART IDENTITY CASCADE`,
     );
   });
 

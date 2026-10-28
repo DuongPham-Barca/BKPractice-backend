@@ -118,14 +118,17 @@ export class TestCaseTypeOrmRepository implements TestCaseRepository {
   }
 
   async remove(problemId: string, testCaseId: string): Promise<boolean> {
-    const rows = await this.transactionContext.requireManager().query<{ id: string }[]>(
-      `DELETE FROM "test_cases"
+    const rows = await this.transactionContext
+      .requireManager()
+      .query<{ id: string }[] | [{ id: string }[], number]>(
+        `DELETE FROM "test_cases"
        WHERE "id" = $1 AND "problem_id" = $2
        RETURNING "id"`,
-      [testCaseId, problemId],
-    );
+        [testCaseId, problemId],
+      );
 
-    return rows.length === 1;
+    const returnedRows = Array.isArray(rows[0]) ? rows[0] : rows;
+    return returnedRows.length === 1;
   }
 
   async reorder(problemId: string, orderedIds: readonly string[]): Promise<void> {

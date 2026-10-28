@@ -36,13 +36,16 @@ export class HarnessTypeOrmRepository implements HarnessRepository {
   }
 
   async remove(problemId: string, language: SupportedLanguage): Promise<boolean> {
-    const rows = await this.transactionContext.requireManager().query<{ id: string }[]>(
-      `DELETE FROM "problem_harnesses"
+    const rows = await this.transactionContext
+      .requireManager()
+      .query<{ id: string }[] | [{ id: string }[], number]>(
+        `DELETE FROM "problem_harnesses"
        WHERE "problem_id" = $1 AND "language" = $2
        RETURNING "id"`,
-      [problemId, language],
-    );
+        [problemId, language],
+      );
 
-    return rows.length === 1;
+    const returnedRows = Array.isArray(rows[0]) ? rows[0] : rows;
+    return returnedRows.length === 1;
   }
 }

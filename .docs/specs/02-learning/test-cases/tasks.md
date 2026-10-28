@@ -159,7 +159,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-002-T010, LRN-002-T018.
       **Truy vết:** LRN-002-FR-011, FR-013, FR-017; mục Đồng thời của kế hoạch.
 
-- [ ] **LRN-002-T021 — Integration test lưu trữ và đồng thời.** Ánh xạ `is_hidden`; thứ tự ổn định;
+- [x] **LRN-002-T021 — Integration test lưu trữ và đồng thời.** Ánh xạ `is_hidden`; thứ tự ổn định;
       truy vấn summary đúng; hai lần gỡ đồng thời không cùng gỡ được Test Case `HIDDEN` cuối cùng của
       Problem `PUBLISHED`; hai lần thêm đồng thời không vượt 100 hay 8 MiB.
       **Phụ thuộc:** LRN-002-T019, LRN-002-T020, LRN-002-T023.
@@ -178,7 +178,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-002-T018.
       **Truy vết:** Mục Thay đổi cơ sở dữ liệu và Migration của kế hoạch.
 
-- [ ] **LRN-002-T023 — Kiểm chứng vòng đời migration.** Trên `bkpractice_learning` cách ly có dữ
+- [x] **LRN-002-T023 — Kiểm chứng vòng đời migration.** Trên `bkpractice_learning` cách ly có dữ
       liệu harness mẫu: `pnpm migration:run:learning`, kiểm tra schema và dữ liệu đã chuyển,
       `pnpm migration:revert:learning`, kiểm tra down, chạy lại up. Ghi lại rằng harness không có dòng
       starter code tương ứng sẽ mất khi down.
@@ -328,6 +328,14 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 - Review 11 — Hợp nhất đường merge ở UpdateTestCase: tính before/after từ command một lần, không
   tạo aggregate `next` trùng lặp; readiness vẫn chạy trước ghi.
 - T002: còn bị chặn vì gateway hiện chưa đặt `x-auth-permissions` theo seam đã phê duyệt.
-- T021/T023/T031: chưa chạy do không có DB cách ly / gateway bị hoãn; chỉ chuẩn bị code và lệnh.
+- T021/T023: đã chạy trên PostgreSQL cách ly và pass; T031 vẫn hoãn vì gateway chưa verify.
 - T035–T037: đã chạy lại `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`; pass.
 - T038: chưa hoàn thành; cần review người và chuyển spec `Implemented`/`Verified` qua SDD.
+
+## Ghi chú kiểm chứng T021/T023 (2026-10-28)
+
+- T021: thêm `test-case-management.integration.spec.ts`; kiểm ánh xạ `is_hidden`, thứ tự,
+  summary, race add/remove; pass trên PostgreSQL cách ly.
+- T023: migration up/down/up pass trên `bkpractice_learning_test`; ghi nhận harness không có starter
+  code tương ứng sẽ mất khi down.
+- T002/T031 vẫn bị chặn/hoãn theo phạm vi phase này.
