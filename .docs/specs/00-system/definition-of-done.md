@@ -9,7 +9,7 @@ công việc còn dang dở.
 - [ ] `spec.md` tồn tại và có Status `Approved` trước khi bắt đầu triển khai.
 - [ ] `plan.md` tồn tại và không mở rộng đặc tả đã Approved.
 - [ ] `tasks.md` tồn tại và phản ánh đúng kế hoạch.
-- [ ] Kiến trúc bắt buộc của service đã được chọn từ `docs/architecture/`.
+- [ ] Kiến trúc bắt buộc của service đã được chọn từ `.docs/architecture/`.
 - [ ] Các câu hỏi mở làm ảnh hưởng đến hành vi đã được giải quyết.
 
 ## Triển khai

@@ -91,5 +91,5 @@ TypeORM relations. `synchronize: true` is not an accepted schema strategy.
 - Every application can build, run and deploy independently even though dependencies are installed
   from one pnpm workspace root.
 
-See [service-architectures.md](./service-architectures.md) for the architecture selected inside each
-application and [dependency-rules.md](./dependency-rules.md) for enforceable dependency direction.
+See [service-architectures.md](service-architectures.md) for the architecture selected inside each
+application and [dependency-rules.md](dependency-rules.md) for enforceable dependency direction.

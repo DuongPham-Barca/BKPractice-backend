@@ -13,8 +13,8 @@ việc triển khai phải được tạo riêng ở giai đoạn SDD tiếp the
 
 - [ID-002 Profile](./spec.md)
 - Trạng thái: `Approved`
-- Phiên bản đã Approved: `0.4`
-- Ngày phê duyệt: `2026-09-01`
+- Phiên bản đã Approved: `0.5`
+- Ngày phê duyệt bản sửa đổi mới nhất: `2026-10-24`
 
 Đặc tả vẫn là nguồn chân lý cho hành vi, quyền riêng tư, phân quyền và phạm vi. Kế hoạch này không
 được thêm trường Profile, thay đổi quyền sở hữu hay đưa vào một luồng xác thực.
@@ -252,14 +252,20 @@ và báo cáo thay vì cắt bớt hay xoá các giá trị hồ sơ.
 Giữ nguyên các thao tác ở mức khái niệm đã được phê duyệt trong `spec.md`; cách đặt tên controller
 chính xác tuân theo quy ước Identity/Gateway hiện có.
 
-| Thao tác                                   | Xác thực                | Thao tác application                                 | Chính sách phản hồi                                                                                 |
-| ------------------------------------------ | ----------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `GET /api/profile/me`                      | Access token Bearer     | `GetMyProfile`                                       | Phản hồi an toàn hồ sơ của mình, gồm `userId`, các trường Profile và signed URL avatar được sinh ra |
-| `PATCH /api/profile/me`                    | Access token Bearer     | `UpdateMyProfile`                                    | Phản hồi an toàn hồ sơ của mình sau khi cập nhật                                                    |
-| `GET /api/users/:userId/profile`           | Công khai               | `GetPublicProfile`                                   | Đúng `displayName`, URL avatar và `bio`; kết quả không khả dụng chung cho đích thiếu/LOCKED/PENDING |
-| `GET /api/users/:userId/profile` bởi Admin | Bearer + khả năng Admin | `AdminGetUserProfile`                                | Chỉ phản hồi an toàn gồm các trường thuộc sở hữu của Profile                                        |
-| `PATCH /api/users/:userId/profile`         | Bearer + khả năng Admin | `AdminUpdateUserProfile`                             | Phản hồi an toàn gồm các trường thuộc sở hữu của Profile sau khi cập nhật                           |
-| `POST /api/profile/me/avatar/upload-url`   | Access token Bearer     | `CreateAvatarUploadIntent` (thao tác adapter hỗ trợ) | Presigned upload URL ngắn hạn và tham chiếu đối tượng mờ đã phê duyệt                               |
+| Thao tác                                   | Xác thực                                           | Thao tác application                                 | Chính sách phản hồi                                                                                 |
+| ------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `GET /api/profile/me`                      | Cookie qua Gateway; Bearer nội bộ                  | `GetMyProfile`                                       | Phản hồi an toàn hồ sơ của mình, gồm `userId`, các trường Profile và signed URL avatar được sinh ra |
+| `PATCH /api/profile/me`                    | Cookie qua Gateway; Bearer nội bộ                  | `UpdateMyProfile`                                    | Phản hồi an toàn hồ sơ của mình sau khi cập nhật                                                    |
+| `GET /api/users/:userId/profile`           | Công khai                                          | `GetPublicProfile`                                   | Đúng `displayName`, URL avatar và `bio`; kết quả không khả dụng chung cho đích thiếu/LOCKED/PENDING |
+| `GET /api/users/:userId/profile` bởi Admin | Cookie qua Gateway; Bearer nội bộ + khả năng Admin | `AdminGetUserProfile`                                | Chỉ phản hồi an toàn gồm các trường thuộc sở hữu của Profile                                        |
+| `PATCH /api/users/:userId/profile`         | Cookie qua Gateway; Bearer nội bộ + khả năng Admin | `AdminUpdateUserProfile`                             | Phản hồi an toàn gồm các trường thuộc sở hữu của Profile sau khi cập nhật                           |
+| `POST /api/profile/me/avatar/upload-url`   | Cookie qua Gateway; Bearer nội bộ                  | `CreateAvatarUploadIntent` (thao tác adapter hỗ trợ) | Presigned upload URL ngắn hạn và tham chiếu đối tượng mờ đã phê duyệt                               |
+
+Frontend cùng site gọi Gateway với `credentials: 'include'` khi khác origin, không đọc access token
+hay tự thêm Authorization. Gateway kiểm chứng cookie theo ID-001 1.2, xoá Cookie thô, chuyển Bearer
+nội bộ và các claim đã xác minh tới Identity. Với PATCH/POST dùng cookie, Gateway chỉ chấp nhận
+Origin hoặc Referer khớp `CORS_ORIGINS`. Controller Profile tiếp tục xác minh Bearer do Gateway
+chuyển tới; không đọc cookie tại Identity và không nhân bản logic xác thực.
 
 Controller chỉ thực hiện việc phân tích ở tầng truyền tải, kiểm tra DTO, gọi use case và ánh xạ phản
 hồi/lỗi. Nó không truy cập trực tiếp TypeORM, R2 hay repository tài khoản. Các DTO phản hồi công khai
@@ -430,7 +436,10 @@ Các test phải truy vết tới các tiêu chí nghiệm thu đã Approved và
 
 ### Test API/Gateway
 
-- Đường riêng tư `/api/profile/me` đòi hỏi một Bearer token hợp lệ.
+- Đường riêng tư `/api/profile/me` nhận cookie access hợp lệ ở Gateway mà frontend không cần gửi
+  Authorization; Identity vẫn đòi hỏi Bearer nội bộ hợp lệ.
+- PATCH Profile và POST ý định tải avatar dùng cookie đòi hỏi Origin/Referer đã cấu hình; GET công
+  khai không cần cookie, còn GET của Admin chỉ dùng ngữ cảnh đã xác minh.
 - Chỉ đúng hình dạng công khai `GET /api/users/:userId/profile` được bỏ qua xác thực ở Gateway;
   `PATCH`, thao tác ý định tải lên, và các đường `/api/users`/`/api/profile` khác vẫn được bảo vệ.
 - Danh sách cho phép ở DTO từ chối các trường bị bảo vệ/lạ, và phản hồi không bao giờ chứa mật
@@ -612,3 +621,7 @@ DTO của Authentication.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó phải luôn phụ thuộc vào `spec.md` đã Approved; các công việc triển
 > khai được cố ý hoãn sang giai đoạn SDD tiếp theo.
+
+## Nguồn tên chính thức được nối ngày 2026-10-25
+
+ID-004 giai đoạn 1 Approved đã thêm User.officialName/users.official_name bằng migration tương thích. TypeormProfileAccountContext đọc trường này; import lưu tên chính thức mà không tạo/ghi đè Profile. Rủi ro thiếu nguồn tên nêu ở baseline chỉ còn áp dụng với account legacy chưa được cấp officialName. E2E mới kiểm chứng lazy-init theo tên import và giữ displayName đã sửa. Không tự backfill tên chính thức từ displayName.

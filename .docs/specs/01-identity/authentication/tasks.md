@@ -518,3 +518,9 @@ ID-001 chỉ Hoàn thành khi mọi mục có liên quan trong
 ID-001-T001–ID-001-T044 đã hoàn thành hoặc được đánh dấu N/A một cách hợp lệ, mọi bằng chứng kiểm
 chứng đã được ghi lại, và quy trình SDD được con người phê duyệt đã chuyển trạng thái đặc tả. Chỉ
 hoàn thành phần code là chưa đủ.
+
+## Bổ sung Lecturer login ngày 2026-10-25
+
+- [x] Đổi use case thành LoginWithPassword, thêm repository findLecturerByEmail và cập nhật tất cả caller/barrel/test.
+- [x] DTO/Swagger/HTTP nhận đúng một studentId hoặc email; giữ web/mobile và login Student.
+- [x] E2E PostgreSQL kiểm chứng Lecturer email/password, Student MSSV, Student bị từ chối ở nhánh email, XOR identifier và Lecturer LOCKED. Toàn suite 132 tests pass/2 skip; full quality gates vẫn bị chặn bởi lỗi Learning data-source ngoài phạm vi.

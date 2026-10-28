@@ -136,7 +136,7 @@ Architecture trên toàn repository.
 
 Quản lý Problem được triển khai như module `problems` của Learning Service
 (`apps/learning-service/src/modules/problems/`), nhất quán với
-`docs/architecture/learning-service.md`. Không tạo microservice Problem và không tạo module Learning
+`.docs/architecture/learning-service.md`. Không tạo microservice Problem và không tạo module Learning
 mới. Test case, topic, tag, ngôn ngữ được hỗ trợ và starter code vẫn nằm trong khu vực Problems;
 việc quản trị danh mục Topic/Tag không thuộc phạm vi triển khai của LRN-001.
 

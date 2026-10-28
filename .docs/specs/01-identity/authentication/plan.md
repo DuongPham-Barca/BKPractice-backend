@@ -641,3 +641,7 @@ API được bảo vệ vì Gateway là cổng công khai duy nhất.
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Việc triển khai vẫn cần `tasks.md` ở Giai đoạn 06, khớp với kế hoạch
 > đã Approved này.
+
+## Bổ sung Approved ngày 2026-10-25 — Lecturer local login
+
+Dùng LoginWithPassword cho hai identifier tại POST /api/auth/login; DTO nhận đúng một trong studentId/email cùng password. Nhánh Student giữ hành vi cũ. Nhánh email trim/lowercase, repository tra duy nhất theo email đã chuẩn hoá và chỉ chấp nhận account có LECTURER; giữ toàn bộ role khi phát hành token. Không tìm thấy/không có LECTURER/sai mật khẩu dùng lỗi invalid_credentials và dummy hash khi account không hợp lệ; account không ACTIVE không được cấp token. Giữ cookie/mobile/CSRF/session delivery và password policy đã duyệt. Migration official_name/cấp account thuộc ID-004 giai đoạn 1; phần này không mở manual CRUD hoặc bootstrap.

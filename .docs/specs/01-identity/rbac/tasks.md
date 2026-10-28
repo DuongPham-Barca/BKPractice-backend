@@ -2,7 +2,11 @@
 
 ## Trạng thái
 
-Approved — Sẵn sàng triển khai
+Approved — checklist seed riêng/user–role baseline 0.5; baseline 0.4 giữ để truy vết. Các quality gate toàn repo còn bị chặn bởi Learning.
+
+> T051–T062 ở cuối tài liệu là checklist mục tiêu mới; T052–T055 được rút bỏ (N/A), các task còn áp dụng chưa hoàn thành. Không dùng trạng thái [x] của baseline làm bằng chứng seed/user–role 0.5 đã có.
+
+## Baseline 0.4 — checklist và bằng chứng lịch sử
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-01`.
 
@@ -15,21 +19,21 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## Chuẩn bị / Phân tích tái sử dụng
 
-- [ ] **ID-003-T001 — Xác nhận lại nền tảng triển khai.** Khảo sát trạng thái Git, spec/plan RBAC đã
+- [x] **ID-003-T001 — Xác nhận lại nền tảng triển khai.** Khảo sát trạng thái Git, spec/plan RBAC đã
       Approved, kiến trúc Identity, kiến trúc Gateway, các quy tắc phụ thuộc, các
       entity/datasource/migration Identity hiện tại, ngữ cảnh principal của Auth, việc định tuyến
       `/api/roles` ở Gateway và các test hiện có. Báo cáo mọi xung đột trước khi thay đổi mã nguồn.  
       **Phụ thuộc:** Không có.  
       **Truy vết:** Quy trình SDD; mục Ảnh hưởng tới mã nguồn hiện có của kế hoạch; Định nghĩa Hoàn thành.
 
-- [ ] **ID-003-T002 — Xác nhận các tài liệu đã Approved và phạm vi.** Kiểm chứng rằng `spec.md` và
+- [x] **ID-003-T002 — Xác nhận các tài liệu đã Approved và phạm vi.** Kiểm chứng rằng `spec.md` và
       `plan.md` đều ở trạng thái `Approved`, mục Câu hỏi mở đã trống, và không công việc triển khai
       nào đưa vào vai trò tuỳ biến, IAM động, CRUD vai trò, service audit, OAuth/MFA hay một
       microservice phân quyền khác.  
       **Phụ thuộc:** ID-003-T001.  
       **Truy vết:** ID-003-FR-002, ID-003-FR-016; mục Ngoài phạm vi; Định nghĩa Hoàn thành.
 
-- [ ] **ID-003-T003 — Xác nhận các contract tái dùng được của Identity và Gateway.** Xác định ngữ
+- [x] **ID-003-T003 — Xác nhận các contract tái dùng được của Identity và Gateway.** Xác định ngữ
       cảnh principal/token đã xác minh của ID-001, phép kiểm tra trạng thái tài khoản, lớp lưu trữ
       `RoleName`/quyền hiện có, bootstrap kiểm tra dữ liệu/lỗi/Swagger toàn cục, việc làm sạch header
       và chuyển tiếp `/api/roles` ở Gateway. Tái dùng các thành phần tương thích và ghi lại mọi seam
@@ -38,7 +42,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-001, ID-003-FR-005, ID-003-FR-011, ID-003-FR-013; ID-003-SR-002,
       ID-003-SR-007–ID-003-SR-008; mục Ảnh hưởng tới mã nguồn hiện có của kế hoạch.
 
-- [ ] **ID-003-T004 — Xác nhận các ranh giới service và cơ sở dữ liệu.** Ghi nhận rằng vai trò, quyền
+- [x] **ID-003-T004 — Xác nhận các ranh giới service và cơ sở dữ liệu.** Ghi nhận rằng vai trò, quyền
       và các phép gán vẫn nằm trong `bkpractice_identity`; Learning, Submission, Community và Profile
       giữ các quy tắc hành động/tài nguyên/sở hữu của riêng mình; không được đưa vào datasource, khoá
       ngoại, repository hay thực thể nghiệp vụ xuyên service nào.  
@@ -47,21 +51,21 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## Định nghĩa chuẩn tắc về vai trò và quyền
 
-- [ ] **ID-003-T005 — Thiết lập một định nghĩa vai trò chuẩn tắc duy nhất.** Tạo hoặc căn chỉnh kiểu
+- [x] **ID-003-T005 — Thiết lập một định nghĩa vai trò chuẩn tắc duy nhất.** Tạo hoặc căn chỉnh kiểu
       vai trò độc lập với framework cho đúng `STUDENT`, `LECTURER` và `ADMIN`, và ánh xạ enum/model
       lưu trữ TypeORM hiện có sang nó mà không thay đổi enum trong cơ sở dữ liệu. Từ chối các vai trò
       nền tảng do người gọi tạo hoặc không xác định.  
       **Phụ thuộc:** ID-003-T003–ID-003-T004.  
       **Truy vết:** ID-003-FR-002; ID-003-SR-004, ID-003-SR-006; AC-014, AC-016.
 
-- [ ] **ID-003-T006 — Thêm phần xử lý mã quyền ổn định.** Hiện thực ranh giới domain/kiểm tra tối
+- [x] **ID-003-T006 — Thêm phần xử lý mã quyền ổn định.** Hiện thực ranh giới domain/kiểm tra tối
       thiểu cho quy ước định danh quyền `resource:action` đã phê duyệt. Giữ các định nghĩa quyền
       thuộc sở hữu của Identity và ở dạng tĩnh; không bịa ra một danh mục đầy đủ cho
       Learning/Submission/Community và không thêm CRUD vai trò/quyền lúc chạy.  
       **Phụ thuộc:** ID-003-T005.  
       **Truy vết:** ID-003-FR-001, ID-003-FR-004; ID-003-SR-004; AC-001, AC-004, AC-014.
 
-- [ ] **ID-003-T007 — Định nghĩa contract principal tin cậy.** Tái dùng contract của ID-001 khi có
+- [x] **ID-003-T007 — Định nghĩa contract principal tin cậy.** Tái dùng contract của ID-001 khi có
       sẵn; nếu không, chỉ tạo hình dạng principal kỹ thuật cần dùng xuyên các ranh giới (`userId`,
       các vai trò tin cậy và ngữ cảnh trạng thái tài khoản đã phê duyệt). Loại trừ mật khẩu, token,
       claim của nhà cung cấp và các entity lưu trữ.  
@@ -70,7 +74,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## Quy tắc và bất biến của domain
 
-- [ ] **ID-003-T008 — Hiện thực chính sách quyết định phân quyền.** Thêm chính sách độc lập với
+- [x] **ID-003-T008 — Hiện thực chính sách quyết định phân quyền.** Thêm chính sách độc lập với
       framework cho việc khớp vai trò/quyền tường minh, phép hợp khi có nhiều vai trò, đầu vào là
       chính sách của tính năng, quyền sở hữu như một mối quan tâm riêng của tính năng, và mặc định từ
       chối với chính sách bị thiếu/không xác định/mơ hồ.  
@@ -78,7 +82,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-003–ID-003-FR-008, ID-003-FR-012; ID-003-SR-003–ID-003-SR-004,
       ID-003-SR-006, ID-003-SR-010; AC-001–AC-006, AC-012, AC-014.
 
-- [ ] **ID-003-T009 — Hiện thực chính sách gán vai trò.** Thực thi rằng chỉ một `ADMIN` có thẩm quyền
+- [x] **ID-003-T009 — Hiện thực chính sách gán vai trò.** Thực thi rằng chỉ một `ADMIN` có thẩm quyền
       mới được xem, gán hay thu hồi vai trò; các thao tác xuyên người dùng chỉ nhắm tới `STUDENT`
       hoặc `LECTURER`; không người gọi nào được tự nâng quyền; và dữ liệu request của Profile/Auth
       không thể thay đổi RBAC. Giữ các ánh xạ vai trò-quyền ở dạng tĩnh.  
@@ -86,14 +90,14 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-009–ID-003-FR-012, ID-003-FR-015; ID-003-SR-001–ID-003-SR-006;
       AC-007–AC-009, AC-012.
 
-- [ ] **ID-003-T010 — Hiện thực tính idempotent và các bất biến về Admin cuối cùng.** Biến việc gán
+- [x] **ID-003-T010 — Hiện thực tính idempotent và các bất biến về Admin cuối cùng.** Biến việc gán
       một vai trò đã có và việc thu hồi `STUDENT`/`LECTURER` vắng mặt thành các thao tác no-op thành
       công. Cho phép một Admin tự thu hồi vai trò `ADMIN` chỉ khi vẫn còn một Admin khác, và từ chối
       mọi thao tác sẽ gỡ Admin cuối cùng. Giữ bất biến này độc lập với mã DTO/controller.  
       **Phụ thuộc:** ID-003-T009.  
       **Truy vết:** ID-003-FR-010, ID-003-FR-010a; ID-003-SR-001, ID-003-SR-005a; AC-008a–AC-008d.
 
-- [ ] **ID-003-T011 — Thêm test cho chính sách domain.** Kiểm thử các vai trò chuẩn tắc, việc kiểm
+- [x] **ID-003-T011 — Thêm test cho chính sách domain.** Kiểm thử các vai trò chuẩn tắc, việc kiểm
       tra mã quyền, phép hợp nhiều vai trò, mặc định từ chối, việc quản lý vai trò chỉ dành cho
       Admin, các phép cấp Admin bị cấm, các quy tắc tự thu hồi, việc bảo vệ Admin cuối cùng và các
       thao tác idempotent, không phụ thuộc framework hay lớp lưu trữ.  
@@ -103,7 +107,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## Port và use case của tầng application
 
-- [ ] **ID-003-T012 — Chỉ định nghĩa các port đã lập kế hoạch.** Thêm các port `RbacRepository`,
+- [x] **ID-003-T012 — Chỉ định nghĩa các port đã lập kế hoạch.** Thêm các port `RbacRepository`,
       `IdentityAccountContext`, `TransactionRunner` và `AuthorizationPrincipalProvider` (hoặc tái
       dùng các port tương thích của ID-001). Giữ các port không chứa TypeORM, NestJS, HTTP và các
       kiểu phản hồi của Gateway; không thêm trừu tượng hoá repository/CQRS chung chung.  
@@ -111,13 +115,13 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** Mục Tầng application / Use case và Tuân thủ kiến trúc của kế hoạch; ID-003-FR-001,
       ID-003-FR-004, ID-003-FR-011.
 
-- [ ] **ID-003-T013 — Hiện thực `GetUserRoles`.** Điều phối việc phân quyền Admin, tra cứu user đích
+- [x] **ID-003-T013 — Hiện thực `GetUserRoles`.** Điều phối việc phân quyền Admin, tra cứu user đích
       và đầu ra vai trò an toàn. Suy ra định danh tác nhân từ principal tin cậy, chỉ trả về `userId`
       đích và tên các vai trò, và ánh xạ hành vi không tìm thấy/bị từ chối qua các lỗi hiện có.  
       **Phụ thuộc:** ID-003-T009, ID-003-T012.  
       **Truy vết:** ID-003-FR-009–ID-003-FR-011; ID-003-SR-001–ID-003-SR-003; AC-008c, AC-012.
 
-- [ ] **ID-003-T014 — Hiện thực `AssignRoleToUser`.** Điều phối việc phân quyền chỉ dành cho Admin,
+- [x] **ID-003-T014 — Hiện thực `AssignRoleToUser`.** Điều phối việc phân quyền chỉ dành cho Admin,
       sự tồn tại của đích, danh sách cho phép `STUDENT`/`LECTURER`, chính sách không-cấp-Admin, việc
       lưu trữ idempotent và đầu ra state kết quả ở dạng an toàn. Không nhận các trường vai trò hay
       định danh của tác nhân từ request.  
@@ -125,14 +129,14 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-009–ID-003-FR-010; ID-003-SR-001, ID-003-SR-005, ID-003-SR-005a;
       AC-007–AC-008d.
 
-- [ ] **ID-003-T015 — Hiện thực `RevokeRoleFromUser`.** Điều phối việc phân quyền chỉ dành cho Admin,
+- [x] **ID-003-T015 — Hiện thực `RevokeRoleFromUser`.** Điều phối việc phân quyền chỉ dành cho Admin,
       việc kiểm tra đích và việc thu hồi idempotent `STUDENT`/`LECTURER` cho mọi đích, kể cả chính
       tác nhân. Chỉ cho phép tự thu hồi `ADMIN` qua ngoại lệ được kiểm soát, và từ chối việc gỡ Admin
       cuối cùng trước khi lớp lưu trữ thay đổi.  
       **Phụ thuộc:** ID-003-T009–ID-003-T012.  
       **Truy vết:** ID-003-FR-009–ID-003-FR-010a; ID-003-SR-001, ID-003-SR-005a; AC-008b–AC-008d.
 
-- [ ] **ID-003-T016 — Hiện thực `EvaluateAuthorization` nội bộ.** Phơi bày một seam ở tầng application
+- [x] **ID-003-T016 — Hiện thực `EvaluateAuthorization` nội bộ.** Phơi bày một seam ở tầng application
       có kiểu rõ ràng, để đánh giá một principal tin cậy đối chiếu với một quyền ổn định và một kết
       quả sở hữu tuỳ chọn do tính năng cung cấp. Giữ nó ở dạng nội bộ; không tạo một endpoint
       `/authorize` công khai hay một lời gọi từ xa cho mọi request.  
@@ -190,7 +194,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## Tích hợp Authentication
 
-- [ ] **ID-003-T022 — Tái dùng principal đã xác thực của ID-001.** Gắn RBAC vào principal ID-001/
+- [x] **ID-003-T022 — Tái dùng principal đã xác thực của ID-001.** Gắn RBAC vào principal ID-001/
       Gateway đã xác minh và ngữ cảnh trạng thái tài khoản. Phân biệt việc xác thực bị thiếu/không
       hợp lệ (`401`) với việc phân quyền không đủ (`403`); không xây một luồng JWT, Microsoft hay
       refresh token thứ hai.  
@@ -198,7 +202,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-005, ID-003-FR-011, ID-003-FR-013–ID-003-FR-014;
       ID-003-SR-002, ID-003-SR-007, ID-003-SR-010; AC-003, AC-005, AC-010–AC-011, AC-013.
 
-- [ ] **ID-003-T023 — Thêm tích hợp guard ngữ cảnh tin cậy ở phía Identity.** Tái dùng việc kiểm
+- [x] **ID-003-T023 — Thêm tích hợp guard ngữ cảnh tin cậy ở phía Identity.** Tái dùng việc kiểm
       chứng token của ID-001 hoặc adapter ngữ cảnh đã phê duyệt của nó cho các route RBAC được bảo
       vệ. Từ chối các request trực tiếp hoặc định tuyến sai mà chỉ dựa vào `x-auth-user-id`,
       `x-auth-roles` hay metadata tương đương do client cung cấp.  
@@ -215,7 +219,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## API / Presentation
 
-- [ ] **ID-003-T025 — Tạo các DTO và phần kiểm tra dữ liệu cho việc quản lý vai trò.** Thêm DTO
+- [x] **ID-003-T025 — Tạo các DTO và phần kiểm tra dữ liệu cho việc quản lý vai trò.** Thêm DTO
       request gán, phần ánh xạ vai trò trên đường dẫn, và các DTO phản hồi an toàn cho thao tác vai
       trò đã lập kế hoạch. Chỉ cho phép các giá trị vai trò chuẩn tắc, từ chối các trường lạ, và
       không bao giờ nhận định danh tác nhân, vai trò tác nhân, quyền, trạng thái tài khoản hay claim
@@ -224,7 +228,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-002, ID-003-FR-006, ID-003-FR-009–ID-003-FR-011;
       ID-003-SR-002, ID-003-SR-009; AC-005, AC-014–AC-015.
 
-- [ ] **ID-003-T026 — Hiện thực các route của controller RBAC.** Chỉ thêm các thao tác quản lý vai
+- [x] **ID-003-T026 — Hiện thực các route của controller RBAC.** Chỉ thêm các thao tác quản lý vai
       trò đã phê duyệt: `GET /api/roles/users/:userId`, `POST /api/roles/users/:userId` và
       `DELETE /api/roles/users/:userId/:role`. Gọi đúng một thao tác application cho mỗi request, suy
       ra tác nhân từ principal tin cậy, và giữ controller không chứa logic nghiệp vụ/lưu trữ.  
@@ -232,7 +236,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-006, ID-003-FR-009–ID-003-FR-011; ID-003-SR-001–ID-003-SR-003;
       AC-002–AC-005, AC-007–AC-008d, AC-012.
 
-- [ ] **ID-003-T027 — Ánh xạ lỗi và các phản hồi an toàn.** Ánh xạ các lỗi domain/application về các
+- [x] **ID-003-T027 — Ánh xạ lỗi và các phản hồi an toàn.** Ánh xạ các lỗi domain/application về các
       quy ước `400`/`401`/`403`/`404`/xung đột hiện có của Identity/Gateway. Chỉ trả về state gán vai
       trò/người dùng ở dạng an toàn; bảo toàn thành công idempotent và không bao giờ phơi bày phần
       nội bộ của chính sách, mật khẩu, bản băm, dữ liệu nhà cung cấp hay token.  
@@ -240,14 +244,14 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-009–ID-003-FR-011; ID-003-SR-009–ID-003-SR-010;
       AC-002–AC-005, AC-008a–AC-008d, AC-014–AC-015.
 
-- [ ] **ID-003-T028 — Nối dây module RBAC tại composition root của Identity.** Đăng ký các chính sách
+- [x] **ID-003-T028 — Nối dây module RBAC tại composition root của Identity.** Đăng ký các chính sách
       domain, các use case của tầng application, các adapter TypeORM, guard/ngữ cảnh principal và
       controller trong `IdentityServiceModule`/module RBAC. Bảo toàn các module Auth/Profile hiện có
       và tránh phụ thuộc vòng.  
       **Phụ thuộc:** ID-003-T012–ID-003-T027.  
       **Truy vết:** ID-003-FR-001, ID-003-FR-016; mục Tuân thủ kiến trúc của kế hoạch; AC-016.
 
-- [ ] **ID-003-T029 — Cập nhật metadata Swagger/OpenAPI.** Mô tả ba route quản lý vai trò, các yêu
+- [x] **ID-003-T029 — Cập nhật metadata Swagger/OpenAPI.** Mô tả ba route quản lý vai trò, các yêu
       cầu Bearer/Admin, enum của request, hình dạng phản hồi an toàn và các mã lỗi liên quan, theo
       các quy ước Swagger hiện có của Identity. Không phơi bày các entity lưu trữ hay bí mật nào.  
       **Phụ thuộc:** ID-003-T025–ID-003-T028.  
@@ -256,7 +260,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
 
 ## API Gateway và ngữ cảnh xuyên service
 
-- [ ] **ID-003-T030 — Kiểm chứng phần tích hợp `/api/roles` ở Gateway.** Xác nhận route Gateway hiện
+- [x] **ID-003-T030 — Kiểm chứng phần tích hợp `/api/roles` ở Gateway.** Xác nhận route Gateway hiện
       có chuyển tiếp mọi thao tác RBAC tới Identity, bảo vệ chúng như các route không công khai, loại
       bỏ các header định danh giả mạo và chỉ chuyển tiếp ngữ cảnh đã xác minh. Chỉ sửa Gateway nếu
       phát hiện một vấn đề tương thích hẹp ở tầng truyền tải; không thêm logic nghiệp vụ về vai trò
@@ -299,7 +303,7 @@ thực tế; đừng đánh dấu hoàn thành chỉ vì một file đã tồn t
       **Truy vết:** ID-003-FR-005, ID-003-FR-007–ID-003-FR-008, ID-003-FR-013;
       ID-003-SR-004, ID-003-SR-006, ID-003-SR-010; AC-002–AC-004, AC-011–AC-014.
 
-- [ ] **ID-003-T035 — Kiểm chứng đầu ra và log an toàn với dữ liệu nhạy cảm.** Kiểm tra các DTO phản
+- [x] **ID-003-T035 — Kiểm chứng đầu ra và log an toàn với dữ liệu nhạy cảm.** Kiểm tra các DTO phản
       hồi, phần ánh xạ lỗi và log để đảm bảo không mật khẩu/bản băm, JWT/refresh token, thông tin xác
       thực nhà cung cấp, header auth thô hay dữ liệu bảng quyền không cần thiết nào bị phơi bày.  
       **Phụ thuộc:** ID-003-T027–ID-003-T029.  
@@ -440,3 +444,32 @@ bản sửa đổi 0.4" của kế hoạch.
 
 > Danh sách này chỉ mô tả công việc triển khai. Nó không thêm hành vi vượt ngoài `spec.md` đã
 > Approved, và nó không hiện thực RBAC ở giai đoạn này.
+
+## Bằng chứng triển khai ngày 2026-10-24
+
+Các ô mới được đánh dấu dựa trên code và test trong [worked entry RBAC](../../../worked/identity/rbac/2026-10-24-role-management.md). T046 giữ bằng chứng integration reader từ worked Auth ngày 2026-10-19; lần này chưa chạy lại database test. Các task repository/transaction có code nhưng vẫn để mở khi chưa chạy PostgreSQL. T047 chờ làm rõ cách lưu dấu vết để rollback không xoá dữ liệu có sẵn; T049/T050 chưa hoàn tất. Không chuyển trạng thái spec.
+
+## Checklist bản sửa đổi 0.5 — Chưa triển khai
+
+`Approved` cho seed và tích hợp import; đối chiếu FR-027–FR-029 và AC-024–AC-028. Phạm vi CRUD/import danh mục và role động của bản nháp trước được rút bỏ. Giữ mã task để truy vết; `N/A` có lý do không phải đã triển khai. T001–T050 giữ bằng chứng baseline, kể cả các phần còn chưa verify.
+
+- [ ] **ID-003-T051 — Chốt chính sách/contract 0.5.** Chốt seed catalog, cách chạy/rollback, bootstrap User Admin/phối hợp ID-004 và contract FE user–role; review Approved spec–plan–tasks. Import tài khoản Excel thuộc ID-004, không phải gate thiết kế parser RBAC. Chặn các task triển khai còn áp dụng.
+- **ID-003-T052 — N/A: Role động.** Rút bỏ ngày 2026-10-25: chỉ seed ba role định sẵn; không chuyển enum/schema sang danh mục động.
+- **ID-003-T053 — N/A: CRUD role.** FE chỉ quản lý user–role; danh mục role thay đổi bằng seed.
+- **ID-003-T054 — N/A: CRUD permission.** Permission được seed riêng, không CRUD qua FE/API.
+- **ID-003-T055 — N/A: Mutation role–permission qua FE.** Ánh xạ role–permission chỉ thay đổi bằng seed.
+- [ ] **ID-003-T056 — Hoàn thiện user–role trên FE/API.** Tái dùng ba route baseline, allowlist, guard, DTO/Swagger, idempotency và bảo vệ Admin cuối cùng; không mở cấp Admin theo giả định. Truy vết: FR-027/FR-029, AC-024/AC-026.
+- [x] **ID-003-T057 — Phần seed RBAC riêng.** Cùng T047 nạp role, permission và ánh xạ theo policy được duyệt; kiểm chứng chạy lại, dữ liệu có sẵn và rollback. Không tạo parser catalog hoặc seed User Admin theo suy luận. Truy vết: FR-017/FR-018/FR-028/FR-029, AC-025/AC-026.
+- [x] **ID-003-T058 — Contract tích hợp ID-004.** Cung cấp seam tra/gán role đã seed cho account import `STUDENT`/`LECTURER`; xác minh transaction account–role, role thiếu/không hợp lệ và không cấp Admin. Account CRUD/parser/credential thuộc ID-004; phần integration chờ ID-004 Approved và có code. Truy vết: FR-027/FR-029, AC-028.
+- [ ] **ID-003-T059 — Guard và contract FE/Gateway.** Actor từ ID-001 đã xác minh; không tin role/quyền của actor trong file/body/header; phản hồi an toàn cho user–role. Truy vết: FR-006/FR-011/FR-027, SR baseline, AC-024.
+- [x] **ID-003-T060 — Test seed và user–role.** PostgreSQL/transaction, dữ liệu seed có sẵn/chạy lại/rollback, uniqueness/tham chiếu, allowed/denied, concurrency Admin và contract tích hợp ID-004. Không dùng test CRUD/import catalog đã rút bỏ. Truy vết: FR-027–FR-029, AC-024–AC-028.
+- [x] **ID-003-T061 — Token freshness và feature boundary.** Hợp nhiều role, gán/thu hồi, token cũ/mới, missing permissions và sở hữu tài nguyên; giữ ràng buộc `problem:*` chỉ Lecturer. Truy vết: FR-019–FR-023, AC-019–AC-022/AC-027.
+- [ ] **ID-003-T062 — Verify và bàn giao.** Các quality gate thực tế, seed trên DB test cách ly, Swagger/user–role FE contract, từng FR/SR/AC và worked entry; báo phần chưa có bằng chứng. Truy vết: DoD, AC-024–AC-028.
+
+Bằng chứng triển khai ngày 2026-10-25: seed riêng, contract/tích hợp ID-004, seed/transaction/race và token snapshot đã pass cùng suite PostgreSQL/Auth/RBAC. Toàn repo 132 tests pass, 2 Profile DB tests skip. T047 migration catalog của bản nháp được thay bởi T057 command seed theo scope 0.5; không đánh dấu migration chưa viết là đã có. T062 còn mở vì lint/typecheck/build toàn repo gặp lỗi heheh có sẵn tại Learning. Xem worked entry `.docs/worked/identity/auth/2026-10-25-account-excel-import.md`.
+
+## Refactor cấu trúc lưu trữ baseline 0.4 ngày 2026-10-25
+
+- [x] Chuyển các model TypeORM `Role` và `Permission` vào `rbac/infrastructure/persistence`, cập nhật
+      import/registry và đối chiếu metadata TypeORM trước/sau. Đây là thay đổi vị trí mã nguồn của
+      baseline; mục tiêu 0.5 hiện tại là seed riêng và quản lý user–role, chưa hoàn tất kiểm chứng.

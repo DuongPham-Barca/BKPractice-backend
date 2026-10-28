@@ -523,6 +523,12 @@ ngữ cảnh đã kiểm chứng để Identity trả góc nhìn Admin; cookie k
 nhận góc nhìn công khai. Không thêm refresh cookie, phiên server-side, danh sách đen access token
 hay thay đổi claim quyền của bản 1.1.
 
+## Làm rõ contract cấp tài khoản ngày 2026-10-25
+
+Chủ sở hữu chốt file Excel của [ID-004](../student-provisioning/spec.md) gồm `mssv`, `name`, `email`, `role`, thay cho bộ cột cũ được nhắc trong quy tắc nghiệp vụ, AC-024 và phụ thuộc cấp tài khoản phía trên. Role từng dòng chỉ là `STUDENT` hoặc `LECTURER`; Student bắt buộc có MSSV, Lecturer để trống MSSV. `name` là tên chính thức, `email` cung cấp email trường đã chuẩn hoá. Không có cột lớp hoặc ghi danh trong luồng này.
+
+Đây là phần làm rõ contract đầu vào của ID-004 đang Proposed, chưa phê duyệt toàn bộ chức năng import. Giữ login Student theo MSSV và đối sánh Microsoft theo email; credential/cách login Lecturer vẫn chờ quyết định, không được suy ra từ việc cột role nhận LECTURER. Role/permission/role–permission được seed riêng; file không tạo danh mục hay cấp ADMIN.
+
 ## Lịch sử sửa đổi
 
 | Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                         |
@@ -536,3 +542,7 @@ hay thay đổi claim quyền của bản 1.1.
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực repository, thư viện Microsoft,
 > ánh xạ TypeORM, transaction và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê
 > duyệt của con người.
+
+## Bản sửa đổi được duyệt ngày 2026-10-25 — Lecturer local login
+
+Chủ sở hữu chốt Lecturer được cấp account/mật khẩu ban đầu như Student và đăng nhập bằng email + mật khẩu vì không có MSSV. Bổ sung nhánh Lecturer cho POST /api/auth/login: đúng một trong studentId hoặc email cùng password. Email được trim/lowercase để tra account có role LECTURER; thiếu account/sai mật khẩu/không có LECTURER/trạng thái không ACTIVE trả cùng lỗi xác thực. Student vẫn dùng MSSV. Không đổi OAuth, web/mobile delivery, CSRF hoặc session policy. Credential ban đầu chỉ lưu Argon2 hash; API không trả mật khẩu/hash. Yêu cầu và AC Student-only ở baseline không cấm nhánh Lecturer được duyệt này.

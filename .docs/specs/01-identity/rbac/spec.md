@@ -2,7 +2,11 @@
 
 ## Trạng thái
 
-Approved
+Approved — phạm vi 0.5 seed riêng và user–role giữ baseline, theo yêu cầu triển khai của chủ sở hữu ngày 2026-10-25; không mở CRUD/catalog động hoặc bootstrap account Admin.
+
+> Phạm vi mới theo yêu cầu ngày 2026-10-24 nằm ở [Bản sửa đổi 0.5](#bản-sửa-đổi-05--seed-danh-mục-và-quản-lý-userrole). Không triển khai seed/user–role 0.5 chỉ từ các quyết định phạm vi khi câu hỏi mở chưa được giải quyết.
+
+## Baseline 0.4 — lịch sử phê duyệt
 
 Phiên bản `0.4`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`. Bản sửa đổi ở mục
 [Bản sửa đổi 0.4 — Truyền quyền hiệu lực](#bản-sửa-đổi-04--truyền-quyền-hiệu-lực) bổ sung cho phiên
@@ -363,9 +367,9 @@ việc ánh xạ lỗi phân quyền hiện có của service sở hữu.
 - [Kiến trúc API Gateway](../../../architecture/api-gateway.md)
 - [Quy trình SDD](../../README.md)
 
-## Câu hỏi mở
+## Câu hỏi mở của baseline 0.4
 
-Không còn. Chính sách quản lý vai trò v1 đã được phê duyệt cho mục đích đặc tả:
+Không còn ở baseline; các câu hỏi chặn mục tiêu 0.5 nằm cuối bản sửa đổi mới. Chính sách quản lý vai trò v1 đã được phê duyệt cho mục đích đặc tả:
 
 - chỉ `ADMIN` được xem, gán và thu hồi vai trò;
 - chỉ các vai trò định sẵn `STUDENT` và `LECTURER` được gán hoặc thu hồi qua luồng đó;
@@ -470,3 +474,66 @@ Chủ sở hữu sản phẩm phê duyệt ngày 2026-09-29:
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết về guard, decorator, permission resolver, repository, controller,
 > migration và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của con người.
+
+## Bản sửa đổi 0.5 — Seed danh mục và quản lý user–role
+
+### Trạng thái và phạm vi đã thống nhất
+
+`Approved` cho seed riêng/user–role baseline theo yêu cầu triển khai ngày 2026-10-25 của chủ sở hữu. Role, permission và ánh xạ role–permission được seed riêng trong database Identity. FE chỉ quản lý phép gán role cho user; không CRUD hoặc import danh mục RBAC. Import hàng loạt được yêu cầu là import **tài khoản** Excel của ID-004, không phải import role/permission.
+
+Bản làm rõ này thay thế phạm vi CRUD/danh mục động/import danh mục của bản nháp 0.5 ngày 2026-10-24. Baseline 0.4 phía trên giữ nguyên để truy vết; các bất biến không bị sửa đổi tiếp tục có hiệu lực. Không coi tài liệu Proposed là bằng chứng tính năng đã triển khai.
+
+### Phân chia trách nhiệm
+
+- **ID-003 / RBAC:** Seed danh mục `STUDENT`, `LECTURER`, `ADMIN`, permission và ánh xạ role–permission theo chính sách đã duyệt; xem/gán/thu hồi role của user; tính quyền hiệu lực cho Auth.
+- **ID-004 / Auth:** CRUD tài khoản và import Excel với các cột `mssv`, `name`, `email`, `role`. File chỉ nhận `STUDENT`/`LECTURER`; Student bắt buộc có MSSV, Lecturer để trống MSSV. Tạo account và gán role có sẵn phải nguyên tử. File không tạo role/permission hay cấp `ADMIN`.
+- **FE:** Gọi API quản trị tài khoản/user–role có bảo vệ và hiển thị kết quả import tài khoản. Không có màn hình CRUD/import danh mục RBAC trong phạm vi này.
+- **Identity:** Tiếp tục sở hữu database và mọi bảng tài khoản/RBAC; Gateway xác minh/proxy/làm sạch metadata, service tính năng giữ chính sách tài nguyên/sở hữu.
+
+### Yêu cầu 0.5
+
+- **FR-002, FR-009, FR-010, FR-010a, FR-017, FR-018:** Giữ baseline ba role định sẵn, danh mục và ánh xạ tĩnh được seed, chỉ Admin quản lý user–role, cấm cấp `ADMIN` qua API hiện tại và bảo vệ Admin cuối cùng. Không mở role động hoặc nới quyền Admin theo suy luận từ chức năng import.
+- **ID-003-FR-024 / FR-025 / FR-026 — Rút khỏi phạm vi:** Các yêu cầu CRUD role, CRUD permission và sửa role–permission lúc chạy của bản nháp 0.5 được rút bỏ. Giữ mã để truy vết, không triển khai và không tái sử dụng mã cho chức năng khác.
+- **ID-003-FR-027 — User–role trên FE:** Admin MUST có thể xem/gán/thu hồi role của tài khoản đã tồn tại theo chính sách baseline. User có thể giữ nhiều role. Import cấp role ban đầu thuộc ID-004; thay đổi về sau thuộc API RBAC, không qua cập nhật Profile hoặc login.
+- **ID-003-FR-028 — Seed RBAC riêng:** MUST có phần seed riêng cho role, permission và ánh xạ role–permission trong DB Identity, tách khỏi file Excel tài khoản. Seed chỉ nạp dữ liệu/chính sách được duyệt; chạy lại không tạo bản ghi hoặc phép gán trùng và không âm thầm ghi đè dữ liệu ngoài phạm vi seed. Cách chạy và hoàn tác seed phải được review trước triển khai. Seed danh mục không đồng nghĩa tạo User Admin đầu tiên.
+- **ID-003-FR-029 — Toàn vẹn:** Seed và thay đổi user–role MUST bảo toàn uniqueness, tham chiếu và chính sách Admin; không tự xoá account/reset credential. ID-004 chỉ gán role đã tồn tại từ danh mục, không tự tạo role để chữa lỗi seed thiếu.
+
+Các FR-001, FR-003–FR-008, FR-011–FR-016 và FR-019–FR-023 giữ nguyên ranh giới, hợp nhiều role, mặc định từ chối, trạng thái tài khoản và ảnh chụp role/permission trong token. Tám mã `problem:*` vẫn chỉ gán cho `LECTURER` theo baseline/feature đã duyệt; Admin không có quyền Problem ngầm.
+
+### Đầu vào, đầu ra và bảo mật
+
+API user–role nhận User ID đích và role định sẵn theo baseline. Actor lấy từ ID-001 đã xác minh, không từ body/file/header client. Phản hồi chỉ chứa state gán an toàn; thiếu/sai token trả 401, thiếu thẩm quyền trả 403, validation/đích không tồn tại/xung đột Admin theo contract baseline. Các thao tác gán/thu hồi lặp lại giữ tính idempotent.
+
+Dữ liệu seed là dữ liệu kỹ thuật được review; không nhận file tài khoản như danh mục RBAC. Không có endpoint bootstrap công khai. Log/response không chứa credential/token/bí mật. Token cũ giữ snapshot; token phát hành sau thay đổi role lấy state mới. Mọi SR baseline, đặc biệt bảo vệ Admin và quyền sở hữu tài nguyên, tiếp tục áp dụng.
+
+### Tiêu chí nghiệm thu 0.5
+
+- **ID-003-AC-023 — Rút khỏi phạm vi:** Không triển khai tiêu chí CRUD role/permission của bản nháp trước.
+- **ID-003-AC-024:** Admin xem/gán/thu hồi role của user qua FE/API theo baseline; người không có thẩm quyền không thay đổi dữ liệu; user nhiều role có hợp quyền không trùng.
+- **ID-003-AC-025:** Seed nạp đúng role/permission/ánh xạ được duyệt; chạy lại không tạo trùng hoặc sửa dữ liệu ngoài phạm vi. Import Excel tài khoản không tạo danh mục hoặc role–permission.
+- **ID-003-AC-026:** Seed hoặc mutation user–role thất bại không để quan hệ treo, không gỡ Admin cuối cùng hoặc làm mất dữ liệu account.
+- **ID-003-AC-027:** Token cũ giữ snapshot role/permission cũ; token mới phản ánh các phép gán hợp lệ hiện tại; quyền không miễn kiểm tra sở hữu.
+- **ID-003-AC-028:** ID-004 import `STUDENT`/`LECTURER` từ Excel tạo account có đúng role đã seed trong cùng transaction; từ chối role không hợp lệ/`ADMIN`; role thiếu trong DB không được tự tạo. Cập nhật role về sau dùng RBAC.
+
+AC baseline giữ nguyên. AC-028 là tiêu chí tích hợp, phụ thuộc ID-004 được Approved và triển khai, không phải nhiệm vụ tạo account bên trong RBAC.
+
+### Ngoài phạm vi
+
+CRUD/import role và permission qua FE/API; sửa role–permission lúc chạy; role tuỳ biến/động; import tài khoản bên trong RBAC; cấp Admin qua Excel; public registration/bootstrap công khai; policy engine, ABAC/ReBAC, role theo tenant/thời hạn, audit service mới, DB xuyên service hoặc thu hồi quyền tức thời trên access token.
+
+### Việc ngoài giai đoạn seed/import và quyết định đã chốt
+
+1. Cách cấp User Admin đầu tiên và phối hợp bảo vệ Admin cuối cùng khi ID-004 xoá account. Seed role `ADMIN` không tự giải quyết cấp account Admin.
+2. Seed giai đoạn này đã chốt theo mục triển khai bên dưới: các catalog/mapping feature Approved và user:import cho ADMIN, command riêng, transaction rollback khi lỗi, không down tự động hoặc bảng metadata.
+3. Chốt contract FE cho user–role, tái sử dụng các route baseline khi phù hợp; không tự đổi sang thay thế toàn bộ tập role hoặc mở cấp Admin.
+4. ID-004 giai đoạn 1 đã được chủ sở hữu chốt: .xlsx 5 MiB/1.000 dòng, nguyên tử toàn file và Lecturer email/mật khẩu. Parser thuộc Auth; manual CRUD account và bootstrap vẫn ngoài đợt này.
+
+### Truy vết và lịch sử
+
+- 2026-10-24: Bản nháp 0.5 mở rộng CRUD/import danh mục, chưa được Approved.
+- 2026-10-25: Chủ sở hữu làm rõ file Excel là import tài khoản gồm `mssv`, `name`, `email`, `role`; chỉ `STUDENT`/`LECTURER`, Lecturer để trống MSSV. Role/permission/role–permission chỉ seed; FE chỉ gán role cho user. Bản làm rõ này thay thế cách hiểu import danh mục trước đó; giữ Proposed.
+- T001–T050 là baseline; T051–T062 được điều chỉnh theo phạm vi hiện tại, không coi các task rút bỏ là đã triển khai.
+
+### Chốt triển khai seed ngày 2026-10-25
+
+Phần seed riêng được triển khai bằng command kỹ thuật được chạy có chủ đích, không tự chạy lúc boot/import. Mỗi lần chạy dùng một transaction, ON CONFLICT giữ dữ liệu có sẵn; nếu gặp mapping trái policy thì báo cần remediation và rollback toàn lần chạy, không âm thầm xoá/sửa quyền. Không có down tự động xoá dữ liệu catalog; rollback khi lỗi là rollback transaction. Nạp các mã/mapping feature đã Approved và user:import cho ADMIN theo ID-004 giai đoạn 1. Bootstrap account Admin và CRUD account vẫn ngoài phạm vi. Các mục Proposed/câu hỏi ở trên không cho phép triển khai thêm hành vi ngoài phạm vi này.
