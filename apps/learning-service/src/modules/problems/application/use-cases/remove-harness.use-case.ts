@@ -49,10 +49,12 @@ export class RemoveHarnessUseCase implements IRemoveHarnessPortIn {
         throw new HarnessNotFoundError(problemId, language);
       }
 
-      const summary = await this.problemRepository.loadTestSuiteSummary(problemId);
+      if (problem.hasEnabledLanguage(language)) {
+        const summary = await this.problemRepository.loadTestSuiteSummary(problemId);
 
-      problem.attachTestSuiteSummary(summary.withHarnessRemoved(language, existing.sourceBytes));
-      this.readiness.assertReadyWhenPublished(problem);
+        problem.attachTestSuiteSummary(summary.withHarnessRemoved(language, existing.sourceBytes));
+        this.readiness.assertReadyWhenPublished(problem);
+      }
 
       const removed = await this.harnessRepository.remove(problemId, language);
 

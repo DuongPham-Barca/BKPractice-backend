@@ -319,10 +319,8 @@ export class Problem {
     }
   }
 
-  assertHarnessLanguageIsEnabled(language: SupportedLanguage): void {
-    if (!this._enabledLanguages.some((item) => item.value === language)) {
-      throw new DomainValidationError('language', `Language ${language} is not enabled`);
-    }
+  hasEnabledLanguage(language: SupportedLanguage): boolean {
+    return this._enabledLanguages.some((item) => item.value === language);
   }
 
   update(input: UpdateProblemInput, now: Date = new Date()): void {

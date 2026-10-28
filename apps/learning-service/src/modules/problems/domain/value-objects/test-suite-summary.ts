@@ -40,12 +40,12 @@ export class TestSuiteSummary {
   readonly totalBytes: number;
   readonly harnessLanguages: readonly SupportedLanguage[];
 
-  constructor(props: TestSuiteSummaryProps) {
+  constructor(props: TestSuiteSummaryProps, enforceLimits = true) {
     this.totalCount = assertIntegerInRange(
       props.totalCount,
       'testSuite.totalCount',
       0,
-      MAX_TEST_CASES,
+      enforceLimits ? MAX_TEST_CASES : Number.MAX_SAFE_INTEGER,
     );
     this.hiddenCount = assertIntegerInRange(
       props.hiddenCount,
@@ -63,7 +63,7 @@ export class TestSuiteSummary {
       props.totalBytes,
       'testSuite.totalBytes',
       0,
-      MAX_TEST_SUITE_BYTES,
+      enforceLimits ? MAX_TEST_SUITE_BYTES : Number.MAX_SAFE_INTEGER,
     );
     this.harnessLanguages = Object.freeze(
       [...new Set(props.harnessLanguages ?? [])]
@@ -71,6 +71,11 @@ export class TestSuiteSummary {
         .sort(),
     );
     Object.freeze(this);
+  }
+
+  /** Reads totals already stored; the size limits only gate new data, never reading old data. */
+  static fromStored(props: TestSuiteSummaryProps): TestSuiteSummary {
+    return new TestSuiteSummary(props, false);
   }
 
   static empty(): TestSuiteSummary {
@@ -113,7 +118,7 @@ export class TestSuiteSummary {
   }
 
   withTestCaseRemoved(removed: TestCaseDelta): TestSuiteSummary {
-    return new TestSuiteSummary({
+    return TestSuiteSummary.fromStored({
       totalCount: this.totalCount - 1,
       hiddenCount: this.hiddenCount - (removed.visibility.isHidden ? 1 : 0),
       totalScore: this.totalScore - removed.score.value,
@@ -157,7 +162,7 @@ export class TestSuiteSummary {
       );
     }
 
-    return new TestSuiteSummary({
+    return TestSuiteSummary.fromStored({
       totalCount: this.totalCount,
       hiddenCount: this.hiddenCount,
       totalScore: this.totalScore,

@@ -292,7 +292,7 @@ describe('SetHarnessUseCase and RemoveHarnessUseCase', () => {
     expect(readiness.assertReadyWhenPublished).toHaveBeenCalledWith(problem);
   });
 
-  it('rejects STANDARD problems and disabled languages', async () => {
+  it('rejects STANDARD problems', async () => {
     const { useCase, repository } = createSetHarnessUseCase();
     const standard = buildProblem({ enabledLanguages: languages('python') });
     repository.loadForUpdate.mockResolvedValue(standard);
@@ -300,13 +300,19 @@ describe('SetHarnessUseCase and RemoveHarnessUseCase', () => {
     await expect(
       useCase.execute(PRINCIPAL, standard.id.value, harnessCommand('python')),
     ).rejects.toMatchObject({ code: 'DOMAIN_VALIDATION' });
+  });
 
-    const functional = functionProblem();
-    repository.loadForUpdate.mockResolvedValue(functional);
+  it('stages a harness for a language that is not enabled yet without touching the summary', async () => {
+    const { useCase, repository, harnessRepository, readiness } = createSetHarnessUseCase();
+    const problem = functionProblem();
+    repository.loadForUpdate.mockResolvedValue(problem);
 
-    await expect(
-      useCase.execute(PRINCIPAL, functional.id.value, harnessCommand('java')),
-    ).rejects.toMatchObject({ code: 'DOMAIN_VALIDATION' });
+    const result = await useCase.execute(PRINCIPAL, problem.id.value, harnessCommand('java'));
+
+    expect(result).toEqual({ language: 'java', source: 'harness' });
+    expect(harnessRepository.upsert).toHaveBeenCalledWith(expect.any(Harness));
+    expect(repository.loadTestSuiteSummary).not.toHaveBeenCalled();
+    expect(readiness.assertReadyWhenPublished).not.toHaveBeenCalled();
   });
 
   it('removes an existing harness even when the language is disabled', async () => {
@@ -320,19 +326,11 @@ describe('SetHarnessUseCase and RemoveHarnessUseCase', () => {
     });
     repository.loadForUpdate.mockResolvedValue(problem);
     harnessRepository.find.mockResolvedValue(harness);
-    repository.loadTestSuiteSummary.mockResolvedValue(
-      new TestSuiteSummary({
-        totalCount: 0,
-        hiddenCount: 0,
-        totalScore: 0,
-        totalBytes: 7,
-        harnessLanguages: ['python'],
-      }),
-    );
     harnessRepository.remove.mockResolvedValue(true);
 
     await useCase.execute(PRINCIPAL, problem.id.value, 'python');
 
+    expect(repository.loadTestSuiteSummary).not.toHaveBeenCalled();
     expect(harnessRepository.remove).toHaveBeenCalledWith(problem.id.value, 'python');
   });
 

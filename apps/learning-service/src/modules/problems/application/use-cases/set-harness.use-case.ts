@@ -50,26 +50,29 @@ export class SetHarnessUseCase implements ISetHarnessPortIn {
       problem.assertCanManageHarnesses();
 
       const language = assertEnumValue(command.language, SUPPORTED_LANGUAGES, 'language');
-      problem.assertHarnessLanguageIsEnabled(language);
 
-      const [summary, existing] = await Promise.all([
-        this.problemRepository.loadTestSuiteSummary(problemId),
-        this.harnessRepository.find(problemId, language),
-      ]);
       const harness = Harness.create({
         problemId: problem.id,
         language,
         source: command.source,
       });
 
-      problem.attachTestSuiteSummary(
-        summary.withHarnessSet(
-          language,
-          existing === null ? null : existing.sourceBytes,
-          harness.sourceBytes,
-        ),
-      );
-      this.readiness.assertReadyWhenPublished(problem);
+      // A harness may be staged before its language is enabled; only enabled ones count toward the summary.
+      if (problem.hasEnabledLanguage(language)) {
+        const [summary, existing] = await Promise.all([
+          this.problemRepository.loadTestSuiteSummary(problemId),
+          this.harnessRepository.find(problemId, language),
+        ]);
+
+        problem.attachTestSuiteSummary(
+          summary.withHarnessSet(
+            language,
+            existing === null ? null : existing.sourceBytes,
+            harness.sourceBytes,
+          ),
+        );
+        this.readiness.assertReadyWhenPublished(problem);
+      }
 
       await this.harnessRepository.upsert(harness);
 

@@ -321,7 +321,7 @@ describe('Problem test suite and harness rules', () => {
     expect(() => deleted.assertCanManageHarnesses()).toThrow(InvalidProblemState);
   });
 
-  it('rejects harnesses for STANDARD problems and disabled languages', () => {
+  it('rejects harnesses for STANDARD problems and reports enabled languages', () => {
     const standard = buildProblem({ enabledLanguages: languages('python') });
 
     expect(() => standard.assertCanManageHarnesses()).toThrow(DomainValidationError);
@@ -331,8 +331,8 @@ describe('Problem test suite and harness rules', () => {
       enabledLanguages: languages('python'),
     });
 
-    expect(() => functional.assertHarnessLanguageIsEnabled('python')).not.toThrow();
-    expect(() => functional.assertHarnessLanguageIsEnabled('java')).toThrow(DomainValidationError);
+    expect(functional.hasEnabledLanguage('python')).toBe(true);
+    expect(functional.hasEnabledLanguage('java')).toBe(false);
   });
 
   it('attaches a derived summary without changing updatedAt', () => {

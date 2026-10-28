@@ -102,7 +102,8 @@ export class TestCaseTypeOrmRepository implements TestCaseRepository {
        SET "input" = $3,
            "expected_output" = $4,
            "is_hidden" = $5,
-           "score" = $6
+           "score" = $6,
+           "display_order" = $7
        WHERE "id" = $1 AND "problem_id" = $2`,
       [
         snapshot.id,
@@ -111,6 +112,7 @@ export class TestCaseTypeOrmRepository implements TestCaseRepository {
         snapshot.expectedOutput,
         snapshot.visibility === 'HIDDEN',
         snapshot.score,
+        snapshot.displayOrder,
       ],
     );
   }

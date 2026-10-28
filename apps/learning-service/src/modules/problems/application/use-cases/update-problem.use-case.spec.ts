@@ -2,6 +2,8 @@ import { ProblemNotFoundError } from '@learning/modules/problems/application/err
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
 import { ProblemContractValidator } from '@learning/modules/problems/domain/services/problem-contract.validator';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
@@ -11,8 +13,11 @@ import {
   buildProblem,
   languages,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
-import { ProblemTitle } from '@learning/modules/problems/domain/value-objects';
-import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
+import {
+  MAX_TEST_SUITE_BYTES,
+  ProblemTitle,
+  TestSuiteSummary,
+} from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -146,7 +151,6 @@ describe('UpdateProblemUseCase', () => {
     await expect(
       useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') }),
     ).rejects.toBeInstanceOf(PublishNotReadyError);
-    expect(repository.save).not.toHaveBeenCalled();
   });
 
   it('rejects enabling a FUNCTION language on a published problem without a harness', async () => {
@@ -168,10 +172,69 @@ describe('UpdateProblemUseCase', () => {
         enabledLanguages: languages('python', 'java'),
       }),
     ).rejects.toBeInstanceOf(PublishNotReadyError);
-    expect(repository.save).not.toHaveBeenCalled();
   });
 
-  it('saves a published update that remains ready and revalidates before returning', async () => {
+  it('validates readiness against the saved summary so a staged harness counts', async () => {
+    const repository = repositoryMock();
+    const publishValidator = publishValidatorMock();
+    const useCase = createUseCase({ repository, publishValidator });
+    const problem = buildProblem({
+      problemType: 'FUNCTION',
+      inputSpecification: null,
+      outputSpecification: null,
+      enabledLanguages: languages('python'),
+    });
+    const summaryOf = (harnessLanguages: ('java' | 'python')[]) =>
+      new TestSuiteSummary({
+        totalCount: 1,
+        hiddenCount: 1,
+        totalScore: 1,
+        totalBytes: 10 * harnessLanguages.length,
+        harnessLanguages,
+      });
+    let validatedWithJavaHarness = false;
+
+    publishValidator.validate.mockImplementation((candidate: typeof problem) => {
+      validatedWithJavaHarness = candidate.testSuiteSummary?.hasHarness('java') ?? false;
+
+      return { ready: true, issues: [] };
+    });
+    problem.publish(TEST_NOW);
+    repository.loadForUpdate.mockResolvedValue(problem);
+    repository.loadTestSuiteSummary
+      .mockResolvedValueOnce(summaryOf(['python']))
+      .mockResolvedValueOnce(summaryOf(['java', 'python']));
+
+    await useCase.execute(PRINCIPAL, problem.id.value, {
+      enabledLanguages: languages('python', 'java'),
+    });
+
+    expect(repository.save).toHaveBeenCalledTimes(1);
+    expect(validatedWithJavaHarness).toBe(true);
+  });
+
+  it('rejects an update that grows the suite beyond the size limit', async () => {
+    const repository = repositoryMock();
+    const useCase = createUseCase({ repository });
+    const problem = buildProblem();
+    const oversized = TestSuiteSummary.fromStored({
+      totalCount: 0,
+      hiddenCount: 0,
+      totalScore: 0,
+      totalBytes: MAX_TEST_SUITE_BYTES + 1,
+    });
+
+    repository.loadForUpdate.mockResolvedValue(problem);
+    repository.loadTestSuiteSummary
+      .mockResolvedValueOnce(TestSuiteSummary.empty())
+      .mockResolvedValueOnce(oversized);
+
+    await expect(
+      useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') }),
+    ).rejects.toBeInstanceOf(DomainValidationError);
+  });
+
+  it('saves a published update that remains ready and validates the saved state', async () => {
     const repository = repositoryMock();
     const publishValidator = publishValidatorMock();
     const resultMapper = resultMapperMock();
@@ -183,11 +246,12 @@ describe('UpdateProblemUseCase', () => {
 
     await useCase.execute(PRINCIPAL, problem.id.value, { title: new ProblemTitle('Updated') });
 
-    expect(publishValidator.validate).toHaveBeenCalledTimes(2);
+    expect(publishValidator.validate).toHaveBeenCalledTimes(1);
     expect(repository.save).toHaveBeenCalledTimes(1);
     expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(
       problem,
       expect.objectContaining({ ready: true }),
+      [],
     );
   });
 });
@@ -196,6 +260,7 @@ function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   topicTagReader?: ReturnType<typeof topicTagReaderMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   contentValidator?: ReturnType<typeof contentValidatorMock>;
   publishValidator?: Pick<PublishValidator, 'validate'>;
   transactionRunner?: ReturnType<typeof transactionRunnerMock>;
@@ -205,6 +270,7 @@ function createUseCase(dependencies: {
     authorization = authorizationMock(),
     topicTagReader = topicTagReaderMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     contentValidator = contentValidatorMock(),
     publishValidator = publishValidatorMock(),
     transactionRunner = transactionRunnerMock(),
@@ -215,6 +281,7 @@ function createUseCase(dependencies: {
     authorization as unknown as ProblemAuthorizationService,
     topicTagReader,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     contentValidator as unknown as ContentFormatValidator,
     publishValidator as unknown as PublishValidator,
     transactionRunner as unknown as TransactionRunner,
@@ -277,4 +344,8 @@ function resultMapperMock() {
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };
+}
+
+function testCaseRepositoryMock() {
+  return { listSamples: jest.fn().mockResolvedValue([]) };
 }

@@ -7,8 +7,13 @@ import { ProblemResultMapper } from '@learning/modules/problems/application/resu
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
-import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/problems/problem.tokens';
+import {
+  PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
+  TRANSACTION_RUNNER,
+} from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -17,6 +22,8 @@ export class RepublishProblemUseCase implements IRepublishProblemPortIn {
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly publishValidator: PublishValidator,
     @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
@@ -51,6 +58,8 @@ export class RepublishProblemUseCase implements IRepublishProblemPortIn {
       return { problem, readiness };
     });
 
-    return this.resultMapper.toManagedDetail(result.problem, result.readiness);
+    const samples = await this.testCaseRepository.listSamples(id);
+
+    return this.resultMapper.toManagedDetail(result.problem, result.readiness, samples);
   }
 }

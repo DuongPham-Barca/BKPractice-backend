@@ -1,3 +1,5 @@
+import { TestCase } from '@learning/modules/problems/domain/test-case.aggregate';
+
 import { TestCasePersistenceMapper } from './test-case.persistence-mapper';
 import { TestCaseTypeOrmRepository } from './test-case.typeorm-repository';
 import type { TypeOrmTransactionContext } from './typeorm-transaction-context';
@@ -39,6 +41,24 @@ describe('TestCaseTypeOrmRepository', () => {
     await expect(repository.listSamples(PROBLEM_ID)).resolves.toBe(samples);
     expect(query.mock.calls[0]?.[0]).toContain('"is_hidden" = FALSE');
     expect(query.mock.calls[0]?.[0]).not.toContain('"score"');
+  });
+
+  it('persists the display order when updating a test case', async () => {
+    const { repository, query } = createRepository([]);
+    const testCase = TestCase.rehydrate({
+      id: CASE_ID,
+      problemId: PROBLEM_ID,
+      input: '1 2',
+      expectedOutput: '3',
+      visibility: 'HIDDEN',
+      score: 10,
+      displayOrder: 5,
+    });
+
+    await repository.update(testCase);
+
+    expect(query.mock.calls[0]?.[0]).toContain('"display_order" = $7');
+    expect(query.mock.calls[0]?.[1]).toEqual([CASE_ID, PROBLEM_ID, '1 2', '3', true, 10, 5]);
   });
 
   it('scopes deletes by problem and returns false when nothing was removed', async () => {

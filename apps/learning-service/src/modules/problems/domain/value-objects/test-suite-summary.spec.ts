@@ -134,4 +134,16 @@ describe('TestSuiteSummary', () => {
         }),
     ).toThrow(DomainValidationError);
   });
+
+  it('reads stored totals above the limits without throwing', () => {
+    const stored = TestSuiteSummary.fromStored({
+      totalCount: MAX_TEST_CASES + 1,
+      hiddenCount: 1,
+      totalScore: 1,
+      totalBytes: MAX_TEST_SUITE_BYTES + 1,
+    });
+
+    expect(stored.totalCount).toBe(MAX_TEST_CASES + 1);
+    expect(stored.totalBytes).toBe(MAX_TEST_SUITE_BYTES + 1);
+  });
 });

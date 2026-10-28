@@ -129,16 +129,26 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     );
     const harnessRows = await manager.query<HarnessSummaryRow[]>(
       `SELECT
-         COALESCE(array_agg("language" ORDER BY "language"), ARRAY[]::varchar[]) AS "languages",
-         COALESCE(SUM(octet_length("source")), 0)::bigint AS "harnessBytes"
-       FROM "problem_harnesses"
-       WHERE "problem_id" = $1`,
+         COALESCE(array_agg("harness"."language" ORDER BY "harness"."language"), ARRAY[]::varchar[]) AS "languages",
+         COALESCE(SUM(octet_length("harness"."source")), 0)::bigint AS "harnessBytes"
+       FROM "problem_harnesses" AS "harness"
+       WHERE "harness"."problem_id" = $1
+         AND EXISTS (
+           SELECT 1 FROM "problems" AS "problem"
+           WHERE "problem"."id" = "harness"."problem_id" AND "problem"."problem_type" <> 'STANDARD'
+         )
+         AND EXISTS (
+           SELECT 1 FROM "problem_languages" AS "language"
+           WHERE "language"."problem_id" = "harness"."problem_id"
+             AND "language"."language" = "harness"."language"
+             AND "language"."enabled"
+         )`,
       [problemId],
     );
     const tests = testRows[0];
     const harnesses = harnessRows[0];
 
-    return new TestSuiteSummary({
+    return TestSuiteSummary.fromStored({
       totalCount: Number(tests?.totalCount ?? 0),
       hiddenCount: Number(tests?.hiddenCount ?? 0),
       totalScore: Number(tests?.totalScore ?? 0),

@@ -13,11 +13,13 @@ import { ProblemAuthorizationService } from '@learning/modules/problems/applicat
 import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
 import type { UpdateProblemInput } from '@learning/modules/problems/domain/problem.aggregate';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import { TagReference, TopicReference } from '@learning/modules/problems/domain/value-objects';
 import {
   PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
   TOPIC_TAG_READER,
   TRANSACTION_RUNNER,
 } from '@learning/modules/problems/problem.tokens';
@@ -31,6 +33,8 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
     private readonly topicTagReader: TopicTagReader,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly contentValidator: ContentFormatValidator,
     private readonly publishValidator: PublishValidator,
     @Inject(TRANSACTION_RUNNER)
@@ -51,7 +55,8 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
       }
 
       this.authorization.requireOwned(principal, existing, 'update');
-      existing.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(id));
+      const previousSummary = await this.repository.loadTestSuiteSummary(id);
+      existing.attachTestSuiteSummary(previousSummary);
 
       const expectedUpdatedAt = existing.updatedAt;
 
@@ -111,24 +116,28 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
       existing.update(update, new Date());
       this.contentValidator.assertSafe(existing);
 
-      if (existing.isPublished) {
-        const readiness = this.publishValidator.validate(existing, {
-          slugAvailable: true,
-        });
+      await this.repository.save(existing, expectedUpdatedAt);
 
-        if (!readiness.ready) {
-          throw new PublishNotReadyError(readiness.issues);
-        }
+      // Enabled languages decide which harnesses count, so re-check against the saved state;
+      // throwing here rolls the transaction back.
+      const summary = await this.repository.loadTestSuiteSummary(id);
+
+      if (summary.totalBytes > previousSummary.totalBytes) {
+        summary.assertWithinLimits();
       }
 
-      await this.repository.save(existing, expectedUpdatedAt);
-      const readiness = this.publishValidator.validate(existing, {
-        slugAvailable: true,
-      });
+      existing.attachTestSuiteSummary(summary);
+      const readiness = this.publishValidator.validate(existing, { slugAvailable: true });
+
+      if (existing.isPublished && !readiness.ready) {
+        throw new PublishNotReadyError(readiness.issues);
+      }
 
       return { problem: existing, readiness };
     });
 
-    return this.resultMapper.toManagedDetail(result.problem, result.readiness);
+    const samples = await this.testCaseRepository.listSamples(id);
+
+    return this.resultMapper.toManagedDetail(result.problem, result.readiness, samples);
   }
 }

@@ -1,6 +1,7 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
@@ -46,10 +47,11 @@ describe('PublishProblemUseCase', () => {
     expect(problem.publishStatus).toBe('PUBLISHED');
     expect(repository.isSlugAvailable).toHaveBeenCalledWith(problem.slug.value, problem.id.value);
     expect(repository.save).toHaveBeenCalledWith(problem, expectedUpdatedAt);
-    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, {
-      ready: true,
-      issues: [],
-    });
+    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(
+      problem,
+      { ready: true, issues: [] },
+      [],
+    );
   });
 
   it('throws when the problem does not exist', async () => {
@@ -119,6 +121,7 @@ describe('PublishProblemUseCase', () => {
 function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   publishValidator?: ReturnType<typeof publishValidatorMock>;
   transactionRunner?: ReturnType<typeof transactionRunnerMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
@@ -126,6 +129,7 @@ function createUseCase(dependencies: {
   const {
     authorization = authorizationMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     publishValidator = publishValidatorMock(),
     transactionRunner = transactionRunnerMock(),
     resultMapper = resultMapperMock(),
@@ -134,6 +138,7 @@ function createUseCase(dependencies: {
   return new PublishProblemUseCase(
     authorization as unknown as ProblemAuthorizationService,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     publishValidator as unknown as PublishValidator,
     transactionRunner as unknown as TransactionRunner,
     resultMapper as unknown as ProblemResultMapper,
@@ -182,4 +187,8 @@ function resultMapperMock() {
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };
+}
+
+function testCaseRepositoryMock() {
+  return { listSamples: jest.fn().mockResolvedValue([]) };
 }

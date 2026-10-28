@@ -5,8 +5,12 @@ import { ProblemResultMapper } from '@learning/modules/problems/application/resu
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
-import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
+import {
+  PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
+} from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -15,6 +19,8 @@ export class GetManagedProblemUseCase implements IGetManagedProblemPortIn {
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly publishValidator: PublishValidator,
     private readonly resultMapper: ProblemResultMapper,
   ) {}
@@ -43,6 +49,8 @@ export class GetManagedProblemUseCase implements IGetManagedProblemPortIn {
     );
     const readiness = this.publishValidator.validate(problem, { slugAvailable });
 
-    return this.resultMapper.toManagedDetail(problem, readiness);
+    const samples = await this.testCaseRepository.listSamples(problem.id.value);
+
+    return this.resultMapper.toManagedDetail(problem, readiness, samples);
   }
 }
