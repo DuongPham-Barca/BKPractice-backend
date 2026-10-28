@@ -39,6 +39,9 @@ export class User {
   @Column({ name: 'is_system_account', type: 'boolean', default: false })
   isSystemAccount!: boolean;
 
+  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
+
   @ManyToMany(() => Role, { eager: true })
   @JoinTable({
     name: 'user_roles',

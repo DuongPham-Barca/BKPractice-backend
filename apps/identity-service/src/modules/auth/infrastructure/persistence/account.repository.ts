@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import type { AuthAccountRepository } from '@/modules/auth/application/ports';
 import type { AuthAccount, LocalAuthAccount } from '@/modules/auth/domain';
@@ -29,6 +29,7 @@ export class TypeormAuthAccountRepository implements AuthAccountRepository {
         '(user.studentId = :identifier OR (LOWER(BTRIM(user.email)) = :email AND user.isSystemAccount = false))',
         { identifier, email: identifier.toLowerCase() },
       )
+      .andWhere('user.deletedAt IS NULL')
       .take(2)
       .getMany();
     const user = users[0];
@@ -37,7 +38,7 @@ export class TypeormAuthAccountRepository implements AuthAccountRepository {
   }
 
   async findById(userId: string): Promise<AuthAccount | null> {
-    const user = await this.users.findOneBy({ id: userId });
+    const user = await this.users.findOneBy({ id: userId, deletedAt: IsNull() });
     return user ? mapAccount(user) : null;
   }
 }

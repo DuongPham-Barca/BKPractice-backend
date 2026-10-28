@@ -32,7 +32,7 @@ export class TypeormExternalIdentityRepository implements ExternalIdentityReposi
         });
         if (linked) {
           const user = await manager.findOne(User, { where: { id: linked.userId } });
-          return user && !user.isSystemAccount ? mapUser(user) : null;
+          return user && !user.isSystemAccount && !user.deletedAt ? mapUser(user) : null;
         }
 
         const matches = await manager
@@ -40,6 +40,7 @@ export class TypeormExternalIdentityRepository implements ExternalIdentityReposi
           .leftJoinAndSelect('user.roles', 'role')
           .where('LOWER(BTRIM(user.email)) = :email', { email: identity.username })
           .andWhere('user.isSystemAccount = false')
+          .andWhere('user.deletedAt IS NULL')
           .take(2)
           .getMany();
         const user = matches[0];

@@ -36,6 +36,7 @@ export class TypeormProfileAccountContext implements IdentityProfileContext {
       .select(['user.id', 'user.status', 'user.displayName'])
       .where('user.id = :userId', { userId })
       .andWhere('user.isSystemAccount = false')
+      .andWhere('user.deletedAt IS NULL')
       .getOne();
     if (!user) return null;
     return { userId: user.id, displayName: user.displayName, status: user.status };
@@ -70,6 +71,7 @@ export class TypeormProfileRepository implements ProfileRepository {
       .where("profile.displayName ILIKE :pattern ESCAPE '!'", { pattern })
       .andWhere('user.status = :status', { status: 'ACTIVE' })
       .andWhere('user.isSystemAccount = false')
+      .andWhere('user.deletedAt IS NULL')
       .orderBy('LOWER(profile.displayName)', 'ASC')
       .addOrderBy('user.id', 'ASC')
       .offset((page - 1) * limit)

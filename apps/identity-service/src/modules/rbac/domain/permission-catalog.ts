@@ -43,6 +43,8 @@ const adminPermissionCodes = [
   ...lecturerPermissionCodes,
   'community:moderate',
   'user:import',
+  'user:read',
+  'user:delete',
 ];
 
 export const rbacPermissionCatalog = [

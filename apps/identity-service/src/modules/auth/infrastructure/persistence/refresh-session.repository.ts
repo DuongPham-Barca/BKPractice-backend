@@ -9,8 +9,10 @@ import type {
   PasswordHasher,
   SessionMetadata,
 } from '@/modules/auth/application/ports';
+import { AuthFailure } from '@/modules/auth/domain';
 import { AuthSession } from '@/modules/auth/infrastructure/persistence/auth-session.entity';
 import { RefreshToken } from '@/modules/auth/infrastructure/persistence/refresh-token.entity';
+import { AccountStatus, User } from '@/modules/users/infrastructure/persistence';
 
 @Injectable()
 export class TypeormRefreshSessionRepository implements RefreshSessionRepository {
@@ -24,6 +26,12 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
     metadata: SessionMetadata = { clientType: 'web' },
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
+      const user = await manager.getRepository(User).createQueryBuilder('user')
+        .setLock('pessimistic_read')
+        .where('user.id = :userId AND user.deletedAt IS NULL', { userId: record.userId })
+        .getOne();
+      if (!user || user.status !== AccountStatus.Active)
+        throw new AuthFailure('invalid_credentials');
       await manager.insert(AuthSession, {
         id: record.familyId,
         userId: record.userId,
@@ -54,6 +62,11 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
     replacement: RefreshRecord,
   ): Promise<boolean> {
     return this.dataSource.transaction(async (manager) => {
+      const user = await manager.getRepository(User).createQueryBuilder('user')
+        .setLock('pessimistic_read')
+        .where('user.id = :userId AND user.deletedAt IS NULL', { userId: current.sub })
+        .getOne();
+      if (!user || user.status !== AccountStatus.Active) return false;
       const session = await manager
         .createQueryBuilder(AuthSession, 'session')
         .setLock('pessimistic_write')
