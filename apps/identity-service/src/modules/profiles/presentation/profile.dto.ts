@@ -1,5 +1,35 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+
+export class SearchProfilesQueryDto {
+  @ApiProperty({ description: 'Profile display name, 1–100 characters after trimming' })
+  @IsString()
+  q!: string;
+
+  @ApiPropertyOptional({ example: '1' })
+  @IsOptional()
+  @Matches(/^[1-9]\d*$/)
+  page?: string;
+
+  @ApiPropertyOptional({ example: '20' })
+  @IsOptional()
+  @Matches(/^[1-9]\d*$/)
+  limit?: string;
+}
+
+export class SearchProfileItemDto {
+  @ApiProperty() userId!: string;
+  @ApiProperty() displayName!: string;
+  @ApiProperty({ type: String, nullable: true, description: 'Short-lived signed R2 read URL' })
+  avatar!: string | null;
+}
+
+export class SearchProfilesResponseDto {
+  @ApiProperty({ type: [SearchProfileItemDto] }) items!: SearchProfileItemDto[];
+  @ApiProperty() page!: number;
+  @ApiProperty() limit!: number;
+  @ApiProperty() hasMore!: boolean;
+}
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({ maxLength: 100 })

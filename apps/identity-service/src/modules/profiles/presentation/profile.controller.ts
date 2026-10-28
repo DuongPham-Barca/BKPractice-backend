@@ -4,10 +4,12 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseFilters,
 } from '@nestjs/common';
@@ -32,6 +34,8 @@ import {
   AvatarUploadIntentResponseDto,
   ProfileResponseDto,
   PublicProfileResponseDto,
+  SearchProfilesQueryDto,
+  SearchProfilesResponseDto,
   UpdateProfileDto,
 } from '@/modules/profiles/presentation/profile.dto';
 import { RoleName, type AuthorizationPrincipal } from '@/modules/rbac/domain';
@@ -53,6 +57,8 @@ const accessDescription =
 @ApiResponse({ status: 503, description: 'Profile dependency unavailable' })
 @Controller('api')
 export class ProfileController {
+  private readonly logger = new Logger(ProfileController.name);
+
   constructor(
     private readonly profiles: ProfileUseCases,
     private readonly access: IdentityAccessAuthenticator,
@@ -64,6 +70,35 @@ export class ProfileController {
   @ApiResponse({ status: 200, type: ProfileResponseDto })
   async getMy(@Req() request: Request): Promise<ProfileResponseDto> {
     return this.profiles.getMy((await this.verifyPrincipal(request)).userId);
+  }
+
+  @Get('profiles/search')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Search public profiles by display name', description: accessDescription })
+  @ApiResponse({ status: 200, type: SearchProfilesResponseDto })
+  async searchProfiles(
+    @Req() request: Request,
+    @Query() query: SearchProfilesQueryDto,
+  ): Promise<SearchProfilesResponseDto> {
+    const principal = await this.verifyPrincipal(request);
+    if (principal.roles.length === 0) throw new AuthFailure('invalid_token');
+    const startedAt = Date.now();
+    try {
+      return await this.profiles.searchProfiles(
+        query.q,
+        query.page === undefined ? 1 : Number(query.page),
+        query.limit === undefined ? 20 : Number(query.limit),
+      );
+    } finally {
+      const requestId = request.header('x-request-id');
+      this.logger.log({
+        operation: 'profile_search',
+        requestId: requestId && /^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(requestId)
+          ? requestId
+          : undefined,
+        durationMs: Date.now() - startedAt,
+      });
+    }
   }
 
   @Patch('profile/me')

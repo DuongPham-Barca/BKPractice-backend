@@ -17,6 +17,12 @@ describe('Identity Profile HTTP without Gateway', () => {
   const profile = { userId: 'user-1', displayName: 'Tên', avatar: null, bio: null };
   const profiles = {
     getMy: jest.fn(async () => profile),
+    searchProfiles: jest.fn(async (_query: string, page: number, limit: number) => ({
+      items: [{ userId: 'user-2', displayName: 'Nguyễn An', avatar: null }],
+      page,
+      limit,
+      hasMore: false,
+    })),
     updateMy: jest.fn(async (_userId: string, input: unknown) => {
       normalizeProfilePatch(input);
       return profile;
@@ -71,6 +77,30 @@ describe('Identity Profile HTTP without Gateway', () => {
     ).toBe(200);
   });
 
+  it('searches only with a valid session and validates query parameters', async () => {
+    const path = `${baseUrl}/api/profiles/search?q=Nguy%E1%BB%85n&page=2&limit=5`;
+    expect((await fetch(path)).status).toBe(401);
+    const response = await fetch(path, { headers: { cookie: '__Host-bk_access=access' } });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      items: [{ userId: 'user-2', displayName: 'Nguyễn An', avatar: null }],
+      page: 2,
+      limit: 5,
+      hasMore: false,
+    });
+    expect(profiles.searchProfiles).toHaveBeenCalledWith('Nguyễn', 2, 5);
+    const firstCharacter = await fetch(`${baseUrl}/api/profiles/search?q=D`, {
+      headers: { authorization: 'Bearer access' },
+    });
+    expect(firstCharacter.status).toBe(200);
+    expect(profiles.searchProfiles).toHaveBeenCalledWith('D', 1, 20);
+    for (const query of ['page=0&q=An', 'q=An&limit=1.5', 'page=2', 'q=An&status=LOCKED']) {
+      expect((await fetch(`${baseUrl}/api/profiles/search?${query}`, {
+        headers: { authorization: 'Bearer access' },
+      })).status).toBe(400);
+    }
+  });
+
   it('accepts one field per PATCH and protects cookie writes with CSRF', async () => {
     const csrf = issueCsrfToken('session-1', 'a'.repeat(32));
     const cookie = `__Host-bk_access=access; __Host-bk_csrf=${csrf}`;
@@ -105,6 +135,21 @@ describe('Identity Profile HTTP without Gateway', () => {
 
   it('documents PATCH fields as optional strings and starts with a valid single-field example', () => {
     const document = SwaggerModule.createDocument(app, new DocumentBuilder().build());
+    const search = document.paths['/api/profiles/search']?.get;
+    const searchParameters = search?.parameters as
+      | ReadonlyArray<{ name: string; required?: boolean }>
+      | undefined;
+    expect(searchParameters?.map((parameter) => ({ name: parameter.name, required: parameter.required }))).toEqual([
+      { name: 'q', required: true },
+      { name: 'page', required: false },
+      { name: 'limit', required: false },
+    ]);
+    expect(search?.responses['200']).toBeDefined();
+    expect(search?.responses['400']).toBeDefined();
+    expect(search?.responses['401']).toBeDefined();
+    expect(document.components?.schemas?.SearchProfileItemDto).toMatchObject({
+      properties: { avatar: { type: 'string', nullable: true } },
+    });
     expect(document.components?.schemas?.UpdateProfileDto).toMatchObject({
       properties: {
         avatar: { type: 'string', nullable: true },

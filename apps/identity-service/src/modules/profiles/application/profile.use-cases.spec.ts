@@ -18,6 +18,7 @@ describe('ProfileUseCases', () => {
   let status: 'ACTIVE' | 'LOCKED' | 'PENDING';
   let cases: ProfileUseCases;
   let avatars: AvatarStorage;
+  let repository: ProfileRepository;
   const admin: AuthorizationPrincipal = {
     userId: 'admin-id',
     roles: [RoleName.Admin],
@@ -36,8 +37,9 @@ describe('ProfileUseCases', () => {
     const accounts: IdentityProfileContext = {
       findAccount: jest.fn(async (userId) => ({ userId, displayName: initialDisplayName, status })),
     };
-    const repository: ProfileRepository = {
+    repository = {
       find: jest.fn(async () => saved),
+      searchByDisplayName: jest.fn(async () => ({ items: [], hasMore: false })),
       loadOrCreate: jest.fn(async (userId, name) => {
         saved ??= {
           profileId: 'profile-id',
@@ -140,6 +142,56 @@ describe('ProfileUseCases', () => {
     await expect(cases.getPublic('student-id')).rejects.toThrow('not_found');
     status = 'PENDING';
     await expect(cases.getPublic('student-id')).rejects.toThrow('not_found');
+  });
+
+  it('searches the trimmed Profile name and returns only public fields with signed avatars', async () => {
+    jest.mocked(repository.searchByDisplayName).mockResolvedValueOnce({
+      items: [
+        { userId: 'other-id', displayName: 'Nguyễn An', avatarReference: 'avatar-key' },
+        { userId: 'third-id', displayName: 'Nguyễn Bình', avatarReference: null },
+      ],
+      hasMore: true,
+    });
+    expect(await cases.searchProfiles('  Nguyễn  ', 2, 2)).toEqual({
+      items: [
+        { userId: 'other-id', displayName: 'Nguyễn An', avatar: 'https://signed.example/avatar-key' },
+        { userId: 'third-id', displayName: 'Nguyễn Bình', avatar: null },
+      ],
+      page: 2,
+      limit: 2,
+      hasMore: true,
+    });
+    expect(repository.searchByDisplayName).toHaveBeenCalledWith('Nguyễn', 2, 2);
+    expect(avatars.signReadUrl).toHaveBeenCalledWith('other-id', 'avatar-key');
+  });
+
+  it('searches after the first typed character', async () => {
+    jest.mocked(repository.searchByDisplayName).mockResolvedValueOnce({
+      items: [{ userId: 'dung-id', displayName: 'Dũng Dương', avatarReference: null }],
+      hasMore: false,
+    });
+    expect(await cases.searchProfiles(' D ', 1, 20)).toEqual({
+      items: [{ userId: 'dung-id', displayName: 'Dũng Dương', avatar: null }],
+      page: 1,
+      limit: 20,
+      hasMore: false,
+    });
+    expect(repository.searchByDisplayName).toHaveBeenCalledWith('D', 1, 20);
+  });
+
+  it('rejects invalid search bounds before querying storage', async () => {
+    for (const [query, page, limit] of [
+      [' ', 1, 20],
+      ['', 1, 20],
+      ['a'.repeat(101), 1, 20],
+      ['An', 0, 20],
+      ['An', 1.5, 20],
+      ['An', 1, 51],
+      ['An', Number.MAX_SAFE_INTEGER, 50],
+    ] as const) {
+      await expect(cases.searchProfiles(query, page, limit)).rejects.toThrow('invalid');
+    }
+    expect(repository.searchByDisplayName).not.toHaveBeenCalled();
   });
 
   it('allows Admin to manage an existing profile and denies Student cross-user updates', async () => {

@@ -12,6 +12,14 @@ export interface IdentityProfileContext {
 
 export interface ProfileRepository {
   find(userId: string): Promise<ProfileRecord | null>;
+  searchByDisplayName(
+    query: string,
+    page: number,
+    limit: number,
+  ): Promise<{
+    items: Array<Pick<ProfileRecord, 'userId' | 'displayName' | 'avatarReference'>>;
+    hasMore: boolean;
+  }>;
   loadOrCreate(userId: string, displayName: string | null): Promise<ProfileRecord>;
   update(
     userId: string,

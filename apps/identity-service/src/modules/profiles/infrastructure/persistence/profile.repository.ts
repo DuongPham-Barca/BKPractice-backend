@@ -51,6 +51,33 @@ export class TypeormProfileRepository implements ProfileRepository {
     return profile ? mapProfile(profile, userId) : null;
   }
 
+  async searchByDisplayName(
+    query: string,
+    page: number,
+    limit: number,
+  ): Promise<{
+    items: Array<Pick<ProfileRecord, 'userId' | 'displayName' | 'avatarReference'>>;
+    hasMore: boolean;
+  }> {
+    const pattern = `%${query.replace(/[!%_]/g, (character) => `!${character}`)}%`;
+    const rows = await this.database
+      .getRepository(Profile)
+      .createQueryBuilder('profile')
+      .innerJoin('profile.user', 'user')
+      .select('user.id', 'userId')
+      .addSelect('profile.displayName', 'displayName')
+      .addSelect('profile.avatarReference', 'avatarReference')
+      .where("profile.displayName ILIKE :pattern ESCAPE '!'", { pattern })
+      .andWhere('user.status = :status', { status: 'ACTIVE' })
+      .andWhere('user.isSystemAccount = false')
+      .orderBy('LOWER(profile.displayName)', 'ASC')
+      .addOrderBy('user.id', 'ASC')
+      .offset((page - 1) * limit)
+      .limit(limit + 1)
+      .getRawMany<Pick<ProfileRecord, 'userId' | 'displayName' | 'avatarReference'>>();
+    return { items: rows.slice(0, limit), hasMore: rows.length > limit };
+  }
+
   async loadOrCreate(userId: string, displayName: string | null): Promise<ProfileRecord> {
     return this.database.transaction(async (manager) => {
       await this.lockUser(manager, userId);

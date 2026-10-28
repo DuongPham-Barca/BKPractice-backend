@@ -2,7 +2,7 @@
 
 ## Trạng thái và đặc tả liên quan
 
-Bản nháp để review theo [spec ID-005 0.1](./spec.md), hiện **Proposed**. Chưa phải kế hoạch được duyệt để triển khai; các lựa chọn phụ thuộc Câu hỏi mở của spec.
+Kế hoạch theo [spec ID-005 1.1](./spec.md), **Approved** theo yêu cầu cập nhật của chủ sở hữu ngày 2026-10-28. Code ID-005 đã triển khai; xác minh PostgreSQL và các lệnh toàn repo còn chờ điều kiện ở [tasks.md](./tasks.md).
 
 ## Service đích và kiến trúc
 
@@ -17,19 +17,19 @@ Identity Service — **Clean Architecture**, theo [kiến trúc Identity](../../
 
 - Áp dụng điều kiện hồ sơ công khai ID-002; không thêm state/entity domain.
 - Thêm use case tìm theo tên và port truy vấn trang kết quả. Use case dựng biểu diễn công khai, ký avatar qua adapter hiện có, không xuất dữ liệu nhạy cảm.
-- Chuẩn hoá `q`, quyền search và schema phân trang chờ quyết định spec.
+- Trim `q`, kiểm tra 1–100 ký tự để FE tìm sau từng ký tự nhập, tìm chuỗi con không phân biệt hoa thường nhưng giữ dấu; escape `%`/`_` trước truy vấn để chúng là ký tự thường. Không tạo Profile cho User cũ khi search.
 
 ## Lưu trữ, cơ sở dữ liệu và migration
 
-- TypeORM adapter Identity truy vấn Profile gắn User `ACTIVE`, không phải hệ thống; khi có xoá mềm thì loại User đã xoá. Dùng tham số truy vấn, giới hạn trang và thứ tự ổn định.
+- TypeORM adapter Identity truy vấn Profile gắn User `ACTIVE`, không phải hệ thống; khi có xoá mềm thì loại User đã xoá. Dùng tham số truy vấn, `page`/`limit` và sắp xếp tên không phân biệt hoa thường rồi `userId` tăng dần.
 - Không thêm cột. Chỉ thêm index/migration nếu kế hoạch truy vấn đã chốt cho thấy cần; không bật `synchronize`.
-- Hành vi User chưa có Profile phải theo quyết định ở spec, không tự tạo hàng loạt trong thao tác đọc.
+- User chưa có Profile bị bỏ qua; không tự tạo hàng loạt trong thao tác đọc.
 
 ## API, DTO và phân quyền
 
-- Route dự kiến `GET /api/profiles/search`; DTO chỉ nhận `q` và tham số phân trang được duyệt.
-- DTO phản hồi chỉ xuất `userId`, `displayName`, `avatar` và metadata phân trang. Route chi tiết ID-002 giữ nguyên.
-- Gateway cho phép cookie/Bearer theo chính sách search sau khi chốt; Identity kiểm tra quyền. Swagger mô tả lỗi/response.
+- Route `GET /api/profiles/search`; DTO nhận `q`, `page` mặc định 1 và `limit` mặc định 20/tối đa 50.
+- DTO phản hồi `{ items, page, limit, hasMore }`; mỗi item chỉ có `userId`, `displayName`, `avatar`. Route chi tiết ID-002 giữ nguyên.
+- Gateway nhận cookie/Bearer đã xác minh; Identity yêu cầu người dùng đăng nhập. Swagger mô tả 400/401/200 và projection.
 
 ## Messaging, realtime và adapter khác
 
@@ -37,16 +37,15 @@ N/A — truy vấn đồng bộ, không phát message hoặc sự kiện. Tái d
 
 ## Kiểm thử và khả năng quan sát
 
-- Unit: tên Profile cá nhân hoá, bộ lọc, projection, truy vấn sai/rỗng, phân trang (FR-001–FR-005).
-- PostgreSQL/API/Gateway: dấu/ký tự đặc biệt theo quy tắc duyệt, thứ tự, quyền, avatar, route chi tiết (AC-001–AC-006).
+- Unit: tên Profile cá nhân hoá, truy vấn một ký tự, bộ lọc, projection, truy vấn sai/rỗng, phân trang (FR-001–FR-005).
+- PostgreSQL/API/Gateway: giữ dấu, `%`/`_` literal, thứ tự, phân trang, 401, avatar và route chi tiết (AC-001–AC-006).
 - Log request ID/thời gian truy vấn tổng hợp; không log tên tìm kiếm thô hoặc dữ liệu kết quả.
 
 ## Thứ tự triển khai sau Approved
 
-1. Chốt Câu hỏi mở và phê duyệt spec; review lại plan/tasks.
-2. Tạo port/use case, adapter truy vấn, DTO/controller và kiểm tra Gateway.
-3. Kiểm thử, Swagger, các lệnh pnpm áp dụng và đối chiếu FR/AC.
+1. Tạo port/use case, adapter truy vấn, DTO/controller và kiểm tra Gateway.
+2. Kiểm thử, Swagger, các lệnh pnpm áp dụng và đối chiếu FR/AC.
 
 ## Rủi ro và tuân thủ kiến trúc
 
-Tìm tên tự do có thể gây truy vấn tốn tài nguyên/dò danh bạ; giới hạn đầu vào/trang và quyền cần chốt. Presentation xử lý HTTP, application điều phối, infrastructure giữ TypeORM/R2; Identity giữ quyền sở hữu User/Profile. Không đọc DB xuyên service.
+Tìm tên tự do có thể gây truy vấn tốn tài nguyên/dò danh bạ; giới hạn `q`, trang và quyền đăng nhập đã chốt giảm rủi ro. Presentation xử lý HTTP, application điều phối, infrastructure giữ TypeORM/R2; Identity giữ quyền sở hữu User/Profile. Không đọc DB xuyên service.

@@ -19,6 +19,13 @@ export interface PrivateProfile {
 
 export type PublicProfile = Omit<PrivateProfile, 'userId'>;
 
+export interface ProfileSearchPage {
+  items: Array<Pick<PrivateProfile, 'userId' | 'displayName' | 'avatar'>>;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
 export class ProfileUseCases {
   constructor(
     private readonly accounts: IdentityProfileContext,
@@ -43,6 +50,38 @@ export class ProfileUseCases {
     if (!profile) throw new ProfileFailure('not_found');
     const result = await this.toPrivate(profile);
     return { displayName: result.displayName, avatar: result.avatar, bio: result.bio };
+  }
+
+  async searchProfiles(query: string, page: number, limit: number): Promise<ProfileSearchPage> {
+    const name = typeof query === 'string' ? query.trim() : '';
+    const nameLength = Array.from(name).length;
+    const offset = (page - 1) * limit;
+    if (
+      nameLength < 1 ||
+      nameLength > 100 ||
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      !Number.isSafeInteger(limit) ||
+      limit < 1 ||
+      limit > 50 ||
+      !Number.isSafeInteger(offset)
+    )
+      throw new ProfileFailure('invalid');
+    const result = await this.profiles.searchByDisplayName(name, page, limit);
+    return {
+      items: await Promise.all(
+        result.items.map(async (profile) => ({
+          userId: profile.userId,
+          displayName: profile.displayName,
+          avatar: profile.avatarReference
+            ? await this.avatars.signReadUrl(profile.userId, profile.avatarReference)
+            : null,
+        })),
+      ),
+      page,
+      limit,
+      hasMore: result.hasMore,
+    };
   }
 
   async adminGet(principal: AuthorizationPrincipal, userId: string): Promise<PrivateProfile> {

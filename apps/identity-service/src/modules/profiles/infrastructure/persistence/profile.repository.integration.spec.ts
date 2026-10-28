@@ -64,6 +64,52 @@ const isolated =
     expect(await repository.find(userId)).toBeNull();
   });
 
+  it('searches existing active public Profiles with literal wildcards and stable pages', async () => {
+    const repository = new TypeormProfileRepository(database);
+    const suffix = randomUUID().slice(0, 8);
+    const ids: string[] = [];
+    const createProfile = async (name: string): Promise<string> => {
+      const id = await createUser();
+      ids.push(id);
+      await repository.loadOrCreate(id, name);
+      return id;
+    };
+    try {
+      const first = await createProfile(`Ánh-${suffix}`);
+      const second = await createProfile(`Ánh-${suffix}`);
+      const third = await createProfile(`ánh-${suffix} B`);
+      const locked = await createProfile(`Ánh-${suffix} locked`);
+      const pending = await createProfile(`Ánh-${suffix} pending`);
+      const system = await createProfile(`Ánh-${suffix} system`);
+      const missing = await createUser();
+      ids.push(missing);
+      await database.query('UPDATE users SET status = $2 WHERE id = $1', [locked, 'LOCKED']);
+      await database.query('UPDATE users SET status = $2 WHERE id = $1', [pending, 'PENDING']);
+      await database.query('UPDATE users SET is_system_account = true WHERE id = $1', [system]);
+      await database.query('UPDATE profiles SET bio = $2 WHERE user_id = $1', [first, 'private bio']);
+
+      const expected = [first, second].sort();
+      expect(await repository.searchByDisplayName(`áNh-${suffix}`, 1, 2)).toEqual({
+        items: expected.map((userId) => ({ userId, displayName: `Ánh-${suffix}`, avatarReference: null })),
+        hasMore: true,
+      });
+      expect(await repository.searchByDisplayName(`áNh-${suffix}`, 2, 2)).toEqual({
+        items: [{ userId: third, displayName: `ánh-${suffix} B`, avatarReference: null }],
+        hasMore: false,
+      });
+      expect((await repository.searchByDisplayName(`anh-${suffix}`, 1, 20)).items).toEqual([]);
+
+      const literal = await createProfile(`Nhóm_%${suffix}`);
+      await createProfile(`Nhómxx${suffix}`);
+      expect(await repository.searchByDisplayName(`_%${suffix}`, 1, 20)).toEqual({
+        items: [{ userId: literal, displayName: `Nhóm_%${suffix}`, avatarReference: null }],
+        hasMore: false,
+      });
+    } finally {
+      await database.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [ids]);
+    }
+  });
+
   it('reverts and reapplies checks without rewriting invalid legacy avatars', async () => {
     const userId = await createUser();
     const repository = new TypeormProfileRepository(database);

@@ -12,6 +12,7 @@ import { ProfileFailure } from '@/modules/profiles/domain';
 import {
   ProfileController,
   ProfileFailureFilter,
+  SearchProfilesQueryDto,
   UpdateProfileDto,
 } from '@/modules/profiles/presentation';
 import { RoleName } from '@/modules/rbac/domain';
@@ -23,6 +24,7 @@ describe('Profile HTTP contract', () => {
     getMy: jest.fn(async () => privateProfile),
     updateMy: jest.fn(async () => privateProfile),
     getPublic: jest.fn(async () => publicProfile),
+    searchProfiles: jest.fn(async () => ({ items: [], page: 1, limit: 20, hasMore: false })),
     adminGet: jest.fn(async () => privateProfile),
     adminUpdate: jest.fn(async () => privateProfile),
     createAvatarUploadIntent: jest.fn(),
@@ -33,7 +35,14 @@ describe('Profile HTTP contract', () => {
       return {
         sub: 'user-id',
         sid: 'session-id',
-        roles: token === 'admin' ? [RoleName.Admin] : [RoleName.Student],
+        roles:
+          token === 'admin'
+            ? [RoleName.Admin]
+            : token === 'lecturer'
+              ? [RoleName.Lecturer]
+              : token === 'no-role'
+                ? []
+                : [RoleName.Student],
         permissions: [],
       };
     }),
@@ -64,6 +73,52 @@ describe('Profile HTTP contract', () => {
     await expect(controller.updateMy(request('PATCH'), {})).rejects.toThrow('invalid_token');
     expect(await controller.getMy(request('GET', 'Bearer student'))).toEqual(privateProfile);
     expect(useCases.getMy).toHaveBeenCalledWith('user-id');
+  });
+
+  it('requires an active session to search and applies pagination defaults', async () => {
+    await expect(controller.searchProfiles(request('GET'), { q: 'An' })).rejects.toThrow(
+      'invalid_token',
+    );
+    expect(useCases.searchProfiles).not.toHaveBeenCalled();
+    expect(await controller.searchProfiles(request('GET', 'Bearer student'), { q: 'An' })).toEqual({
+      items: [], page: 1, limit: 20, hasMore: false,
+    });
+    expect(useCases.searchProfiles).toHaveBeenCalledWith('An', 1, 20);
+    await controller.searchProfiles(request('GET', 'Bearer lecturer'), { q: 'An' });
+    await controller.searchProfiles(request('GET', 'Bearer admin'), { q: 'An' });
+    expect(useCases.searchProfiles).toHaveBeenCalledTimes(3);
+    await expect(controller.searchProfiles(request('GET', 'Bearer no-role'), { q: 'An' })).rejects.toThrow('invalid_token');
+    await controller.searchProfiles(request('GET', undefined, '__Host-bk_access=student'), {
+      q: 'Bình', page: '2', limit: '5',
+    });
+    expect(useCases.searchProfiles).toHaveBeenCalledWith('Bình', 2, 5);
+    jest.mocked(sessions.isActive).mockResolvedValueOnce(false);
+    await expect(controller.searchProfiles(request('GET', 'Bearer student'), { q: 'An' })).rejects.toThrow('invalid_token');
+  });
+
+  it('validates search query shape at the HTTP boundary', async () => {
+    const pipe = new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true });
+    const metadata = { type: 'query' as const, metatype: SearchProfilesQueryDto };
+    await expect(pipe.transform({ q: 'An', page: '2', limit: '50' }, metadata)).resolves.toMatchObject({ q: 'An', page: '2', limit: '50' });
+    for (const query of [{}, { q: 'An', page: '0' }, { q: 'An', limit: '51x' }, { q: 'An', email: 'x' }]) {
+      await expect(pipe.transform(query, metadata)).rejects.toThrow();
+    }
+  });
+
+  it('logs search duration without the searched name or an unsafe request ID', async () => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    const incoming = {
+      method: 'GET',
+      header: (name: string) => name === 'authorization' ? 'Bearer student' : name === 'x-request-id' ? 'unsafe-id' : undefined,
+    } as Request;
+    try {
+      await controller.searchProfiles(incoming, { q: 'Private Name' });
+      expect(log).toHaveBeenCalledWith(expect.objectContaining({ operation: 'profile_search' }));
+      expect(JSON.stringify(log.mock.calls)).not.toContain('Private Name');
+      expect(JSON.stringify(log.mock.calls)).not.toContain('unsafe-id');
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it('accepts web cookies directly and requires CSRF for profile writes', async () => {
