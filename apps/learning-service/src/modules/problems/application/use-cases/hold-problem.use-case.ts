@@ -39,7 +39,11 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     this.authorization.requireOwned(principal, problem, 'hold');
 
     const expectedUpdatedAt = problem.updatedAt;
-    problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
+    const [summary, samples] = await Promise.all([
+      this.repository.loadTestSuiteSummary(problem.id.value),
+      this.testCaseRepository.listSamples(problem.id.value),
+    ]);
+    problem.attachTestSuiteSummary(summary);
     problem.hold();
 
     await this.transactionRunner.run(() => this.repository.save(problem, expectedUpdatedAt));
@@ -47,8 +51,6 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     const readiness = this.publishValidator.validate(problem, {
       slugAvailable: true,
     });
-
-    const samples = await this.testCaseRepository.listSamples(problem.id.value);
 
     return this.resultMapper.toManagedDetail(problem, readiness, samples);
   }

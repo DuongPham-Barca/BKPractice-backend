@@ -33,6 +33,9 @@ export interface ProblemRepository {
   findManagedById(id: string, ownerId: string, includeDeleted: boolean): Promise<Problem | null>;
   loadForUpdate(id: string, includeDeleted?: boolean): Promise<Problem | null>;
   loadTestSuiteSummary(problemId: string): Promise<TestSuiteSummary>;
+  loadTestSuiteSummaries(
+    problemIds: readonly string[],
+  ): Promise<ReadonlyMap<string, TestSuiteSummary>>;
   listPublished(filter: ProblemListFilter): Promise<ProblemPage<Problem>>;
   listManaged(filter: ManagedProblemListFilter): Promise<ProblemPage<Problem>>;
   isSlugAvailable(slug: string, excludeProblemId?: string): Promise<boolean>;

@@ -68,6 +68,24 @@ describe('AddTestCaseUseCase', () => {
     expect(readiness.assertReadyWhenPublished).toHaveBeenCalledWith(problem);
   });
 
+  it('rejects a duplicate display order before writing', async () => {
+    const { useCase, repository, testCaseRepository } = createAddUseCase();
+    const problem = buildProblem({ enabledLanguages: languages('python') });
+    const existing = existingTestCase(problem, SECOND_CASE_ID, 1, 2);
+
+    repository.loadForUpdate.mockResolvedValue(problem);
+    repository.loadTestSuiteSummary.mockResolvedValue(TestSuiteSummary.empty());
+    testCaseRepository.listByProblem.mockResolvedValue([existing]);
+
+    await expect(
+      useCase.execute(PRINCIPAL, problem.id.value, {
+        ...addCommand(),
+        displayOrder: new DisplayOrder(2),
+      }),
+    ).rejects.toMatchObject({ code: 'DOMAIN_VALIDATION' });
+    expect(testCaseRepository.add).not.toHaveBeenCalled();
+  });
+
   it('rejects the 101st test case before writing', async () => {
     const { useCase, repository, testCaseRepository } = createAddUseCase();
     const problem = buildProblem({ enabledLanguages: languages('python') });
@@ -136,6 +154,24 @@ describe('UpdateTestCaseUseCase', () => {
 
     expect(result.displayOrder).toBe(2);
     expect(testCaseRepository.update).toHaveBeenCalledWith(testCase);
+  });
+
+  it('rejects a duplicate display order before writing', async () => {
+    const { useCase, repository, testCaseRepository } = createUpdateUseCase();
+    const problem = buildProblem({ enabledLanguages: languages('python') });
+    const testCase = existingTestCase(problem, CASE_ID, 5, 0);
+    const other = existingTestCase(problem, SECOND_CASE_ID, 1, 2);
+    repository.loadForUpdate.mockResolvedValue(problem);
+    testCaseRepository.findById.mockResolvedValue(testCase);
+    testCaseRepository.listByProblem.mockResolvedValue([testCase, other]);
+    repository.loadTestSuiteSummary.mockResolvedValue(summaryFor(testCase));
+
+    await expect(
+      useCase.execute(PRINCIPAL, problem.id.value, CASE_ID, {
+        displayOrder: new DisplayOrder(2),
+      }),
+    ).rejects.toMatchObject({ code: 'DOMAIN_VALIDATION' });
+    expect(testCaseRepository.update).not.toHaveBeenCalled();
   });
 
   it('returns 404 when the test case does not belong to the problem', async () => {
@@ -517,6 +553,7 @@ function problemRepositoryMock() {
     findById: jest.fn(),
     loadForUpdate: jest.fn(),
     loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

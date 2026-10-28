@@ -10,9 +10,9 @@ import {
 } from '@learning/modules/problems/application/results/test-case.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import { TestSuiteReadinessService } from '@learning/modules/problems/application/services/test-suite-readiness.service';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
-import { TestCase } from '@learning/modules/problems/domain/test-case.aggregate';
 import {
   PROBLEM_REPOSITORY,
   TEST_CASE_REPOSITORY,
@@ -55,31 +55,44 @@ export class UpdateTestCaseUseCase implements IUpdateTestCasePortIn {
         throw new TestCaseNotFoundError(testCaseId);
       }
 
-      const summary = await this.problemRepository.loadTestSuiteSummary(problemId);
-      const next = TestCase.create({
-        id: existing.id,
-        problemId: existing.problemId,
+      const requestedDisplayOrder = command.displayOrder;
+      if (requestedDisplayOrder !== undefined) {
+        const current = await this.testCaseRepository.listByProblem(problemId);
+
+        if (
+          current.some(
+            (item) =>
+              item.id.value !== testCaseId &&
+              item.displayOrder.value === requestedDisplayOrder.value,
+          )
+        ) {
+          throw new DomainValidationError(
+            'displayOrder',
+            'Display order is already used by another test case',
+          );
+        }
+      }
+
+      const before = {
+        visibility: existing.visibility,
+        score: existing.score,
+        bytes: existing.payloadBytes,
+      };
+      const after = {
         input: command.input ?? existing.input,
         expectedOutput: command.expectedOutput ?? existing.expectedOutput,
         visibility: command.visibility ?? existing.visibility,
         score: command.score ?? existing.score,
-        displayOrder: command.displayOrder ?? existing.displayOrder,
-      });
+      };
 
+      const summary = await this.problemRepository.loadTestSuiteSummary(problemId);
       problem.attachTestSuiteSummary(
-        summary.withTestCaseUpdated(
-          {
-            visibility: existing.visibility,
-            score: existing.score,
-            bytes: existing.payloadBytes,
-          },
-          {
-            input: next.input,
-            expectedOutput: next.expectedOutput,
-            visibility: next.visibility,
-            score: next.score,
-          },
-        ),
+        summary.withTestCaseUpdated(before, {
+          input: after.input,
+          expectedOutput: after.expectedOutput,
+          visibility: after.visibility,
+          score: after.score,
+        }),
       );
       this.readiness.assertReadyWhenPublished(problem);
 

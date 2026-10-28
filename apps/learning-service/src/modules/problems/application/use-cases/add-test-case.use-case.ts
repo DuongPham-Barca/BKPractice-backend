@@ -9,6 +9,7 @@ import {
 } from '@learning/modules/problems/application/results/test-case.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import { TestSuiteReadinessService } from '@learning/modules/problems/application/services/test-suite-readiness.service';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
 import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { TestCase } from '@learning/modules/problems/domain/test-case.aggregate';
@@ -52,6 +53,18 @@ export class AddTestCaseUseCase implements IAddTestCasePortIn {
         this.problemRepository.loadTestSuiteSummary(problemId),
         this.testCaseRepository.listByProblem(problemId),
       ]);
+
+      const requestedDisplayOrder = command.displayOrder;
+      if (
+        requestedDisplayOrder !== undefined &&
+        current.some((item) => item.displayOrder.value === requestedDisplayOrder.value)
+      ) {
+        throw new DomainValidationError(
+          'displayOrder',
+          'Display order is already used by another test case',
+        );
+      }
+
       const nextOrder =
         command.displayOrder ??
         new DisplayOrder(

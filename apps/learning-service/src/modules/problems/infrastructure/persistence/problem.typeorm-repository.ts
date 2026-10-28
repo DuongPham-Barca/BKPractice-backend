@@ -22,18 +22,6 @@ import { QueryFailedError } from 'typeorm';
 import { ProblemPersistenceMapper } from './problem.persistence-mapper';
 import { TypeOrmTransactionContext } from './typeorm-transaction-context';
 
-interface TestCaseSummaryRow {
-  readonly totalCount: number;
-  readonly hiddenCount: number;
-  readonly totalScore: string;
-  readonly testCaseBytes: string;
-}
-
-interface HarnessSummaryRow {
-  readonly languages: SupportedLanguage[];
-  readonly harnessBytes: string;
-}
-
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 @Injectable()
@@ -116,23 +104,54 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
   }
 
   async loadTestSuiteSummary(problemId: string): Promise<TestSuiteSummary> {
+    const summaries = await this.loadTestSuiteSummaries([problemId]);
+
+    return summaries.get(problemId) ?? TestSuiteSummary.empty();
+  }
+
+  async loadTestSuiteSummaries(
+    problemIds: readonly string[],
+  ): Promise<ReadonlyMap<string, TestSuiteSummary>> {
+    const summaries = new Map(problemIds.map((problemId) => [problemId, TestSuiteSummary.empty()]));
+
+    if (problemIds.length === 0) {
+      return summaries;
+    }
+
     const manager = this.transactionContext.getManager();
-    const testRows = await manager.query<TestCaseSummaryRow[]>(
+    const testRows = await manager.query<
+      Array<{
+        problemId: string;
+        totalCount: number;
+        hiddenCount: number;
+        totalScore: string | number;
+        testCaseBytes: string | number;
+      }>
+    >(
       `SELECT
+         "problem_id" AS "problemId",
          COUNT(*)::int AS "totalCount",
          COUNT(*) FILTER (WHERE "is_hidden")::int AS "hiddenCount",
          COALESCE(SUM("score"), 0)::bigint AS "totalScore",
          COALESCE(SUM(octet_length("input") + octet_length("expected_output")), 0)::bigint AS "testCaseBytes"
        FROM "test_cases"
-       WHERE "problem_id" = $1`,
-      [problemId],
+       WHERE "problem_id" = ANY($1::uuid[])
+       GROUP BY "problem_id"`,
+      [problemIds],
     );
-    const harnessRows = await manager.query<HarnessSummaryRow[]>(
+    const harnessRows = await manager.query<
+      Array<{
+        problemId: string;
+        languages: string[] | null;
+        harnessBytes: string | number;
+      }>
+    >(
       `SELECT
+         "harness"."problem_id" AS "problemId",
          COALESCE(array_agg("harness"."language" ORDER BY "harness"."language"), ARRAY[]::varchar[]) AS "languages",
          COALESCE(SUM(octet_length("harness"."source")), 0)::bigint AS "harnessBytes"
        FROM "problem_harnesses" AS "harness"
-       WHERE "harness"."problem_id" = $1
+       WHERE "harness"."problem_id" = ANY($1::uuid[])
          AND EXISTS (
            SELECT 1 FROM "problems" AS "problem"
            WHERE "problem"."id" = "harness"."problem_id" AND "problem"."problem_type" <> 'STANDARD'
@@ -142,19 +161,31 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
            WHERE "language"."problem_id" = "harness"."problem_id"
              AND "language"."language" = "harness"."language"
              AND "language"."enabled"
-         )`,
-      [problemId],
+         )
+       GROUP BY "harness"."problem_id"`,
+      [problemIds],
     );
-    const tests = testRows[0];
-    const harnesses = harnessRows[0];
 
-    return TestSuiteSummary.fromStored({
-      totalCount: Number(tests?.totalCount ?? 0),
-      hiddenCount: Number(tests?.hiddenCount ?? 0),
-      totalScore: Number(tests?.totalScore ?? 0),
-      totalBytes: Number(tests?.testCaseBytes ?? 0) + Number(harnesses?.harnessBytes ?? 0),
-      harnessLanguages: harnesses?.languages ?? [],
-    });
+    const testsByProblem = new Map(testRows.map((row) => [row.problemId, row]));
+    const harnessesByProblem = new Map(harnessRows.map((row) => [row.problemId, row]));
+
+    for (const problemId of problemIds) {
+      const tests = testsByProblem.get(problemId);
+      const harnesses = harnessesByProblem.get(problemId);
+
+      summaries.set(
+        problemId,
+        TestSuiteSummary.fromStored({
+          totalCount: Number(tests?.totalCount ?? 0),
+          hiddenCount: Number(tests?.hiddenCount ?? 0),
+          totalScore: Number(tests?.totalScore ?? 0),
+          totalBytes: Number(tests?.testCaseBytes ?? 0) + Number(harnesses?.harnessBytes ?? 0),
+          harnessLanguages: (harnesses?.languages ?? []) as readonly SupportedLanguage[],
+        }),
+      );
+    }
+
+    return summaries;
   }
 
   async listPublished(filter: ProblemListFilter): Promise<ProblemPage<Problem>> {

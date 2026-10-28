@@ -127,6 +127,7 @@ function repositoryMock() {
     findById: jest.fn(),
     loadForUpdate: jest.fn(),
     loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

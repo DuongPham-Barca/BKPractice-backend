@@ -87,9 +87,17 @@ describe('ProblemTypeOrmRepository unit', () => {
       query: jest
         .fn()
         .mockResolvedValueOnce([
-          { totalCount: 2, hiddenCount: 1, totalScore: '15', testCaseBytes: '10' },
+          {
+            problemId: PROBLEM_ID,
+            totalCount: 2,
+            hiddenCount: 1,
+            totalScore: '15',
+            testCaseBytes: '10',
+          },
         ])
-        .mockResolvedValueOnce([{ languages: ['python'], harnessBytes: '5' }]),
+        .mockResolvedValueOnce([
+          { problemId: PROBLEM_ID, languages: ['python'], harnessBytes: '5' },
+        ]),
     };
     const repository = new ProblemTypeOrmRepository(contextWith(manager), mapper);
 

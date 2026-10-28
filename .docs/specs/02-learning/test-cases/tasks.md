@@ -315,3 +315,19 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 > File này là danh sách kiểm tra triển khai, không phải đặc tả. Không thêm yêu cầu và không âm thầm
 > thay đổi `spec.md` hay `plan.md` đã Approved trong lúc thực hiện.
+
+## Ghi chú triển khai review 7–11 (2026-10-28)
+
+- Review 7 — Body limit: giữ `4mb` global ở Gateway và Learning; lý do payload Test Case có thể tới
+  ~2 MiB. Chưa kiểm chứng chuyển tiếp ~2 MiB qua Gateway (T031 bị hoãn theo yêu cầu).
+- Review 8 — N+1 ở list managed: thêm `loadTestSuiteSummaries(problemIds)` vào
+  `ProblemRepository` và adapter; `ListManagedProblemsUseCase` nạp summary một lần cho cả page.
+- Review 9 — `DisplayOrder` trùng: Add/Update từ chối giá trị đã dùng bởi Test Case khác, trả
+  `DomainValidationError` (HTTP 400); thứ tự cũ giữ nguyên.
+- Review 10 — Truy vấn thừa ở Hold: nạp summary và samples song song trước khi hold/save.
+- Review 11 — Hợp nhất đường merge ở UpdateTestCase: tính before/after từ command một lần, không
+  tạo aggregate `next` trùng lặp; readiness vẫn chạy trước ghi.
+- T002: còn bị chặn vì gateway hiện chưa đặt `x-auth-permissions` theo seam đã phê duyệt.
+- T021/T023/T031: chưa chạy do không có DB cách ly / gateway bị hoãn; chỉ chuẩn bị code và lệnh.
+- T035–T037: đã chạy lại `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`; pass.
+- T038: chưa hoàn thành; cần review người và chuyển spec `Implemented`/`Verified` qua SDD.
