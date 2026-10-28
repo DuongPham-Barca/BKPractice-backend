@@ -126,7 +126,7 @@ describe('ManagedProblemsController', () => {
   it('previews a problem with deletion data included', async () => {
     const previewProblem = { execute: jest.fn().mockResolvedValue(RESULT) };
     const responseMapper = {
-      toManagedDetail: jest.fn().mockReturnValue(RESPONSE),
+      toPreviewDetail: jest.fn().mockReturnValue(RESPONSE),
       toManagedPage: jest.fn(),
       toSoftDelete: jest.fn(),
     };
@@ -134,7 +134,7 @@ describe('ManagedProblemsController', () => {
 
     await expect(controller.preview(PRINCIPAL, 'problem-id')).resolves.toEqual(RESPONSE);
     expect(previewProblem.execute).toHaveBeenCalledWith(PRINCIPAL, 'problem-id');
-    expect(responseMapper.toManagedDetail).toHaveBeenCalledWith(RESULT, true);
+    expect(responseMapper.toPreviewDetail).toHaveBeenCalledWith(RESULT, true);
   });
 });
 
@@ -155,6 +155,7 @@ interface ControllerDependencies {
   };
   responseMapper?: {
     toManagedDetail?: jest.Mock;
+    toPreviewDetail?: jest.Mock;
     toManagedPage?: jest.Mock;
     toSoftDelete?: jest.Mock;
   };
@@ -175,6 +176,7 @@ function createController(dependencies: ControllerDependencies): ManagedProblems
     requestMapper = { toCreateCommand: jest.fn(), toUpdateCommand: jest.fn() },
     responseMapper = {
       toManagedDetail: jest.fn(),
+      toPreviewDetail: jest.fn(),
       toManagedPage: jest.fn(),
       toSoftDelete: jest.fn(),
     },

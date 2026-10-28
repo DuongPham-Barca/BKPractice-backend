@@ -1,12 +1,14 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -49,7 +51,7 @@ describe('RestoreProblemUseCase', () => {
       TEST_USER_ID,
       expect.any(Date),
     );
-    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness);
+    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness, []);
   });
 
   it('throws when the problem does not exist', async () => {
@@ -120,6 +122,7 @@ function deletedProblem() {
 function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   publishValidator?: ReturnType<typeof publishValidatorMock>;
   transactionRunner?: ReturnType<typeof transactionRunnerMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
@@ -127,6 +130,7 @@ function createUseCase(dependencies: {
   const {
     authorization = authorizationMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     publishValidator = publishValidatorMock(),
     transactionRunner = transactionRunnerMock(),
     resultMapper = resultMapperMock(),
@@ -135,6 +139,7 @@ function createUseCase(dependencies: {
   return new RestoreProblemUseCase(
     authorization as unknown as ProblemAuthorizationService,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     publishValidator as unknown as PublishValidator,
     transactionRunner as unknown as TransactionRunner,
     resultMapper as unknown as ProblemResultMapper,
@@ -152,6 +157,9 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),
@@ -181,4 +189,8 @@ function resultMapperMock() {
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };
+}
+
+function testCaseRepositoryMock() {
+  return { listSamples: jest.fn().mockResolvedValue([]) };
 }

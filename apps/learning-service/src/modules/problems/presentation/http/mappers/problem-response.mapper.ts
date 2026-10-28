@@ -2,6 +2,7 @@ import type {
   ManagedProblemDetailResult,
   ManagedProblemSummaryResult,
   OopConstructorResult,
+  PreviewProblemResult,
   ProblemDetailResult,
   ProblemReadinessIssueResult,
   ProblemReadinessResult,
@@ -30,6 +31,10 @@ import type {
   TopicResponseDto,
   VisibleExampleResponseDto,
 } from '@learning/modules/problems/presentation/http/dto/problem-response.dto';
+import {
+  SampleTestCaseResponseDto,
+  toTestSuiteSummaryDto,
+} from '@learning/modules/problems/presentation/http/dto/test-case-response.dto';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -53,6 +58,7 @@ export class ProblemResponseMapper {
       ...this.summary(result),
       publishStatus: result.publishStatus,
       readiness: this.readiness(result.readiness),
+      testSuiteSummary: toTestSuiteSummaryDto(result.testSuiteSummary),
       createdAt: result.createdAt.toISOString(),
       updatedAt: result.updatedAt.toISOString(),
       ...(includeDeleted ? { deletedAt: toIsoOrNull(result.deletedAt) } : {}),
@@ -61,6 +67,22 @@ export class ProblemResponseMapper {
 
   toManagedDetail(
     result: ManagedProblemDetailResult,
+    includeDeleted: boolean,
+  ): ManagedProblemResponseDto {
+    return {
+      ...this.summary(result),
+      ...this.detail(result),
+      publishStatus: result.publishStatus,
+      readiness: this.readiness(result.readiness),
+      testSuiteSummary: toTestSuiteSummaryDto(result.testSuiteSummary),
+      createdAt: result.createdAt.toISOString(),
+      updatedAt: result.updatedAt.toISOString(),
+      ...(includeDeleted ? { deletedAt: toIsoOrNull(result.deletedAt) } : {}),
+    };
+  }
+
+  toPreviewDetail(
+    result: PreviewProblemResult,
     includeDeleted: boolean,
   ): ManagedProblemResponseDto {
     return {
@@ -146,6 +168,11 @@ export class ProblemResponseMapper {
           type: parameter.type,
         })),
         returnType: contract.returnType,
+      })),
+      sampleTestCases: result.sampleTestCases.map((sample): SampleTestCaseResponseDto => ({
+        input: sample.input,
+        expectedOutput: sample.expectedOutput,
+        order: sample.order,
       })),
       oopContracts: result.oopContracts.map((contract): OopContractResponseDto => ({
         language: contract.language,

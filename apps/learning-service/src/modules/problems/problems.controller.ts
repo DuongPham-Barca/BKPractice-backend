@@ -1,28 +1,22 @@
-import type { JudgeTestCase, ProblemType, SupportedLanguage } from '@app/contracts';
-import { Controller, Get, NotFoundException, Param, UseGuards } from '@nestjs/common';
+import type { SupportedLanguage } from '@app/contracts';
+import {
+  BUILD_JUDGE_PACKAGE_PORT_IN,
+  type IBuildJudgePackagePortIn,
+} from '@learning/modules/problems/application/ports/in/build-judge-package.port.in';
+import type { JudgePackageResult } from '@learning/modules/problems/application/results/test-case.results';
+import { Controller, Get, Inject, Param, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
-import { Problem, StarterCode, TestCase } from './entities/problem.entity';
 import { InternalServiceGuard } from './internal-service.guard';
-
-interface JudgePackage {
-  problemId: string;
-  problemType: ProblemType;
-  timeLimitMs: number;
-  memoryLimitMb: number;
-  hiddenHarness?: string;
-  testCases: JudgeTestCase[];
-}
+import { ProblemExceptionFilter } from './presentation/http/filters/problem-exception.filter';
 
 @ApiTags('problems')
 @Controller()
+@UseFilters(ProblemExceptionFilter)
 export class ProblemsController {
   constructor(
-    @InjectRepository(Problem) private readonly problems: Repository<Problem>,
-    @InjectRepository(TestCase) private readonly testCases: Repository<TestCase>,
-    @InjectRepository(StarterCode) private readonly starterCodes: Repository<StarterCode>,
+    @Inject(BUILD_JUDGE_PACKAGE_PORT_IN)
+    private readonly buildJudgePackage: IBuildJudgePackagePortIn,
   ) {}
 
   @Get('internal/problems/:id/judge-package/:language')
@@ -31,30 +25,7 @@ export class ProblemsController {
   async judgePackage(
     @Param('id') id: string,
     @Param('language') language: SupportedLanguage,
-  ): Promise<JudgePackage> {
-    const problem = await this.problems.findOneBy({ id });
-    if (!problem) throw new NotFoundException('Problem not found');
-    const [cases, starter] = await Promise.all([
-      this.testCases.find({ where: { problem: { id } }, order: { displayOrder: 'ASC' } }),
-      this.starterCodes
-        .createQueryBuilder('starter')
-        .addSelect('starter.hiddenHarness')
-        .where('starter.problem_id = :id', { id })
-        .andWhere('starter.language = :language', { language })
-        .getOne(),
-    ]);
-    return {
-      problemId: problem.id,
-      problemType: problem.problemType,
-      timeLimitMs: problem.timeLimitMs,
-      memoryLimitMb: problem.memoryLimitMb,
-      hiddenHarness: starter?.hiddenHarness ?? undefined,
-      testCases: cases.map((testCase) => ({
-        id: testCase.id,
-        stdin: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        score: testCase.score,
-      })),
-    };
+  ): Promise<JudgePackageResult> {
+    return this.buildJudgePackage.execute(id, language);
   }
 }

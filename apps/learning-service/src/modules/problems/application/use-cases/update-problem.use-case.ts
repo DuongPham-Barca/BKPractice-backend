@@ -13,11 +13,13 @@ import { ProblemAuthorizationService } from '@learning/modules/problems/applicat
 import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
 import type { UpdateProblemInput } from '@learning/modules/problems/domain/problem.aggregate';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { ContentFormatValidator } from '@learning/modules/problems/domain/services/content-format.validator';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import { TagReference, TopicReference } from '@learning/modules/problems/domain/value-objects';
 import {
   PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
   TOPIC_TAG_READER,
   TRANSACTION_RUNNER,
 } from '@learning/modules/problems/problem.tokens';
@@ -31,6 +33,8 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
     private readonly topicTagReader: TopicTagReader,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly contentValidator: ContentFormatValidator,
     private readonly publishValidator: PublishValidator,
     @Inject(TRANSACTION_RUNNER)
@@ -43,85 +47,97 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
     id: string,
     command: UpdateProblemCommand,
   ): Promise<ManagedProblemDetailResult> {
-    const existing = await this.repository.findById(id);
+    const result = await this.transactionRunner.run(async () => {
+      const existing = await this.repository.loadForUpdate(id);
 
-    if (existing === null) {
-      throw new ProblemNotFoundError(id);
-    }
+      if (existing === null) {
+        throw new ProblemNotFoundError(id);
+      }
 
-    this.authorization.requireOwned(principal, existing, 'update');
+      this.authorization.requireOwned(principal, existing, 'update');
+      const previousSummary = await this.repository.loadTestSuiteSummary(id);
+      existing.attachTestSuiteSummary(previousSummary);
 
-    const expectedUpdatedAt = existing.updatedAt;
+      const expectedUpdatedAt = existing.updatedAt;
 
-    if (existing.isOnHold) {
-      throw new InvalidProblemState('publishStatus', 'A problem on hold cannot be updated');
-    }
+      if (existing.isOnHold) {
+        throw new InvalidProblemState('publishStatus', 'A problem on hold cannot be updated');
+      }
 
-    if (
-      command.problemType !== undefined &&
-      command.problemType !== existing.problemType &&
-      !existing.isDraft
-    ) {
-      throw new InvalidProblemState(
-        'problemType',
-        'The problem type can only be changed while the problem is a draft',
-      );
-    }
+      if (
+        command.problemType !== undefined &&
+        command.problemType !== existing.problemType &&
+        !existing.isDraft
+      ) {
+        throw new InvalidProblemState(
+          'problemType',
+          'The problem type can only be changed while the problem is a draft',
+        );
+      }
 
-    const references: UnknownReference[] = [];
+      const references: UnknownReference[] = [];
 
-    if (command.topicIds !== undefined) {
-      const missingTopicIds = await this.topicTagReader.findMissingTopicIds(command.topicIds);
-      references.push(...missingTopicIds.map((id): UnknownReference => ({ kind: 'topic', id })));
-    }
+      if (command.topicIds !== undefined) {
+        const missingTopicIds = await this.topicTagReader.findMissingTopicIds(command.topicIds);
+        references.push(
+          ...missingTopicIds.map((topicId): UnknownReference => ({ kind: 'topic', id: topicId })),
+        );
+      }
 
-    if (command.tagIds !== undefined) {
-      const missingTagIds = await this.topicTagReader.findMissingTagIds(command.tagIds);
-      references.push(...missingTagIds.map((id): UnknownReference => ({ kind: 'tag', id })));
-    }
+      if (command.tagIds !== undefined) {
+        const missingTagIds = await this.topicTagReader.findMissingTagIds(command.tagIds);
+        references.push(
+          ...missingTagIds.map((tagId): UnknownReference => ({ kind: 'tag', id: tagId })),
+        );
+      }
 
-    if (references.length > 0) {
-      throw new UnknownReferenceError(references);
-    }
+      if (references.length > 0) {
+        throw new UnknownReferenceError(references);
+      }
 
-    const update: UpdateProblemInput = {
-      title: command.title,
-      statement: command.statement,
-      inputSpecification: command.inputSpecification,
-      outputSpecification: command.outputSpecification,
-      problemType: command.problemType,
-      difficulty: command.difficulty,
-      examples: command.examples,
-      constraints: command.constraints,
-      executionLimits: command.executionLimits,
-      topics: command.topicIds?.map((id) => new TopicReference(id)),
-      tags: command.tagIds?.map((id) => new TagReference(id)),
-      enabledLanguages: command.enabledLanguages,
-      starterCodes: command.starterCodes,
-      functionContracts: command.functionContracts,
-      oopContracts: command.oopContracts,
-    };
+      const update: UpdateProblemInput = {
+        title: command.title,
+        statement: command.statement,
+        inputSpecification: command.inputSpecification,
+        outputSpecification: command.outputSpecification,
+        problemType: command.problemType,
+        difficulty: command.difficulty,
+        examples: command.examples,
+        constraints: command.constraints,
+        executionLimits: command.executionLimits,
+        topics: command.topicIds?.map((topicId) => new TopicReference(topicId)),
+        tags: command.tagIds?.map((tagId) => new TagReference(tagId)),
+        enabledLanguages: command.enabledLanguages,
+        starterCodes: command.starterCodes,
+        functionContracts: command.functionContracts,
+        oopContracts: command.oopContracts,
+      };
 
-    existing.update(update, new Date());
+      existing.update(update, new Date());
+      this.contentValidator.assertSafe(existing);
 
-    this.contentValidator.assertSafe(existing);
+      await this.repository.save(existing, expectedUpdatedAt);
 
-    if (existing.isPublished) {
-      const readiness = this.publishValidator.validate(existing, {
-        slugAvailable: true,
-      });
+      // Enabled languages decide which harnesses count, so re-check against the saved state;
+      // throwing here rolls the transaction back.
+      const summary = await this.repository.loadTestSuiteSummary(id);
 
-      if (!readiness.ready) {
+      if (summary.totalBytes > previousSummary.totalBytes) {
+        summary.assertWithinLimits();
+      }
+
+      existing.attachTestSuiteSummary(summary);
+      const readiness = this.publishValidator.validate(existing, { slugAvailable: true });
+
+      if (existing.isPublished && !readiness.ready) {
         throw new PublishNotReadyError(readiness.issues);
       }
-    }
 
-    await this.transactionRunner.run(() => this.repository.save(existing, expectedUpdatedAt));
-
-    const readiness = this.publishValidator.validate(existing, {
-      slugAvailable: true,
+      return { problem: existing, readiness };
     });
 
-    return this.resultMapper.toManagedDetail(existing, readiness);
+    const samples = await this.testCaseRepository.listSamples(id);
+
+    return this.resultMapper.toManagedDetail(result.problem, result.readiness, samples);
   }
 }

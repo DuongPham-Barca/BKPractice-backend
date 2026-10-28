@@ -1,9 +1,11 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -15,9 +17,15 @@ const PRINCIPAL = { userId: 'user-1', roles: ['LECTURER'], permissions: ['proble
 describe('PreviewProblemUseCase', () => {
   it('returns a managed detail for a deleted problem without mutating it', async () => {
     const repository = repositoryMock();
+    const testCaseRepository = testCaseRepositoryMock();
     const publishValidator = publishValidatorMock();
     const resultMapper = resultMapperMock();
-    const useCase = createUseCase({ repository, publishValidator, resultMapper });
+    const useCase = createUseCase({
+      repository,
+      testCaseRepository,
+      publishValidator,
+      resultMapper,
+    });
     const problem = buildProblem();
 
     problem.publish(TEST_NOW);
@@ -25,16 +33,19 @@ describe('PreviewProblemUseCase', () => {
     const readiness = { ready: false, issues: [] };
     const detail = { id: problem.id.value };
 
+    const samples = [{ input: '1 2', expectedOutput: '3', displayOrder: 0 }];
+
     repository.findByIdIncludingDeleted.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
+    testCaseRepository.listSamples.mockResolvedValue(samples);
     publishValidator.validate.mockReturnValue(readiness);
-    resultMapper.toManagedDetail.mockResolvedValue(detail);
+    resultMapper.toPreviewDetail.mockResolvedValue(detail);
 
     await expect(useCase.execute(PRINCIPAL, problem.id.value)).resolves.toBe(detail);
 
     expect(problem.isDeleted).toBe(true);
     expect(publishValidator.validate).toHaveBeenCalledWith(problem, { slugAvailable: true });
-    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness);
+    expect(resultMapper.toPreviewDetail).toHaveBeenCalledWith(problem, readiness, samples);
   });
 
   it('throws when the problem does not exist', async () => {
@@ -69,12 +80,14 @@ describe('PreviewProblemUseCase', () => {
 function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   publishValidator?: ReturnType<typeof publishValidatorMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
 }): PreviewProblemUseCase {
   const {
     authorization = authorizationMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     publishValidator = publishValidatorMock(),
     resultMapper = resultMapperMock(),
   } = dependencies;
@@ -82,6 +95,7 @@ function createUseCase(dependencies: {
   return new PreviewProblemUseCase(
     authorization as unknown as ProblemAuthorizationService,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     publishValidator as unknown as PublishValidator,
     resultMapper as unknown as ProblemResultMapper,
   );
@@ -98,6 +112,9 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),
@@ -107,6 +124,12 @@ function repositoryMock() {
     save: jest.fn(),
     softDelete: jest.fn(),
     restore: jest.fn(),
+  };
+}
+
+function testCaseRepositoryMock() {
+  return {
+    listSamples: jest.fn().mockResolvedValue([]),
   };
 }
 
@@ -120,6 +143,7 @@ function resultMapperMock() {
     toDetail: jest.fn(),
     toManagedSummary: jest.fn(),
     toManagedDetail: jest.fn().mockResolvedValue({ id: 'problem' }),
+    toPreviewDetail: jest.fn().mockResolvedValue({ id: 'problem' }),
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };

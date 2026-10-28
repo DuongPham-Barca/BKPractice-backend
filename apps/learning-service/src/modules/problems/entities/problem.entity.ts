@@ -92,6 +92,7 @@ export class Problem {
 
   @OneToMany(() => TestCase, (testCase) => testCase.problem) testCases!: TestCase[];
   @OneToMany(() => StarterCode, (starter) => starter.problem) starterCodes!: StarterCode[];
+  @OneToMany(() => ProblemHarness, (harness) => harness.problem) harnesses!: ProblemHarness[];
   @OneToMany(() => ProblemLanguage, (language) => language.problem) languages!: ProblemLanguage[];
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
@@ -119,8 +120,6 @@ export class StarterCode {
   problem!: Problem;
   @Column({ type: 'varchar', length: 20 }) language!: SupportedLanguage;
   @Column({ name: 'source_code', type: 'text' }) sourceCode!: string;
-  @Column({ name: 'hidden_harness', type: 'text', nullable: true, select: false }) hiddenHarness!:
-    string | null;
 }
 
 @Entity('problem_languages')
@@ -131,4 +130,17 @@ export class ProblemLanguage {
   problem!: Problem;
   @Column({ type: 'varchar', length: 20 }) language!: SupportedLanguage;
   @Column({ type: 'boolean', default: true }) enabled!: boolean;
+}
+
+@Entity('problem_harnesses')
+@Unique('uq_problem_harnesses_problem_language', ['problem', 'language'])
+export class ProblemHarness {
+  @PrimaryGeneratedColumn('uuid') id!: string;
+  @ManyToOne(() => Problem, (problem) => problem.harnesses, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'problem_id' })
+  problem!: Problem;
+  @Column({ type: 'varchar', length: 20 }) language!: SupportedLanguage;
+  @Column({ type: 'text' }) source!: string;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
 }

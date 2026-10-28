@@ -1,9 +1,11 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -17,11 +19,19 @@ describe('GetManagedProblemUseCase', () => {
     const repository = repositoryMock();
     const publishValidator = publishValidatorMock();
     const resultMapper = resultMapperMock();
-    const useCase = createUseCase({ repository, publishValidator, resultMapper });
+    const testCaseRepository = testCaseRepositoryMock();
+    const useCase = createUseCase({
+      repository,
+      testCaseRepository,
+      publishValidator,
+      resultMapper,
+    });
     const problem = buildProblem();
     const readiness = { ready: true, issues: [] };
     const detail = { id: problem.id.value };
+    const samples = [{ input: '1 2', expectedOutput: '3', displayOrder: 0 }];
 
+    testCaseRepository.listSamples.mockResolvedValue(samples);
     repository.findByIdIncludingDeleted.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
     publishValidator.validate.mockReturnValue(readiness);
@@ -30,7 +40,7 @@ describe('GetManagedProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, problem.id.value, true)).resolves.toBe(detail);
     expect(repository.isSlugAvailable).toHaveBeenCalledWith(problem.slug.value, problem.id.value);
     expect(publishValidator.validate).toHaveBeenCalledWith(problem, { slugAvailable: true });
-    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness);
+    expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness, samples);
   });
 
   it('throws when no problem exists including deleted ones', async () => {
@@ -83,12 +93,14 @@ describe('GetManagedProblemUseCase', () => {
 function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   publishValidator?: ReturnType<typeof publishValidatorMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
 }): GetManagedProblemUseCase {
   const {
     authorization = authorizationMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     publishValidator = publishValidatorMock(),
     resultMapper = resultMapperMock(),
   } = dependencies;
@@ -96,6 +108,7 @@ function createUseCase(dependencies: {
   return new GetManagedProblemUseCase(
     authorization as unknown as ProblemAuthorizationService,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     publishValidator as unknown as PublishValidator,
     resultMapper as unknown as ProblemResultMapper,
   );
@@ -112,6 +125,9 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),
@@ -137,4 +153,8 @@ function resultMapperMock() {
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };
+}
+
+function testCaseRepositoryMock() {
+  return { listSamples: jest.fn().mockResolvedValue([]) };
 }

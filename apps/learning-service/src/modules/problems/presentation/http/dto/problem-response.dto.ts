@@ -7,6 +7,8 @@ import {
 import type { Difficulty, PublishStatus } from '@learning/modules/problems/domain/value-objects';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { SampleTestCaseResponseDto, TestSuiteSummaryResponseDto } from './test-case-response.dto';
+
 export class TopicResponseDto {
   @ApiProperty()
   id!: string;
@@ -183,6 +185,9 @@ export class ProblemDetailResponseDto extends ProblemSummaryResponseDto {
 
   @ApiProperty({ type: [OopContractResponseDto] })
   oopContracts!: OopContractResponseDto[];
+
+  @ApiProperty({ type: [SampleTestCaseResponseDto] })
+  sampleTestCases!: SampleTestCaseResponseDto[];
 }
 
 export class ManagedProblemSummaryResponseDto extends ProblemSummaryResponseDto {
@@ -191,6 +196,9 @@ export class ManagedProblemSummaryResponseDto extends ProblemSummaryResponseDto 
 
   @ApiProperty({ type: ReadinessResponseDto })
   readiness!: ReadinessResponseDto;
+
+  @ApiProperty({ type: TestSuiteSummaryResponseDto })
+  testSuiteSummary!: TestSuiteSummaryResponseDto;
 
   @ApiProperty()
   createdAt!: string;
@@ -208,6 +216,9 @@ export class ManagedProblemResponseDto extends ProblemDetailResponseDto {
 
   @ApiProperty({ type: ReadinessResponseDto })
   readiness!: ReadinessResponseDto;
+
+  @ApiPropertyOptional({ type: TestSuiteSummaryResponseDto })
+  testSuiteSummary?: TestSuiteSummaryResponseDto;
 
   @ApiProperty()
   createdAt!: string;

@@ -4,6 +4,7 @@ import {
   MAX_TIME_LIMIT_MS,
   MIN_MEMORY_LIMIT_MB,
   MIN_TIME_LIMIT_MS,
+  TestSuiteSummary,
 } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemContractValidator } from './problem-contract.validator';
@@ -91,6 +92,36 @@ export class PublishValidator {
         field: 'executionLimits.memoryLimitMb',
         message: 'The execution memory limit is invalid',
       });
+    }
+
+    const testSuite = problem.testSuiteSummary ?? TestSuiteSummary.empty();
+
+    if (testSuite.hiddenCount < 1) {
+      issues.push({
+        code: 'TEST_CASE_HIDDEN_REQUIRED',
+        field: 'testCases',
+        message: 'A problem requires at least one hidden test case',
+      });
+    }
+
+    if (testSuite.totalScore <= 0) {
+      issues.push({
+        code: 'TEST_CASE_SCORE_REQUIRED',
+        field: 'testCases',
+        message: 'A problem requires test cases with a positive total score',
+      });
+    }
+
+    if (problem.problemType !== 'STANDARD') {
+      for (const language of problem.enabledLanguages) {
+        if (!testSuite.hasHarness(language.value)) {
+          issues.push({
+            code: 'HARNESS_REQUIRED',
+            field: `harnesses.${language.value}`,
+            message: `A ${problem.problemType} problem requires a harness for ${language.value}`,
+          });
+        }
+      }
     }
 
     for (const issue of this.contractValidator.validate(problem)) {

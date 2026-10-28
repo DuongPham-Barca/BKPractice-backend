@@ -1,12 +1,21 @@
 import type { SupportedLanguage } from '@app/contracts';
 import type { CreateProblemCommand } from '@learning/modules/problems/application/command/create-problem.command';
+import type {
+  AddTestCaseCommand,
+  ReorderTestCasesCommand,
+  SetHarnessCommand,
+  UpdateTestCaseCommand,
+} from '@learning/modules/problems/application/command/test-case.commands';
 import type { UpdateProblemCommand } from '@learning/modules/problems/application/command/update-problem.command';
 import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import {
   Constraints,
+  DisplayOrder,
   EnabledLanguage,
   ExecutionLimits,
+  ExpectedOutput,
   FunctionContract,
+  HarnessSource,
   InputSpecification,
   OopContract,
   OutputSpecification,
@@ -15,6 +24,10 @@ import {
   Slug,
   StarterCode,
   TagReference,
+  TestCaseId,
+  TestCaseInput,
+  TestCaseScore,
+  TestCaseVisibility,
   TopicReference,
   VisibleExample,
   type OopMethod,
@@ -27,6 +40,12 @@ import type {
   VisibleExampleDto,
 } from '@learning/modules/problems/presentation/http/dto/content.dto';
 import type { CreateProblemRequestDto } from '@learning/modules/problems/presentation/http/dto/create-problem.request.dto';
+import type {
+  AddTestCaseRequestDto,
+  ReorderTestCasesRequestDto,
+  SetHarnessRequestDto,
+  UpdateTestCaseRequestDto,
+} from '@learning/modules/problems/presentation/http/dto/test-case.request.dto';
 import type { UpdateProblemRequestDto } from '@learning/modules/problems/presentation/http/dto/update-problem.request.dto';
 import { Injectable } from '@nestjs/common';
 
@@ -130,10 +149,65 @@ export class ProblemRequestMapper {
 
     return command;
   }
+
+  toAddTestCaseCommand(dto: AddTestCaseRequestDto): AddTestCaseCommand {
+    return {
+      input: new TestCaseInput(dto.input ?? ''),
+      expectedOutput: new ExpectedOutput(dto.expectedOutput),
+      visibility: new TestCaseVisibility(dto.visibility ?? 'HIDDEN'),
+      score: new TestCaseScore(dto.score),
+      ...(dto.displayOrder === undefined
+        ? {}
+        : { displayOrder: new DisplayOrder(dto.displayOrder) }),
+    };
+  }
+
+  toUpdateTestCaseCommand(dto: UpdateTestCaseRequestDto): UpdateTestCaseCommand {
+    const command: MutableUpdateTestCaseCommand = {};
+
+    if (dto.input !== undefined) {
+      command.input = new TestCaseInput(dto.input);
+    }
+
+    if (dto.expectedOutput !== undefined) {
+      command.expectedOutput = new ExpectedOutput(dto.expectedOutput);
+    }
+
+    if (dto.visibility !== undefined) {
+      command.visibility = new TestCaseVisibility(dto.visibility);
+    }
+
+    if (dto.score !== undefined) {
+      command.score = new TestCaseScore(dto.score);
+    }
+
+    if (dto.displayOrder !== undefined) {
+      command.displayOrder = new DisplayOrder(dto.displayOrder);
+    }
+
+    return command;
+  }
+
+  toReorderTestCasesCommand(dto: ReorderTestCasesRequestDto): ReorderTestCasesCommand {
+    return {
+      testCaseIds: dto.testCaseIds.map((testCaseId) => TestCaseId.from(testCaseId)),
+    };
+  }
+
+  toSetHarnessCommand(language: string, dto: SetHarnessRequestDto): SetHarnessCommand {
+    return {
+      language,
+      source: new HarnessSource(dto.source),
+    };
+  }
 }
 
 type MutableUpdateCommand = {
   -readonly [K in keyof UpdateProblemCommand]: UpdateProblemCommand[K];
+};
+
+type MutableUpdateTestCaseCommand = {
+  -readonly [K in keyof UpdateTestCaseCommand]: UpdateTestCaseCommand[K];
 };
 
 function nullableString<T>(

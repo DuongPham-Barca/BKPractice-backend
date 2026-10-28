@@ -19,6 +19,7 @@ import type {
   Slug,
   StarterCode,
   TagReference,
+  TestSuiteSummary,
   TopicReference,
   VisibleExample,
 } from './value-objects';
@@ -42,6 +43,7 @@ export interface ProblemSnapshot {
   readonly starterCodes: readonly StarterCode[];
   readonly functionContracts: ReadonlyMap<SupportedLanguage, FunctionContract>;
   readonly oopContracts: ReadonlyMap<SupportedLanguage, OopContract>;
+  readonly testSuiteSummary?: TestSuiteSummary | null;
   readonly publishStatus: PublishStatus;
   readonly deletedMarker: DeletedMarker;
   readonly createdBy: CreatedBy;
@@ -113,6 +115,7 @@ export class Problem {
   private _starterCodes: readonly StarterCode[];
   private _functionContracts: ReadonlyMap<SupportedLanguage, FunctionContract>;
   private _oopContracts: ReadonlyMap<SupportedLanguage, OopContract>;
+  private _testSuiteSummary: TestSuiteSummary | null;
   private _publishStatus: PublishStatus;
   private _deletedMarker: DeletedMarker;
   private _updatedAt: Date;
@@ -135,6 +138,7 @@ export class Problem {
     this._starterCodes = Object.freeze([...snapshot.starterCodes]);
     this._functionContracts = new Map(snapshot.functionContracts);
     this._oopContracts = new Map(snapshot.oopContracts);
+    this._testSuiteSummary = snapshot.testSuiteSummary ?? null;
     this._publishStatus = snapshot.publishStatus;
     this._deletedMarker = snapshot.deletedMarker;
     this._createdBy = snapshot.createdBy;
@@ -162,6 +166,7 @@ export class Problem {
       starterCodes: input.starterCodes ?? [],
       functionContracts: input.functionContracts ?? new Map(),
       oopContracts: input.oopContracts ?? new Map(),
+      testSuiteSummary: null,
       publishStatus: 'DRAFT',
       deletedMarker: DeletedMarker.none(),
       createdBy: input.createdBy,
@@ -246,6 +251,10 @@ export class Problem {
     return new Map(this._oopContracts);
   }
 
+  get testSuiteSummary(): TestSuiteSummary | null {
+    return this._testSuiteSummary;
+  }
+
   get publishStatus(): PublishStatus {
     return this._publishStatus;
   }
@@ -280,6 +289,38 @@ export class Problem {
 
   get isOnHold(): boolean {
     return this._publishStatus === 'ON_HOLD';
+  }
+
+  attachTestSuiteSummary(summary: TestSuiteSummary): void {
+    this._testSuiteSummary = summary;
+  }
+
+  assertCanManageTestCases(): void {
+    if (this.isDeleted) {
+      throw new InvalidProblemState('deleted', 'A deleted problem cannot manage test cases');
+    }
+
+    if (this.isOnHold) {
+      throw new InvalidProblemState('publishStatus', 'A problem on hold cannot manage test cases');
+    }
+  }
+
+  assertCanManageHarnesses(): void {
+    if (this.isDeleted) {
+      throw new InvalidProblemState('deleted', 'A deleted problem cannot manage harnesses');
+    }
+
+    if (this.isOnHold) {
+      throw new InvalidProblemState('publishStatus', 'A problem on hold cannot manage harnesses');
+    }
+
+    if (this.problemType === 'STANDARD') {
+      throw new DomainValidationError('problemType', 'A STANDARD problem cannot have a harness');
+    }
+  }
+
+  hasEnabledLanguage(language: SupportedLanguage): boolean {
+    return this._enabledLanguages.some((item) => item.value === language);
   }
 
   update(input: UpdateProblemInput, now: Date = new Date()): void {
@@ -321,6 +362,7 @@ export class Problem {
       starterCodes: input.starterCodes ?? this._starterCodes,
       functionContracts: input.functionContracts ?? this._functionContracts,
       oopContracts: input.oopContracts ?? this._oopContracts,
+      testSuiteSummary: this._testSuiteSummary,
       publishStatus: this._publishStatus,
       deletedMarker: this._deletedMarker,
       createdBy: this._createdBy,
@@ -345,6 +387,7 @@ export class Problem {
     this._starterCodes = Object.freeze([...candidate.starterCodes]);
     this._functionContracts = new Map(candidate.functionContracts);
     this._oopContracts = new Map(candidate.oopContracts);
+    this._testSuiteSummary = candidate.testSuiteSummary ?? null;
     this._updatedAt = updatedAt;
   }
 

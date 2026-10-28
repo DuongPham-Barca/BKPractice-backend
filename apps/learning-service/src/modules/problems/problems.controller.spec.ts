@@ -1,103 +1,77 @@
-import { NotFoundException } from '@nestjs/common';
-import type { Repository } from 'typeorm';
+import type { AddressInfo } from 'node:net';
 
-import type { Problem, StarterCode, TestCase } from './entities/problem.entity';
+import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import { BUILD_JUDGE_PACKAGE_PORT_IN } from '@learning/modules/problems/application/ports/in/build-judge-package.port.in';
+import type { JudgePackageResult } from '@learning/modules/problems/application/results/test-case.results';
+import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
+import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { Test } from '@nestjs/testing';
+
+import { InternalServiceGuard } from './internal-service.guard';
 import { ProblemsController } from './problems.controller';
 
+const PROBLEM_ID = '00000000-0000-4000-8000-000000000001';
+
 describe('ProblemsController', () => {
-  it('returns a judge package with test cases and the hidden harness', async () => {
-    const builder = starterCodeBuilder();
-    const problems = { findOneBy: jest.fn().mockResolvedValue(problemEntity()) };
-    const testCases = {
-      find: jest.fn().mockResolvedValue([
-        { id: 'case-1', input: '1 2', expectedOutput: '3', score: 10 },
-        { id: 'case-2', input: '2 3', expectedOutput: '5', score: 20 },
-      ]),
-    };
-    const starterCodes = { createQueryBuilder: jest.fn().mockReturnValue(builder) };
-    const controller = createController({ problems, testCases, starterCodes });
-
-    builder.getOne.mockResolvedValue({ hiddenHarness: 'secret-harness' });
-
-    await expect(controller.judgePackage('problem-id', 'python')).resolves.toEqual({
-      problemId: 'problem-id',
-      problemType: 'STANDARD',
+  it('delegates the judge package request to the application port', async () => {
+    const result: JudgePackageResult = {
+      problemId: '00000000-0000-4000-8000-000000000001',
+      problemType: 'FUNCTION',
       timeLimitMs: 1_000,
       memoryLimitMb: 256,
       hiddenHarness: 'secret-harness',
-      testCases: [
-        { id: 'case-1', stdin: '1 2', expectedOutput: '3', score: 10 },
-        { id: 'case-2', stdin: '2 3', expectedOutput: '5', score: 20 },
-      ],
-    });
-    expect(problems.findOneBy).toHaveBeenCalledWith({ id: 'problem-id' });
-    expect(testCases.find).toHaveBeenCalledWith({
-      where: { problem: { id: 'problem-id' } },
-      order: { displayOrder: 'ASC' },
-    });
-    expect(builder.where).toHaveBeenCalledWith('starter.problem_id = :id', { id: 'problem-id' });
-    expect(builder.andWhere).toHaveBeenCalledWith('starter.language = :language', {
-      language: 'python',
-    });
+      testCases: [{ id: 'case-1', stdin: '1 2', expectedOutput: '3', score: 10 }],
+    };
+    const useCase = { execute: jest.fn().mockResolvedValue(result) };
+    const controller = new ProblemsController(useCase);
+
+    await expect(
+      controller.judgePackage('00000000-0000-4000-8000-000000000001', 'python'),
+    ).resolves.toBe(result);
+    expect(useCase.execute).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'python');
   });
 
-  it('leaves hiddenHarness undefined when no starter code exists', async () => {
-    const builder = starterCodeBuilder();
-    const problems = { findOneBy: jest.fn().mockResolvedValue(problemEntity()) };
-    const testCases = { find: jest.fn().mockResolvedValue([]) };
-    const starterCodes = { createQueryBuilder: jest.fn().mockReturnValue(builder) };
-    const controller = createController({ problems, testCases, starterCodes });
+  describe('error mapping', () => {
+    let app: NestExpressApplication;
+    let baseUrl: string;
+    const useCase = { execute: jest.fn() };
 
-    builder.getOne.mockResolvedValue(null);
+    beforeAll(async () => {
+      const moduleRef = await Test.createTestingModule({
+        controllers: [ProblemsController],
+        providers: [{ provide: BUILD_JUDGE_PACKAGE_PORT_IN, useValue: useCase }],
+      })
+        .overrideGuard(InternalServiceGuard)
+        .useValue({ canActivate: () => true })
+        .compile();
 
-    const judgePackage = await controller.judgePackage('problem-id', 'java');
+      app = moduleRef.createNestApplication<NestExpressApplication>();
+      await app.listen(0, '127.0.0.1');
 
-    expect(judgePackage.hiddenHarness).toBeUndefined();
-    expect(judgePackage.testCases).toEqual([]);
-  });
+      const address = (app.getHttpServer() as { address(): AddressInfo | string | null }).address();
 
-  it('throws NotFoundException when the problem does not exist', async () => {
-    const problems = { findOneBy: jest.fn().mockResolvedValue(null) };
-    const controller = createController({ problems });
+      if (address === null || typeof address === 'string') {
+        throw new Error('Expected an ephemeral TCP port');
+      }
 
-    await expect(controller.judgePackage('missing', 'python')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+      baseUrl = `http://127.0.0.1:${address.port}/internal/problems`;
+    });
+
+    afterAll(async () => {
+      await app.close();
+    });
+
+    it.each([
+      ['a missing or ineligible problem', new ProblemNotFoundError(PROBLEM_ID), 404],
+      ['a harness-less FUNCTION problem', new InvalidProblemState('harness', 'missing'), 409],
+      ['an unsupported language', new DomainValidationError('language', 'invalid'), 400],
+    ])('maps %s to its HTTP status instead of 500', async (_name, error, status) => {
+      useCase.execute.mockRejectedValueOnce(error);
+
+      const response = await fetch(`${baseUrl}/${PROBLEM_ID}/judge-package/python`);
+
+      expect(response.status).toBe(status);
+    });
   });
 });
-
-function createController(dependencies: {
-  problems?: { findOneBy: jest.Mock };
-  testCases?: { find: jest.Mock };
-  starterCodes?: { createQueryBuilder: jest.Mock };
-}): ProblemsController {
-  const {
-    problems = { findOneBy: jest.fn() },
-    testCases = { find: jest.fn() },
-    starterCodes = { createQueryBuilder: jest.fn() },
-  } = dependencies;
-
-  return new ProblemsController(
-    problems as unknown as Repository<Problem>,
-    testCases as unknown as Repository<TestCase>,
-    starterCodes as unknown as Repository<StarterCode>,
-  );
-}
-
-function problemEntity() {
-  return {
-    id: 'problem-id',
-    problemType: 'STANDARD',
-    timeLimitMs: 1_000,
-    memoryLimitMb: 256,
-  };
-}
-
-function starterCodeBuilder() {
-  return {
-    addSelect: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    getOne: jest.fn(),
-  };
-}

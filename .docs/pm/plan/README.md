@@ -26,4 +26,5 @@ A feature implementation still follows the Approved `spec.md` and the reviewed `
 
 ## Available plans
 
+- [Learning — Quản lý Test Case](learning/problems/test-case-management.md): ghi chú migration, judge-package và rủi ro chỉnh sửa tại chỗ của LRN-002.
 - [Identity implementation plan](identity/README.md): smaller execution plans for Authentication, Profile and RBAC, linked to their Approved specs, plans and task checklists.

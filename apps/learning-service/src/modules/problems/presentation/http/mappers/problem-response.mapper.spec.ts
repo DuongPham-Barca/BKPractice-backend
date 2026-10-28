@@ -59,6 +59,7 @@ describe('ProblemResponseMapper', () => {
       ],
     });
     expect(response.oopContracts[1]?.constructorContract).toBeNull();
+    expect(response.sampleTestCases).toEqual([{ input: '1 2', expectedOutput: '3', order: 0 }]);
   });
 
   it('maps a managed summary and hides deletedAt unless requested', () => {
@@ -75,6 +76,13 @@ describe('ProblemResponseMapper', () => {
       ],
     });
     expect(result).not.toHaveProperty('deletedAt');
+    expect(result.testSuiteSummary).toEqual({
+      totalCount: 1,
+      hiddenCount: 1,
+      totalScore: 1,
+      totalBytes: 12,
+      harnessLanguages: [],
+    });
   });
 
   it('includes deletedAt as an ISO string when requested', () => {
@@ -91,6 +99,16 @@ describe('ProblemResponseMapper', () => {
     expect(response.publishStatus).toBe('PUBLISHED');
     expect(response.deletedAt).toBe('2026-01-03T00:00:00.000Z');
     expect(response.createdAt).toBe('2026-01-01T00:00:00.000Z');
+    expect(response.testSuiteSummary?.totalCount).toBe(1);
+    expect(response.sampleTestCases).toHaveLength(1);
+  });
+
+  it('maps a preview without exposing the test suite summary', () => {
+    const response = mapper.toPreviewDetail(managedDetail(), true);
+
+    expect(response.publishStatus).toBe('PUBLISHED');
+    expect(response.sampleTestCases).toHaveLength(1);
+    expect(response.testSuiteSummary).toBeUndefined();
   });
 
   it('maps public pages', () => {
@@ -152,6 +170,7 @@ function detail(): ProblemDetailResult {
     constraints: null,
     executionLimits: { timeLimitMs: 1_000, memoryLimitMb: 256 },
     starterCodes: [{ language: 'python', sourceCode: 'print(1)' }],
+    sampleTestCases: [{ input: '1 2', expectedOutput: '3', order: 0 }],
     functionContracts: [
       {
         language: 'python',
@@ -203,6 +222,13 @@ function managedSummary(
         { code: 'PROBLEM_DELETED', message: 'A deleted problem cannot be published' },
       ],
     },
+    testSuiteSummary: {
+      totalCount: 1,
+      hiddenCount: 1,
+      totalScore: 1,
+      totalBytes: 12,
+      harnessLanguages: [],
+    },
     ...overrides,
   };
 }
@@ -213,5 +239,12 @@ function managedDetail(): ManagedProblemDetailResult {
     publishStatus: 'PUBLISHED',
     deletedAt: new Date('2026-01-03T00:00:00.000Z'),
     readiness: { ready: true, issues: [] },
+    testSuiteSummary: {
+      totalCount: 1,
+      hiddenCount: 1,
+      totalScore: 1,
+      totalBytes: 12,
+      harnessLanguages: [],
+    },
   };
 }

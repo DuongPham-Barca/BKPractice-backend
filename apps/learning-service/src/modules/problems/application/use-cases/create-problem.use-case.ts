@@ -16,6 +16,7 @@ import { PublishValidator } from '@learning/modules/problems/domain/services/pub
 import {
   CreatedBy,
   TagReference,
+  TestSuiteSummary,
   TopicReference,
 } from '@learning/modules/problems/domain/value-objects';
 import {
@@ -83,6 +84,7 @@ export class CreateProblemUseCase implements ICreateProblemPortIn {
       createdBy: new CreatedBy(principal.userId),
     });
 
+    problem.attachTestSuiteSummary(TestSuiteSummary.empty());
     this.contentValidator.assertSafe(problem);
 
     await this.transactionRunner.run(() => this.repository.save(problem));

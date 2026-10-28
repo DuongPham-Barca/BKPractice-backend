@@ -1,6 +1,8 @@
 import type { ProblemType, SupportedLanguage } from '@app/contracts';
 import type { Difficulty, PublishStatus } from '@learning/modules/problems/domain/value-objects';
 
+import type { SampleTestCaseResult, TestSuiteSummaryResult } from './test-case.results';
+
 export interface TopicResult {
   readonly id: string;
   readonly name: string;
@@ -94,18 +96,24 @@ export interface ProblemDetailResult extends ProblemSummaryResult {
   readonly starterCodes: readonly StarterCodeResult[];
   readonly functionContracts: readonly FunctionContractResult[];
   readonly oopContracts: readonly OopContractResult[];
+  readonly sampleTestCases: readonly SampleTestCaseResult[];
 }
 
 export interface ManagedProblemSummaryResult extends ProblemSummaryResult {
   readonly publishStatus: PublishStatus;
   readonly deletedAt: Date | null;
   readonly readiness: ProblemReadinessResult;
+  readonly testSuiteSummary: TestSuiteSummaryResult;
 }
 
-export interface ManagedProblemDetailResult extends ProblemDetailResult {
+export interface PreviewProblemResult extends ProblemDetailResult {
   readonly publishStatus: PublishStatus;
   readonly deletedAt: Date | null;
   readonly readiness: ProblemReadinessResult;
+}
+
+export interface ManagedProblemDetailResult extends PreviewProblemResult {
+  readonly testSuiteSummary: TestSuiteSummaryResult;
 }
 
 export interface SoftDeleteProblemResult {

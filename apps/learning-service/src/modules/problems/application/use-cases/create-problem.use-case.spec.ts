@@ -17,6 +17,7 @@ import {
   ProblemTitle,
   Slug,
 } from '@learning/modules/problems/domain/value-objects';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import { CreateProblemUseCase } from './create-problem.use-case';
 
@@ -174,6 +175,9 @@ function topicTagReaderMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),

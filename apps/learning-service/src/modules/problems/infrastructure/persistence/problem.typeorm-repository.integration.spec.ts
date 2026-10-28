@@ -1,6 +1,7 @@
 import type { SupportedLanguage } from '@app/contracts';
 import { InitialLearningSchema1700000003000 } from '@learning/database/migrations/1700000003000-InitialLearningSchema';
 import { Lrn001ProblemManagement1700000004000 } from '@learning/database/migrations/1700000004000-Lrn001ProblemManagement';
+import { Lrn002TestCaseManagement1700000007000 } from '@learning/database/migrations/1700000007000-Lrn002TestCaseManagement';
 import { learningEntities } from '@learning/modules/learning.entities';
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
@@ -61,7 +62,11 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       type: 'postgres',
       url: TEST_DATABASE_URL,
       entities: learningEntities,
-      migrations: [InitialLearningSchema1700000003000, Lrn001ProblemManagement1700000004000],
+      migrations: [
+        InitialLearningSchema1700000003000,
+        Lrn001ProblemManagement1700000004000,
+        Lrn002TestCaseManagement1700000007000,
+      ],
       synchronize: false,
     });
 
@@ -78,7 +83,7 @@ describeIntegration('ProblemTypeOrmRepository', () => {
     clock = TEST_NOW.getTime();
     await dataSource.query(
       `TRUNCATE "problems", "topics", "tags", "problem_topics", "problem_tags",
-        "problem_languages", "starter_codes" RESTART IDENTITY CASCADE`,
+        "problem_languages", "starter_codes", "test_cases", "problem_harnesses" RESTART IDENTITY CASCADE`,
     );
   });
 
@@ -493,16 +498,12 @@ describeIntegration('ProblemTypeOrmRepository', () => {
   });
 
   describe('starter codes and enabled languages', () => {
-    it('updates source_code without losing hidden_harness and removes deleted starter rows', async () => {
+    it('updates source_code and removes deleted starter rows', async () => {
       const problem = draftProblem({
         enabledLanguages: [new EnabledLanguage('python')],
         starterCodes: [new StarterCode({ language: 'python', sourceCode: 'print("old")' })],
       });
       await persist(problem);
-      await dataSource.query(
-        'UPDATE "starter_codes" SET "hidden_harness" = $1 WHERE "problem_id" = $2',
-        ['secret-harness', problem.id.value],
-      );
 
       const loaded = requireProblem(await repository.findById(problem.id.value));
       const token = loaded.updatedAt;
@@ -514,17 +515,12 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       );
       await runner.run(() => repository.save(loaded, token));
 
-      const starterRows: {
-        sourceCode: string;
-        hiddenHarness: string | null;
-      }[] = await dataSource.query(
-        `SELECT "source_code" AS "sourceCode", "hidden_harness" AS "hiddenHarness"
+      const starterRows: { sourceCode: string }[] = await dataSource.query(
+        `SELECT "source_code" AS "sourceCode"
          FROM "starter_codes" WHERE "problem_id" = $1`,
         [problem.id.value],
       );
-      expect(starterRows).toEqual([
-        { sourceCode: 'print("new")', hiddenHarness: 'secret-harness' },
-      ]);
+      expect(starterRows).toEqual([{ sourceCode: 'print("new")' }]);
 
       const loadedAgain = requireProblem(await repository.findById(problem.id.value));
       const secondToken = loadedAgain.updatedAt;

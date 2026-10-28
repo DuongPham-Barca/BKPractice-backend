@@ -6,8 +6,13 @@ import { ProblemResultMapper } from '@learning/modules/problems/application/resu
 import type { ManagedProblemDetailResult } from '@learning/modules/problems/application/results/problem.results';
 import { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
-import { PROBLEM_REPOSITORY, TRANSACTION_RUNNER } from '@learning/modules/problems/problem.tokens';
+import {
+  PROBLEM_REPOSITORY,
+  TEST_CASE_REPOSITORY,
+  TRANSACTION_RUNNER,
+} from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -16,6 +21,8 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     private readonly authorization: ProblemAuthorizationService,
     @Inject(PROBLEM_REPOSITORY)
     private readonly repository: ProblemRepository,
+    @Inject(TEST_CASE_REPOSITORY)
+    private readonly testCaseRepository: TestCaseRepository,
     private readonly publishValidator: PublishValidator,
     @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
@@ -32,6 +39,11 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
     this.authorization.requireOwned(principal, problem, 'hold');
 
     const expectedUpdatedAt = problem.updatedAt;
+    const [summary, samples] = await Promise.all([
+      this.repository.loadTestSuiteSummary(problem.id.value),
+      this.testCaseRepository.listSamples(problem.id.value),
+    ]);
+    problem.attachTestSuiteSummary(summary);
     problem.hold();
 
     await this.transactionRunner.run(() => this.repository.save(problem, expectedUpdatedAt));
@@ -40,6 +52,6 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
       slugAvailable: true,
     });
 
-    return this.resultMapper.toManagedDetail(problem, readiness);
+    return this.resultMapper.toManagedDetail(problem, readiness, samples);
   }
 }

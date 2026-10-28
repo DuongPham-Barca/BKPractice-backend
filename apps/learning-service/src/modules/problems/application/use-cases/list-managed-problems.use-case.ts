@@ -11,6 +11,7 @@ import {
   PublishValidator,
   type PublishReadiness,
 } from '@learning/modules/problems/domain/services/publish.validator';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -41,9 +42,13 @@ export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
       page: normalizedPage,
       limit: normalizedLimit,
     });
+    const summaries = await this.repository.loadTestSuiteSummaries(
+      result.items.map((problem) => problem.id.value),
+    );
     const readinessByProblemId = new Map<string, PublishReadiness>();
 
     for (const problem of result.items) {
+      problem.attachTestSuiteSummary(summaries.get(problem.id.value) ?? TestSuiteSummary.empty());
       readinessByProblemId.set(
         problem.id.value,
         this.publishValidator.validate(problem, { slugAvailable: true }),

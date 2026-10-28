@@ -6,7 +6,8 @@ Approved
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-29`.
 
-Kế hoạch này bám theo phiên bản `1.1` (Approved) của đặc tả LRN-002. Nó là tài liệu thiết kế, không
+Kế hoạch này bám theo phiên bản `1.2` của đặc tả LRN-002 (các thay đổi 1.2 về harness đã được
+phê duyệt ngày `2026-10-28`). Nó là tài liệu thiết kế, không
 triển khai code và không thay đổi đặc tả. Các quyết định lúc review nằm ở mục
 [Quyết định đã phê duyệt](#quyết-định-đã-phê-duyệt).
 
@@ -107,8 +108,8 @@ Thêm các điều kiện của LRN-002-FR-013, dựa trên `TestSuiteSummary`:
 
 - `TEST_CASE_HIDDEN_REQUIRED`: `hiddenCount ≥ 1`.
 - `TEST_CASE_SCORE_REQUIRED`: `totalScore > 0` (tính cả `SAMPLE`, theo quyết định 2a).
-- `HARNESS_REQUIRED` (chỉ `FUNCTION`/`OOP`): mọi ngôn ngữ đang bật có mặt trong `harnessLanguages`,
-  báo lỗi theo từng ngôn ngữ thiếu.
+- `HARNESS_REQUIRED` (chỉ `FUNCTION`/`OOP`): mọi ngôn ngữ đang bật có mặt trong `harnessLanguages`
+  (chỉ gồm harness của ngôn ngữ đang bật), báo lỗi theo từng ngôn ngữ thiếu.
 
 Cùng validator được dùng bởi xuất bản, xuất bản lại, phần mức độ sẵn sàng ở phía quản lý, xem trước,
 và kiểm tra "giữ điều kiện sẵn sàng" khi sửa Test Case/harness hoặc khi `UpdateProblem` của LRN-001
@@ -118,7 +119,8 @@ bật thêm ngôn ngữ cho Problem đã xuất bản.
 
 Tái dùng quy tắc của aggregate `Problem`: chỉ `DRAFT` và `PUBLISHED` (chưa xoá mềm) cho phép thay đổi
 Test Case và harness; trạng thái khác trả `InvalidProblemState`. Harness chỉ hợp lệ với
-`FUNCTION`/`OOP` và ngôn ngữ đang bật.
+`FUNCTION`/`OOP` và ngôn ngữ được hỗ trợ; ngôn ngữ chưa bật vẫn đặt trước được nhưng chưa tính vào
+`TestSuiteSummary`.
 
 ## Tầng application / Use case
 
@@ -133,7 +135,7 @@ quyền sở hữu qua `ProblemAuthorizationService`, rồi mới thay đổi d�
 | `ReorderTestCases`  | `problem:update`       | Tập ID gửi lên phải trùng đúng tập hiện có; gán `display_order` 0..n-1                                                                                                                          | FR-006, AC-012                        |
 | `ListTestCases`     | `problem:read-managed` | Trả mọi Test Case của Problem theo thứ tự, trong phạm vi chủ sở hữu, kèm `TestSuiteSummary`                                                                                                     | FR-008, AC-022                        |
 | `GetTestCase`       | `problem:read-managed` | Trả một Test Case đầy đủ                                                                                                                                                                        | FR-008, AC-022                        |
-| `SetHarness`        | `problem:update`       | Chỉ `FUNCTION`/`OOP`, ngôn ngữ đang bật; upsert theo `(problemId, language)`; kiểm tra `totalBytes` ≤ 8 MiB                                                                                     | FR-012, AC-021                        |
+| `SetHarness`        | `problem:update`       | Chỉ `FUNCTION`/`OOP`, ngôn ngữ được hỗ trợ (đặt trước được); upsert theo `(problemId, language)`; nếu ngôn ngữ đang bật thì kiểm tra `totalBytes` ≤ 8 MiB                                       | FR-012, AC-021, AC-025                |
 | `RemoveHarness`     | `problem:update`       | Như trên; nếu `PUBLISHED` thì bị chặn khi làm mất điều kiện sẵn sàng                                                                                                                            | FR-012, FR-013                        |
 | `GetHarness`        | `problem:read-managed` | Trả harness của một ngôn ngữ cho chủ sở hữu                                                                                                                                                     | FR-012                                |
 | `BuildJudgePackage` | Service tin cậy        | Problem phải `PUBLISHED`, chưa xoá, ngôn ngữ đang bật; FUNCTION/OOP phải có harness (thiếu thì từ chối theo hướng đóng); trả Test Case `SAMPLE` + `HIDDEN` theo thứ tự                          | FR-014, FR-015, AC-008, 009, 019, 020 |
@@ -145,6 +147,11 @@ Thay đổi ở use case của LRN-001:
 - `GetManagedProblem`/`ListManagedProblems` bổ sung `TestSuiteSummary` và lỗi sẵn sàng mới.
 - `PublishProblem`/`RepublishProblem`/`UpdateProblem` dùng `PublishValidator` đã mở rộng và cũng
   khoá dòng `problems` để không đua với thao tác Test Case.
+- `UpdateProblem` kiểm tra readiness và trần 8 MiB **sau khi lưu** trên `TestSuiteSummary` tải lại
+  (vì tập ngôn ngữ đang bật quyết định harness nào tính); lỗi thì transaction rollback. Chỉ chặn vượt
+  trần khi tổng byte tăng so với trước cập nhật.
+- `GetManagedProblem`, `UpdateProblem`, `PublishProblem`, `RepublishProblem`, `HoldProblem`,
+  `RestoreProblem` nạp thêm Test Case `SAMPLE` cho `sampleTestCases` của phản hồi quản lý.
 
 ### Port
 
@@ -168,7 +175,9 @@ Không thêm port nào khác.
 - `TestSuiteSummary` dùng một truy vấn tổng hợp:
   `COUNT(*)`, `COUNT(*) FILTER (WHERE is_hidden)`, `SUM(score)`,
   `SUM(octet_length(input) + octet_length(expected_output))`, cộng danh sách ngôn ngữ và
-  `SUM(octet_length(source))` trong `problem_harnesses`. `totalBytes` là tổng hai phần này.
+  `SUM(octet_length(source))` trong `problem_harnesses`, chỉ với harness có ngôn ngữ `enabled` trong
+  `problem_languages` và Problem không phải `STANDARD`. `totalBytes` là tổng hai phần này. Các số
+  liệu đọc từ DB không áp trần (`TestSuiteSummary.fromStored`); trần chỉ áp khi thêm dữ liệu.
 
 ### Đồng thời
 

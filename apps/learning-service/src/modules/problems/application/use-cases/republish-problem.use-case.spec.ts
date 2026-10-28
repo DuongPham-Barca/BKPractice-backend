@@ -1,12 +1,14 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_NOW,
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
 import type { ProblemResultMapper } from '../results/problem-result.mapper';
 import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
@@ -38,7 +40,7 @@ describe('RepublishProblemUseCase', () => {
     const expectedUpdatedAt = problem.updatedAt;
     const detail = { id: problem.id.value };
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
     resultMapper.toManagedDetail.mockResolvedValue(detail);
 
@@ -54,7 +56,7 @@ describe('RepublishProblemUseCase', () => {
     const authorization = authorizationMock();
     const useCase = createUseCase({ repository, authorization });
 
-    repository.findById.mockResolvedValue(null);
+    repository.loadForUpdate.mockResolvedValue(null);
 
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
@@ -70,7 +72,7 @@ describe('RepublishProblemUseCase', () => {
 
     problem.publish(TEST_NOW);
     problem.hold(TEST_NOW);
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(false);
     publishValidator.validate.mockReturnValue({
       ready: false,
@@ -89,7 +91,7 @@ describe('RepublishProblemUseCase', () => {
     const useCase = createUseCase({ repository });
     const problem = buildProblem();
 
-    repository.findById.mockResolvedValue(problem);
+    repository.loadForUpdate.mockResolvedValue(problem);
 
     await expect(useCase.execute(PRINCIPAL, problem.id.value)).rejects.toMatchObject({
       code: 'INVALID_PROBLEM_STATE',
@@ -101,6 +103,7 @@ describe('RepublishProblemUseCase', () => {
 function createUseCase(dependencies: {
   authorization?: ReturnType<typeof authorizationMock>;
   repository?: ReturnType<typeof repositoryMock>;
+  testCaseRepository?: ReturnType<typeof testCaseRepositoryMock>;
   publishValidator?: ReturnType<typeof publishValidatorMock>;
   transactionRunner?: ReturnType<typeof transactionRunnerMock>;
   resultMapper?: ReturnType<typeof resultMapperMock>;
@@ -108,6 +111,7 @@ function createUseCase(dependencies: {
   const {
     authorization = authorizationMock(),
     repository = repositoryMock(),
+    testCaseRepository = testCaseRepositoryMock(),
     publishValidator = publishValidatorMock(),
     transactionRunner = transactionRunnerMock(),
     resultMapper = resultMapperMock(),
@@ -116,6 +120,7 @@ function createUseCase(dependencies: {
   return new RepublishProblemUseCase(
     authorization as unknown as ProblemAuthorizationService,
     repository,
+    testCaseRepository as unknown as TestCaseRepository,
     publishValidator as unknown as PublishValidator,
     transactionRunner as unknown as TransactionRunner,
     resultMapper as unknown as ProblemResultMapper,
@@ -133,6 +138,9 @@ function authorizationMock() {
 function repositoryMock() {
   return {
     findById: jest.fn(),
+    loadForUpdate: jest.fn(),
+    loadTestSuiteSummary: jest.fn().mockResolvedValue(TestSuiteSummary.empty()),
+    loadTestSuiteSummaries: jest.fn().mockResolvedValue(new Map()),
     findByIdIncludingDeleted: jest.fn(),
     findPublishedByIdOrSlug: jest.fn(),
     findManagedById: jest.fn(),
@@ -162,4 +170,8 @@ function resultMapperMock() {
     toPage: jest.fn(),
     toManagedPage: jest.fn(),
   };
+}
+
+function testCaseRepositoryMock() {
+  return { listSamples: jest.fn().mockResolvedValue([]) };
 }

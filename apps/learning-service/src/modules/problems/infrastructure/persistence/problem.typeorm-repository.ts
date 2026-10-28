@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import type { SupportedLanguage } from '@app/contracts';
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
 import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
@@ -9,6 +10,7 @@ import type {
   ProblemPage,
   ProblemRepository,
 } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
+import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 import {
   Problem as ProblemEntity,
   PublishStatus as EntityPublishStatus,
@@ -76,6 +78,114 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     const entity = await query.getOne();
 
     return entity === null ? null : this.mapper.toDomain(entity);
+  }
+
+  async loadForUpdate(id: string, includeDeleted = false): Promise<Problem | null> {
+    const manager = this.transactionContext.requireManager();
+    const lockQuery = manager
+      .getRepository(ProblemEntity)
+      .createQueryBuilder('p')
+      .select('p.id', 'id')
+      .where('p.id = :id', { id });
+
+    if (!includeDeleted) {
+      lockQuery.andWhere('p.deletedAt IS NULL');
+    }
+
+    const locked = await lockQuery.setLock('pessimistic_write').getRawOne<{ id: string }>();
+
+    if (locked === undefined) {
+      return null;
+    }
+
+    const entity = await this.baseQuery(manager).where('p.id = :id', { id }).getOne();
+
+    return entity === null ? null : this.mapper.toDomain(entity);
+  }
+
+  async loadTestSuiteSummary(problemId: string): Promise<TestSuiteSummary> {
+    const summaries = await this.loadTestSuiteSummaries([problemId]);
+
+    return summaries.get(problemId) ?? TestSuiteSummary.empty();
+  }
+
+  async loadTestSuiteSummaries(
+    problemIds: readonly string[],
+  ): Promise<ReadonlyMap<string, TestSuiteSummary>> {
+    const summaries = new Map(problemIds.map((problemId) => [problemId, TestSuiteSummary.empty()]));
+
+    if (problemIds.length === 0) {
+      return summaries;
+    }
+
+    const manager = this.transactionContext.getManager();
+    const testRows = await manager.query<
+      Array<{
+        problemId: string;
+        totalCount: number;
+        hiddenCount: number;
+        totalScore: string | number;
+        testCaseBytes: string | number;
+      }>
+    >(
+      `SELECT
+         "problem_id" AS "problemId",
+         COUNT(*)::int AS "totalCount",
+         COUNT(*) FILTER (WHERE "is_hidden")::int AS "hiddenCount",
+         COALESCE(SUM("score"), 0)::bigint AS "totalScore",
+         COALESCE(SUM(octet_length("input") + octet_length("expected_output")), 0)::bigint AS "testCaseBytes"
+       FROM "test_cases"
+       WHERE "problem_id" = ANY($1::uuid[])
+       GROUP BY "problem_id"`,
+      [problemIds],
+    );
+    const harnessRows = await manager.query<
+      Array<{
+        problemId: string;
+        languages: string[] | null;
+        harnessBytes: string | number;
+      }>
+    >(
+      `SELECT
+         "harness"."problem_id" AS "problemId",
+         COALESCE(array_agg("harness"."language" ORDER BY "harness"."language"), ARRAY[]::varchar[]) AS "languages",
+         COALESCE(SUM(octet_length("harness"."source")), 0)::bigint AS "harnessBytes"
+       FROM "problem_harnesses" AS "harness"
+       WHERE "harness"."problem_id" = ANY($1::uuid[])
+         AND EXISTS (
+           SELECT 1 FROM "problems" AS "problem"
+           WHERE "problem"."id" = "harness"."problem_id" AND "problem"."problem_type" <> 'STANDARD'
+         )
+         AND EXISTS (
+           SELECT 1 FROM "problem_languages" AS "language"
+           WHERE "language"."problem_id" = "harness"."problem_id"
+             AND "language"."language" = "harness"."language"
+             AND "language"."enabled"
+         )
+       GROUP BY "harness"."problem_id"`,
+      [problemIds],
+    );
+
+    const testsByProblem = new Map(testRows.map((row) => [row.problemId, row]));
+    const harnessesByProblem = new Map(harnessRows.map((row) => [row.problemId, row]));
+
+    for (const problemId of problemIds) {
+      const tests = testsByProblem.get(problemId);
+      const harnesses = harnessesByProblem.get(problemId);
+
+      summaries.set(
+        problemId,
+        TestSuiteSummary.fromStored({
+          totalCount: Number(tests?.totalCount ?? 0),
+          hiddenCount: Number(tests?.hiddenCount ?? 0),
+          totalScore: Number(tests?.totalScore ?? 0),
+          totalBytes: Number(tests?.testCaseBytes ?? 0) + Number(harnesses?.harnessBytes ?? 0),
+          harnessLanguages: (harnesses?.languages ?? []) as readonly SupportedLanguage[],
+        }),
+      );
+    }
+
+    return summaries;
   }
 
   async listPublished(filter: ProblemListFilter): Promise<ProblemPage<Problem>> {

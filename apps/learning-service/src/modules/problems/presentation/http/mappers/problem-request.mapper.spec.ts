@@ -168,6 +168,39 @@ describe('ProblemRequestMapper', () => {
     expect(command.functionContracts?.get('python')?.returnType).toBe('int');
   });
 
+  it('applies test case defaults and maps reorder and harness requests', () => {
+    const add = mapper.toAddTestCaseCommand({
+      expectedOutput: '3',
+      score: 5,
+    });
+
+    expect(add.input.value).toBe('');
+    expect(add.visibility.value).toBe('HIDDEN');
+    expect(add.displayOrder).toBeUndefined();
+
+    const explicit = mapper.toAddTestCaseCommand({
+      input: '1 2',
+      expectedOutput: '3',
+      visibility: 'SAMPLE',
+      score: 5,
+      displayOrder: 2,
+    });
+
+    expect(explicit.visibility?.value).toBe('SAMPLE');
+    expect(explicit.displayOrder?.value).toBe(2);
+
+    const reorder = mapper.toReorderTestCasesCommand({
+      testCaseIds: [TOPIC_ID],
+    });
+
+    expect(reorder.testCaseIds[0]?.value).toBe(TOPIC_ID);
+
+    const harness = mapper.toSetHarnessCommand('python', { source: 'def solve(): pass' });
+
+    expect(harness.language).toBe('python');
+    expect(harness.source.value).toBe('def solve(): pass');
+  });
+
   it('returns an empty command for an empty update request', () => {
     expect(mapper.toUpdateCommand({})).toEqual({});
   });
