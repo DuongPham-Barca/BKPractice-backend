@@ -27,10 +27,13 @@ export class TypeormRefreshSessionRepository implements RefreshSessionRepository
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       const user = await manager.getRepository(User).createQueryBuilder('user')
+        .addSelect('user.passwordHash')
         .setLock('pessimistic_read')
         .where('user.id = :userId AND user.deletedAt IS NULL', { userId: record.userId })
         .getOne();
       if (!user || user.status !== AccountStatus.Active)
+        throw new AuthFailure('invalid_credentials');
+      if (record.expectedPasswordHash && user.passwordHash !== record.expectedPasswordHash)
         throw new AuthFailure('invalid_credentials');
       await manager.insert(AuthSession, {
         id: record.familyId,

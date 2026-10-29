@@ -17,6 +17,7 @@ export interface RefreshRecord {
   userId: string;
   tokenHash: string;
   expiresAt: Date;
+  expectedPasswordHash?: string;
 }
 
 export type ClientType = 'web' | 'mobile';

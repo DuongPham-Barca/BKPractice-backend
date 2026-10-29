@@ -5,3 +5,6 @@ export * from '@/modules/auth/infrastructure/persistence/refresh-session.reposit
 export * from '@/modules/auth/infrastructure/persistence/auth-session.entity';
 export * from '@/modules/auth/infrastructure/persistence/refresh-token.entity';
 export * from '@/modules/auth/infrastructure/persistence/account-import.repository';
+export * from '@/modules/auth/infrastructure/persistence/password-reset.repository';
+export * from '@/modules/auth/infrastructure/persistence/password-reset-challenge.entity';
+export * from '@/modules/auth/infrastructure/persistence/password-reset-grant.entity';

@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '@/modules/auth';
 import { identityEntities } from '@/modules/identity.entities';
 import { ProfileModule } from '@/modules/profiles';
+import { UsersModule } from '@/modules/users';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ProfileModule } from '@/modules/profiles';
     JwtModule.register({ global: true }),
     AuthModule,
     ProfileModule,
+    UsersModule,
     HealthModule.forService('identity-service'),
   ],
 })

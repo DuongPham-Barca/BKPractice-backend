@@ -57,6 +57,34 @@ describe('Identity configuration', () => {
     ).toThrow();
   });
 
+  it('requires Brevo credentials in production', () => {
+    const production = {
+      ...identity,
+      NODE_ENV: 'production',
+      CORS_ORIGINS: 'https://example.test',
+      MICROSOFT_REDIRECT_URI: 'https://example.test/callback',
+      AUTH_WEB_LOGIN_REDIRECT_URL: 'https://example.test/auth/callback',
+    };
+    expect(() => validateEnvironment('identity-service')(production)).toThrow('BREVO_API_KEY');
+    expect(validateEnvironment('identity-service')({
+      ...production,
+      BREVO_API_KEY: 'test-key',
+      BREVO_SENDER_EMAIL: 'verified@example.com',
+    }).BREVO_SENDER_EMAIL).toBe('verified@example.com');
+  });
+
+  it('defaults and validates the Brevo sender display name', () => {
+    expect(validateEnvironment('identity-service')(identity).BREVO_SENDER_NAME).toBe('BKPractice');
+    expect(validateEnvironment('identity-service')({
+      ...identity,
+      BREVO_SENDER_NAME: 'BKPractice Support',
+    }).BREVO_SENDER_NAME).toBe('BKPractice Support');
+    expect(() => validateEnvironment('identity-service')({
+      ...identity,
+      BREVO_SENDER_NAME: '   ',
+    })).toThrow('BREVO_SENDER_NAME');
+  });
+
   it('uses Redis by default and forbids memory storage in production', () => {
     expect(validateEnvironment('identity-service')(identity).AUTH_FLOW_STORE).toBe('redis');
     expect(() =>

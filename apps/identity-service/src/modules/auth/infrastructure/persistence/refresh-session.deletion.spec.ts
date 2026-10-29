@@ -17,6 +17,7 @@ describe('Session creation after soft deletion', () => {
 
   it('does not insert a session when the User lock lookup excludes a deleted account', async () => {
     const query = {
+      addSelect: jest.fn().mockReturnThis(),
       setLock: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       getOne: jest.fn().mockResolvedValue(null),
@@ -33,5 +34,23 @@ describe('Session creation after soft deletion', () => {
     expect(manager.insert).not.toHaveBeenCalled();
     const claims = { sub: userId, fid: record.familyId, jti: record.tokenId } as BkRefreshClaims;
     expect(await sessions.rotate(claims, 'raw', record)).toBe(false);
+  });
+
+  it('rejects a password login that was verified before a concurrent reset', async () => {
+    const query = {
+      addSelect: jest.fn().mockReturnThis(),
+      setLock: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue({ status: 'ACTIVE', passwordHash: 'new-hash' }),
+    };
+    const manager = {
+      getRepository: jest.fn().mockReturnValue({ createQueryBuilder: () => query }),
+      insert: jest.fn(),
+    };
+    const database = { transaction: async (work: (transactionManager: typeof manager) => Promise<unknown>) => work(manager) };
+    const sessions = new TypeormRefreshSessionRepository(database as unknown as DataSource, hasher);
+    await expect(sessions.create({ ...record, expectedPasswordHash: 'old-hash' }))
+      .rejects.toThrow('invalid_credentials');
+    expect(manager.insert).not.toHaveBeenCalled();
   });
 });

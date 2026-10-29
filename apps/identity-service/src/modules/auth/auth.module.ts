@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
@@ -32,6 +33,15 @@ import {
   ACCOUNT_IMPORT_REPOSITORY,
   type AccountImportParser,
   type AccountImportRepository,
+  PASSWORD_RESET_ACCOUNTS,
+  PASSWORD_RESET_STORE,
+  PASSWORD_RESET_MAILER,
+  SendPasswordResetOtp,
+  VerifyPasswordResetOtp,
+  ResetPasswordWithGrant,
+  type PasswordResetAccountRepository,
+  type PasswordResetStore,
+  type PasswordResetMailer,
 } from '@/modules/auth/application';
 import {
   Argon2PasswordHasher,
@@ -47,6 +57,8 @@ import {
   TypeormRefreshSessionRepository,
   TypeormAccountImportRepository,
   XlsxAccountParser,
+  TypeormPasswordResetRepository,
+  BrevoPasswordResetMailer,
 } from '@/modules/auth/infrastructure';
 import {
   AccountImportController,
@@ -54,6 +66,7 @@ import {
   AuthController,
   IdentityAccessAuthenticator,
   SessionStatusController,
+  PasswordResetController,
 } from '@/modules/auth/presentation';
 import type { EffectivePermissionReader } from '@/modules/rbac/application/effective-permission-reader';
 import { EFFECTIVE_PERMISSION_READER } from '@/modules/rbac/application/effective-permission-reader';
@@ -63,11 +76,18 @@ import { User } from '@/modules/users/infrastructure/persistence';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, RefreshToken, AuthSession, ExternalIdentity]),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     RbacModule,
   ],
-  controllers: [AuthController, SessionStatusController, AccountImportController],
+  controllers: [
+    AuthController,
+    SessionStatusController,
+    AccountImportController,
+    PasswordResetController,
+  ],
   providers: [
     AccountImportGuard,
+    ThrottlerGuard,
     IdentityAccessAuthenticator,
     { provide: ACCOUNT_IMPORT_PARSER, useClass: XlsxAccountParser },
     { provide: ACCOUNT_IMPORT_REPOSITORY, useClass: TypeormAccountImportRepository },
@@ -83,6 +103,35 @@ import { User } from '@/modules/users/infrastructure/persistence';
     { provide: AUTH_ACCOUNT_REPOSITORY, useClass: TypeormAuthAccountRepository },
     { provide: EXTERNAL_IDENTITY_REPOSITORY, useClass: TypeormExternalIdentityRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
+    {
+      provide: PASSWORD_RESET_ACCOUNTS,
+      inject: [DataSource, PASSWORD_HASHER, ConfigService],
+      useFactory: (dataSource: DataSource, hasher: PasswordHasher, config: ConfigService) =>
+        new TypeormPasswordResetRepository(dataSource, hasher, config),
+    },
+    { provide: PASSWORD_RESET_STORE, useExisting: PASSWORD_RESET_ACCOUNTS },
+    { provide: PASSWORD_RESET_MAILER, useClass: BrevoPasswordResetMailer },
+    {
+      provide: SendPasswordResetOtp,
+      inject: [PASSWORD_RESET_ACCOUNTS, PASSWORD_RESET_STORE, PASSWORD_RESET_MAILER],
+      useFactory: (
+        accounts: PasswordResetAccountRepository,
+        store: PasswordResetStore,
+        mailer: PasswordResetMailer,
+      ) => new SendPasswordResetOtp(accounts, store, mailer),
+    },
+    {
+      provide: VerifyPasswordResetOtp,
+      inject: [PASSWORD_RESET_ACCOUNTS, PASSWORD_RESET_STORE],
+      useFactory: (accounts: PasswordResetAccountRepository, store: PasswordResetStore) =>
+        new VerifyPasswordResetOtp(accounts, store),
+    },
+    {
+      provide: ResetPasswordWithGrant,
+      inject: [PASSWORD_RESET_ACCOUNTS],
+      useFactory: (accounts: PasswordResetAccountRepository) =>
+        new ResetPasswordWithGrant(accounts),
+    },
     { provide: BK_TOKEN_SERVICE, useClass: JwtBkTokenService },
     { provide: MICROSOFT_IDENTITY_PROVIDER, useClass: MsalMicrosoftIdentityProvider },
     {

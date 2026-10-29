@@ -2,6 +2,8 @@ export {
   AuthSession,
   ExternalIdentity,
   RefreshToken,
+  PasswordResetChallenge,
+  PasswordResetGrant,
 } from '@/modules/auth/infrastructure/persistence';
 export { Profile } from '@/modules/profiles/infrastructure/persistence/profile.entity';
 export { Permission } from '@/modules/rbac/infrastructure/persistence/permission.entity';
@@ -12,6 +14,8 @@ import {
   AuthSession,
   ExternalIdentity,
   RefreshToken,
+  PasswordResetChallenge,
+  PasswordResetGrant,
 } from '@/modules/auth/infrastructure/persistence';
 import { Profile } from '@/modules/profiles/infrastructure/persistence/profile.entity';
 import { Permission } from '@/modules/rbac/infrastructure/persistence/permission.entity';
@@ -26,4 +30,6 @@ export const identityEntities = [
   RefreshToken,
   AuthSession,
   ExternalIdentity,
+  PasswordResetChallenge,
+  PasswordResetGrant,
 ];

@@ -52,6 +52,9 @@ const serviceSchemas: Record<ServiceName, z.ZodObject> = {
     MICROSOFT_TENANT_ID: z.uuid(),
     MICROSOFT_CLIENT_ID: z.uuid(),
     MICROSOFT_CLIENT_SECRET: z.string().min(1),
+    BREVO_API_KEY: z.string().min(1).optional(),
+    BREVO_SENDER_EMAIL: z.email().optional(),
+    BREVO_SENDER_NAME: z.string().trim().min(1).max(100).default('BKPractice'),
     MICROSOFT_REDIRECT_URI: url,
     AUTH_WEB_LOGIN_REDIRECT_URL: url,
     AUTH_MOBILE_LOGIN_REDIRECT_URL: url.optional(),
@@ -124,6 +127,9 @@ export function validateEnvironment(service: ServiceName) {
         throw new Error(
           'Invalid environment for identity-service: AUTH_FLOW_STORE cannot use memory in production',
         );
+      }
+      if (result.data.NODE_ENV === 'production' && (!result.data.BREVO_API_KEY || !result.data.BREVO_SENDER_EMAIL)) {
+        throw new Error('Invalid environment for identity-service: BREVO_API_KEY and BREVO_SENDER_EMAIL are required in production');
       }
       const ttlMs = (value: string): number => {
         const unit = value.slice(-1);

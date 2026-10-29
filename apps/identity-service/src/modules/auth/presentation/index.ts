@@ -7,3 +7,6 @@ export * from '@/modules/auth/presentation/account-import.controller';
 export * from '@/modules/auth/presentation/account-import.guard';
 export * from '@/modules/auth/presentation/account-import-failure.filter';
 export * from '@/modules/auth/presentation/identity-access.authenticator';
+export * from '@/modules/auth/presentation/password-reset.controller';
+export * from '@/modules/auth/presentation/password-reset.dto';
+export * from '@/modules/auth/presentation/password-reset-failure.filter';

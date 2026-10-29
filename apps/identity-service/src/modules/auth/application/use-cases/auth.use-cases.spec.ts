@@ -104,7 +104,7 @@ describe('Authentication use cases', () => {
     await expect(
       new LoginWithPassword(accounts, createHasher(), issuer).execute('admin', 'admin'),
     ).resolves.toEqual({ userId: 'user-1', ...pair });
-    expect(issue).toHaveBeenCalledWith(admin, { clientType: 'web' });
+    expect(issue).toHaveBeenCalledWith(admin, { clientType: 'web' }, 'hash');
   });
 
   it('rejects a wrong Admin password and a locked Admin before issuing tokens', async () => {

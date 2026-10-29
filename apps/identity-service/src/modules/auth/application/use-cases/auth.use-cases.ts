@@ -35,7 +35,7 @@ export class LoginWithPassword {
       throw new AuthFailure('invalid_credentials');
     }
     requireActiveAccount(account);
-    return { userId: account.userId, ...(await this.issuer.issueNewFamily(account, metadata)) };
+    return { userId: account.userId, ...(await this.issuer.issueNewFamily(account, metadata, account.passwordHash)) };
   }
 }
 

@@ -5,3 +5,6 @@ export const PASSWORD_HASHER = Symbol('PasswordHasher');
 export const BK_TOKEN_SERVICE = Symbol('BkTokenService');
 export const MICROSOFT_IDENTITY_PROVIDER = Symbol('MicrosoftIdentityProvider');
 export const AUTH_FLOW_STORE = Symbol('AuthFlowStore');
+export const PASSWORD_RESET_ACCOUNTS = Symbol('PasswordResetAccounts');
+export const PASSWORD_RESET_STORE = Symbol('PasswordResetStore');
+export const PASSWORD_RESET_MAILER = Symbol('PasswordResetMailer');

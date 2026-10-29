@@ -45,8 +45,13 @@ export class AuthTokenIssuer {
     };
   }
 
-  async issueNewFamily(account: AuthAccount, metadata: SessionMetadata = { clientType: 'web' }): Promise<TokenPair> {
+  async issueNewFamily(
+    account: AuthAccount,
+    metadata: SessionMetadata = { clientType: 'web' },
+    expectedPasswordHash?: string,
+  ): Promise<TokenPair> {
     const prepared = await this.prepare(account, randomUUID());
+    prepared.record.expectedPasswordHash = expectedPasswordHash;
     await this.sessions.create(prepared.record, metadata);
     return prepared.pair;
   }
