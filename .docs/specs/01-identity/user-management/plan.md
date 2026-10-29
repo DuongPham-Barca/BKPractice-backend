@@ -2,7 +2,7 @@
 
 ## Trạng thái và đặc tả liên quan
 
-Bản nháp theo [spec ID-006 0.1](./spec.md), hiện **Proposed**. Chưa triển khai tới khi Approved và hoà giải phần CRUD Proposed của ID-004.
+Kế hoạch được chủ sở hữu review theo [spec ID-006 1.0](./spec.md), **Approved** ngày 2026-10-28. Phần import ID-004 đã Approved giữ nguyên; bản sao spec ID-004 đã được tái dựng theo yêu cầu chủ sở hữu để đối chiếu trước khi triển khai.
 
 ## Service đích và kiến trúc
 
@@ -16,32 +16,32 @@ Identity Service — **Clean Architecture**, theo [kiến trúc Identity](../../
 
 ## Domain và application
 
-- Định nghĩa bất biến User đã xoá, Admin cuối cùng và quyền xem/xoá theo spec được duyệt.
+- Định nghĩa bất biến User có `deletedAt`, chặn xoá ADMIN/system và quyền đọc/xoá theo spec 1.0.
 - Use case đọc trang, đọc chi tiết, xoá mềm. Xoá điều phối User repository, RBAC và chính sách phiên, không sửa dữ liệu service khác.
-- Port cho truy vấn projection, transaction xoá, thu hồi phiên; chính sách Admin/system/phiên cần chốt trước thiết kế cuối.
+- Port cho truy vấn projection, transaction xoá và thu hồi mọi phiên. Dùng kiểm tra phiên hiện có để access token cũ bị từ chối ngay.
 
 ## Lưu trữ, cơ sở dữ liệu và migration
 
 - TypeORM Identity truy vấn phân trang/thứ tự ổn định và projection allowlist; xoá dùng transaction/lock bảo vệ cạnh tranh và Admin cuối cùng.
 - Migration TypeORM thêm dấu xoá theo contract, giữ User/tham chiếu; không bật `synchronize`.
-- Cập nhật query xác thực/Microsoft/refresh/Profile để loại User đã xoá; uniqueness/import lại theo spec chốt.
+- Cập nhật query xác thực/Microsoft/refresh/Profile để loại User đã xoá; giữ email/MSSV unique và cho import lại báo trùng.
 
 ## API, DTO và phân quyền
 
-- Route dự kiến `GET /api/admin/users`, `GET /api/admin/users/:userId`, `DELETE /api/admin/users/:userId`.
-- DTO chỉ xuất trường quản trị duyệt, không serialize User entity trực tiếp.
-- Guard kiểm tra access token/phiên và ADMIN + quyền được duyệt; RBAC catalog/seed chỉ sửa sau khi mã quyền được duyệt.
+- Route `GET /api/admin/users`, `GET /api/admin/users/:userId`, `DELETE /api/admin/users/:userId`.
+- DTO danh sách nhận `page`/`limit` (1/20, tối đa 50) và `includeDeleted` mặc định false; trả `{ items, page, limit, hasMore }`, sắp xếp `createdAt`/`userId` giảm dần. Projection chỉ các trường FR-002, không serialize User entity trực tiếp.
+- Guard kiểm tra access token/phiên và ADMIN + `user:read` hoặc `user:delete`. Bổ sung hai quyền vào RBAC catalog/seed chỉ cho ADMIN; token cũ nhận quyền sau login/refresh.
 - Gateway giữ cookie/Bearer và CSRF cho DELETE dùng cookie; Swagger mô tả phản hồi/lỗi/quyền.
 
 ## Messaging, realtime và adapter khác
 
-N/A — không message/realtime. Thu hồi phiên nếu duyệt dùng port/repository Identity, không truy cập DB khác.
+N/A — không message/realtime. Thu hồi mọi phiên dùng port/repository Identity, không truy cập DB khác.
 
 ## Xử lý lỗi, bảo mật và quan sát
 
 - Lỗi auth/quyền/UUID/User/chính sách bảo vệ ánh xạ nhất quán, không lộ lỗi DB.
 - Log request ID, actor ID, kết quả tổng hợp; không log mật khẩu, token, email hoặc Profile.
-- Test xoá cùng login/refresh/token cũ; không suy chính sách token từ `deletedAt`.
+- Test xoá cùng login/refresh/token cũ; session revocation và dấu `deletedAt` đều bắt buộc.
 
 ## Chiến lược kiểm thử
 
@@ -51,10 +51,10 @@ N/A — không message/realtime. Thu hồi phiên nếu duyệt dùng port/repos
 
 ## Thứ tự triển khai sau Approved
 
-1. Chốt Câu hỏi mở, đối chiếu ID-004/ID-003/ID-001 và phê duyệt spec; review plan/tasks.
-2. Thêm migration, domain/application, repository, controller/DTO/guard.
+1. Khôi phục bản sao ID-004 còn thiếu và đối chiếu phần import đã Approved, rồi kiểm tra worktree/schema.
+2. Thêm migration, domain/application, repository, controller/DTO/guard và RBAC seed.
 3. Cập nhật query Auth/Profile và Gateway; test, pnpm gates, đối chiếu FR/AC.
 
 ## Rủi ro và tuân thủ kiến trúc
 
-Dấu xoá không được áp đồng nhất sẽ để lộ/cho login User đã xoá. Migration, uniqueness và token cũ cần chốt trong spec. Presentation xử lý HTTP; application điều phối; infrastructure giữ TypeORM; Identity giữ User/phiên, không cascade xuyên service.
+Dấu xoá không được áp đồng nhất sẽ để lộ/cho login User đã xoá. Test mọi đường phát token, kiểm tra phiên và uniqueness; không đổi dữ liệu service khác. Presentation xử lý HTTP; application điều phối; infrastructure giữ TypeORM; Identity giữ User/phiên, không cascade xuyên service.
