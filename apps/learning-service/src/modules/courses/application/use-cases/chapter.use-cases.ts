@@ -1,13 +1,22 @@
+import {
+  COURSE_REPOSITORY,
+  COURSE_TRANSACTION_RUNNER,
+} from '@learning/modules/courses/course.tokens';
+import type { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { ChapterTitle, ChapterDescription } from '@learning/modules/courses/domain/value-objects';
 import { ChapterId } from '@learning/modules/courses/domain/value-objects';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '../../course.tokens';
 import { CourseNotFoundError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
 import type { CourseRepository } from '../ports/out/course-repository.port';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port';
 import { CourseAuthorizationService } from '../services/course-authorization.service';
+
+export interface AddChapterResult {
+  readonly course: Course;
+  readonly chapterId: ChapterId;
+}
 
 @Injectable()
 export class AddChapterUseCase {
@@ -22,16 +31,16 @@ export class AddChapterUseCase {
     title: ChapterTitle,
     description: ChapterDescription | null = null,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<AddChapterResult> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    const chapterId = course.addChapter({ title, description }, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      const chapterId = course.addChapter({ title, description }, now);
       await this.repository.save(course);
+      return { course, chapterId };
     });
-    return { course, chapterId };
   }
 }
 
@@ -49,16 +58,16 @@ export class UpdateChapterUseCase {
     title: ChapterTitle | undefined,
     description: ChapterDescription | undefined,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.updateChapter(chapterId, { title, description }, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.updateChapter(chapterId, { title, description }, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }
 
@@ -74,16 +83,16 @@ export class RemoveChapterUseCase {
     courseId: string,
     chapterId: ChapterId,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.removeChapter(chapterId, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.removeChapter(chapterId, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }
 
@@ -99,15 +108,15 @@ export class ReorderChaptersUseCase {
     courseId: string,
     orderedIds: readonly ChapterId[],
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.reorderChapters(orderedIds, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.reorderChapters(orderedIds, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }

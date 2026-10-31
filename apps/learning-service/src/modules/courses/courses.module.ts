@@ -1,13 +1,11 @@
 import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
 import { Module } from '@nestjs/common';
-import { Inject, Injectable } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import type { ProblemReferenceReader } from '../problems/application/ports/out/problem-reference-reader.port.out';
-import { PROBLEM_REFERENCE_READER } from '../problems/problem.tokens';
 import { ProblemsModule } from '../problems/problems.module';
 
 import { CourseAuthorizationService } from './application/services/course-authorization.service';
+import { CoursePublishReadinessService } from './application/services/course-publish-readiness.service';
 import {
   AddChapterUseCase,
   UpdateChapterUseCase,
@@ -42,37 +40,12 @@ import {
   COURSE_TRANSACTION_RUNNER,
 } from './course.tokens';
 import { Course, Chapter, ChapterProblem } from './entities/course.entity';
+import { CourseTypeOrmReferenceChecker } from './infrastructure/persistence/course-reference.checker';
 import { CourseTypeOrmRepository } from './infrastructure/persistence/course.typeorm-repository';
+import { CourseTypeOrmTransactionContext } from './infrastructure/persistence/course.typeorm-transaction-context';
 import { CourseTypeOrmTransactionRunner } from './infrastructure/persistence/course.typeorm-transaction-runner';
 import { CourseExceptionFilter } from './presentation/http/course-exception.filter';
 import { ManagedCoursesController } from './presentation/http/managed-courses.controller';
-
-// CourseReferenceChecker adapter: reuse problem reference reader
-
-@Injectable()
-class CourseReferenceCheckerAdapter {
-  constructor(
-    @Inject(PROBLEM_REFERENCE_READER) private readonly problemReader: ProblemReferenceReader,
-  ) {}
-  async isProblemAttachable(problemId: string, principalUserId: string) {
-    const info = await this.problemReader.getProblemReference(problemId);
-    const attachable =
-      info.publishStatus !== undefined &&
-      info.isDeleted === false &&
-      (info.publishStatus === 'PUBLISHED' ||
-        ((info.publishStatus === 'DRAFT' || info.publishStatus === 'ON_HOLD') &&
-          info.createdBy === principalUserId));
-    return {
-      attachable,
-      createdBy: info.createdBy,
-      publishStatus: info.publishStatus,
-      isDeleted: info.isDeleted,
-    };
-  }
-  async hasCourseReferences(_courseId: string): Promise<boolean> {
-    return false;
-  }
-}
 
 @Module({
   imports: [TypeOrmModule.forFeature([Course, Chapter, ChapterProblem]), ProblemsModule],
@@ -80,6 +53,7 @@ class CourseReferenceCheckerAdapter {
   providers: [
     CourseExceptionFilter,
     CourseAuthorizationService,
+    CoursePublishReadinessService,
     CourseReadiness,
     CreateCourseUseCase,
     UpdateCourseUseCase,
@@ -102,12 +76,12 @@ class CourseReferenceCheckerAdapter {
     ListPublishedCoursesUseCase,
     PreviewCourseUseCase,
     CourseTypeOrmRepository,
+    CourseTypeOrmTransactionContext,
     CourseTypeOrmTransactionRunner,
-    CourseReferenceCheckerAdapter,
+    CourseTypeOrmReferenceChecker,
     { provide: COURSE_REPOSITORY, useExisting: CourseTypeOrmRepository },
-    { provide: COURSE_REFERENCE_CHECKER, useExisting: CourseReferenceCheckerAdapter },
+    { provide: COURSE_REFERENCE_CHECKER, useExisting: CourseTypeOrmReferenceChecker },
     { provide: COURSE_TRANSACTION_RUNNER, useExisting: CourseTypeOrmTransactionRunner },
-    // reference checker delegates to PROBLEM_REFERENCE_READER
   ],
 })
 export class CoursesModule {}

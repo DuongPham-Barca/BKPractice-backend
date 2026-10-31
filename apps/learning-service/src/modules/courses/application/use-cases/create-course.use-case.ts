@@ -1,9 +1,13 @@
+import {
+  COURSE_REPOSITORY,
+  COURSE_TRANSACTION_RUNNER,
+} from '@learning/modules/courses/course.tokens';
 import { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { CreatedBy } from '@learning/modules/courses/domain/value-objects';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '../../course.tokens';
 import type { CreateCourseCommand } from '../commands/course.commands';
+import { DuplicateCourseSlugError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
 import type { CourseRepository } from '../ports/out/course-repository.port';
 import type { TransactionRunner } from '../ports/out/transaction-runner.port';
@@ -19,6 +23,9 @@ export class CreateCourseUseCase {
 
   async execute(principal: Principal, command: CreateCourseCommand): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:create');
+    if (!(await this.repository.isSlugAvailable(command.slug.value))) {
+      throw new DuplicateCourseSlugError('Course slug is already in use');
+    }
     const course = Course.create({
       slug: command.slug,
       title: command.title,
