@@ -7,11 +7,13 @@ import {
   DomainValidationError,
   InvalidCourseState,
 } from '@learning/modules/courses/domain/errors/domain-validation.error';
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 
-@Catch(DomainValidationError, InvalidCourseState, Error)
+@Catch()
 export class CourseExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(CourseExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -25,6 +27,12 @@ export class CourseExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof CourseNotFoundError) status = HttpStatus.NOT_FOUND;
     else if (exception instanceof CourseHasReferencesError) status = HttpStatus.CONFLICT;
     else if (exception instanceof InvalidCourseState) status = HttpStatus.CONFLICT;
+
+    if (Number(status) >= 500) {
+      this.logger.error(message, exception instanceof Error ? exception.stack : undefined);
+    } else {
+      this.logger.warn(message);
+    }
 
     response.status(status).json({ statusCode: status, message, ...(issues ? { issues } : {}) });
   }
