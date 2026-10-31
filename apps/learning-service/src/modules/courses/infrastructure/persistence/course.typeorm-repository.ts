@@ -1,3 +1,4 @@
+import { DuplicateCourseSlugError } from '@learning/modules/courses/application/errors/application-errors';
 import type {
   CourseRepository,
   CourseListFilter,
@@ -11,19 +12,24 @@ import {
   ChapterProblem as ChapterProblemEntity,
 } from '@learning/modules/courses/entities/course.entity';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 
 import { CoursePersistenceMapper } from './course.persistence-mapper';
+import { CourseTypeOrmTransactionContext } from './course.typeorm-transaction-context';
 
 @Injectable()
 export class CourseTypeOrmRepository implements CourseRepository {
-  constructor(
-    @InjectRepository(CourseEntity) private readonly courseRepo: Repository<CourseEntity>,
-    @InjectRepository(ChapterEntity) private readonly chapterRepo: Repository<ChapterEntity>,
-    @InjectRepository(ChapterProblemEntity)
-    private readonly chapterProblemRepo: Repository<ChapterProblemEntity>,
-  ) {}
+  constructor(private readonly context: CourseTypeOrmTransactionContext) {}
+
+  private get courseRepo(): Repository<CourseEntity> {
+    return this.context.getManager().getRepository(CourseEntity);
+  }
+  private get chapterRepo(): Repository<ChapterEntity> {
+    return this.context.getManager().getRepository(ChapterEntity);
+  }
+  private get chapterProblemRepo(): Repository<ChapterProblemEntity> {
+    return this.context.getManager().getRepository(ChapterProblemEntity);
+  }
 
   private async loadAggregate(courseId: string): Promise<CourseAggregate | null> {
     const entity = await this.courseRepo.findOne({ where: { id: courseId } });
@@ -73,6 +79,15 @@ export class CourseTypeOrmRepository implements CourseRepository {
   }
 
   async loadForUpdate(id: string, includeDeleted = false): Promise<CourseAggregate | null> {
+    // Khoá dòng course để các ghi đồng thời trên cùng Course được tuần tự hoá (plan: SELECT ... FOR UPDATE).
+    const locked = await this.context
+      .requireManager()
+      .createQueryBuilder(CourseEntity, 'c')
+      .select('c.id', 'id')
+      .where('c.id = :id', { id })
+      .setLock('pessimistic_write')
+      .getRawOne<{ id: string }>();
+    if (locked === undefined) return null;
     return includeDeleted ? this.findByIdIncludingDeleted(id) : this.findById(id);
   }
 
@@ -124,15 +139,26 @@ export class CourseTypeOrmRepository implements CourseRepository {
   }
 
   async save(course: CourseAggregate, _expectedUpdatedAt?: Date): Promise<void> {
+    const manager = this.context.requireManager();
+    const courseRepo = manager.getRepository(CourseEntity);
+    const chapterRepo = manager.getRepository(ChapterEntity);
+    const chapterProblemRepo = manager.getRepository(ChapterProblemEntity);
     const entity = CoursePersistenceMapper.toEntity(course);
-    await this.courseRepo.save(entity);
+    try {
+      await courseRepo.save(entity);
+    } catch (error) {
+      // Race giữa kiểm tra slug và INSERT: UNIQUE (slug) vi phạm -> 409.
+      if (isUniqueViolation(error))
+        throw new DuplicateCourseSlugError('Course slug is already in use');
+      throw error;
+    }
 
     // sync chapters
-    const existingChapters = await this.chapterRepo.find({ where: { courseId: course.id.value } });
+    const existingChapters = await chapterRepo.find({ where: { courseId: course.id.value } });
     const newChapterIds = new Set(course.chapters.map((c) => c.id.value));
 
     for (const ch of existingChapters) {
-      if (!newChapterIds.has(ch.id)) await this.chapterRepo.delete(ch.id);
+      if (!newChapterIds.has(ch.id)) await chapterRepo.delete(ch.id);
     }
 
     for (const ch of course.chapters) {
@@ -145,51 +171,44 @@ export class CourseTypeOrmRepository implements CourseRepository {
       chapterEntity.title = ch.title.value;
       chapterEntity.description = ch.description.value;
       chapterEntity.displayOrder = course.chapters.indexOf(ch);
-      await this.chapterRepo.save(chapterEntity);
+      await chapterRepo.save(chapterEntity);
 
       // sync chapter problems
-      const existingProblems = await this.chapterProblemRepo.find({
+      const existingProblems = await chapterProblemRepo.find({
         where: { chapterId: ch.id.value },
       });
       const newProblemIds = new Set(ch.problemRefs.map((p) => p.value));
       for (const cp of existingProblems) {
-        if (!newProblemIds.has(cp.problemId)) await this.chapterProblemRepo.delete(cp.id);
+        if (!newProblemIds.has(cp.problemId)) await chapterProblemRepo.delete(cp.id);
       }
       for (let i = 0; i < ch.problemRefs.length; i += 1) {
         const ref = ch.problemRefs[i]!;
         const existing = existingProblems.find((cp) => cp.problemId === ref.value);
         if (existing) {
           existing.displayOrder = i;
-          await this.chapterProblemRepo.save(existing);
+          await chapterProblemRepo.save(existing);
         } else {
           const cp = new ChapterProblemEntity();
           cp.chapterId = ch.id.value;
           cp.problemId = ref.value;
           cp.displayOrder = i;
-          await this.chapterProblemRepo.save(cp);
+          await chapterProblemRepo.save(cp);
         }
       }
     }
   }
 
-  async softDelete(id: string, ownerId: string, at: Date): Promise<boolean> {
-    const result = await this.courseRepo.update(
-      { id, createdBy: ownerId, deletedAt: null as unknown as Date },
-      { deletedAt: at, updatedAt: at },
-    );
-    return (result.affected ?? 0) > 0;
-  }
-
-  async restore(id: string, ownerId: string, at: Date): Promise<boolean> {
-    const result = await this.courseRepo.update(
-      { id, createdBy: ownerId },
-      { deletedAt: null, updatedAt: at },
-    );
-    return (result.affected ?? 0) > 0;
-  }
-
   async hardDelete(id: string, ownerId: string): Promise<boolean> {
-    const result = await this.courseRepo.delete({ id, createdBy: ownerId });
+    const result = await this.context
+      .requireManager()
+      .getRepository(CourseEntity)
+      .delete({ id, createdBy: ownerId });
     return (result.affected ?? 0) > 0;
   }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    error instanceof QueryFailedError && (error.driverError as { code?: string })?.code === '23505'
+  );
 }

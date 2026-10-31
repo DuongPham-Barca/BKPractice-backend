@@ -1,6 +1,10 @@
+import {
+  COURSE_REPOSITORY,
+  COURSE_TRANSACTION_RUNNER,
+} from '@learning/modules/courses/course.tokens';
+import type { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '../../course.tokens';
 import type { UpdateCourseCommand } from '../commands/course.commands';
 import { CourseNotFoundError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
@@ -21,15 +25,15 @@ export class UpdateCourseUseCase {
     courseId: string,
     command: UpdateCourseCommand,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.update(command, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.update(command, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }

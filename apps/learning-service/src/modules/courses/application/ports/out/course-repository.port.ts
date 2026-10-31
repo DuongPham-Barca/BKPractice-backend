@@ -30,8 +30,6 @@ export interface CourseRepository {
   listManaged(filter: ManagedCourseListFilter): Promise<CoursePage<Course>>;
   isSlugAvailable(slug: string, excludeCourseId?: string): Promise<boolean>;
   save(course: Course, expectedUpdatedAt?: Date): Promise<void>;
-  softDelete(id: string, ownerId: string, at: Date): Promise<boolean>;
-  restore(id: string, ownerId: string, at: Date): Promise<boolean>;
   hardDelete(id: string, ownerId: string): Promise<boolean>;
 }
 
@@ -46,4 +44,8 @@ export interface CourseReferenceChecker {
     isDeleted: boolean | undefined;
   }>;
   hasCourseReferences(courseId: string): Promise<boolean>;
+  getProblemState(problemId: string): Promise<{
+    publishStatus: 'DRAFT' | 'PUBLISHED' | 'ON_HOLD' | undefined;
+    isDeleted: boolean | undefined;
+  }>;
 }

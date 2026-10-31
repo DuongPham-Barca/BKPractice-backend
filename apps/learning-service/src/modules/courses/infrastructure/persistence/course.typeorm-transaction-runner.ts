@@ -2,23 +2,17 @@ import type { TransactionRunner } from '@learning/modules/courses/application/po
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
+import { CourseTypeOrmTransactionContext } from './course.typeorm-transaction-context';
+
 @Injectable()
 export class CourseTypeOrmTransactionRunner implements TransactionRunner {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly context: CourseTypeOrmTransactionContext,
+  ) {}
 
   async run<T>(work: () => Promise<T>): Promise<T> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const result = await work();
-      await queryRunner.commitTransaction();
-      return result;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    if (this.context.current() !== null) return work();
+    return this.dataSource.transaction((manager) => this.context.runWith(manager, work));
   }
 }

@@ -1,12 +1,13 @@
-import { ProblemReference } from '@learning/modules/courses/domain/value-objects';
-import { ChapterId } from '@learning/modules/courses/domain/value-objects';
-import { Inject, Injectable } from '@nestjs/common';
-
 import {
   COURSE_REPOSITORY,
   COURSE_REFERENCE_CHECKER,
   COURSE_TRANSACTION_RUNNER,
-} from '../../course.tokens';
+} from '@learning/modules/courses/course.tokens';
+import type { Course } from '@learning/modules/courses/domain/course.aggregate';
+import { ProblemReference } from '@learning/modules/courses/domain/value-objects';
+import { ChapterId } from '@learning/modules/courses/domain/value-objects';
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
   CourseNotFoundError,
   ProblemNotAttachableError,
@@ -32,24 +33,24 @@ export class AddProblemToChapterUseCase {
     chapterId: ChapterId,
     problemId: ProblemReference,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    const info = await this.checker.isProblemAttachable(problemId.value, principal.userId);
-    if (!info.attachable) throw new ProblemNotAttachableError('Problem is not attachable');
-    try {
-      course.addProblemToChapter(chapterId, problemId, now);
-    } catch (e) {
-      if (e instanceof Error && e.message === 'Problem already in course')
-        throw new DuplicateProblemInCourseError(e.message);
-      throw e;
-    }
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      const info = await this.checker.isProblemAttachable(problemId.value, principal.userId);
+      if (!info.attachable) throw new ProblemNotAttachableError('Problem is not attachable');
+      try {
+        course.addProblemToChapter(chapterId, problemId, now);
+      } catch (e) {
+        if (e instanceof Error && e.message === 'Problem already in course')
+          throw new DuplicateProblemInCourseError(e.message);
+        throw e;
+      }
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }
 
@@ -66,16 +67,16 @@ export class RemoveProblemFromChapterUseCase {
     chapterId: ChapterId,
     problemId: ProblemReference,
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.removeProblemFromChapter(chapterId, problemId, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.removeProblemFromChapter(chapterId, problemId, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }
 
@@ -92,15 +93,15 @@ export class ReorderProblemsInChapterUseCase {
     chapterId: ChapterId,
     orderedIds: readonly ProblemReference[],
     now = new Date(),
-  ): Promise<unknown> {
+  ): Promise<Course> {
     this.authorization.requirePermission(principal, 'course:update');
-    const course = await this.repository.loadForUpdate(courseId);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    course.reorderProblemsInChapter(chapterId, orderedIds, now);
-    await this.transactionRunner.run(async () => {
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(course.createdBy.value, principal);
+      course.reorderProblemsInChapter(chapterId, orderedIds, now);
       await this.repository.save(course);
+      return course;
     });
-    return course;
   }
 }

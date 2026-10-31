@@ -35,3 +35,6 @@ export class CourseHasReferencesError extends ApplicationError {
 export class ConcurrentModificationError extends ApplicationError {
   readonly code = 'CONCURRENT_MODIFICATION';
 }
+export class DuplicateCourseSlugError extends ApplicationError {
+  readonly code = 'DUPLICATE_COURSE_SLUG';
+}
