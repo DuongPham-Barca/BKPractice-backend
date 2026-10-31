@@ -10,17 +10,28 @@ import { UnknownReferenceError } from '@learning/modules/problems/application/er
 import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
 import { DuplicateSlugError } from '@learning/modules/problems/domain/errors/duplicate-slug.error';
 import { InvalidProblemState } from '@learning/modules/problems/domain/errors/invalid-problem-state.error';
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 
 @Catch(DomainValidationError, InvalidProblemState, DuplicateSlugError, ApplicationError)
 export class ProblemExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(ProblemExceptionFilter.name);
+
   catch(
     exception: DomainValidationError | InvalidProblemState | DuplicateSlugError | ApplicationError,
     host: ArgumentsHost,
   ): void {
     const response = host.switchToHttp().getResponse<Response>();
     const status = this.statusOf(exception);
+
+    if (status >= 500) {
+      this.logger.error(
+        exception.message,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    } else {
+      this.logger.warn(exception.message);
+    }
 
     response.status(status).json({
       statusCode: status,
