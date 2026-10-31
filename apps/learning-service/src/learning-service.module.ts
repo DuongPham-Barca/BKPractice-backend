@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { CoursesModule } from './modules/courses/courses.module';
 import { learningEntities } from './modules/learning.entities';
 import { ProblemsModule } from './modules/problems/problems.module';
 import { ProgressModule } from './modules/progress/progress.module';
@@ -18,6 +19,7 @@ import { ProgressModule } from './modules/progress/progress.module';
     }),
     RabbitMqModule,
     ProblemsModule,
+    CoursesModule,
     ProgressModule,
     HealthModule.forService('learning-service'),
   ],
