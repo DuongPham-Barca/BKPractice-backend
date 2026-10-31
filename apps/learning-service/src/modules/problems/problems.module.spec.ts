@@ -46,6 +46,7 @@ import { SoftDeleteProblemUseCase } from './application/use-cases/soft-delete-pr
 import { UpdateProblemUseCase } from './application/use-cases/update-problem.use-case';
 import { UpdateTestCaseUseCase } from './application/use-cases/update-test-case.use-case';
 import { HarnessTypeOrmRepository } from './infrastructure/persistence/harness.typeorm-repository';
+import { ProblemReferenceReaderAdapter } from './infrastructure/persistence/problem-reference-reader.adapter';
 import { ProblemPersistenceMapper } from './infrastructure/persistence/problem.persistence-mapper';
 import { ProblemTypeOrmRepository } from './infrastructure/persistence/problem.typeorm-repository';
 import { TestCasePersistenceMapper } from './infrastructure/persistence/test-case.persistence-mapper';
@@ -59,6 +60,7 @@ import { ManagedTestCasesController } from './presentation/http/managed-test-cas
 import { PublicProblemsController } from './presentation/http/public-problems.controller';
 import {
   HARNESS_REPOSITORY,
+  PROBLEM_REFERENCE_READER,
   PROBLEM_REPOSITORY,
   TEST_CASE_REPOSITORY,
   TOPIC_TAG_READER,
@@ -167,6 +169,7 @@ describe('ProblemsModule dependency resolution', () => {
       TestCasePersistenceMapper,
       TestCaseTypeOrmRepository,
       HarnessTypeOrmRepository,
+      ProblemReferenceReaderAdapter,
     ];
     const stubbed: unknown[] = [
       PROBLEM_REPOSITORY,
@@ -174,6 +177,7 @@ describe('ProblemsModule dependency resolution', () => {
       HARNESS_REPOSITORY,
       TOPIC_TAG_READER,
       TRANSACTION_RUNNER,
+      PROBLEM_REFERENCE_READER,
     ];
     const providers = (Reflect.getMetadata('providers', ProblemsModule) as Provider[]).filter(
       (provider) =>

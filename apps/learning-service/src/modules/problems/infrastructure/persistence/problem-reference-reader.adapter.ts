@@ -1,22 +1,43 @@
 import type {
-  ProblemReferenceReader,
   ProblemReferenceInfo,
+  ProblemReferenceReader,
 } from '@learning/modules/problems/application/ports/out/problem-reference-reader.port.out';
-import type { ProblemRepository } from '@learning/modules/problems/domain/repositories/problem.repository.port.out';
-import { PROBLEM_REPOSITORY } from '@learning/modules/problems/problem.tokens';
-import { Inject, Injectable } from '@nestjs/common';
+import { Problem } from '@learning/modules/problems/entities/problem.entity';
+import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class ProblemReferenceReaderAdapter implements ProblemReferenceReader {
-  constructor(@Inject(PROBLEM_REPOSITORY) private readonly repository: ProblemRepository) {}
+  constructor(private readonly dataSource: DataSource) {}
 
-  async getProblemReference(problemId: string): Promise<ProblemReferenceInfo> {
-    const problem = await this.repository.findByIdIncludingDeleted(problemId);
-    if (!problem) return { publishStatus: undefined, isDeleted: undefined, createdBy: undefined };
-    return {
-      publishStatus: problem.publishStatus,
-      isDeleted: problem.deletedAt !== null,
-      createdBy: problem.createdBy.value,
-    };
+  async getProblemReferences(
+    problemIds: readonly string[],
+  ): Promise<readonly ProblemReferenceInfo[]> {
+    if (problemIds.length === 0) return [];
+    const rows = await this.dataSource
+      .getRepository(Problem)
+      .createQueryBuilder('p')
+      .select([
+        'p.id',
+        'p.slug',
+        'p.title',
+        'p.problemType',
+        'p.difficulty',
+        'p.publishStatus',
+        'p.createdBy',
+        'p.deletedAt',
+      ])
+      .where('p.id IN (:...ids)', { ids: [...problemIds] })
+      .getMany();
+    return rows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      problemType: row.problemType,
+      difficulty: row.difficulty,
+      publishStatus: row.publishStatus,
+      isDeleted: row.deletedAt !== null,
+      createdBy: row.createdBy,
+    }));
   }
 }

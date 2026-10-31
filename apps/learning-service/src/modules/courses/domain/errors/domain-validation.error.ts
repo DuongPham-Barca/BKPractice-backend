@@ -17,3 +17,17 @@ export class InvalidCourseState extends Error {
     this.name = 'InvalidCourseState';
   }
 }
+
+export class ProblemAlreadyInCourse extends Error {
+  constructor(public readonly problemId: string) {
+    super('Problem is already attached to this course');
+    this.name = 'ProblemAlreadyInCourse';
+  }
+}
+
+export class ChapterNotFound extends Error {
+  constructor(public readonly chapterId: string) {
+    super('Chapter not found');
+    this.name = 'ChapterNotFound';
+  }
+}

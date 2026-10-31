@@ -1,4 +1,9 @@
-import { assertMaxLength, assertString, assertTrimmedNonEmpty } from './value-object.utils';
+import {
+  assertMaxLength,
+  assertSafeMarkdown,
+  assertString,
+  assertTrimmedNonEmpty,
+} from './value-object.utils';
 
 export class CourseSlug {
   readonly value: string;
@@ -27,7 +32,7 @@ export class CourseDescription {
       return;
     }
     const text = assertString(value, 'description');
-    this.value = assertMaxLength(text, 'description', 20000);
+    this.value = assertSafeMarkdown(assertMaxLength(text, 'description', 20000), 'description');
     Object.freeze(this);
   }
 }
@@ -50,7 +55,10 @@ export class ChapterDescription {
       return;
     }
     const text = assertString(value, 'chapterDescription');
-    this.value = assertMaxLength(text, 'chapterDescription', 5000);
+    this.value = assertSafeMarkdown(
+      assertMaxLength(text, 'chapterDescription', 5000),
+      'chapterDescription',
+    );
     Object.freeze(this);
   }
 }

@@ -1,45 +1,43 @@
 import type { Principal } from '@learning/modules/courses/application/models/principal';
 import {
   AddChapterUseCase,
-  UpdateChapterUseCase,
   RemoveChapterUseCase,
   ReorderChaptersUseCase,
+  UpdateChapterUseCase,
 } from '@learning/modules/courses/application/use-cases/chapter.use-cases';
 import {
-  PublishCourseUseCase,
+  DeleteCourseUseCase,
   HoldCourseUseCase,
+  PublishCourseUseCase,
   RepublishCourseUseCase,
-  SoftDeleteCourseUseCase,
   RestoreCourseUseCase,
-  HardDeleteCourseUseCase,
 } from '@learning/modules/courses/application/use-cases/course-lifecycle.use-cases';
 import { CreateCourseUseCase } from '@learning/modules/courses/application/use-cases/create-course.use-case';
 import {
-  AddProblemToChapterUseCase,
-  RemoveProblemFromChapterUseCase,
-  ReorderProblemsInChapterUseCase,
+  AttachProblemUseCase,
+  DetachProblemUseCase,
+  ReorderChapterProblemsUseCase,
 } from '@learning/modules/courses/application/use-cases/problem-in-chapter.use-cases';
 import {
   GetManagedCourseUseCase,
-  ListManagedCoursesUseCase,
   GetPublishedCourseUseCase,
+  ListManagedCoursesUseCase,
   ListPublishedCoursesUseCase,
-  PreviewCourseUseCase,
 } from '@learning/modules/courses/application/use-cases/read-course.use-cases';
 import { UpdateCourseUseCase } from '@learning/modules/courses/application/use-cases/update-course.use-case';
 import {
-  CourseSlug,
-  CourseTitle,
-  CourseDescription,
-  ChapterTitle,
   ChapterDescription,
   ChapterId,
+  ChapterTitle,
+  CourseDescription,
+  CourseSlug,
+  CourseTitle,
   ProblemReference,
 } from '@learning/modules/courses/domain/value-objects';
 import { CourseExceptionFilter } from '@learning/modules/courses/presentation/http/course-exception.filter';
 import {
   AddChapterRequestDto,
-  AddProblemRequestDto,
+  AttachProblemRequestDto,
   CreateCourseRequestDto,
   IncludeDeletedQueryDto,
   ManagedCourseQueryDto,
@@ -49,14 +47,19 @@ import {
   UpdateCourseRequestDto,
 } from '@learning/modules/courses/presentation/http/dto/course.request.dto';
 import {
+  CourseDetailResponseDto,
   CourseListResponseDto,
-  CourseResponseDto,
+  ManagedCourseListResponseDto,
+  ManagedCourseResponseDto,
 } from '@learning/modules/courses/presentation/http/dto/course.response.dto';
 import {
+  toCourseDetailResponse,
   toCourseListResponse,
-  toCourseResponse,
+  toManagedCourseListResponse,
+  toManagedCourseResponse,
 } from '@learning/modules/courses/presentation/http/mappers/course-response.mapper';
 import { TrustedPrincipal } from '@learning/modules/problems/presentation/http/decorators/trusted-principal.decorator';
+import { TrustedPrincipalGuard } from '@learning/modules/problems/presentation/http/guards/trusted-principal.guard';
 import {
   Body,
   Controller,
@@ -71,12 +74,15 @@ import {
   Put,
   Query,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -84,315 +90,305 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+/**
+ * 18 route theo bảng API của plan LRN-003. Route `managed` khai báo trước `:idOrSlug`. Mỗi route gọi
+ * đúng một use case; không có logic nghiệp vụ ở đây.
+ */
 @ApiTags('courses')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Missing or malformed trusted principal headers.' })
 @ApiForbiddenResponse({ description: 'Missing role/permission or not the owner.' })
-@ApiBadRequestResponse({ description: 'Validation or readiness failure.' })
-@ApiConflictResponse({ description: 'Invalid state, duplicate or referenced.' })
+@ApiBadRequestResponse({ description: 'Validation, limit or readiness failure.' })
+@ApiConflictResponse({ description: 'Invalid state, duplicate slug/problem or referenced.' })
 @ApiNotFoundResponse({ description: 'Course or chapter not found.' })
+@UseGuards(TrustedPrincipalGuard)
 @UseFilters(CourseExceptionFilter)
 @Controller('api/courses')
 export class ManagedCoursesController {
   constructor(
-    private readonly createCourseUseCase: CreateCourseUseCase,
-    private readonly updateCourseUseCase: UpdateCourseUseCase,
-    private readonly publishCourseUseCase: PublishCourseUseCase,
-    private readonly holdCourseUseCase: HoldCourseUseCase,
-    private readonly republishCourseUseCase: RepublishCourseUseCase,
-    private readonly softDeleteCourseUseCase: SoftDeleteCourseUseCase,
-    private readonly restoreCourseUseCase: RestoreCourseUseCase,
-    private readonly hardDeleteCourseUseCase: HardDeleteCourseUseCase,
-    private readonly addChapterUseCase: AddChapterUseCase,
-    private readonly updateChapterUseCase: UpdateChapterUseCase,
-    private readonly removeChapterUseCase: RemoveChapterUseCase,
-    private readonly reorderChaptersUseCase: ReorderChaptersUseCase,
-    private readonly addProblemUseCase: AddProblemToChapterUseCase,
-    private readonly removeProblemUseCase: RemoveProblemFromChapterUseCase,
-    private readonly reorderProblemsUseCase: ReorderProblemsInChapterUseCase,
-    private readonly getManagedCourseUseCase: GetManagedCourseUseCase,
-    private readonly listManagedCoursesUseCase: ListManagedCoursesUseCase,
-    private readonly getPublishedCourseUseCase: GetPublishedCourseUseCase,
-    private readonly listPublishedCoursesUseCase: ListPublishedCoursesUseCase,
-    private readonly previewCourseUseCase: PreviewCourseUseCase,
+    private readonly createCourse: CreateCourseUseCase,
+    private readonly updateCourse: UpdateCourseUseCase,
+    private readonly publishCourse: PublishCourseUseCase,
+    private readonly holdCourse: HoldCourseUseCase,
+    private readonly republishCourse: RepublishCourseUseCase,
+    private readonly deleteCourse: DeleteCourseUseCase,
+    private readonly restoreCourse: RestoreCourseUseCase,
+    private readonly addChapter: AddChapterUseCase,
+    private readonly updateChapter: UpdateChapterUseCase,
+    private readonly removeChapter: RemoveChapterUseCase,
+    private readonly reorderChapters: ReorderChaptersUseCase,
+    private readonly attachProblem: AttachProblemUseCase,
+    private readonly detachProblem: DetachProblemUseCase,
+    private readonly reorderProblems: ReorderChapterProblemsUseCase,
+    private readonly getManagedCourse: GetManagedCourseUseCase,
+    private readonly listManagedCourses: ListManagedCoursesUseCase,
+    private readonly getPublishedCourse: GetPublishedCourseUseCase,
+    private readonly listPublishedCourses: ListPublishedCoursesUseCase,
   ) {}
 
-  @ApiOperation({ summary: 'Create a draft course' })
-  @ApiOkResponse({ type: CourseResponseDto })
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(
-    @TrustedPrincipal() principal: Principal,
-    @Body() body: CreateCourseRequestDto,
-  ): Promise<CourseResponseDto> {
-    const command = {
-      slug: new CourseSlug(body.slug),
-      title: new CourseTitle(body.title),
-      description: new CourseDescription(body.description ?? null),
-    };
-    const course = await this.createCourseUseCase.execute(principal, command);
-    return toCourseResponse(course);
-  }
-
-  @ApiOperation({ summary: 'List own courses' })
+  @ApiOperation({ summary: 'List published courses' })
   @ApiOkResponse({ type: CourseListResponseDto })
-  @Get('managed')
-  async listManaged(
-    @TrustedPrincipal() principal: Principal,
-    @Query() q: ManagedCourseQueryDto,
-  ): Promise<CourseListResponseDto> {
+  @Get()
+  async listPublished(@Query() query: PublishedCourseQueryDto): Promise<CourseListResponseDto> {
     return toCourseListResponse(
-      await this.listManagedCoursesUseCase.execute(principal, q.includeDeleted, q.page, q.limit),
+      await this.listPublishedCourses.execute({
+        page: query.page,
+        limit: query.pageSize,
+        search: query.q,
+      }),
     );
   }
 
-  @ApiOperation({ summary: 'Get own course' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOperation({ summary: 'List own courses in any state' })
+  @ApiOkResponse({ type: ManagedCourseListResponseDto })
+  @Get('managed')
+  async listManaged(
+    @TrustedPrincipal() principal: Principal,
+    @Query() query: ManagedCourseQueryDto,
+  ): Promise<ManagedCourseListResponseDto> {
+    return toManagedCourseListResponse(
+      await this.listManagedCourses.execute(
+        principal,
+        query.includeDeleted,
+        query.page,
+        query.pageSize,
+        query.q,
+      ),
+    );
+  }
+
+  @ApiOperation({ summary: 'Get own course with problem states and readiness' })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
   @Get('managed/:id')
   async getManaged(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() q: IncludeDeletedQueryDto,
-  ): Promise<CourseResponseDto> {
-    const course = await this.getManagedCourseUseCase.execute(principal, id, q.includeDeleted);
-    return toCourseResponse(course);
+    @Query() query: IncludeDeletedQueryDto,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.getManagedCourse.execute(principal, id, query.includeDeleted),
+    );
+  }
+
+  @ApiOperation({ summary: 'Get a published course by id or slug (visible problems only)' })
+  @ApiOkResponse({ type: CourseDetailResponseDto })
+  @Get(':idOrSlug')
+  async getPublished(@Param('idOrSlug') idOrSlug: string): Promise<CourseDetailResponseDto> {
+    return toCourseDetailResponse(await this.getPublishedCourse.execute(idOrSlug));
+  }
+
+  @ApiOperation({ summary: 'Create a draft course' })
+  @ApiCreatedResponse({ type: ManagedCourseResponseDto })
+  @Post()
+  async create(
+    @TrustedPrincipal() principal: Principal,
+    @Body() body: CreateCourseRequestDto,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.createCourse.execute(principal, {
+        slug: new CourseSlug(body.slug),
+        title: new CourseTitle(body.title),
+        description: new CourseDescription(body.description ?? null),
+      }),
+    );
   }
 
   @ApiOperation({ summary: 'Update course title/description' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
   @Patch(':id')
   async update(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCourseRequestDto,
-  ): Promise<CourseResponseDto> {
-    const command = {
-      title: body.title ? new CourseTitle(body.title) : undefined,
-      description:
-        body.description === undefined ? undefined : new CourseDescription(body.description),
-    };
-    const course = await this.updateCourseUseCase.execute(principal, id, command);
-    return toCourseResponse(course);
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.updateCourse.execute(principal, id, {
+        title: body.title === undefined ? undefined : new CourseTitle(body.title),
+        description:
+          body.description === undefined ? undefined : new CourseDescription(body.description),
+      }),
+    );
   }
 
   @ApiOperation({ summary: 'Publish a ready course' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @HttpCode(HttpStatus.OK)
   @Post(':id/publish')
   async publish(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.publishCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(await this.publishCourse.execute(principal, id));
   }
 
   @ApiOperation({ summary: 'Put a published course on hold' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @HttpCode(HttpStatus.OK)
   @Post(':id/hold')
   async hold(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.holdCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(await this.holdCourse.execute(principal, id));
   }
 
-  @ApiOperation({ summary: 'Republish a held course' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOperation({ summary: 'Republish a held course (readiness is re-checked)' })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @HttpCode(HttpStatus.OK)
   @Post(':id/republish')
   async republish(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.republishCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(await this.republishCourse.execute(principal, id));
   }
 
-  @ApiOperation({ summary: 'Soft-delete a published/on-hold course' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOperation({
+    summary: 'Delete a course: hard-delete an unreferenced draft, soft-delete otherwise',
+  })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  async softDelete(
+  async remove(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.softDeleteCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
+  ): Promise<void> {
+    await this.deleteCourse.execute(principal, id);
   }
 
-  @ApiOperation({ summary: 'Restore a soft-deleted course' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOperation({ summary: 'Restore a soft-deleted course to its previous status' })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @HttpCode(HttpStatus.OK)
   @Post(':id/restore')
   async restore(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.restoreCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(await this.restoreCourse.execute(principal, id));
   }
 
-  @ApiOperation({ summary: 'Hard-delete an unreferenced draft course' })
-  @Delete(':id/hard')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async hardDelete(
-    @TrustedPrincipal() principal: Principal,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
-    await this.hardDeleteCourseUseCase.execute(principal, id);
-  }
-
-  @ApiOperation({ summary: 'Preview a course as a learner would see it' })
-  @ApiOkResponse({ type: CourseResponseDto })
-  @Post(':id/preview')
-  async preview(
-    @TrustedPrincipal() principal: Principal,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.previewCourseUseCase.execute(principal, id);
-    return toCourseResponse(course);
-  }
-
-  @ApiOperation({ summary: 'Add a chapter' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOperation({ summary: 'Add a chapter (at the end or at `position`)' })
+  @ApiCreatedResponse({ type: ManagedCourseResponseDto })
   @Post(':id/chapters')
-  async addChapter(
+  async addChapterToCourse(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: AddChapterRequestDto,
-  ): Promise<CourseResponseDto> {
-    const result = await this.addChapterUseCase.execute(
-      principal,
-      id,
-      new ChapterTitle(body.title),
-      new ChapterDescription(body.description ?? null),
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.addChapter.execute(
+        principal,
+        id,
+        new ChapterTitle(body.title),
+        new ChapterDescription(body.description ?? null),
+        body.position,
+      ),
     );
-    return toCourseResponse(result.course);
+  }
+
+  @ApiOperation({ summary: 'Reorder chapters (must list exactly the current set)' })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @Put(':id/chapters/order')
+  async reorderCourseChapters(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: ReorderRequestDto,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.reorderChapters.execute(
+        principal,
+        id,
+        body.ids.map((value) => ChapterId.from(value)),
+      ),
+    );
   }
 
   @ApiOperation({ summary: 'Update a chapter' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
   @Patch(':id/chapters/:chapterId')
-  async updateChapter(
+  async updateCourseChapter(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('chapterId', ParseUUIDPipe) chapterId: string,
     @Body() body: UpdateChapterRequestDto,
-  ): Promise<CourseResponseDto> {
-    const title = body.title ? new ChapterTitle(body.title) : undefined;
-    const description =
-      body.description === undefined ? undefined : new ChapterDescription(body.description);
-    const course = await this.updateChapterUseCase.execute(
-      principal,
-      id,
-      ChapterId.from(chapterId),
-      title,
-      description,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.updateChapter.execute(
+        principal,
+        id,
+        ChapterId.from(chapterId),
+        body.title === undefined ? undefined : new ChapterTitle(body.title),
+        body.description === undefined ? undefined : new ChapterDescription(body.description),
+      ),
     );
-    return toCourseResponse(course);
   }
 
   @ApiOperation({ summary: 'Remove a chapter and its problem references' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id/chapters/:chapterId')
-  async removeChapter(
+  async removeCourseChapter(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('chapterId', ParseUUIDPipe) chapterId: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.removeChapterUseCase.execute(
-      principal,
-      id,
-      ChapterId.from(chapterId),
-    );
-    return toCourseResponse(course);
-  }
-
-  @ApiOperation({ summary: 'Reorder chapters' })
-  @ApiOkResponse({ type: CourseResponseDto })
-  @Put(':id/chapters/order')
-  async reorderChapters(
-    @TrustedPrincipal() principal: Principal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: ReorderRequestDto,
-  ): Promise<CourseResponseDto> {
-    const ids = body.orderedIds.map((x) => ChapterId.from(x));
-    const course = await this.reorderChaptersUseCase.execute(principal, id, ids);
-    return toCourseResponse(course);
+  ): Promise<void> {
+    await this.removeChapter.execute(principal, id, ChapterId.from(chapterId));
   }
 
   @ApiOperation({ summary: 'Attach a problem to a chapter' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiCreatedResponse({ type: ManagedCourseResponseDto })
   @Post(':id/chapters/:chapterId/problems')
-  async addProblem(
+  async attach(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('chapterId', ParseUUIDPipe) chapterId: string,
-    @Body() body: AddProblemRequestDto,
-  ): Promise<CourseResponseDto> {
-    const course = await this.addProblemUseCase.execute(
-      principal,
-      id,
-      ChapterId.from(chapterId),
-      new ProblemReference(body.problemId),
+    @Body() body: AttachProblemRequestDto,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.attachProblem.execute(
+        principal,
+        id,
+        ChapterId.from(chapterId),
+        new ProblemReference(body.problemId),
+        body.position,
+      ),
     );
-    return toCourseResponse(course);
+  }
+
+  @ApiOperation({ summary: 'Reorder problems in a chapter (must list exactly the current set)' })
+  @ApiOkResponse({ type: ManagedCourseResponseDto })
+  @Put(':id/chapters/:chapterId/problems/order')
+  async reorderChapterProblems(
+    @TrustedPrincipal() principal: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('chapterId', ParseUUIDPipe) chapterId: string,
+    @Body() body: ReorderRequestDto,
+  ): Promise<ManagedCourseResponseDto> {
+    return toManagedCourseResponse(
+      await this.reorderProblems.execute(
+        principal,
+        id,
+        ChapterId.from(chapterId),
+        body.ids.map((value) => new ProblemReference(value)),
+      ),
+    );
   }
 
   @ApiOperation({ summary: 'Detach a problem from a chapter' })
-  @ApiOkResponse({ type: CourseResponseDto })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id/chapters/:chapterId/problems/:problemId')
-  async removeProblem(
+  async detach(
     @TrustedPrincipal() principal: Principal,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('chapterId', ParseUUIDPipe) chapterId: string,
     @Param('problemId', ParseUUIDPipe) problemId: string,
-  ): Promise<CourseResponseDto> {
-    const course = await this.removeProblemUseCase.execute(
+  ): Promise<void> {
+    await this.detachProblem.execute(
       principal,
       id,
       ChapterId.from(chapterId),
       new ProblemReference(problemId),
     );
-    return toCourseResponse(course);
-  }
-
-  @ApiOperation({ summary: 'Reorder problems in a chapter' })
-  @ApiOkResponse({ type: CourseResponseDto })
-  @Put(':id/chapters/:chapterId/problems/order')
-  async reorderProblems(
-    @TrustedPrincipal() principal: Principal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('chapterId', ParseUUIDPipe) chapterId: string,
-    @Body() body: ReorderRequestDto,
-  ): Promise<CourseResponseDto> {
-    const ids = body.orderedIds.map((x) => new ProblemReference(x));
-    const course = await this.reorderProblemsUseCase.execute(
-      principal,
-      id,
-      ChapterId.from(chapterId),
-      ids,
-    );
-    return toCourseResponse(course);
-  }
-
-  @ApiOperation({ summary: 'List published courses' })
-  @ApiOkResponse({ type: CourseListResponseDto })
-  @Get()
-  async listPublished(@Query() q: PublishedCourseQueryDto): Promise<CourseListResponseDto> {
-    return toCourseListResponse(
-      await this.listPublishedCoursesUseCase.execute({
-        page: q.page,
-        limit: q.limit,
-        search: q.search,
-      }),
-    );
-  }
-
-  @ApiOperation({ summary: 'Get a published course by id or slug' })
-  @ApiOkResponse({ type: CourseResponseDto })
-  @Get(':idOrSlug')
-  async getPublished(@Param('idOrSlug') idOrSlug: string): Promise<CourseResponseDto> {
-    const course = await this.getPublishedCourseUseCase.execute(idOrSlug);
-    return toCourseResponse(course);
   }
 }
