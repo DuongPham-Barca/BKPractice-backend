@@ -14,14 +14,8 @@ export class ForbiddenError extends ApplicationError {
 export class CourseNotFoundError extends ApplicationError {
   readonly code = 'COURSE_NOT_FOUND';
 }
-export class ChapterNotFoundError extends ApplicationError {
-  readonly code = 'CHAPTER_NOT_FOUND';
-}
 export class ProblemNotAttachableError extends ApplicationError {
   readonly code = 'PROBLEM_NOT_ATTACHABLE';
-}
-export class DuplicateProblemInCourseError extends ApplicationError {
-  readonly code = 'DUPLICATE_PROBLEM_IN_COURSE';
 }
 export class CourseNotReadyError extends ApplicationError {
   readonly code = 'COURSE_NOT_READY';

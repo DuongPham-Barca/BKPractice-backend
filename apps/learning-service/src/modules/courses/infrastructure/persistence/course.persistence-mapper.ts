@@ -1,5 +1,4 @@
 import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
-import type { CourseStatus } from '@learning/modules/courses/domain/value-objects';
 import {
   ChapterDescription,
   ChapterId,
@@ -41,7 +40,7 @@ export class CoursePersistenceMapper {
       slug: new CourseSlug(entity.slug),
       title: new CourseTitle(entity.title),
       description: new CourseDescription(entity.description),
-      status: entity.publishStatus as CourseStatus,
+      status: entity.status,
       deletedMarker: entity.deletedAt ? DeletedMarker.at(entity.deletedAt) : DeletedMarker.none(),
       chapters: chapterList,
       createdBy: new CreatedBy(entity.createdBy),
@@ -57,7 +56,7 @@ export class CoursePersistenceMapper {
     entity.slug = course.slug.value;
     entity.description = course.description.value;
     entity.createdBy = course.createdBy.value;
-    entity.publishStatus = course.status;
+    entity.status = course.status;
     entity.deletedAt = course.deletedMarker.deletedAt;
     entity.createdAt = course.createdAt;
     entity.updatedAt = course.updatedAt;

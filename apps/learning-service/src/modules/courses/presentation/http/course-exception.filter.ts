@@ -1,18 +1,18 @@
 import {
-  ChapterNotFoundError,
   ConcurrentModificationError,
   CourseHasReferencesError,
   CourseNotFoundError,
   CourseNotReadyError,
   DuplicateCourseSlugError,
-  DuplicateProblemInCourseError,
   ForbiddenError,
   ProblemNotAttachableError,
   UnauthorizedError,
 } from '@learning/modules/courses/application/errors/application-errors';
 import {
+  ChapterNotFound,
   DomainValidationError,
   InvalidCourseState,
+  ProblemAlreadyInCourse,
 } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import { UnauthorizedError as TrustedPrincipalUnauthorizedError } from '@learning/modules/problems/application/errors/unauthorized.error';
 import {
@@ -35,7 +35,7 @@ function statusOf(exception: unknown): HttpStatus {
     return HttpStatus.UNAUTHORIZED;
   }
   if (exception instanceof ForbiddenError) return HttpStatus.FORBIDDEN;
-  if (exception instanceof CourseNotFoundError || exception instanceof ChapterNotFoundError) {
+  if (exception instanceof CourseNotFoundError || exception instanceof ChapterNotFound) {
     return HttpStatus.NOT_FOUND;
   }
   if (
@@ -48,7 +48,7 @@ function statusOf(exception: unknown): HttpStatus {
   if (
     exception instanceof CourseHasReferencesError ||
     exception instanceof DuplicateCourseSlugError ||
-    exception instanceof DuplicateProblemInCourseError ||
+    exception instanceof ProblemAlreadyInCourse ||
     exception instanceof ConcurrentModificationError ||
     exception instanceof InvalidCourseState
   ) {

@@ -20,8 +20,14 @@ export class Course {
   @Column({ name: 'created_by', type: 'uuid' }) createdBy!: string;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
-  @Column({ name: 'publish_status', type: 'varchar', length: 20, default: 'DRAFT' })
-  publishStatus!: string;
+  @Column({
+    name: 'status',
+    type: 'enum',
+    enum: ['DRAFT', 'PUBLISHED', 'ON_HOLD'],
+    enumName: 'courses_status_enum',
+    default: 'DRAFT',
+  })
+  status!: 'DRAFT' | 'PUBLISHED' | 'ON_HOLD';
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true }) deletedAt!: Date | null;
 }
 
@@ -44,6 +50,7 @@ export class ChapterProblem {
   @JoinColumn({ name: 'chapter_id' })
   chapter!: Chapter;
   @Column({ name: 'chapter_id', type: 'uuid' }) chapterId!: string;
+  @Column({ name: 'course_id', type: 'uuid' }) courseId!: string;
   @Column({ name: 'problem_id', type: 'uuid' }) problemId!: string;
   @Column({ name: 'display_order', type: 'integer', default: 0 }) displayOrder!: number;
 }

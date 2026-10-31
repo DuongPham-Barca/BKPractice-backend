@@ -1,4 +1,9 @@
-import { DomainValidationError, InvalidCourseState } from './errors/domain-validation.error';
+import {
+  DomainValidationError,
+  ChapterNotFound,
+  InvalidCourseState,
+  ProblemAlreadyInCourse,
+} from './errors/domain-validation.error';
 import type { CourseSlug, CourseStatus, CourseTitle, CreatedBy } from './value-objects';
 import type { Chapter, ChapterTitle, ProblemReference } from './value-objects';
 import { CourseDescription, CourseId, DeletedMarker } from './value-objects';
@@ -33,6 +38,8 @@ export interface UpdateCourseInput {
 export interface AddChapterInput {
   readonly title: ChapterTitle;
   readonly description?: ChapterDescription | null;
+  /** Vị trí chèn (0..số Chapter hiện có); mặc định cuối danh sách. */
+  readonly position?: number;
 }
 
 export interface UpdateChapterInput {
@@ -173,7 +180,8 @@ export class Course {
       description: input.description ?? new ChapterDescription(null),
       problemRefs: [],
     };
-    this._chapters.push(chapter);
+    const position = resolvePosition(input.position, this._chapters.length, 'chapterPosition');
+    this._chapters.splice(position, 0, chapter);
     this._updatedAt = updatedAt;
     return chapter.id;
   }
@@ -181,7 +189,7 @@ export class Course {
   updateChapter(chapterId: ChapterId, input: UpdateChapterInput, now: Date = new Date()): void {
     if (!this.isEditable) throw new InvalidCourseState('status', 'Course is not editable');
     const index = this._chapters.findIndex((c) => c.id.equals(chapterId));
-    if (index < 0) throw new DomainValidationError('chapterId', 'Chapter not found');
+    if (index < 0) throw new ChapterNotFound(chapterId.value);
     const updatedAt = assertValidDate(now, 'now');
     const current = this._chapters[index]!;
     this._chapters[index] = {
@@ -196,7 +204,7 @@ export class Course {
   removeChapter(chapterId: ChapterId, now: Date = new Date()): void {
     if (!this.isEditable) throw new InvalidCourseState('status', 'Course is not editable');
     const index = this._chapters.findIndex((c) => c.id.equals(chapterId));
-    if (index < 0) throw new DomainValidationError('chapterId', 'Chapter not found');
+    if (index < 0) throw new ChapterNotFound(chapterId.value);
     const updatedAt = assertValidDate(now, 'now');
     this._chapters.splice(index, 1);
     this._updatedAt = updatedAt;
@@ -225,10 +233,11 @@ export class Course {
     chapterId: ChapterId,
     problemId: ProblemReference,
     now: Date = new Date(),
+    position?: number,
   ): void {
     if (!this.isEditable) throw new InvalidCourseState('status', 'Course is not editable');
     const chapterIndex = this._chapters.findIndex((c) => c.id.equals(chapterId));
-    if (chapterIndex < 0) throw new DomainValidationError('chapterId', 'Chapter not found');
+    if (chapterIndex < 0) throw new ChapterNotFound(chapterId.value);
     const chapter = this._chapters[chapterIndex]!;
     if (chapter.problemRefs.length >= MAX_PROBLEMS_PER_CHAPTER) {
       throw new DomainValidationError(
@@ -236,16 +245,14 @@ export class Course {
         `Chapter may have at most ${MAX_PROBLEMS_PER_CHAPTER} problems`,
       );
     }
-    if (chapter.problemRefs.some((p) => p.value === problemId.value)) {
-      throw new DomainValidationError('problems', 'Problem already in chapter');
-    }
-    // unique across course
+    // Mỗi Problem tối đa một lần trong cả Course (kể cả cùng Chapter).
     const allRefs = this._chapters.flatMap((c) => c.problemRefs);
     if (allRefs.some((p) => p.value === problemId.value)) {
-      throw new DomainValidationError('problems', 'Problem already in course');
+      throw new ProblemAlreadyInCourse(problemId.value);
     }
     const updatedAt = assertValidDate(now, 'now');
-    const newRefs = [...chapter.problemRefs, problemId];
+    const newRefs = [...chapter.problemRefs];
+    newRefs.splice(resolvePosition(position, newRefs.length, 'problemPosition'), 0, problemId);
     this._chapters[chapterIndex] = { ...chapter, problemRefs: newRefs };
     this._updatedAt = updatedAt;
   }
@@ -257,7 +264,7 @@ export class Course {
   ): void {
     if (!this.isEditable) throw new InvalidCourseState('status', 'Course is not editable');
     const chapterIndex = this._chapters.findIndex((c) => c.id.equals(chapterId));
-    if (chapterIndex < 0) throw new DomainValidationError('chapterId', 'Chapter not found');
+    if (chapterIndex < 0) throw new ChapterNotFound(chapterId.value);
     const chapter = this._chapters[chapterIndex]!;
     const refIndex = chapter.problemRefs.findIndex((p) => p.value === problemId.value);
     if (refIndex < 0) throw new DomainValidationError('problems', 'Problem not in chapter');
@@ -275,7 +282,7 @@ export class Course {
   ): void {
     if (!this.isEditable) throw new InvalidCourseState('status', 'Course is not editable');
     const chapterIndex = this._chapters.findIndex((c) => c.id.equals(chapterId));
-    if (chapterIndex < 0) throw new DomainValidationError('chapterId', 'Chapter not found');
+    if (chapterIndex < 0) throw new ChapterNotFound(chapterId.value);
     const chapter = this._chapters[chapterIndex]!;
     if (orderedIds.length !== chapter.problemRefs.length) {
       throw new DomainValidationError('problemOrder', 'Reorder must include all problems');
@@ -364,3 +371,11 @@ export class Course {
 }
 
 export type { CourseSnapshot as CourseSnapshotType };
+
+function resolvePosition(position: number | undefined, length: number, field: string): number {
+  if (position === undefined) return length;
+  if (!Number.isInteger(position) || position < 0 || position > length) {
+    throw new DomainValidationError(field, `${field} must be an integer between 0 and ${length}`);
+  }
+  return position;
+}

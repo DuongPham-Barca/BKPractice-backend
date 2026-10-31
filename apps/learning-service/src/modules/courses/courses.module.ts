@@ -5,82 +5,87 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProblemsModule } from '../problems/problems.module';
 
 import { CourseAuthorizationService } from './application/services/course-authorization.service';
+import { CourseMutationService } from './application/services/course-mutation.service';
 import { CoursePublishReadinessService } from './application/services/course-publish-readiness.service';
+import { CourseViewAssembler } from './application/services/course-view.assembler';
 import {
   AddChapterUseCase,
-  UpdateChapterUseCase,
   RemoveChapterUseCase,
   ReorderChaptersUseCase,
+  UpdateChapterUseCase,
 } from './application/use-cases/chapter.use-cases';
 import {
-  PublishCourseUseCase,
+  DeleteCourseUseCase,
   HoldCourseUseCase,
+  PublishCourseUseCase,
   RepublishCourseUseCase,
-  SoftDeleteCourseUseCase,
   RestoreCourseUseCase,
-  HardDeleteCourseUseCase,
 } from './application/use-cases/course-lifecycle.use-cases';
 import { CreateCourseUseCase } from './application/use-cases/create-course.use-case';
 import {
-  AddProblemToChapterUseCase,
-  RemoveProblemFromChapterUseCase,
-  ReorderProblemsInChapterUseCase,
+  AttachProblemUseCase,
+  DetachProblemUseCase,
+  ReorderChapterProblemsUseCase,
 } from './application/use-cases/problem-in-chapter.use-cases';
 import {
   GetManagedCourseUseCase,
-  ListManagedCoursesUseCase,
   GetPublishedCourseUseCase,
+  ListManagedCoursesUseCase,
   ListPublishedCoursesUseCase,
-  PreviewCourseUseCase,
 } from './application/use-cases/read-course.use-cases';
 import { UpdateCourseUseCase } from './application/use-cases/update-course.use-case';
 import {
-  COURSE_REPOSITORY,
+  COURSE_PROBLEM_CATALOG,
   COURSE_REFERENCE_CHECKER,
+  COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
 } from './course.tokens';
-import { Course, Chapter, ChapterProblem } from './entities/course.entity';
+import { Chapter, ChapterProblem, Course } from './entities/course.entity';
 import { CourseTypeOrmReferenceChecker } from './infrastructure/persistence/course-reference.checker';
 import { CourseTypeOrmRepository } from './infrastructure/persistence/course.typeorm-repository';
 import { CourseTypeOrmTransactionContext } from './infrastructure/persistence/course.typeorm-transaction-context';
 import { CourseTypeOrmTransactionRunner } from './infrastructure/persistence/course.typeorm-transaction-runner';
+import { ProblemReferenceCatalogAdapter } from './infrastructure/problems/problem-catalog.adapter';
 import { CourseExceptionFilter } from './presentation/http/course-exception.filter';
 import { ManagedCoursesController } from './presentation/http/managed-courses.controller';
 
 @Module({
+  // ProblemsModule chỉ để lấy PROBLEM_REFERENCE_READER (API đọc duy nhất courses dùng).
   imports: [TypeOrmModule.forFeature([Course, Chapter, ChapterProblem]), ProblemsModule],
   controllers: [ManagedCoursesController],
   providers: [
     CourseExceptionFilter,
     CourseAuthorizationService,
-    CoursePublishReadinessService,
     CourseReadiness,
+    CoursePublishReadinessService,
+    CourseViewAssembler,
+    CourseMutationService,
     CreateCourseUseCase,
     UpdateCourseUseCase,
     PublishCourseUseCase,
     HoldCourseUseCase,
     RepublishCourseUseCase,
-    SoftDeleteCourseUseCase,
+    DeleteCourseUseCase,
     RestoreCourseUseCase,
-    HardDeleteCourseUseCase,
     AddChapterUseCase,
     UpdateChapterUseCase,
     RemoveChapterUseCase,
     ReorderChaptersUseCase,
-    AddProblemToChapterUseCase,
-    RemoveProblemFromChapterUseCase,
-    ReorderProblemsInChapterUseCase,
+    AttachProblemUseCase,
+    DetachProblemUseCase,
+    ReorderChapterProblemsUseCase,
     GetManagedCourseUseCase,
     ListManagedCoursesUseCase,
     GetPublishedCourseUseCase,
     ListPublishedCoursesUseCase,
-    PreviewCourseUseCase,
     CourseTypeOrmRepository,
     CourseTypeOrmTransactionContext,
     CourseTypeOrmTransactionRunner,
     CourseTypeOrmReferenceChecker,
+    ProblemReferenceCatalogAdapter,
     { provide: COURSE_REPOSITORY, useExisting: CourseTypeOrmRepository },
     { provide: COURSE_REFERENCE_CHECKER, useExisting: CourseTypeOrmReferenceChecker },
+    { provide: COURSE_PROBLEM_CATALOG, useExisting: ProblemReferenceCatalogAdapter },
     { provide: COURSE_TRANSACTION_RUNNER, useExisting: CourseTypeOrmTransactionRunner },
   ],
 })

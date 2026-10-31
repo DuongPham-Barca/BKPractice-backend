@@ -1,20 +1,35 @@
 import { COURSE_REPOSITORY } from '@learning/modules/courses/course.tokens';
-import type { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CourseNotFoundError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
-import type { CourseRepository } from '../ports/out/course-repository.port';
-import type { CourseListFilter, CoursePage } from '../ports/out/course-repository.port';
+import type {
+  CourseListFilter,
+  CoursePage,
+  CourseRepository,
+} from '../ports/out/course-repository.port';
+import type {
+  LearnerCourseResult,
+  LearnerCourseSummaryResult,
+  ManagedCourseResult,
+  ManagedCourseSummaryResult,
+} from '../results/course.results';
 import { CourseAuthorizationService } from '../services/course-authorization.service';
+import { CourseViewAssembler } from '../services/course-view.assembler';
 
 @Injectable()
 export class GetManagedCourseUseCase {
   constructor(
     private readonly authorization: CourseAuthorizationService,
+    private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
   ) {}
-  async execute(principal: Principal, courseId: string, includeDeleted: boolean): Promise<Course> {
+
+  async execute(
+    principal: Principal,
+    courseId: string,
+    includeDeleted: boolean,
+  ): Promise<ManagedCourseResult> {
     this.authorization.requirePermission(principal, 'course:read-managed');
     const course = await this.repository.findManagedById(
       courseId,
@@ -22,8 +37,7 @@ export class GetManagedCourseUseCase {
       includeDeleted,
     );
     if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    return course;
+    return this.views.toManaged(course);
   }
 }
 
@@ -31,48 +45,52 @@ export class GetManagedCourseUseCase {
 export class ListManagedCoursesUseCase {
   constructor(
     private readonly authorization: CourseAuthorizationService,
+    private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
   ) {}
+
   async execute(
     principal: Principal,
     includeDeleted: boolean,
     page: number,
     limit: number,
-  ): Promise<CoursePage<Course>> {
+    search?: string,
+  ): Promise<CoursePage<ManagedCourseSummaryResult>> {
     this.authorization.requirePermission(principal, 'course:read-managed');
-    return this.repository.listManaged({ ownerId: principal.userId, includeDeleted, page, limit });
+    const result = await this.repository.listManaged({
+      ownerId: principal.userId,
+      includeDeleted,
+      page,
+      limit,
+      search,
+    });
+    return { ...result, items: result.items.map((c) => this.views.toManagedSummary(c)) };
   }
 }
 
 @Injectable()
 export class GetPublishedCourseUseCase {
-  constructor(@Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository) {}
-  async execute(idOrSlug: string): Promise<Course> {
+  constructor(
+    private readonly views: CourseViewAssembler,
+    @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
+  ) {}
+
+  async execute(idOrSlug: string): Promise<LearnerCourseResult> {
     const course = await this.repository.findPublishedByIdOrSlug(idOrSlug);
     if (!course) throw new CourseNotFoundError('Course not found');
-    return course;
+    return this.views.toLearner(course);
   }
 }
 
 @Injectable()
 export class ListPublishedCoursesUseCase {
-  constructor(@Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository) {}
-  async execute(filter: CourseListFilter): Promise<CoursePage<Course>> {
-    return this.repository.listPublished(filter);
-  }
-}
-
-@Injectable()
-export class PreviewCourseUseCase {
   constructor(
-    private readonly authorization: CourseAuthorizationService,
+    private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
   ) {}
-  async execute(principal: Principal, courseId: string): Promise<Course> {
-    this.authorization.requirePermission(principal, 'course:read-managed');
-    const course = await this.repository.findManagedById(courseId, principal.userId, true);
-    if (!course) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(course.createdBy.value, principal);
-    return course;
+
+  async execute(filter: CourseListFilter): Promise<CoursePage<LearnerCourseSummaryResult>> {
+    const result = await this.repository.listPublished(filter);
+    return { ...result, items: result.items.map((c) => this.views.toLearnerSummary(c)) };
   }
 }

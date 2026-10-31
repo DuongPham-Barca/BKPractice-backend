@@ -1,5 +1,9 @@
 import type { Principal } from '@learning/modules/courses/application/models/principal';
 import type {
+  CourseProblemCatalog,
+  ProblemSummary,
+} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port';
+import type {
   CourseListFilter,
   CoursePage,
   CourseReferenceChecker,
@@ -7,7 +11,12 @@ import type {
   ManagedCourseListFilter,
 } from '@learning/modules/courses/application/ports/out/course-repository.port';
 import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port';
+import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
+import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
+import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
+import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
 import { Course } from '@learning/modules/courses/domain/course.aggregate';
+import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
 import {
   ChapterDescription,
   ChapterTitle,
@@ -67,22 +76,23 @@ export class InMemoryCourseRepository implements CourseRepository {
 
   findById(id: string): Promise<Course | null> {
     const course = this.store.get(id);
-    return Promise.resolve(course && !course.isDeleted ? course : null);
+    return Promise.resolve(course && !course.isDeleted ? clone(course) : null);
   }
   findByIdIncludingDeleted(id: string): Promise<Course | null> {
-    return Promise.resolve(this.store.get(id) ?? null);
+    const course = this.store.get(id);
+    return Promise.resolve(course ? clone(course) : null);
   }
   findPublishedByIdOrSlug(idOrSlug: string): Promise<Course | null> {
     const found = [...this.store.values()].find(
       (c) =>
         (c.id.value === idOrSlug || c.slug.value === idOrSlug) && c.isPublished && !c.isDeleted,
     );
-    return Promise.resolve(found ?? null);
+    return Promise.resolve(found ? clone(found) : null);
   }
   findManagedById(id: string, ownerId: string, includeDeleted: boolean): Promise<Course | null> {
     const course = this.store.get(id);
     if (!course || course.createdBy.value !== ownerId) return Promise.resolve(null);
-    return Promise.resolve(course.isDeleted && !includeDeleted ? null : course);
+    return Promise.resolve(course.isDeleted && !includeDeleted ? null : clone(course));
   }
   loadForUpdate(id: string, includeDeleted = false): Promise<Course | null> {
     return includeDeleted ? this.findByIdIncludingDeleted(id) : this.findById(id);
@@ -93,7 +103,10 @@ export class InMemoryCourseRepository implements CourseRepository {
   }
   listManaged(filter: ManagedCourseListFilter): Promise<CoursePage<Course>> {
     const all = [...this.store.values()].filter(
-      (c) => c.createdBy.value === filter.ownerId && (filter.includeDeleted || !c.isDeleted),
+      (c) =>
+        c.createdBy.value === filter.ownerId &&
+        (filter.includeDeleted || !c.isDeleted) &&
+        (!filter.search || c.title.value.toLowerCase().includes(filter.search.toLowerCase())),
     );
     return Promise.resolve(this.paginate(all, filter.page, filter.limit));
   }
@@ -106,7 +119,7 @@ export class InMemoryCourseRepository implements CourseRepository {
   }
   save(course: Course): Promise<void> {
     this.saveCount += 1;
-    this.store.set(course.id.value, course);
+    this.store.set(course.id.value, clone(course));
     return Promise.resolve();
   }
   hardDelete(id: string): Promise<boolean> {
@@ -116,7 +129,7 @@ export class InMemoryCourseRepository implements CourseRepository {
 
   private paginate(items: Course[], page: number, limit: number): CoursePage<Course> {
     return {
-      items: items.slice((page - 1) * limit, page * limit),
+      items: items.slice((page - 1) * limit, page * limit).map(clone),
       total: items.length,
       page,
       limit,
@@ -124,37 +137,43 @@ export class InMemoryCourseRepository implements CourseRepository {
   }
 }
 
-type ProblemState = { publishStatus: 'DRAFT' | 'PUBLISHED' | 'ON_HOLD'; isDeleted: boolean };
+/** Giống DB: mỗi lần nạp là một bản sao, thay đổi chưa `save` không rò vào state đã lưu. */
+function clone(course: Course): Course {
+  return Course.rehydrate(course.toSnapshot());
+}
+
+export class FakeProblemCatalog implements CourseProblemCatalog {
+  readonly problems = new Map<string, ProblemSummary>();
+
+  setProblem(problemId: string, overrides: Partial<ProblemSummary> = {}): ProblemSummary {
+    const problem: ProblemSummary = {
+      id: problemId,
+      slug: `slug-${problemId.slice(-4)}`,
+      title: `Problem ${problemId.slice(-4)}`,
+      problemType: 'STANDARD',
+      difficulty: 'EASY',
+      publishStatus: 'PUBLISHED',
+      isDeleted: false,
+      createdBy: OWNER_ID,
+      ...overrides,
+    };
+    this.problems.set(problemId, problem);
+    return problem;
+  }
+
+  findByIds(ids: readonly string[]): Promise<ReadonlyMap<string, ProblemSummary>> {
+    const found = new Map<string, ProblemSummary>();
+    for (const id of ids) {
+      const problem = this.problems.get(id);
+      if (problem) found.set(id, problem);
+    }
+    return Promise.resolve(found);
+  }
+}
 
 export class FakeReferenceChecker implements CourseReferenceChecker {
-  readonly problems = new Map<string, ProblemState & { createdBy: string }>();
   referenced = false;
 
-  setProblem(problemId: string, state: Partial<ProblemState> & { createdBy?: string } = {}): void {
-    this.problems.set(problemId, {
-      publishStatus: state.publishStatus ?? 'PUBLISHED',
-      isDeleted: state.isDeleted ?? false,
-      createdBy: state.createdBy ?? OWNER_ID,
-    });
-  }
-
-  isProblemAttachable(problemId: string, principalUserId: string) {
-    const p = this.problems.get(problemId);
-    const attachable =
-      p !== undefined &&
-      !p.isDeleted &&
-      (p.publishStatus === 'PUBLISHED' || p.createdBy === principalUserId);
-    return Promise.resolve({
-      attachable,
-      createdBy: p?.createdBy,
-      publishStatus: p?.publishStatus,
-      isDeleted: p?.isDeleted,
-    });
-  }
-  getProblemState(problemId: string) {
-    const p = this.problems.get(problemId);
-    return Promise.resolve({ publishStatus: p?.publishStatus, isDeleted: p?.isDeleted });
-  }
   hasCourseReferences(): Promise<boolean> {
     return Promise.resolve(this.referenced);
   }
@@ -164,4 +183,36 @@ export class InlineTransactionRunner implements TransactionRunner {
   run<T>(work: () => Promise<T>): Promise<T> {
     return work();
   }
+}
+
+/** Dựng toàn bộ service application trên fake in-memory để test use case mà không cần Nest. */
+export function createCourseTestKit() {
+  const repository = new InMemoryCourseRepository();
+  const catalog = new FakeProblemCatalog();
+  const checker = new FakeReferenceChecker();
+  const transactions = new InlineTransactionRunner();
+  const authorization = new CourseAuthorizationService();
+  const readiness = new CoursePublishReadinessService(new CourseReadiness(), catalog);
+  const views = new CourseViewAssembler(catalog, readiness);
+  const mutation = new CourseMutationService(authorization, views, repository, transactions);
+  return {
+    repository,
+    catalog,
+    checker,
+    transactions,
+    authorization,
+    readiness,
+    views,
+    mutation,
+    seed(course: Course = courseWithProblem()): Course {
+      repository.store.set(course.id.value, course);
+      return course;
+    },
+    /** State đã lưu của một Course (bản sao mới nhất trong repository). */
+    stored(course: Course): Course {
+      const saved = repository.store.get(course.id.value);
+      if (!saved) throw new Error('Course is not stored');
+      return saved;
+    },
+  };
 }

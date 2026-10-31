@@ -1,4 +1,7 @@
-import { DuplicateCourseSlugError } from '@learning/modules/courses/application/errors/application-errors';
+import {
+  DuplicateCourseSlugError,
+  ProblemNotAttachableError,
+} from '@learning/modules/courses/application/errors/application-errors';
 import type {
   CourseRepository,
   CourseListFilter,
@@ -6,12 +9,14 @@ import type {
   CoursePage,
 } from '@learning/modules/courses/application/ports/out/course-repository.port';
 import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
+import { ProblemAlreadyInCourse } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import {
   Course as CourseEntity,
   Chapter as ChapterEntity,
   ChapterProblem as ChapterProblemEntity,
 } from '@learning/modules/courses/entities/course.entity';
 import { Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 import { QueryFailedError, Repository } from 'typeorm';
 
 import { CoursePersistenceMapper } from './course.persistence-mapper';
@@ -56,10 +61,14 @@ export class CourseTypeOrmRepository implements CourseRepository {
   }
 
   async findPublishedByIdOrSlug(idOrSlug: string): Promise<CourseAggregate | null> {
+    // `id` là uuid còn `slug` là varchar: dùng hai tham số riêng (một tham số dùng chung làm Postgres
+    // suy kiểu sai) và chỉ thử `id` khi chuỗi đúng dạng UUID (tránh lỗi cast).
+    const matcher = isUUID(idOrSlug) ? '(c.id = :id OR c.slug = :slug)' : 'c.slug = :slug';
     const entity = await this.courseRepo
       .createQueryBuilder('c')
-      .where('(c.id = :v OR c.slug = :v) AND c.publish_status = :s AND c.deleted_at IS NULL', {
-        v: idOrSlug,
+      .where(`${matcher} AND c.status = :s AND c.deleted_at IS NULL`, {
+        id: idOrSlug,
+        slug: idOrSlug,
         s: 'PUBLISHED',
       })
       .getOne();
@@ -94,8 +103,8 @@ export class CourseTypeOrmRepository implements CourseRepository {
   async listPublished(filter: CourseListFilter): Promise<CoursePage<CourseAggregate>> {
     const qb = this.courseRepo
       .createQueryBuilder('c')
-      .where('c.publish_status = :s AND c.deleted_at IS NULL', { s: 'PUBLISHED' });
-    if (filter.search) qb.andWhere('c.title ILIKE :q', { q: `%${filter.search}%` });
+      .where('c.status = :s AND c.deleted_at IS NULL', { s: 'PUBLISHED' });
+    if (filter.search) qb.andWhere('c.title ILIKE :q', { q: `%${escapeLike(filter.search)}%` });
     const total = await qb.getCount();
     const entities = await qb
       .orderBy('c.created_at', 'DESC')
@@ -116,6 +125,7 @@ export class CourseTypeOrmRepository implements CourseRepository {
       .createQueryBuilder('c')
       .where('c.created_by = :owner', { owner: filter.ownerId });
     if (!filter.includeDeleted) qb.andWhere('c.deleted_at IS NULL');
+    if (filter.search) qb.andWhere('c.title ILIKE :q', { q: `%${escapeLike(filter.search)}%` });
     const total = await qb.getCount();
     const entities = await qb
       .orderBy('c.created_at', 'DESC')
@@ -143,58 +153,52 @@ export class CourseTypeOrmRepository implements CourseRepository {
     const courseRepo = manager.getRepository(CourseEntity);
     const chapterRepo = manager.getRepository(ChapterEntity);
     const chapterProblemRepo = manager.getRepository(ChapterProblemEntity);
-    const entity = CoursePersistenceMapper.toEntity(course);
+    const courseId = course.id.value;
+
     try {
-      await courseRepo.save(entity);
-    } catch (error) {
-      // Race giữa kiểm tra slug và INSERT: UNIQUE (slug) vi phạm -> 409.
-      if (isUniqueViolation(error))
-        throw new DuplicateCourseSlugError('Course slug is already in use');
-      throw error;
-    }
+      await courseRepo.save(CoursePersistenceMapper.toEntity(course));
 
-    // sync chapters
-    const existingChapters = await chapterRepo.find({ where: { courseId: course.id.value } });
-    const newChapterIds = new Set(course.chapters.map((c) => c.id.value));
+      const existingChapters = await chapterRepo.find({ where: { courseId } });
+      const existingProblems = await chapterProblemRepo.find({ where: { courseId } });
+      const keptChapterIds = new Set(course.chapters.map((c) => c.id.value));
 
-    for (const ch of existingChapters) {
-      if (!newChapterIds.has(ch.id)) await chapterRepo.delete(ch.id);
-    }
-
-    for (const ch of course.chapters) {
-      let chapterEntity = existingChapters.find((e) => e.id === ch.id.value);
-      if (!chapterEntity) {
-        chapterEntity = new ChapterEntity();
-        chapterEntity.id = ch.id.value;
-        chapterEntity.courseId = course.id.value;
+      // Xoá trước, ghi sau, để UNIQUE (course_id, problem_id) không bị chạm bởi dòng sắp bị gỡ.
+      for (const chapter of existingChapters) {
+        if (!keptChapterIds.has(chapter.id)) await chapterRepo.delete(chapter.id); // cascade tới chapter_problems
       }
-      chapterEntity.title = ch.title.value;
-      chapterEntity.description = ch.description.value;
-      chapterEntity.displayOrder = course.chapters.indexOf(ch);
-      await chapterRepo.save(chapterEntity);
-
-      // sync chapter problems
-      const existingProblems = await chapterProblemRepo.find({
-        where: { chapterId: ch.id.value },
-      });
-      const newProblemIds = new Set(ch.problemRefs.map((p) => p.value));
-      for (const cp of existingProblems) {
-        if (!newProblemIds.has(cp.problemId)) await chapterProblemRepo.delete(cp.id);
-      }
-      for (let i = 0; i < ch.problemRefs.length; i += 1) {
-        const ref = ch.problemRefs[i]!;
-        const existing = existingProblems.find((cp) => cp.problemId === ref.value);
-        if (existing) {
-          existing.displayOrder = i;
-          await chapterProblemRepo.save(existing);
-        } else {
-          const cp = new ChapterProblemEntity();
-          cp.chapterId = ch.id.value;
-          cp.problemId = ref.value;
-          cp.displayOrder = i;
-          await chapterProblemRepo.save(cp);
+      const wanted = new Set(
+        course.chapters.flatMap((c) => c.problemRefs.map((p) => `${c.id.value}:${p.value}`)),
+      );
+      for (const row of existingProblems) {
+        if (keptChapterIds.has(row.chapterId) && !wanted.has(`${row.chapterId}:${row.problemId}`)) {
+          await chapterProblemRepo.delete(row.id);
         }
       }
+
+      for (const [chapterIndex, chapter] of course.chapters.entries()) {
+        const chapterEntity =
+          existingChapters.find((e) => e.id === chapter.id.value) ?? new ChapterEntity();
+        chapterEntity.id = chapter.id.value;
+        chapterEntity.courseId = courseId;
+        chapterEntity.title = chapter.title.value;
+        chapterEntity.description = chapter.description.value;
+        chapterEntity.displayOrder = chapterIndex;
+        await chapterRepo.save(chapterEntity);
+
+        for (const [problemIndex, ref] of chapter.problemRefs.entries()) {
+          const row =
+            existingProblems.find(
+              (p) => p.chapterId === chapter.id.value && p.problemId === ref.value,
+            ) ?? new ChapterProblemEntity();
+          row.chapterId = chapter.id.value;
+          row.courseId = courseId;
+          row.problemId = ref.value;
+          row.displayOrder = problemIndex;
+          await chapterProblemRepo.save(row);
+        }
+      }
+    } catch (error) {
+      throw translatePersistenceError(error);
     }
   }
 
@@ -207,8 +211,27 @@ export class CourseTypeOrmRepository implements CourseRepository {
   }
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    error instanceof QueryFailedError && (error.driverError as { code?: string })?.code === '23505'
-  );
+const UNIQUE_VIOLATION = '23505';
+const FOREIGN_KEY_VIOLATION = '23503';
+const PROBLEM_UNIQUE_CONSTRAINT = 'UQ_chapter_problems_course_problem';
+const PROBLEM_FOREIGN_KEY = 'FK_chapter_problems_problem';
+
+/** Ánh xạ vi phạm ràng buộc DB sang lỗi nghiệp vụ (plan: DuplicateSlug, ProblemAlreadyInCourse). */
+function translatePersistenceError(error: unknown): unknown {
+  if (!(error instanceof QueryFailedError)) return error;
+  const driver = error.driverError as { code?: string; constraint?: string };
+  if (driver.code === UNIQUE_VIOLATION) {
+    return driver.constraint === PROBLEM_UNIQUE_CONSTRAINT
+      ? new ProblemAlreadyInCourse('unknown')
+      : new DuplicateCourseSlugError('Course slug is already in use');
+  }
+  if (driver.code === FOREIGN_KEY_VIOLATION && driver.constraint === PROBLEM_FOREIGN_KEY) {
+    return new ProblemNotAttachableError('Problem is not attachable');
+  }
+  return error;
+}
+
+/** Không để `%`/`_` do người dùng nhập trở thành ký tự đại diện của ILIKE. */
+function escapeLike(text: string): string {
+  return text.replace(/[\\%_]/g, '\\$&');
 }

@@ -39,3 +39,21 @@ export function assertUniqueValues(values: readonly string[], field: string): vo
     throw new DomainValidationError(field, `${field} must be unique`);
   }
 }
+
+// Markdown hạn chế như LRN-001-FR-029: từ chối HTML/script thô. Sao chép các mẫu của bộ kiểm LRN-001
+// (không import nội bộ module `problems`); frontend vẫn phải làm sạch khi render.
+const DANGEROUS_TAG_PATTERN =
+  /<\s*\/?\s*(?:script|style|iframe|object|embed|form|input|button|link|meta|base|svg|math)\b/i;
+const EVENT_HANDLER_PATTERN = /\bon[a-z]+\s*=/i;
+const DANGEROUS_PROTOCOL_PATTERN = /(?:javascript|vbscript)\s*:|data\s*:\s*text\s*\/\s*html/i;
+
+export function assertSafeMarkdown(value: string, field: string): string {
+  if (
+    DANGEROUS_TAG_PATTERN.test(value) ||
+    EVENT_HANDLER_PATTERN.test(value) ||
+    DANGEROUS_PROTOCOL_PATTERN.test(value)
+  ) {
+    throw new DomainValidationError(field, `${field} must not contain raw HTML or scripts`);
+  }
+  return value;
+}

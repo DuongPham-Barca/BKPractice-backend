@@ -9,6 +9,7 @@ export interface CourseListFilter {
 export interface ManagedCourseListFilter {
   readonly ownerId: string;
   readonly includeDeleted: boolean;
+  readonly search?: string;
   readonly page: number;
   readonly limit: number;
 }
@@ -34,18 +35,6 @@ export interface CourseRepository {
 }
 
 export interface CourseReferenceChecker {
-  isProblemAttachable(
-    problemId: string,
-    principalUserId: string,
-  ): Promise<{
-    attachable: boolean;
-    createdBy: string | undefined;
-    publishStatus: 'DRAFT' | 'PUBLISHED' | 'ON_HOLD' | undefined;
-    isDeleted: boolean | undefined;
-  }>;
+  /** Có Class hoặc Assignment nào tham chiếu Course không (FR-018). */
   hasCourseReferences(courseId: string): Promise<boolean>;
-  getProblemState(problemId: string): Promise<{
-    publishStatus: 'DRAFT' | 'PUBLISHED' | 'ON_HOLD' | undefined;
-    isDeleted: boolean | undefined;
-  }>;
 }

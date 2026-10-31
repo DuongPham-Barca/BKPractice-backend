@@ -58,6 +58,14 @@
 - **DTO + Swagger cho controller.** Thêm `dto/course.request.dto.ts` (body, query, reorder; `class-validator`)
   và `dto/course.response.dto.ts`; controller bỏ kiểu body/query inline, thêm `@ApiOperation`/`@ApiOkResponse`
   và các `@Api*Response` lỗi. Filter trả danh sách lỗi chi tiết của `ValidationPipe` (400).
+- **Lỗi domain có kiểu cho Problem trùng.** Thêm `ProblemAlreadyInCourse` (domain); aggregate ném lỗi
+  này cho cả trường hợp trùng trong cùng Chapter (trước đây ra `DomainValidationError` → 400) lẫn khác
+  Chapter; `CourseExceptionFilter` ánh xạ sang 409; bỏ `DuplicateProblemInCourseError` và việc so khớp
+  message trong `AddProblemToChapterUseCase`.
+- **Nối `ProblemAttachPolicy`.** `CourseTypeOrmReferenceChecker.isProblemAttachable` dùng policy của
+  domain thay vì tự lặp logic; thêm `course-readiness.spec.ts` cho `CourseReadiness` và policy.
+- **Tick `tasks.md`** cho 8 task đã kiểm chứng: T002, T005, T006, T007, T010, T017, T025, T028.
+  Spec vẫn `Approved`, không chuyển trạng thái (xem Remaining).
 - Đổi import token trong 6 use case sang alias `@learning/...`.
 - **Test mới (53 test cho module, 625 toàn repo khi có DB):** `course-lifecycle.use-cases.spec.ts`,
   `course-response.mapper.spec.ts`, `managed-courses.api.e2e.spec.ts` (HTTP thật qua controller + use
@@ -111,15 +119,8 @@ No configuration change.
 
 ## Remaining
 
-- Not done:
-  - Chưa tick checkbox trong `tasks.md` LRN-003 và chưa chuyển spec sang `Implemented`/`Verified`:
-    cần review của người (đúng quy trình, không tự chuyển trạng thái).
-  - Seam quyền Gateway (`x-auth-permissions`) vẫn mở như các spec Learning khác.
-  - `AddProblemToChapterUseCase` còn nhận biết lỗi "Problem trùng" qua message của aggregate
-    (`'Problem already in course'`); nên đổi sang lỗi domain có kiểu riêng khi sửa aggregate.
-  - `CourseReferenceChecker` dùng SQL thô trên `classes`/`assignments`; khi LRN-004/005 có repository
-    riêng nên đổi sang port của hai module đó.
-- Risks:
-  - Hình dạng response đổi (primitive thay vì `{ value }`); chưa có client nào dùng route này, nhưng
-    cần báo cho Gateway/Frontend trước khi tích hợp.
-  - `loadForUpdate` khoá dòng `courses`; LRN-004 phải khoá `FOR SHARE` khi tạo Class (plan dòng 356–363).
+Các điểm code lệch plan được tìm ra khi tick `tasks.md` (rò rỉ Problem chưa công khai, FR-019/AC-019,
+Markdown AC-012, migration, API) đã được xử lý trong
+[`2026-10-31-lrn-003-align-with-plan.md`](./2026-10-31-lrn-003-align-with-plan.md); xem Remaining ở đó cho
+các việc còn mở. Lưu ý: mô tả "response phẳng", route `/hard` và các mã trạng thái ở entry này đã bị thay
+bằng hợp đồng API của plan trong entry kế tiếp.

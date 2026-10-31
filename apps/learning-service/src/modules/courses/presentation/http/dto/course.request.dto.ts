@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   ArrayUnique,
   IsArray,
   IsBoolean,
@@ -62,6 +63,12 @@ export class AddChapterRequestDto {
   @IsOptional()
   @IsString()
   description?: string | null;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Insert position; defaults to the end.' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  position?: number;
 }
 
 export class UpdateChapterRequestDto {
@@ -78,19 +85,26 @@ export class UpdateChapterRequestDto {
   description?: string | null;
 }
 
-export class AddProblemRequestDto {
+export class AttachProblemRequestDto {
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   problemId!: string;
+
+  @ApiPropertyOptional({ minimum: 0, description: 'Insert position; defaults to the end.' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  position?: number;
 }
 
 export class ReorderRequestDto {
   @ApiProperty({ type: [String], description: 'Complete new order; must match the current set.' })
   @IsArray()
+  @ArrayMinSize(1)
   @ArrayMaxSize(MAX_ITEMS)
   @ArrayUnique()
   @IsUUID(undefined, { each: true })
-  orderedIds!: string[];
+  ids!: string[];
 }
 
 export class PublishedCourseQueryDto {
@@ -100,34 +114,21 @@ export class PublishedCourseQueryDto {
   @Min(1)
   page = 1;
 
-  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 50 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
-  limit = 20;
+  @Max(50)
+  pageSize = 20;
 
   @ApiPropertyOptional({ maxLength: 200, description: 'Case-insensitive title search.' })
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  search?: string;
+  q?: string;
 }
 
-export class ManagedCourseQueryDto {
-  @ApiPropertyOptional({ default: 1, minimum: 1 })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page = 1;
-
-  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit = 20;
-
+export class ManagedCourseQueryDto extends PublishedCourseQueryDto {
   @ApiPropertyOptional({ default: false })
   @Transform(({ value }: { value: unknown }) => value === true || value === 'true')
   @IsBoolean()
