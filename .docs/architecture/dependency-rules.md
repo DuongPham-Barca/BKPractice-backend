@@ -78,6 +78,13 @@ driving adapter (consumer) -> orchestrator -> pipeline -> driven ports <- adapte
 
 ## Gateway rules
 
+- The Gateway uses three technical layers with one dependency direction:
+  `presentation -> application -> infrastructure`.
+- `presentation/` holds controllers, middleware, guards and the realtime gateway. It may depend on
+  `application/` services, not on `infrastructure/` adapters.
+- `application/` holds proxy forwarding, session verification and realtime result dispatch. It may
+  depend on `infrastructure/` adapters, NestJS transport/configuration clients and shared contracts.
+- `infrastructure/` holds the Identity HTTP client and the Redis subscriber.
 - Gateway code may depend directly on HTTP, JWT, rate-limit, Redis and Socket.IO libraries.
 - Gateway must not have domain/repository layers, business entities or a business database.
 - Coarse authentication/route metadata is allowed; stateful domain authorization belongs to the

@@ -35,7 +35,7 @@ export class GatewayProxyService {
   ) {
     this.targets = [
       {
-        prefixes: ['/api/auth', '/api/users', '/api/profile', '/api/roles'],
+        prefixes: ['/api/auth', '/api/users', '/api/profile', '/api/roles', '/api/admin/users'],
         baseUrl: config.getOrThrow<string>('IDENTITY_SERVICE_URL'),
       },
       {

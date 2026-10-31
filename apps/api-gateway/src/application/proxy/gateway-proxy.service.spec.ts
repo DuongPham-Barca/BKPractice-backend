@@ -32,6 +32,37 @@ describe('GatewayProxyService', () => {
     jest.clearAllMocks();
   });
 
+  it('forwards profile search and its query string to Identity', async () => {
+    const upstream = { request: jest.fn().mockReturnValue(of({ status: 200, headers: {}, data: { items: [] } })) };
+    await new GatewayProxyService(upstream as unknown as HttpService, config).forward(
+      {
+        method: 'GET',
+        path: '/api/profiles/search',
+        originalUrl: '/api/profiles/search?q=Nguy%E1%BB%85n&page=2',
+        headers: { authorization: 'Bearer verified-access', host: 'localhost' },
+      } as unknown as Request,
+      response,
+    );
+    expect(upstream.request).toHaveBeenCalledWith(expect.objectContaining({
+      url: 'http://localhost:3001/api/profiles/search?q=Nguy%E1%BB%85n&page=2',
+      headers: { authorization: 'Bearer verified-access' },
+    }));
+  });
+
+  it('routes User administration to Identity without exposing client cookies', async () => {
+    const upstream = { request: jest.fn().mockReturnValue(of({ status: 204, headers: {}, data: '' })) };
+    const path = '/api/admin/users/00000000-0000-0000-0000-000000000001';
+    await new GatewayProxyService(upstream as unknown as HttpService, config).forward(
+      { method: 'DELETE', path, originalUrl: path,
+        headers: { authorization: 'Bearer access', cookie: 'private=value' } } as unknown as Request,
+      response,
+    );
+    expect(upstream.request).toHaveBeenCalledWith(expect.objectContaining({
+      url: `http://localhost:3001${path}`,
+      headers: { authorization: 'Bearer access' },
+    }));
+  });
+
   it.each(['GET', 'POST', 'DELETE'])(
     'forwards %s role management to Identity and preserves Authorization',
     async (method) => {
@@ -121,7 +152,7 @@ describe('GatewayProxyService', () => {
         path: '/api/auth/login',
         originalUrl: '/api/auth/login',
         headers: { cookie: 'other=secret', origin: 'https://app.example' },
-        body: { studentId: '2210001', password: 'password' },
+        body: { identifier: '2210001', password: 'password' },
       } as unknown as Request,
       response,
     );
@@ -198,10 +229,16 @@ describe('GatewayProxyService', () => {
   it('returns mobile tokens in JSON without forwarding cookies', async () => {
     const data = { userId: 'user-1', accessToken: 'access', refreshToken: 'refresh' };
     const upstream = { request: jest.fn().mockReturnValue(of({ status: 200, headers: {}, data })) };
-    await new GatewayProxyService(upstream as unknown as HttpService, config).forward({
-      method: 'POST', path: '/api/auth/login', originalUrl: '/api/auth/login',
-      headers: { 'x-client-type': 'mobile' }, body: { studentId: '2210001', password: 'password' },
-    } as unknown as Request, response);
+    await new GatewayProxyService(upstream as unknown as HttpService, config).forward(
+      {
+        method: 'POST',
+        path: '/api/auth/login',
+        originalUrl: '/api/auth/login',
+        headers: { 'x-client-type': 'mobile' },
+        body: { identifier: '2210001', password: 'password' },
+      } as unknown as Request,
+      response,
+    );
     expect(headers['set-cookie']).toBeUndefined();
     expect(response.send).toHaveBeenCalledWith(data);
   });

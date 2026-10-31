@@ -1,4 +1,4 @@
-import { parseSubmissionRealtimeEnvelope } from './submission-realtime.gateway';
+import { parseSubmissionRealtimeEnvelope } from './submission-result.parser';
 
 describe('parseSubmissionRealtimeEnvelope', () => {
   it('rebuilds a whitelist notification and drops unknown fields', () => {

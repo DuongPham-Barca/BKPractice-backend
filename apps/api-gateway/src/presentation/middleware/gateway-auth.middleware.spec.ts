@@ -1,10 +1,10 @@
 import { issueCsrfToken } from '@app/common';
+import type { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';
 
 import { GatewayAuthMiddleware } from './gateway-auth.middleware';
-import type { GatewaySessionVerifier } from './gateway-session-verifier';
 
 describe('GatewayAuthMiddleware', () => {
   const jwt = new JwtService();
@@ -12,7 +12,7 @@ describe('GatewayAuthMiddleware', () => {
     JWT_ACCESS_SECRET: 'a'.repeat(32),
     CORS_ORIGINS: 'http://localhost:3006,https://app.example',
   });
-  const sessions = { isActive: jest.fn().mockResolvedValue(true) } as unknown as GatewaySessionVerifier;
+  const sessions = { isActive: jest.fn().mockResolvedValue(true) } as unknown as GatewaySessionService;
   const middleware = new GatewayAuthMiddleware(jwt, config, sessions);
   const response = {} as Response;
   const next = jest.fn();
@@ -32,7 +32,8 @@ describe('GatewayAuthMiddleware', () => {
     if (cookie) headers.cookie = cookie;
     if (
       method === 'POST' &&
-      ['/api/auth/login', '/api/auth/microsoft/exchange', '/api/auth/refresh', '/api/auth/logout'].includes(path)
+      ['/api/auth/login', '/api/auth/microsoft/exchange', '/api/auth/refresh', '/api/auth/logout',
+        '/api/auth/password/send-otp', '/api/auth/password/verify-otp', '/api/auth/password/reset'].includes(path)
     )
       headers.origin = 'http://localhost:3006';
     return { method, path, headers, header: (key: string) => headers[key] } as unknown as Request;
@@ -64,6 +65,9 @@ describe('GatewayAuthMiddleware', () => {
       ['POST', '/api/auth/refresh'],
       ['POST', '/api/auth/logout'],
       ['GET', '/api/auth/csrf'],
+      ['POST', '/api/auth/password/send-otp'],
+      ['POST', '/api/auth/password/verify-otp'],
+      ['POST', '/api/auth/password/reset'],
     ];
     for (const [method, path] of publicRoutes) {
       const request = createRequest(method, path);
@@ -72,7 +76,7 @@ describe('GatewayAuthMiddleware', () => {
       expect(request.headers['x-auth-roles']).toBeUndefined();
       expect(request.headers['x-auth-permissions']).toBeUndefined();
     }
-    expect(next).toHaveBeenCalledTimes(7);
+    expect(next).toHaveBeenCalledTimes(10);
     await expect(
       middleware.use(createRequest('POST', '/api/auth/register'), response, next),
     ).rejects.toThrow();
@@ -116,6 +120,9 @@ describe('GatewayAuthMiddleware', () => {
     for (const [method, privatePath] of [
       ['PATCH', path],
       ['GET', '/api/profile/me'],
+      ['GET', '/api/admin/users'],
+      ['DELETE', '/api/admin/users/00000000-0000-0000-0000-000000000001'],
+      ['GET', '/api/profiles/search'],
       ['POST', '/api/profile/me/avatar/upload-url'],
       ['GET', '/api/users/00000000-0000-0000-0000-000000000001'],
     ] as Array<[string, string]>) {
@@ -137,6 +144,11 @@ describe('GatewayAuthMiddleware', () => {
     expect(read.headers.cookie).toBeUndefined();
     expect(read.headers.authorization).toBe(`Bearer ${token}`);
     expect(read.headers['x-auth-user-id']).toBe('user-1');
+
+    const search = createRequest('GET', '/api/profiles/search', undefined, cookie);
+    await middleware.use(search, response, next);
+    expect(search.headers.authorization).toBe(`Bearer ${token}`);
+    expect(search.headers.cookie).toBeUndefined();
 
     const write = createRequest('PATCH', '/api/profile/me', undefined, cookie);
     await expect(middleware.use(write, response, next)).rejects.toThrow('Untrusted request origin');

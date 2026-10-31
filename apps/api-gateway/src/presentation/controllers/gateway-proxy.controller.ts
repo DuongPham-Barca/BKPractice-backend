@@ -1,8 +1,7 @@
+import { GatewayProxyService } from '@gateway/application/proxy/gateway-proxy.service';
 import { All, Controller, Req, Res } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-
-import { GatewayProxyService } from './gateway-proxy.service';
 
 @ApiExcludeController()
 @Controller('api')

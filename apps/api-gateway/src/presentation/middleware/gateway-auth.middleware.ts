@@ -1,12 +1,11 @@
 import { isAllowedBrowserOrigin, readCookie, verifyCsrfToken } from '@app/common';
 import { BK_ACCESS_COOKIE_NAME, BK_CSRF_COOKIE_NAME, BK_REFRESH_COOKIE_NAME } from '@app/contracts';
+import { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
 import { ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import type { NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { NextFunction, Request, Response } from 'express';
-
-import { GatewaySessionVerifier } from './gateway-session-verifier';
 
 interface AccessTokenPayload {
   sub: string;
@@ -25,12 +24,18 @@ const publicRoutes = new Set([
   'POST /api/auth/refresh',
   'POST /api/auth/logout',
   'GET /api/auth/csrf',
+  'POST /api/auth/password/send-otp',
+  'POST /api/auth/password/verify-otp',
+  'POST /api/auth/password/reset',
 ]);
 const originCheckedRoutes = new Set([
   'POST /api/auth/login',
   'POST /api/auth/microsoft/exchange',
   'POST /api/auth/refresh',
   'POST /api/auth/logout',
+  'POST /api/auth/password/send-otp',
+  'POST /api/auth/password/verify-otp',
+  'POST /api/auth/password/reset',
 ]);
 const authCookieRoutes = new Set(['POST /api/auth/refresh', 'POST /api/auth/logout', 'GET /api/auth/csrf']);
 const publicProfileRoute =
@@ -42,7 +47,7 @@ export class GatewayAuthMiddleware implements NestMiddleware {
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
-    private readonly sessions: GatewaySessionVerifier,
+    private readonly sessions: GatewaySessionService,
   ) {}
 
   async use(request: Request, _response: Response, next: NextFunction): Promise<void> {
