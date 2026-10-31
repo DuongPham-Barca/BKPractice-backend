@@ -204,9 +204,11 @@ File migration mẫu đã triển khai cho Learning Service:
 | `1700000003000-InitialLearningSchema.ts`       | Schema ban đầu: `problems`, `test_cases`, `courses`, `classes`, `enrollments`, `progress`, ...                                                                                                                                           |
 | `1700000004000-Lrn004ClassEnrollment.ts`       | Thêm `status`, `created_at`, `updated_at`, `archived_at` vào `classes`; CHECK `ARCHIVED ⇔ archived_at`; đổi FK `course_id` sang `ON DELETE RESTRICT`; index `classes(lecturer_id, created_at)` và `enrollments(student_id, enrolled_at)` |
 | `1700000005000-Lrn006Progress.ts`              | Tạo bảng `progress_event_receipts`; thêm CHECK `best_score >= 0` và `SOLVED ⇒ solved_at` trên `progress`                                                                                                                                 |
+| `1700000004000-Lrn001ProblemManagement.ts`     | Thêm `type_config`, `deleted_at`; đổi enum `publish_status` (`ARCHIVED -> ON_HOLD`); CHECK loại problem/giới hạn thực thi; unique `starter_codes(problem_id, language)`; partial index theo `deleted_at IS NULL`                         |
 | `1700000006000-Lrn007RecommendationIndexes.ts` | Thêm index `problem_topics(topic_id)` và `problem_tags(tag_id)`                                                                                                                                                                          |
+| `1700000007000-Lrn002TestCaseManagement.ts`    | CHECK `score`/`display_order` không âm; index `test_cases(problem_id, display_order)`; tạo `problem_harnesses` và chuyển `starter_codes.hidden_harness` sang bảng mới                                                                    |
 
-Thứ tự chạy khuyến nghị: `InitialLearningSchema` → `Lrn004ClassEnrollment` → `Lrn006Progress` → `Lrn007RecommendationIndexes`.
+Thứ tự chạy khuyến nghị: `InitialLearningSchema` → `Lrn001ProblemManagement` → `Lrn004ClassEnrollment` → `Lrn006Progress` → `Lrn007RecommendationIndexes` → `Lrn002TestCaseManagement`.
 
 ## 5. Best practices
 
@@ -232,3 +234,25 @@ pnpm migration:revert:learning
 # Kiểm tra trạng thái migration (nếu CLI hỗ trợ)
 npx typeorm -d apps/learning-service/src/database/data-source.ts migration:show
 ```
+
+## 7. Cảnh báo migration LRN-001 và LRN-002
+
+### 7.1 `1700000004000-Lrn001ProblemManagement.ts`
+
+- `up` kiểm tra dữ liệu hiện có trước khi thêm ràng buộc. Migration sẽ dừng nếu:
+  - `problems.problem_type` có giá trị ngoài `STANDARD`, `FUNCTION`, `OOP`;
+  - `time_limit_ms` ngoài `1..10000` hoặc `memory_limit_mb` ngoài `1..1024`;
+  - `starter_codes` trùng cặp `(problem_id, language)`.
+    Sửa dữ liệu và sao lưu trước khi chạy lại.
+- `up` đổi enum `problems_publish_status_enum` và ánh xạ `ARCHIVED -> ON_HOLD`. Sau khi chạy, `ARCHIVED`
+  không còn là giá trị hợp lệ; mọi mã đọc/ghi trạng thái phải dùng `ON_HOLD`.
+- `down` ánh xạ ngược `ON_HOLD -> ARCHIVED` và **xoá cột `deleted_at` cùng `type_config`**. Dấu xoá mềm
+  và cấu hình theo loại problem sẽ mất. Chỉ revert khi chấp nhận mất dữ liệu này và đã sao lưu.
+
+### 7.2 `1700000007000-Lrn002TestCaseManagement.ts`
+
+- `up` tạo bảng `problem_harnesses`, chép dữ liệu từ `starter_codes.hidden_harness`, rồi xoá cột
+  `hidden_harness`. Sao lưu `starter_codes` trước khi chạy.
+- `down` thêm lại cột `hidden_harness` và chỉ chép ngược các hàng có `starter_codes` khớp
+  `(problem_id, language)`. Hàng harness không có starter code tương ứng sẽ mất khi bảng bị xoá.
+- Phải chạy LRN-001 trước LRN-002 vì LRN-002 dựa trên schema problem đã cập nhật.
