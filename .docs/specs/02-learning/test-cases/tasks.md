@@ -235,7 +235,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 ## Cấu hình
 
-- [ ] **LRN-002-T031 — Nâng giới hạn body JSON.** Trong `apps/api-gateway/src/main.ts` và
+- [x] **LRN-002-T031 — Nâng giới hạn body JSON.** Trong `apps/api-gateway/src/main.ts` và
       `apps/learning-service/src/main.ts`, đặt `app.useBodyParser('json', { limit: '4mb' })` (dùng
       `NestExpressApplication`). Xác nhận Gateway chuyển tiếp được request khoảng 2 MiB trong timeout
       15 giây. Không thêm biến môi trường, không đổi `.env.example`, Docker hay RabbitMQ.
@@ -293,7 +293,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-002-T035, LRN-002-T036.
       **Truy vết:** Đặc tả 1.1; Định nghĩa Hoàn thành.
 
-- [ ] **LRN-002-T038 — Bàn giao theo SDD.** Cập nhật ô đánh dấu trung thực, viết worked entry, lấy
+- [x] **LRN-002-T038 — Bàn giao theo SDD.** Cập nhật ô đánh dấu trung thực, viết worked entry, lấy
       review của con người, chỉ chuyển đặc tả sang `Implemented` rồi `Verified` qua quy trình SDD.
       **Phụ thuộc:** LRN-002-T037.
       **Truy vết:** Quy trình SDD.
