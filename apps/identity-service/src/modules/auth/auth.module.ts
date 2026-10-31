@@ -93,12 +93,19 @@ import { User } from '@/modules/users/infrastructure/persistence';
     { provide: ACCOUNT_IMPORT_REPOSITORY, useClass: TypeormAccountImportRepository },
     {
       provide: ImportAccounts,
-      inject: [ACCOUNT_IMPORT_PARSER, ACCOUNT_IMPORT_REPOSITORY, PASSWORD_HASHER],
+      inject: [ACCOUNT_IMPORT_PARSER, ACCOUNT_IMPORT_REPOSITORY, PASSWORD_HASHER, ConfigService],
       useFactory: (
         parser: AccountImportParser,
         accounts: AccountImportRepository,
         passwords: PasswordHasher,
-      ) => new ImportAccounts(parser, accounts, passwords),
+        config: ConfigService,
+      ) =>
+        new ImportAccounts(
+          parser,
+          accounts,
+          passwords,
+          config.getOrThrow<string>('ACCOUNT_IMPORT_PASSWORD'),
+        ),
     },
     { provide: AUTH_ACCOUNT_REPOSITORY, useClass: TypeormAuthAccountRepository },
     { provide: EXTERNAL_IDENTITY_REPOSITORY, useClass: TypeormExternalIdentityRepository },

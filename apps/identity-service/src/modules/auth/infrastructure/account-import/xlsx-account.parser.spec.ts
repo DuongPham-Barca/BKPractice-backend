@@ -140,6 +140,36 @@ describe('Account Excel import boundaries', () => {
     });
   });
 
+  it.each(['first-test-password', 'second-test-password'])(
+    'hashes each imported account with the configured password (%s)',
+    async (importPassword) => {
+      const repository: AccountImportRepository = {
+        findConflicts: jest.fn().mockResolvedValue([]),
+        createAll: jest.fn().mockResolvedValue(undefined),
+      };
+      const passwords: PasswordHasher = {
+        hash: jest
+          .fn()
+          .mockResolvedValueOnce('student-hash')
+          .mockResolvedValueOnce('lecturer-hash'),
+        verify: jest.fn(),
+        verifyDummy: jest.fn(),
+      };
+      const imports = new ImportAccounts(parser, repository, passwords, importPassword);
+      await expect(imports.execute(admin, await makeFile([student, lecturer]))).resolves.toEqual({
+        totalRows: 2,
+        created: 2,
+      });
+      expect(passwords.hash).toHaveBeenCalledTimes(2);
+      expect(passwords.hash).toHaveBeenNthCalledWith(1, importPassword);
+      expect(passwords.hash).toHaveBeenNthCalledWith(2, importPassword);
+      expect(repository.createAll).toHaveBeenCalledWith([
+        expect.objectContaining({ passwordHash: 'student-hash' }),
+        expect.objectContaining({ passwordHash: 'lecturer-hash' }),
+      ]);
+    },
+  );
+
   it('checks authorization and all rows before hashing or writing any account', async () => {
     const repository: AccountImportRepository = {
       findConflicts: jest.fn().mockResolvedValue([]),
@@ -150,7 +180,7 @@ describe('Account Excel import boundaries', () => {
       verify: jest.fn(),
       verifyDummy: jest.fn(),
     };
-    const imports = new ImportAccounts(parser, repository, passwords);
+    const imports = new ImportAccounts(parser, repository, passwords, 'test-import-password');
     await expect(
       imports.execute({ ...admin, permissions: [] }, Buffer.from('invalid')),
     ).rejects.toThrow('forbidden');

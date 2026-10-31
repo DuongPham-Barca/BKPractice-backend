@@ -15,6 +15,7 @@ export class ImportAccounts {
     private readonly parser: AccountImportParser,
     private readonly accounts: AccountImportRepository,
     private readonly passwords: PasswordHasher,
+    private readonly importPassword: string,
   ) {}
 
   async execute(
@@ -28,7 +29,7 @@ export class ImportAccounts {
     const prepared = [];
     for (const row of rows) {
       try {
-        prepared.push({ ...row, passwordHash: await this.passwords.hash('123456') });
+        prepared.push({ ...row, passwordHash: await this.passwords.hash(this.importPassword) });
       } catch {
         throw new AccountImportFailure('dependency_unavailable');
       }

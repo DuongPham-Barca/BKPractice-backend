@@ -43,6 +43,7 @@ const serviceSchemas: Record<ServiceName, z.ZodObject> = {
   'identity-service': commonSchema.extend({
     IDENTITY_SERVICE_PORT: port.default(3001),
     IDENTITY_DATABASE_URL: url,
+    ACCOUNT_IMPORT_PASSWORD: z.string().min(1),
     JWT_ACCESS_SECRET: secret,
     JWT_REFRESH_SECRET: secret,
     JWT_ACCESS_TTL: z.literal('15m').default('15m'),

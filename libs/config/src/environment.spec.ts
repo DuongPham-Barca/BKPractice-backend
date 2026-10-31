@@ -1,6 +1,7 @@
 import { validateEnvironment } from './environment';
 
 const identity = {
+  ACCOUNT_IMPORT_PASSWORD: 'test-import-password',
   NODE_ENV: 'test',
   IDENTITY_DATABASE_URL: 'postgresql://localhost/bkpractice_identity_test',
   REDIS_URL: 'redis://localhost:6379',
@@ -23,6 +24,23 @@ const identity = {
 };
 
 describe('Identity configuration', () => {
+  it('requires a non-empty import password without changing its value', () => {
+    const missing: Record<string, string> = { ...identity };
+    delete missing.ACCOUNT_IMPORT_PASSWORD;
+    expect(() => validateEnvironment('identity-service')(missing)).toThrow(
+      'ACCOUNT_IMPORT_PASSWORD',
+    );
+    expect(() =>
+      validateEnvironment('identity-service')({
+        ...identity,
+        ACCOUNT_IMPORT_PASSWORD: '',
+      }),
+    ).toThrow('ACCOUNT_IMPORT_PASSWORD');
+    expect(validateEnvironment('identity-service')(identity).ACCOUNT_IMPORT_PASSWORD).toBe(
+      identity.ACCOUNT_IMPORT_PASSWORD,
+    );
+  });
+
   it('fails early without Microsoft configuration', () => {
     const missing: Record<string, string> = { ...identity };
     delete missing.MICROSOFT_CLIENT_ID;

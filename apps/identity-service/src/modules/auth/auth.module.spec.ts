@@ -22,6 +22,7 @@ describeDatabase('AuthModule composition', () => {
           load: [
             () => ({
               REDIS_URL: 'redis://127.0.0.1:6379',
+              ACCOUNT_IMPORT_PASSWORD: 'test-import-password',
               AUTH_FLOW_STORE: 'redis',
               MICROSOFT_TENANT_ID: '11111111-1111-4111-8111-111111111111',
               MICROSOFT_CLIENT_ID: '22222222-2222-4222-8222-222222222222',
