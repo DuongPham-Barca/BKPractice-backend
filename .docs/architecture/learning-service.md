@@ -177,3 +177,4 @@ or value object exists yet.
 - [Dependency Rules](../architecture/dependency-rules.md)
 - [Service Architecture Matrix](../architecture/service-architectures.md)
 - [System Architecture](../architecture/system-architecture.md)
+- [Learning Service deployment notes](../learning-service-operations.md)

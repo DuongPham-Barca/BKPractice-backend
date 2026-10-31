@@ -462,7 +462,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Kiểm thử
 
-- [ ] **LRN-001-T042 — Thêm test API/E2E.** Bao phủ: Giảng viên có thẩm quyền tạo được `DRAFT` với ID
+- [x] **LRN-001-T042 — Thêm test API/E2E.** Bao phủ: Giảng viên có thẩm quyền tạo được `DRAFT` với ID
       ổn định và người tạo tin cậy; Học viên bị từ chối; giả mạo người tạo bị bỏ qua; người học chỉ
       thấy nội dung `PUBLISHED` chưa bị xoá, kể cả khi tra cứu chính xác theo id/slug; chủ sở hữu cập
       nhật được các trường trong danh sách cho phép còn Giảng viên khác nhận `403`; bản nháp hợp lệ
@@ -473,7 +473,7 @@ Approved và không thay đổi `plan.md`.
       **Truy vết:** LRN-001-AC-001 tới LRN-001-AC-014, LRN-001-AC-019, LRN-001-AC-026
       tới LRN-001-AC-031.
 
-- [ ] **LRN-001-T043 — Thêm test bảo mật và bảo mật dữ liệu ẩn.** Kiểm tra phản hồi, lỗi, log và ví
+- [x] **LRN-001-T043 — Thêm test bảo mật và bảo mật dữ liệu ẩn.** Kiểm tra phản hồi, lỗi, log và ví
       dụ Swagger công khai không chứa tài liệu ẩn, thông tin xác thực hay lệnh runtime; route judge
       nội bộ từ chối bí mật giả mạo và người gọi công khai; các nỗ lực gán hàng loạt và giả mạo header
       định danh đều thất bại; lỗi phân quyền/kiểm tra dữ liệu/chuyển trạng thái không commit thay đổi
@@ -484,7 +484,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Tài liệu
 
-- [ ] **LRN-001-T044 — Cập nhật tài liệu hướng tới việc triển khai.** Giữ Swagger đồng bộ; ghi lại
+- [x] **LRN-001-T044 — Cập nhật tài liệu hướng tới việc triển khai.** Giữ Swagger đồng bộ; ghi lại
       cảnh báo về việc áp dụng/hoàn tác migration, đặc biệt là chuyển đổi enum `ARCHIVED -> ON_HOLD`;
       ghi lại tình trạng của cơ chế truyền quyền `problem:*` và mọi phương án tạm đã được chấp nhận;
       ghi lại rủi ro còn lại của việc chỉnh sửa tại chỗ nội dung đã xuất bản khi đã có Submission
@@ -494,7 +494,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Kiểm chứng
 
-- [ ] **LRN-001-T045 — Chạy các lệnh kiểm chứng của repository.** Khảo sát `package.json` và chạy
+- [x] **LRN-001-T045 — Chạy các lệnh kiểm chứng của repository.** Khảo sát `package.json` và chạy
       đúng các script hiện có, chỉ dùng pnpm: `pnpm lint`, `pnpm typecheck`, `pnpm test` và
       `pnpm build`. Chỉ sửa các lỗi thuộc phạm vi, chạy lại cho tới khi pass, và ghi lại kết quả
       chính xác cùng mọi lỗi có sẵn không liên quan. Không che lỗi bằng `any`, `@ts-ignore` hay việc
@@ -504,7 +504,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Tuân thủ kiến trúc
 
-- [ ] **LRN-001-T046 — Kiểm chứng tuân thủ DDD + Hexagonal.** Xác nhận tầng domain không import
+- [x] **LRN-001-T046 — Kiểm chứng tuân thủ DDD + Hexagonal.** Xác nhận tầng domain không import
       NestJS/TypeORM/JWT/HTTP và test được không cần cơ sở dữ liệu; tầng application chỉ phụ thuộc
       các kiểu domain và các port; tầng presentation là driving adapter chỉ lo transport; tầng
       infrastructure là driven adapter được gắn ở composition root; aggregate được biện minh bởi bất
@@ -517,7 +517,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Xác minh cuối cùng
 
-- [ ] **LRN-001-T047 — Đối chiếu bản triển khai với đặc tả đã Approved.** Rà soát từng
+- [x] **LRN-001-T047 — Đối chiếu bản triển khai với đặc tả đã Approved.** Rà soát từng
       `LRN-001-FR-001` tới `LRN-001-FR-034`, `LRN-001-SR-001` tới `LRN-001-SR-012`, và
       `LRN-001-AC-001` tới `LRN-001-AC-031` với code, test, migration, Swagger và các kết quả kiểm
       chứng đã ghi lại. Xác nhận không có hành vi Ngoài phạm vi nào được thêm vào: CRUD Test Case,
