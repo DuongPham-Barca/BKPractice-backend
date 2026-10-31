@@ -283,7 +283,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Truy vết:** Đặc tả 1.0; Định nghĩa Hoàn thành.
 
 - [ ] **LRN-006-T035 — Bàn giao theo SDD.** Cập nhật ô đánh dấu trung thực, viết worked entry dưới
-      `docs/worked/learning/progress/`, lấy review của con người, chỉ chuyển đặc tả sang `Implemented`
+      `.docs/worked/learning/progress/`, lấy review của con người, chỉ chuyển đặc tả sang `Implemented`
       rồi `Verified` qua quy trình SDD.
       **Phụ thuộc:** LRN-006-T034.
       **Truy vết:** Quy trình SDD.

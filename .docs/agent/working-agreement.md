@@ -6,7 +6,7 @@ document from that pointer and follow it.
 
 This process operates the Spec-Driven Development workflow defined in [`specs/README.md`](../specs/README.md).
 It must not loosen the requirements of an Approved `spec.md`, and it must not change the architecture in
-[`docs/architecture/`](../architecture/system-architecture.md) or [`docs/adr/`](../adr/0001-service-specific-internal-architectures.md).
+[`.docs/architecture/`](../architecture/system-architecture.md) or [`.docs/adr/`](../adr/0001-service-specific-internal-architectures.md).
 
 ## Sources of truth
 
@@ -22,7 +22,7 @@ System architecture and ADRs + Approved spec.md
 The six steps in this document are a mandatory process. A line in `tasks.md` must not skip the
 clarification step or the worked-log step. This agreement must not add product requirements.
 
-- Architecture and service boundaries live in `docs/architecture/` and `docs/adr/`.
+- Architecture and service boundaries live in `.docs/architecture/` and `.docs/adr/`.
 - The SDD workflow and system-level rules live in `specs/README.md` and `specs/00-system/`.
 - An Approved `spec.md` defines WHAT. Do not modify that file unless explicitly instructed.
 - `plan.md` defines HOW. `tasks.md` is the implementation checklist. Neither may add new requirements.
@@ -38,7 +38,7 @@ spec.md (Status: Approved)
     -> clarify open questions
     -> implement
     -> verify
-    -> write docs/worked/
+    -> write .docs/worked/
 ```
 
 ### Step 1. Spec
@@ -127,10 +127,10 @@ A documentation-only change does not run migrations, does not install dependenci
 
 ### Step 6. Write the worked entry
 
-When a piece of work finishes, including a configuration-only change, create a file under [`docs/worked/`](../worked/). Split notes into folders so the log stays easy to manage. Do not leave every entry as a loose file in `docs/worked/`.
+When a piece of work finishes, including a configuration-only change, create a file under [`.docs/worked/`](../worked/). Split notes into folders so the log stays easy to manage. Do not leave every entry as a loose file in `.docs/worked/`.
 
 ```text
-docs/worked/<area>/YYYY-MM-DD-short-name.md
+.docs/worked/<area>/YYYY-MM-DD-short-name.md
 ```
 
 `<area>` is:
@@ -142,8 +142,8 @@ docs/worked/<area>/YYYY-MM-DD-short-name.md
 Examples:
 
 ```text
-docs/worked/agent/2026-09-23-working-agreement.md
-docs/worked/identity/auth/2026-09-23-login.md
+.docs/worked/agent/2026-09-23-working-agreement.md
+.docs/worked/identity/auth/2026-09-23-login.md
 ```
 
 Create a folder only when that area has an entry to write. Do not create empty folders.
@@ -154,7 +154,7 @@ One file per piece of work. A list of changed files is not enough. The entry mus
 - why those pieces were used
 - how the feature actually flows
 
-The folder rules are also summarized in [`docs/worked/README.md`](../worked/README.md).
+The folder rules are also summarized in [`.docs/worked/README.md`](../worked/README.md).
 
 Use this template:
 
@@ -234,7 +234,29 @@ When the user asks only for a documentation change:
 
 ## How to write code
 
-These three rules apply when writing or editing TypeScript.
+These rules apply when writing or editing TypeScript.
+
+### Use `@/` for application-local imports
+
+For new or changed imports within an application, use `@/` rooted at that application's `src/`
+directory instead of relative `./` or `../` paths. For shared libraries, keep the existing
+`@app/*` aliases; package imports keep their package names. Example inside Identity:
+`import { User } from '@/modules/profiles/infrastructure/persistence/user.entity';`.
+
+Identity already configures `@/`. For another application, add and verify the alias for its
+TypeScript/Nest build, Jest tests, and any direct runtime or migration entry points before using it.
+Do not convert unrelated imports solely to enforce this rule.
+
+### Import through a barrel in each folder
+
+When adding or changing an application module, maintain an `index.ts` in each source folder of that
+module, including nested folders. Each index re-exports the source files directly in its folder and
+the indexes of its child folders; do not export test files. Import through the narrowest appropriate
+folder with `@/`, for example `@/modules/auth/infrastructure/persistence`.
+
+Keep imports pointed at a specific file when importing through that file's own folder index would
+create a circular dependency. Respect the service's layer dependency rules when choosing a barrel;
+do not import a module-wide barrel from a lower layer merely to shorten a path.
 
 ### Use `any` only when the type cannot be expressed
 
@@ -284,27 +306,27 @@ When implementation has to add documentation, split it into one folder per modul
 Place the folder under the service that owns the module:
 
 ```text
-docs/pm/plan/<service>/<module>/
+.docs/pm/plan/<service>/<module>/
 ```
 
-The same grouping is summarized in [`docs/pm/plan/README.md`](../pm/plan/README.md).
+The same grouping is summarized in [`.docs/pm/plan/README.md`](../pm/plan/README.md).
 
 `<service>` is one of: `api-gateway`, `identity`, `learning`, `submission`, `judge`, `community`.
 `<module>` is the feature module inside that service. Use the same name as the code directory `modules/<module>/`, or the feature folder in `specs/` when the module does not have a code directory yet.
 
-Example: Identity authentication documentation lives at `docs/pm/plan/identity/auth/`, not in the same file as profile or rbac.
+Example: Identity authentication documentation lives at `.docs/pm/plan/identity/auth/`, not in the same file as profile or rbac.
 
 Create a folder only when that module has a document to write. Do not create empty folders to fill out a diagram.
 
 These locations keep their current roles. Do not put new feature documents there:
 
-- `docs/architecture/` and `docs/adr/` hold the settled architecture and decisions.
-- `docs/agent/` holds this working agreement.
-- `docs/worked/` is the log of finished work.
+- `.docs/architecture/` and `.docs/adr/` hold the settled architecture and decisions.
+- `.docs/agent/` holds this working agreement.
+- `.docs/worked/` is the log of finished work.
 
 ## Architecture boundaries
 
-- Identity, Learning, Submission, and Community follow Clean Architecture in [`docs/architecture/dependency-rules.md`](../architecture/dependency-rules.md).
+- Identity, Learning, Submission, and Community follow Clean Architecture in [`.docs/architecture/dependency-rules.md`](../architecture/dependency-rules.md).
 - API Gateway follows Gateway Pattern + Layered Architecture and must not own business persistence.
 - Judge follows Worker + Pipeline + Adapter and treats submitted code as untrusted.
 - A service must not access another service's database, repository, entity, migration, or source internals.

@@ -1,9 +1,9 @@
 # Plan
 
-Each plan lives in a folder for its area. Split plans the same way finished-work notes are split under `docs/worked/`. Do not leave plan files loose in this directory.
+Each plan lives in a folder for its area. Split plans the same way finished-work notes are split under `.docs/worked/`. Do not leave plan files loose in this directory.
 
 ```text
-docs/pm/plan/<area>/
+.docs/pm/plan/<area>/
 ```
 
 `<area>` is:
@@ -15,8 +15,8 @@ docs/pm/plan/<area>/
 Examples:
 
 ```text
-docs/pm/plan/agent/
-docs/pm/plan/identity/auth/
+.docs/pm/plan/agent/
+.docs/pm/plan/identity/auth/
 ```
 
 Create a folder only when that area has a plan to write. Do not create empty folders.

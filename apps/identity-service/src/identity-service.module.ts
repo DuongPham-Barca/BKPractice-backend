@@ -5,8 +5,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AuthModule } from './modules/auth/auth.module';
-import { identityEntities } from './modules/identity.entities';
+import { AuthModule } from '@/modules/auth';
+import { identityEntities } from '@/modules/identity.entities';
+import { ProfileModule } from '@/modules/profiles';
+import { UsersModule } from '@/modules/users';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { identityEntities } from './modules/identity.entities';
     }),
     JwtModule.register({ global: true }),
     AuthModule,
+    ProfileModule,
+    UsersModule,
     HealthModule.forService('identity-service'),
   ],
 })

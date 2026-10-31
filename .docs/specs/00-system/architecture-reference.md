@@ -7,8 +7,8 @@ Các quyết định có thẩm quyền vẫn nằm tại:
 - [`system-architecture.md`](../../architecture/system-architecture.md)
 - [`service-architectures.md`](../../architecture/service-architectures.md)
 - [`dependency-rules.md`](../../architecture/dependency-rules.md)
-- tài liệu riêng của service liên quan trong [`docs/architecture`](../../docs/architecture/)
-- các ADR đã được chấp nhận trong [`docs/adr`](../../docs/adr/)
+- tài liệu riêng của service liên quan trong [`.docs/architecture`](../../architecture/)
+- các ADR đã được chấp nhận trong [`.docs/adr`](../../adr/)
 
 File này là chỉ mục lập kế hoạch và bản tóm tắt tuân thủ ngắn gọn. Nếu câu chữ có khác biệt, các tài
 liệu kiến trúc và ADR đã chấp nhận được ưu tiên.

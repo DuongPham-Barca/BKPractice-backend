@@ -4,6 +4,9 @@
 
 Approved
 
+Phiên bản `0.5`: người dùng đã yêu cầu Profile sử dụng access token trong HttpOnly cookie hiện có
+của ID-001 khi frontend gọi qua API Gateway. Các quy tắc sở hữu và dữ liệu Profile giữ nguyên.
+
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
 
 ## Mục tiêu
@@ -130,8 +133,10 @@ cách hiện thực thông tin xác thực thuộc về một `plan.md` sau này
 
 ### Đọc hồ sơ của mình — theo ý niệm `GET /api/profile/me`
 
-Yêu cầu một access token Bearer BKPractice hợp lệ và không nhận user ID nào do người gọi cung cấp để
-xác định chủ sở hữu.
+Yêu cầu một access token BKPractice hợp lệ và không nhận user ID nào do người gọi cung cấp để xác
+định chủ sở hữu. Frontend gọi qua API Gateway bằng HttpOnly access cookie của ID-001, không cần đọc
+token hoặc tự gửi header Authorization. Gateway kiểm chứng cookie rồi chuyển Bearer nội bộ cho
+Identity; khi gọi Identity trực tiếp, endpoint vẫn yêu cầu Bearer.
 
 ### Cập nhật hồ sơ của mình — theo ý niệm `PATCH /api/profile/me`
 
@@ -288,6 +293,10 @@ tảng đã thiết lập.
   được tạo hoặc truy vấn.
 - **ID-002-AC-015:** Cho trước một lần cập nhật hoặc đọc Profile, khi rà soát log và lỗi, thì không
   mật khẩu, token, thông tin xác thực R2 hay trường tài khoản nhạy cảm nào bị ghi log hoặc trả về.
+- **ID-002-AC-016:** Cho trước frontend và Gateway cùng site, khi người dùng đã đăng nhập gọi các
+  thao tác Profile riêng tư qua Gateway với access cookie hợp lệ và không tự gửi Authorization,
+  Gateway xác thực và chuyển ngữ cảnh tới Identity; thao tác ghi dùng cookie chỉ được chấp nhận từ
+  origin frontend đã cấu hình. GET Profile công khai vẫn hoạt động khi không có cookie.
 
 ## Ngoài phạm vi
 
@@ -331,6 +340,7 @@ Không còn. Các quyết định sản phẩm đã ghi trong đặc tả này l
 | 2026-09-01 | 0.2       | Quyết định sản phẩm  | Chốt displayName 100 ký tự, signed URL R2, async avatar cleanup và ẩn profile LOCKED/PENDING |
 | 2026-09-01 | 0.3       | Chủ sở hữu sản phẩm  | Phê duyệt đặc tả ID-002 Profile                                                              |
 | 2026-09-01 | 0.4       | Chủ sở hữu sản phẩm  | Chốt bio tối đa 1.000 ký tự và quy tắc xử lý Unicode                                         |
+| 2026-10-24 | 0.5       | Chủ sở hữu sản phẩm  | Profile dùng access cookie ID-001 tại Gateway; Identity giữ Bearer nội bộ                    |
 
 > `spec.md` mô tả CÁI GÌ. Chi tiết thư mục, class, cách hiện thực DTO, adapter R2, ánh xạ cơ sở dữ
 > liệu và thứ tự thực thi thuộc về một `plan.md` sau này, sau khi có phê duyệt của con người.

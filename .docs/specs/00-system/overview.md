@@ -4,7 +4,7 @@
 
 Phần này ghi lại các ràng buộc ở cấp hệ thống mà mọi đặc tả tính năng, kế hoạch và danh sách công
 việc của BKPractice đều phải tuân theo. Đây là phần quản trị SDD, không thay thế tài liệu kiến trúc
-có thẩm quyền nằm tại [`docs/architecture`](../../architecture/system-architecture.md).
+có thẩm quyền nằm tại [`.docs/architecture`](../../architecture/system-architecture.md).
 
 ## Quy trình phát triển bắt buộc
 

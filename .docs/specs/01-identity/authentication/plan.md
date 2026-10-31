@@ -9,8 +9,8 @@ Approved
 ## Đặc tả liên quan
 
 - [ID-001 Authentication](./spec.md)
-- Phiên bản đã Approved: `1.0`
-- Ngày phê duyệt: `2026-09-01`
+- Phiên bản đã Approved: `1.2`
+- Ngày phê duyệt bản sửa đổi mới nhất: `2026-10-24`
 
 Kế hoạch này triển khai đặc tả đã Approved mà không thay đổi các yêu cầu của nó. Luồng import Excel
 của quản trị viên và trang Đổi mật khẩu vẫn là các tính năng riêng.
@@ -616,5 +616,32 @@ nào bên ngoài Identity bị sửa đổi.
 - Test: claim access chỉ gồm `sub`, `roles`, `permissions`, `type`, `iat`, `exp` (ID-001-AC-011 sửa);
   làm mới phiên phản ánh quyền hiện tại.
 
+## Bổ sung cho bản sửa đổi 1.2 — Cookie access token
+
+Theo bản sửa đổi 1.2 đã Approved, tầng presentation của Identity đặt và xoá cookie
+`__Host-bk_access` trên login, Microsoft exchange, refresh và logout. Cookie có `HttpOnly`,
+`Secure`, `SameSite=Lax`, `Path=/`, không có Domain, và `Max-Age` lấy từ `JWT_ACCESS_TTL`.
+Controller giữ refresh token trong JSON/body và loại access token khỏi DTO phản hồi; các use case
+và `JwtBkTokenService` tiếp tục phát hành/kiểm chứng cặp token như trước.
+
+Gateway chuyển tiếp `Set-Cookie` chỉ cho bốn route Auth nêu trên khi upstream trả thành công. Nó
+kiểm chứng access token từ cookie hoặc Bearer tường minh, ưu tiên Bearer nếu có cả hai, xoá header
+Cookie trước khi proxy và chỉ đặt Bearer nội bộ sau khi đã kiểm chứng. Một GET công khai có cookie
+không hợp lệ vẫn công khai; các route khác trả 401. Request thay đổi state dùng cookie cần Origin
+hoặc Referer khớp chính xác `CORS_ORIGINS`; POST login/exchange/refresh cũng kiểm tra nguồn để
+tránh login CSRF. Phần CORS hiện có ở Gateway giữ `credentials: true` và danh sách origin tường minh.
+
+Test HTTP/Gateway kiểm tra thuộc tính cookie, JSON không có access token, refresh thay cookie,
+logout xoá cookie, quyền truy cập không cần Authorization, loại token/claim sai, thứ tự ưu tiên
+Bearer, origin/Referer, không chuyển tiếp Cookie thô và không nhận `Set-Cookie` từ route khác.
+Gateway Socket.IO đọc cùng cookie ở handshake cho browser, kiểm chứng JWT và origin theo
+`CORS_ORIGINS` trước khi tham gia phòng của người dùng; `handshake.auth.token` cũ vẫn hoạt động.
+Không thêm migration, dependency hay service mới; phần trực tiếp tới Identity vẫn dùng Bearer cho
+API được bảo vệ vì Gateway là cổng công khai duy nhất.
+
 > `plan.md` mô tả NHƯ THẾ NÀO. Việc triển khai vẫn cần `tasks.md` ở Giai đoạn 06, khớp với kế hoạch
 > đã Approved này.
+
+## Bổ sung Approved ngày 2026-10-25 — Lecturer local login
+
+Dùng LoginWithPassword cho hai identifier tại POST /api/auth/login; DTO nhận đúng một trong studentId/email cùng password. Nhánh Student giữ hành vi cũ. Nhánh email trim/lowercase, repository tra duy nhất theo email đã chuẩn hoá và chỉ chấp nhận account có LECTURER; giữ toàn bộ role khi phát hành token. Không tìm thấy/không có LECTURER/sai mật khẩu dùng lỗi invalid_credentials và dummy hash khi account không hợp lệ; account không ACTIVE không được cấp token. Giữ cookie/mobile/CSRF/session delivery và password policy đã duyệt. Migration official_name/cấp account thuộc ID-004 giai đoạn 1; phần này không mở manual CRUD hoặc bootstrap.

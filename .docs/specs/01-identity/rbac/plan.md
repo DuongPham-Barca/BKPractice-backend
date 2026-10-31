@@ -2,7 +2,9 @@
 
 ## Trạng thái
 
-Approved
+Approved — kế hoạch seed riêng/user–role baseline ngày 2026-10-25. Xem [phần mục tiêu mới](#kế-hoạch-mục-tiêu-05--seed-rbac-và-quản-lý-userrole) ở cuối tài liệu. Phần kế hoạch 0.3/0.4 bên dưới là baseline; mục tiêu 0.5 giữ role cố định và seed riêng, FE quản lý user–role.
+
+## Baseline 0.4 — kế hoạch đã được duyệt trước đây
 
 Được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-01`.
 
@@ -55,11 +57,11 @@ rỗng nào.
 
 ### Nền tảng hiện tại
 
-- `apps/identity-service/src/modules/rbac/entities/role.entity.ts` đã định nghĩa enum `STUDENT`,
+- `apps/identity-service/src/modules/rbac/infrastructure/persistence/role.entity.ts` đã định nghĩa enum `STUDENT`,
   `LECTURER`, `ADMIN` và quan hệ eager giữa Role và Permission.
-- `apps/identity-service/src/modules/rbac/entities/permission.entity.ts` đã định nghĩa một cột mã
+- `apps/identity-service/src/modules/rbac/infrastructure/persistence/permission.entity.ts` đã định nghĩa một cột mã
   quyền duy nhất.
-- `apps/identity-service/src/modules/users/entities/user.entity.ts` đã cung cấp quan hệ nhiều-nhiều
+- `apps/identity-service/src/modules/users/infrastructure/persistence/user.entity.ts` đã cung cấp quan hệ nhiều-nhiều
   giữa User và Role qua `user_roles`; khoá chính tổ hợp của nó ngăn các phép gán trùng lặp.
 - `apps/identity-service/src/modules/identity.entities.ts` và
   `apps/identity-service/src/database/data-source.ts` đã đăng ký các model lưu trữ RBAC chỉ trong
@@ -464,9 +466,9 @@ và `pnpm build`.
 
 ### REUSE
 
-- `apps/identity-service/src/modules/rbac/entities/role.entity.ts`
-- `apps/identity-service/src/modules/rbac/entities/permission.entity.ts`
-- `apps/identity-service/src/modules/users/entities/user.entity.ts`
+- `apps/identity-service/src/modules/rbac/infrastructure/persistence/role.entity.ts`
+- `apps/identity-service/src/modules/rbac/infrastructure/persistence/permission.entity.ts`
+- `apps/identity-service/src/modules/users/infrastructure/persistence/user.entity.ts`
 - `apps/identity-service/src/modules/identity.entities.ts`
 - `apps/identity-service/src/database/data-source.ts`
 - `apps/identity-service/src/database/migrations/1700000000000-InitialIdentitySchema.ts`
@@ -476,7 +478,7 @@ và `pnpm build`.
 
 ### MODIFY
 
-- `apps/identity-service/src/modules/rbac/entities/role.entity.ts`: ánh xạ lớp lưu trữ sang định
+- `apps/identity-service/src/modules/rbac/infrastructure/persistence/role.entity.ts`: ánh xạ lớp lưu trữ sang định
   nghĩa vai trò chuẩn tắc của domain nếu cần, mà không thay đổi enum cơ sở dữ liệu đã phê duyệt.
 - `apps/identity-service/src/identity-service.module.ts`: import module RBAC và gắn các port/adapter
   của nó.
@@ -659,3 +661,48 @@ SR-011, AC-017 tới AC-022).
 
 > `plan.md` mô tả NHƯ THẾ NÀO. Nó phải được rà soát đối chiếu với `spec.md` đã Approved trước khi tạo
 > `tasks.md`; không mã nguồn RBAC nào được tạo ở giai đoạn này.
+
+## Kế hoạch mục tiêu 0.5 — Seed RBAC và quản lý user–role
+
+`Approved` cho seed/user–role baseline; bám [spec 0.5](./spec.md#bản-sửa-đổi-05--seed-danh-mục-và-quản-lý-userrole). Phạm vi hiện tại thay thế kế hoạch CRUD/role động/import danh mục trong bản nháp ngày 2026-10-24.
+
+### Tái sử dụng và dữ liệu
+
+- Giữ `RoleName` với ba giá trị `STUDENT`, `LECTURER`, `ADMIN`; không tạo migration chuyển enum sang role động.
+- Tái dùng các use case/repository/API xem/gán/thu hồi user–role baseline, JWT/principal, reader quyền hiệu lực và snapshot token. Giữ allowlist, tính idempotent, cấm cấp Admin và bảo vệ Admin cuối cùng.
+- Role/permission/role–permission được nạp trong phần seed riêng của Identity theo dữ liệu được duyệt; không có parser/import danh mục hoặc CRUD catalog qua FE.
+- T047 là công việc seed baseline còn mở; T057 nối vào cùng một thiết kế seed, không tạo hai nguồn danh mục độc lập. Review idempotency, dữ liệu có sẵn và rollback trước chọn migration/script. Không sửa migration nền tảng hoặc bật synchronize.
+
+### Domain, application và infrastructure
+
+Domain giữ chính sách role định sẵn, quyền hiệu lực và mặc định từ chối. Application nhận actor đã xác minh, tải user đích và điều phối thay đổi role trong transaction. Adapter TypeORM giữ query trong database Identity; khoá/kiểm tra Admin cuối cùng cùng đơn vị ghi theo baseline.
+
+Phần seed chỉ đọc dữ liệu/chính sách được review, đảm bảo uniqueness và tham chiếu; không nhận file account hoặc credential. Chỉ bổ sung port/helper khi có seam thực sự cần dùng, không thêm generic CRUD framework hay policy engine.
+
+### Ranh giới FE và ID-004
+
+| Khả năng | Cách vận hành | Chủ sở hữu |
+| --- | --- | --- |
+| Role/permission/role–permission ban đầu | Seed riêng trong DB Identity | RBAC |
+| Xem/gán/thu hồi role của user | FE gọi API có bảo vệ; tái dùng route baseline | RBAC |
+| CRUD account và import Excel `mssv`, `name`, `email`, `role` | FE upload; parser/validation/transaction cấp account | ID-004 trong Auth |
+
+ID-004 kiểm tra `role` từng dòng chỉ là `STUDENT` hoặc `LECTURER`, tra danh mục đã seed và tạo account–credential–role nguyên tử. Student có MSSV; Lecturer để trống. File không tạo role/permission, không cấp Admin. Thiếu role trong DB là lỗi điều kiện dữ liệu cần được báo theo contract ID-004; không tự tạo role trong import.
+
+RBAC chỉ cung cấp policy/seam cho phép gán và kiểm chứng tích hợp sau khi ID-004 được duyệt/có code. Backend cung cấp contract cho FE; không ghi nhận FE đã được xây dựng ở repo này.
+
+### Token và kiểm thử
+
+Auth đọc quyền hiện tại khi phát hành token mới; token cũ giữ snapshot. Gateway bỏ metadata client tự gửi và chuyển tiếp claim đã xác minh. Service nghiệp vụ tiếp tục kiểm tra quyền sở hữu.
+
+Kiểm thử tập trung vào seed chạy lại/dữ liệu có sẵn/rollback, mutation user–role allowed/denied/idempotent, đồng thời bảo vệ Admin cuối cùng, role thiếu và transaction tích hợp ID-004, nhiều role và token cũ/mới. Không thiết kế test CRUD/import catalog đã rút khỏi phạm vi.
+
+### Thứ tự sau review
+
+1. Chốt seed catalog/cách chạy/rollback và các câu hỏi Admin/contract còn mở trong spec.
+2. Đối chiếu T047/T057, thiết kế phần seed riêng và thử trên DB test cách ly; không chạy trên DB đang cấu hình khi chưa được phép.
+3. Hoàn thiện user–role API/Swagger/FE contract và các phần baseline còn thiếu bằng chứng.
+4. Cung cấp seam cho ID-004; kiểm chứng account–role sau khi ID-004 sẵn sàng.
+5. Chạy các quality gate thực tế, đối chiếu FR/SR/AC, cập nhật checklist và worked entry. Chưa chuyển Implemented/Verified khi thiếu bằng chứng.
+
+Seed dùng command riêng, transaction và insert idempotent; không có down tự động, không tạo User Admin. Khảo sát/xác minh phần còn thiếu của baseline theo scope import ID-004, không tự coi toàn RBAC đã Verified.

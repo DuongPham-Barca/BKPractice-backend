@@ -8,6 +8,7 @@ interface BootstrapOptions {
   port: number;
   swaggerTitle: string;
   globalPrefix?: string;
+  host?: string;
 }
 
 export async function configureHttpApp(
@@ -37,7 +38,7 @@ export async function configureHttpApp(
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(options.port, '0.0.0.0');
+  await app.listen(options.port, options.host ?? '0.0.0.0');
   Logger.log(`Listening on http://localhost:${options.port}`, options.serviceName);
   Logger.log(`Swagger UI at http://localhost:${options.port}/docs`, options.serviceName);
 }
