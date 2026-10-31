@@ -61,6 +61,7 @@ import {
   Topic,
 } from './entities/problem.entity';
 import { HarnessTypeOrmRepository } from './infrastructure/persistence/harness.typeorm-repository';
+import { ProblemReferenceReaderAdapter } from './infrastructure/persistence/problem-reference-reader.adapter';
 import { ProblemPersistenceMapper } from './infrastructure/persistence/problem.persistence-mapper';
 import { ProblemTypeOrmRepository } from './infrastructure/persistence/problem.typeorm-repository';
 import { TestCasePersistenceMapper } from './infrastructure/persistence/test-case.persistence-mapper';
@@ -81,6 +82,7 @@ import {
   TEST_CASE_REPOSITORY,
   TOPIC_TAG_READER,
   TRANSACTION_RUNNER,
+  PROBLEM_REFERENCE_READER,
 } from './problem.tokens';
 import { ProblemsController } from './problems.controller';
 
@@ -175,6 +177,9 @@ import { ProblemsController } from './problems.controller';
     { provide: SOFT_DELETE_PROBLEM_PORT_IN, useExisting: SoftDeleteProblemUseCase },
     { provide: UPDATE_PROBLEM_PORT_IN, useExisting: UpdateProblemUseCase },
     { provide: UPDATE_TEST_CASE_PORT_IN, useExisting: UpdateTestCaseUseCase },
+    ProblemReferenceReaderAdapter,
+    { provide: PROBLEM_REFERENCE_READER, useExisting: ProblemReferenceReaderAdapter },
   ],
+  exports: [PROBLEM_REFERENCE_READER],
 })
 export class ProblemsModule {}
