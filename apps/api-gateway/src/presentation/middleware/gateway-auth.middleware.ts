@@ -1,6 +1,13 @@
 import { isAllowedBrowserOrigin, readCookie, verifyCsrfToken } from '@app/common';
-import { BK_ACCESS_COOKIE_NAME, BK_CSRF_COOKIE_NAME, BK_REFRESH_COOKIE_NAME } from '@app/contracts';
 import { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
+import {
+  AUTH_COOKIE_NAMES,
+  AUTH_COOKIE_REQUEST_ROUTES,
+  AUTH_ORIGIN_CHECKED_ROUTES,
+  AUTH_PUBLIC_ROUTES,
+  PUBLIC_PROFILE_ROUTE,
+  UNSAFE_METHODS,
+} from '@gateway/application/auth/auth-constants';
 import { ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import type { NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,32 +23,6 @@ interface AccessTokenPayload {
   type: 'access';
 }
 
-const publicRoutes = new Set([
-  'POST /api/auth/login',
-  'GET /api/auth/microsoft',
-  'GET /api/auth/microsoft/callback',
-  'POST /api/auth/microsoft/exchange',
-  'POST /api/auth/refresh',
-  'POST /api/auth/logout',
-  'GET /api/auth/csrf',
-  'POST /api/auth/password/send-otp',
-  'POST /api/auth/password/verify-otp',
-  'POST /api/auth/password/reset',
-]);
-const originCheckedRoutes = new Set([
-  'POST /api/auth/login',
-  'POST /api/auth/microsoft/exchange',
-  'POST /api/auth/refresh',
-  'POST /api/auth/logout',
-  'POST /api/auth/password/send-otp',
-  'POST /api/auth/password/verify-otp',
-  'POST /api/auth/password/reset',
-]);
-const authCookieRoutes = new Set(['POST /api/auth/refresh', 'POST /api/auth/logout', 'GET /api/auth/csrf']);
-const publicProfileRoute =
-  /^\/api\/users\/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\/profile$/;
-const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-
 @Injectable()
 export class GatewayAuthMiddleware implements NestMiddleware {
   constructor(
@@ -51,9 +32,9 @@ export class GatewayAuthMiddleware implements NestMiddleware {
   ) {}
 
   async use(request: Request, _response: Response, next: NextFunction): Promise<void> {
-    const accessCookie = this.readTokenCookie(request, BK_ACCESS_COOKIE_NAME);
-    const refreshCookie = this.readTokenCookie(request, BK_REFRESH_COOKIE_NAME);
-    const csrfCookie = this.readTokenCookie(request, BK_CSRF_COOKIE_NAME);
+    const accessCookie = this.readTokenCookie(request, AUTH_COOKIE_NAMES.access);
+    const refreshCookie = this.readTokenCookie(request, AUTH_COOKIE_NAMES.refresh);
+    const csrfCookie = this.readTokenCookie(request, AUTH_COOKIE_NAMES.csrf);
     delete request.headers.cookie;
     delete request.headers['x-auth-user-id'];
     delete request.headers['x-auth-roles'];
@@ -67,27 +48,27 @@ export class GatewayAuthMiddleware implements NestMiddleware {
     }
 
     const route = `${request.method} ${request.path}`;
-    if (authCookieRoutes.has(route)) {
+    if (AUTH_COOKIE_REQUEST_ROUTES.has(route)) {
       request.headers.cookie = [
-        refreshCookie && `${BK_REFRESH_COOKIE_NAME}=${refreshCookie}`,
-        csrfCookie && `${BK_CSRF_COOKIE_NAME}=${csrfCookie}`,
-        accessCookie && `${BK_ACCESS_COOKIE_NAME}=${accessCookie}`,
+        refreshCookie && `${AUTH_COOKIE_NAMES.refresh}=${refreshCookie}`,
+        csrfCookie && `${AUTH_COOKIE_NAMES.csrf}=${csrfCookie}`,
+        accessCookie && `${AUTH_COOKIE_NAMES.access}=${accessCookie}`,
       ].filter(Boolean).join('; ');
     }
 
-    if (originCheckedRoutes.has(route)) {
+    if (AUTH_ORIGIN_CHECKED_ROUTES.has(route)) {
       if (request.header('x-client-type') !== 'mobile') this.requireAllowedOrigin(request);
       next();
       return;
     }
 
-    if (publicRoutes.has(route)) {
+    if (AUTH_PUBLIC_ROUTES.has(route)) {
       next();
       return;
     }
 
     const authorization = request.header('authorization');
-    const publicProfile = request.method === 'GET' && publicProfileRoute.test(request.path);
+    const publicProfile = request.method === 'GET' && PUBLIC_PROFILE_ROUTE.test(request.path);
     if (authorization === undefined && !accessCookie && publicProfile) {
       next();
       return;
@@ -113,7 +94,7 @@ export class GatewayAuthMiddleware implements NestMiddleware {
         throw new Error('Invalid access token');
       }
       if (!(await this.sessions.isActive(token))) throw new Error('Revoked session');
-      if (fromCookie && unsafeMethods.has(request.method)) {
+      if (fromCookie && UNSAFE_METHODS.has(request.method)) {
         this.requireAllowedOrigin(request);
         if (!verifyCsrfToken(payload.sid, csrfCookie, request.header('x-csrf-token'),
           this.config.getOrThrow<string>('JWT_ACCESS_SECRET')))

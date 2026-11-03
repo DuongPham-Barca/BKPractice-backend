@@ -33,7 +33,9 @@ describe('GatewayProxyService', () => {
   });
 
   it('forwards profile search and its query string to Identity', async () => {
-    const upstream = { request: jest.fn().mockReturnValue(of({ status: 200, headers: {}, data: { items: [] } })) };
+    const upstream = {
+      request: jest.fn().mockReturnValue(of({ status: 200, headers: {}, data: { items: [] } })),
+    };
     await new GatewayProxyService(upstream as unknown as HttpService, config).forward(
       {
         method: 'GET',
@@ -43,24 +45,34 @@ describe('GatewayProxyService', () => {
       } as unknown as Request,
       response,
     );
-    expect(upstream.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: 'http://localhost:3001/api/profiles/search?q=Nguy%E1%BB%85n&page=2',
-      headers: { authorization: 'Bearer verified-access' },
-    }));
+    expect(upstream.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://localhost:3001/api/profiles/search?q=Nguy%E1%BB%85n&page=2',
+        headers: { authorization: 'Bearer verified-access' },
+      }),
+    );
   });
 
   it('routes User administration to Identity without exposing client cookies', async () => {
-    const upstream = { request: jest.fn().mockReturnValue(of({ status: 204, headers: {}, data: '' })) };
+    const upstream = {
+      request: jest.fn().mockReturnValue(of({ status: 204, headers: {}, data: '' })),
+    };
     const path = '/api/admin/users/00000000-0000-0000-0000-000000000001';
     await new GatewayProxyService(upstream as unknown as HttpService, config).forward(
-      { method: 'DELETE', path, originalUrl: path,
-        headers: { authorization: 'Bearer access', cookie: 'private=value' } } as unknown as Request,
+      {
+        method: 'DELETE',
+        path,
+        originalUrl: path,
+        headers: { authorization: 'Bearer access', cookie: 'private=value' },
+      } as unknown as Request,
       response,
     );
-    expect(upstream.request).toHaveBeenCalledWith(expect.objectContaining({
-      url: `http://localhost:3001${path}`,
-      headers: { authorization: 'Bearer access' },
-    }));
+    expect(upstream.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `http://localhost:3001${path}`,
+        headers: { authorization: 'Bearer access' },
+      }),
+    );
   });
 
   it.each(['GET', 'POST', 'DELETE'])(
@@ -114,6 +126,59 @@ describe('GatewayProxyService', () => {
     expect(headers.location).toBe('https://login.microsoftonline.com/tenant/oauth?state=abc');
     expect(headers['set-cookie']).toBeUndefined();
     expect(response.status).toHaveBeenCalledWith(302);
+  });
+
+  it('allows only the configured mobile deep link for the OAuth callback', async () => {
+    const callbackRequest = {
+      method: 'GET',
+      path: '/api/auth/microsoft/callback',
+      originalUrl: '/api/auth/microsoft/callback?code=code&state=state',
+      headers: { host: 'localhost' },
+    } as unknown as Request;
+    const mobileConfig = new ConfigService({
+      IDENTITY_SERVICE_URL: 'http://localhost:3001',
+      LEARNING_SERVICE_URL: 'http://localhost:3002',
+      SUBMISSION_SERVICE_URL: 'http://localhost:3003',
+      COMMUNITY_SERVICE_URL: 'http://localhost:3005',
+      AUTH_MOBILE_LOGIN_REDIRECT_URL: 'bkpracticemobile://auth/callback',
+    });
+    const allowedHttp = {
+      request: jest.fn().mockReturnValue(
+        of({
+          status: 302,
+          headers: { location: 'bkpracticemobile://auth/callback?loginCode=once' },
+          data: '',
+        }),
+      ),
+    } as unknown as HttpService;
+    await new GatewayProxyService(allowedHttp, mobileConfig).forward(callbackRequest, response);
+    expect(headers.location).toBe('bkpracticemobile://auth/callback?loginCode=once');
+
+    const otherScheme = {
+      request: jest.fn().mockReturnValue(
+        of({
+          status: 302,
+          headers: { location: 'otherscheme://auth/callback?loginCode=once' },
+          data: '',
+        }),
+      ),
+    } as unknown as HttpService;
+    await expect(
+      new GatewayProxyService(otherScheme, mobileConfig).forward(callbackRequest, response),
+    ).rejects.toThrow();
+
+    const mobileDisabled = {
+      request: jest.fn().mockReturnValue(
+        of({
+          status: 302,
+          headers: { location: 'bkpracticemobile://auth/callback?loginCode=once' },
+          data: '',
+        }),
+      ),
+    } as unknown as HttpService;
+    await expect(
+      new GatewayProxyService(mobileDisabled, config).forward(callbackRequest, response),
+    ).rejects.toThrow();
   });
 
   it('rejects an OAuth redirect containing bearer tokens', async () => {

@@ -1,4 +1,4 @@
-import { BK_ACCESS_COOKIE_NAME, BK_CSRF_COOKIE_NAME, BK_REFRESH_COOKIE_NAME } from '@app/contracts';
+import { AUTH_COOKIE_NAMES, AUTH_COOKIE_REQUEST_ROUTES, AUTH_COOKIE_RESPONSE_ROUTES } from '@gateway/application/auth/auth-constants';
 import { HttpService } from '@nestjs/axios';
 import { BadGatewayException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,22 +12,11 @@ interface RouteTarget {
 }
 
 const responseHeaders = ['content-type', 'content-length', 'etag', 'last-modified'];
-const cookieRoutes = new Set([
-  'POST /api/auth/login',
-  'POST /api/auth/microsoft/exchange',
-  'POST /api/auth/refresh',
-  'POST /api/auth/logout',
-  'POST /api/auth/logout-all',
-]);
-const authCookieRequestRoutes = new Set([
-  'POST /api/auth/refresh',
-  'POST /api/auth/logout',
-  'GET /api/auth/csrf',
-]);
 
 @Injectable()
 export class GatewayProxyService {
   private readonly targets: RouteTarget[];
+  private readonly mobileRedirect: URL | null;
 
   constructor(
     private readonly http: HttpService,
@@ -51,6 +40,8 @@ export class GatewayProxyService {
         baseUrl: config.getOrThrow<string>('COMMUNITY_SERVICE_URL'),
       },
     ];
+    const mobileRedirect = config.get<string>('AUTH_MOBILE_LOGIN_REDIRECT_URL');
+    this.mobileRedirect = mobileRedirect ? new URL(mobileRedirect) : null;
   }
 
   async forward(request: Request, response: Response): Promise<void> {
@@ -62,7 +53,7 @@ export class GatewayProxyService {
     const headers = { ...request.headers };
     delete headers.host;
     delete headers['content-length'];
-    if (!authCookieRequestRoutes.has(`${request.method} ${request.path}`)) delete headers.cookie;
+    if (!AUTH_COOKIE_REQUEST_ROUTES.has(`${request.method} ${request.path}`)) delete headers.cookie;
 
     const accountImport = request.method === 'POST' && request.path === '/api/auth/accounts/import';
     const multipart =
@@ -88,7 +79,7 @@ export class GatewayProxyService {
     try {
       const upstream = await firstValueFrom(this.http.request<unknown>(options));
       if (
-        cookieRoutes.has(`${request.method} ${request.path}`) &&
+        AUTH_COOKIE_RESPONSE_ROUTES.has(`${request.method} ${request.path}`) &&
         upstream.status >= 200 &&
         upstream.status < 300
       ) {
@@ -124,7 +115,7 @@ export class GatewayProxyService {
           throw new BadGatewayException('Invalid authentication redirect');
         const redirect = new URL(location);
         if (
-          !['http:', 'https:'].includes(redirect.protocol) ||
+          !this.isAllowedOAuthRedirect(redirect) ||
           redirect.username ||
           redirect.password ||
           ['access_token', 'refresh_token', 'id_token'].some(
@@ -142,6 +133,16 @@ export class GatewayProxyService {
     }
   }
 
+  private isAllowedOAuthRedirect(redirect: URL): boolean {
+    if (['http:', 'https:'].includes(redirect.protocol)) return true;
+    if (!this.mobileRedirect) return false;
+    return (
+      redirect.protocol === this.mobileRedirect.protocol &&
+      redirect.host === this.mobileRedirect.host &&
+      redirect.pathname === this.mobileRedirect.pathname
+    );
+  }
+
   private validAuthCookies(cookies: unknown): cookies is string[] {
     if (
       !Array.isArray(cookies) ||
@@ -149,10 +150,10 @@ export class GatewayProxyService {
       !cookies.every((cookie) => typeof cookie === 'string')
     )
       return false;
-    const expected = new Map([
-      [BK_ACCESS_COOKIE_NAME, { path: '/', httpOnly: true }],
-      [BK_REFRESH_COOKIE_NAME, { path: '/api/auth', httpOnly: true }],
-      [BK_CSRF_COOKIE_NAME, { path: '/', httpOnly: false }],
+    const expected: Map<string, { path: string; httpOnly: boolean }> = new Map([
+      [AUTH_COOKIE_NAMES.access, { path: '/', httpOnly: true }],
+      [AUTH_COOKIE_NAMES.refresh, { path: '/api/auth', httpOnly: true }],
+      [AUTH_COOKIE_NAMES.csrf, { path: '/', httpOnly: false }],
     ]);
     for (const cookie of cookies) {
       const name = cookie.slice(0, cookie.indexOf('='));
