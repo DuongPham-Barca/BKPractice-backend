@@ -66,6 +66,12 @@ Các file được di chuyển, không đổi hành vi:
 - `test/account-import.integration.spec.ts` import file Gateway theo đường dẫn mới và provide
   `GatewaySessionService` cùng `IdentitySessionClient`.
 
+Trong bước xác minh, test này vẫn dùng tên trường cũ `officialName`/`official_name` sau khi migration
+`1700000000006-InitializeImportedProfiles` đổi cột thành `display_name` (entity `User`, repository,
+`AccountImportRow` và `ProfileAccount` đều dùng `displayName`). Đã cập nhật test sang
+`displayName`/`display_name` để khớp schema hiện tại, nhờ đó `pnpm typecheck` và `pnpm test` xanh
+toàn repo.
+
 Các import nội bộ của application giờ dùng alias `@gateway/*` có sẵn. Không cần thêm alias mới.
 
 ## Why these choices
@@ -117,14 +123,10 @@ Không thay đổi cấu hình.
 - `pnpm test apps/api-gateway`: 8 suite, 39 test pass.
 - `pnpm eslint "apps/api-gateway/**/*.ts"`: pass.
 - `pnpm build:gateway`: pass.
-- `pnpm test`: 119 suite pass, 9 skip, 1 fail; 727 test pass, 54 skip. Lỗi duy nhất là TypeScript
-  có sẵn trong `test/account-import.integration.spec.ts`.
-- `pnpm typecheck`: chỉ còn năm lỗi `officialName` có sẵn trong
-  `test/account-import.integration.spec.ts`, ngoài phạm vi thay đổi này.
-- `pnpm eslint test/account-import.integration.spec.ts`: hai lỗi unsafe-argument có sẵn ở dòng 238
-  và 241, cùng nguyên nhân lệch type `officialName`.
-- `pnpm prettier --check`: file mới đã format; các file được di chuyển vẫn còn format drift có từ
-  trước thay đổi này.
+- `pnpm lint`: pass toàn repo.
+- `pnpm typecheck`: pass toàn repo.
+- `pnpm test`: 119 suite pass, 10 skip, 0 fail; 727 test pass, 62 skip.
+- `pnpm build`: cả 6 service build thành công.
 - Chưa kiểm chứng: các service upstream Identity/Learning/Submission/Community thật. Môi trường
   đang chạy Node 20.19.6 trong khi repository yêu cầu Node 22 trở lên.
 

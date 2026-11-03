@@ -81,7 +81,7 @@ Mọi công việc dưới đây đã hoàn thành và được kiểm chứng. 
       **Phụ thuộc:** GW-001-T006, GW-001-T010, GW-001-T013, GW-001-T014.  
       **Truy vết:** GW-001-AC-005.
 
-- [x] **GW-001-T016 — Chạy các lệnh chất lượng repository.** `pnpm eslint "apps/api-gateway/**/*.ts"` pass; `pnpm build:gateway` thành công. `pnpm typecheck` chỉ còn 5 lỗi `officialName` có sẵn trong `test/account-import.integration.spec.ts`, ngoài phạm vi thay đổi này.  
+- [x] **GW-001-T016 — Chạy các lệnh chất lượng repository.** `pnpm lint`, `pnpm typecheck`, `pnpm test` (119 suite pass, 0 fail) và `pnpm build` (cả 6 service) đều pass. Để đạt điều này, `test/account-import.integration.spec.ts` được cập nhật từ tên cột cũ `officialName`/`official_name` sang `displayName`/`display_name` cho khớp migration `1700000000006-InitializeImportedProfiles`.  
       **Phụ thuộc:** GW-001-T014.  
       **Truy vết:** Định nghĩa Hoàn thành.
 
