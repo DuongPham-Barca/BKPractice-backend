@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm';
 
 import {
   AUTH_ACCOUNT_REPOSITORY,
+  PASSWORD_CHANGE_REPOSITORY,
   AUTH_FLOW_STORE,
   BK_TOKEN_SERVICE,
   EXTERNAL_IDENTITY_REPOSITORY,
@@ -13,6 +14,7 @@ import {
   PASSWORD_HASHER,
   REFRESH_SESSION_REPOSITORY,
   AuthTokenIssuer,
+  ChangePassword,
   CompleteMicrosoftLogin,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
@@ -25,6 +27,7 @@ import {
   type AuthFlowStore,
   type BkTokenService,
   type ExternalIdentityRepository,
+  type PasswordChangeRepository,
   type MicrosoftIdentityProvider,
   type PasswordHasher,
   type RefreshSessionRepository,
@@ -53,6 +56,7 @@ import {
   RedisAuthFlowStore,
   RefreshToken,
   TypeormAuthAccountRepository,
+  TypeormPasswordChangeRepository,
   TypeormExternalIdentityRepository,
   TypeormRefreshSessionRepository,
   TypeormAccountImportRepository,
@@ -108,6 +112,7 @@ import { User } from '@/modules/users/infrastructure/persistence';
         ),
     },
     { provide: AUTH_ACCOUNT_REPOSITORY, useClass: TypeormAuthAccountRepository },
+    { provide: PASSWORD_CHANGE_REPOSITORY, useClass: TypeormPasswordChangeRepository },
     { provide: EXTERNAL_IDENTITY_REPOSITORY, useClass: TypeormExternalIdentityRepository },
     { provide: PASSWORD_HASHER, useClass: Argon2PasswordHasher },
     {
@@ -249,6 +254,12 @@ import { User } from '@/modules/users/infrastructure/persistence';
       provide: GetCurrentAuthenticatedUser,
       inject: [AUTH_ACCOUNT_REPOSITORY],
       useFactory: (accounts: AuthAccountRepository) => new GetCurrentAuthenticatedUser(accounts),
+    },
+    {
+      provide: ChangePassword,
+      inject: [PASSWORD_CHANGE_REPOSITORY, PASSWORD_HASHER],
+      useFactory: (passwords: PasswordChangeRepository, hasher: PasswordHasher) =>
+        new ChangePassword(passwords, hasher),
     },
     {
       provide: LogoutAllSessions,

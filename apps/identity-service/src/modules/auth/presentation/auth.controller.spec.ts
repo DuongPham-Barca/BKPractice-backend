@@ -9,6 +9,7 @@ import {
   BK_TOKEN_SERVICE,
   REFRESH_SESSION_REPOSITORY,
   CompleteMicrosoftLogin,
+  ChangePassword,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
   LoginWithPassword,
@@ -49,6 +50,7 @@ describe('Identity authentication HTTP contract', () => {
       status: 'ACTIVE',
     }),
   };
+  const changePassword = { execute: jest.fn().mockResolvedValue(undefined) };
   const tokens = {
     verifyAccessClaims: jest.fn(async (value: string) => {
       if (value !== 'access' && value !== 'next' && value !== 'valid')
@@ -88,6 +90,7 @@ describe('Identity authentication HTTP contract', () => {
         { provide: LogoutCurrentSession, useValue: logout },
         { provide: LogoutAllSessions, useValue: logoutAll },
         { provide: GetCurrentAuthenticatedUser, useValue: current },
+        { provide: ChangePassword, useValue: changePassword },
         { provide: BK_TOKEN_SERVICE, useValue: tokens },
         { provide: REFRESH_SESSION_REPOSITORY, useValue: sessions },
         {
@@ -323,6 +326,60 @@ describe('Identity authentication HTTP contract', () => {
     });
   });
 
+  it('changes only the authenticated user’s password and retains cookie CSRF checks', async () => {
+    const mobile = await fetch(`${baseUrl}/api/auth/password/change`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-client-type': 'mobile',
+        authorization: 'Bearer valid',
+      },
+      body: JSON.stringify({ currentPassword: 'old-password', newPassword: 'new-password' }),
+    });
+    expect(mobile.status).toBe(204);
+    expect(changePassword.execute).toHaveBeenLastCalledWith(
+      'user-1',
+      'session-1',
+      'old-password',
+      'new-password',
+    );
+
+    const csrf = issueCsrfToken('session-1', 'a'.repeat(32));
+    const web = await fetch(`${baseUrl}/api/auth/password/change`, {
+      method: 'POST',
+      headers: {
+        ...webHeaders,
+        cookie: `__Host-bk_access=valid; __Host-bk_csrf=${csrf}`,
+        'x-csrf-token': csrf,
+      },
+      body: JSON.stringify({ currentPassword: 'old-password', newPassword: 'new-password' }),
+    });
+    expect(web.status).toBe(204);
+
+    const missingCsrf = await fetch(`${baseUrl}/api/auth/password/change`, {
+      method: 'POST',
+      headers: { ...webHeaders, cookie: '__Host-bk_access=valid' },
+      body: JSON.stringify({ currentPassword: 'old-password', newPassword: 'new-password' }),
+    });
+    expect(missingCsrf.status).toBe(403);
+
+    const otherUser = await fetch(`${baseUrl}/api/auth/password/change`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-client-type': 'mobile',
+        authorization: 'Bearer valid',
+      },
+      body: JSON.stringify({
+        currentPassword: 'old-password',
+        newPassword: 'new-password',
+        userId: 'someone-else',
+      }),
+    });
+    expect(otherUser.status).toBe(400);
+    expect(changePassword.execute).toHaveBeenCalledTimes(2);
+  });
+
   it('documents all shared endpoints', () => {
     const document = SwaggerModule.createDocument(
       app,
@@ -339,6 +396,7 @@ describe('Identity authentication HTTP contract', () => {
         '/api/auth/logout-all',
         '/api/auth/csrf',
         '/api/auth/me',
+        '/api/auth/password/change',
       ].sort(),
     );
   });

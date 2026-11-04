@@ -1,4 +1,5 @@
 export const AUTH_ACCOUNT_REPOSITORY = Symbol('AuthAccountRepository');
+export const PASSWORD_CHANGE_REPOSITORY = Symbol('PasswordChangeRepository');
 export const EXTERNAL_IDENTITY_REPOSITORY = Symbol('ExternalIdentityRepository');
 export const REFRESH_SESSION_REPOSITORY = Symbol('RefreshSessionRepository');
 export const PASSWORD_HASHER = Symbol('PasswordHasher');

@@ -23,6 +23,7 @@ import type { Request, Response } from 'express';
 
 import {
   BK_TOKEN_SERVICE,
+  ChangePassword,
   REFRESH_SESSION_REPOSITORY,
   CompleteMicrosoftLogin,
   ExchangeMicrosoftLoginCode,
@@ -43,6 +44,7 @@ import { AuthFailure } from '@/modules/auth/domain';
 import { clearAuthCookies, setAuthCookies } from '@/modules/auth/presentation/auth-cookie';
 import { AuthFailureFilter } from '@/modules/auth/presentation/auth-failure.filter';
 import {
+  ChangePasswordDto,
   AuthenticatedResponseDto,
   CurrentAuthUserResponseDto,
   MicrosoftCallbackDto,
@@ -80,6 +82,7 @@ export class AuthController {
     private readonly logoutUseCase: LogoutCurrentSession,
     private readonly logoutAllUseCase: LogoutAllSessions,
     private readonly currentUserUseCase: GetCurrentAuthenticatedUser,
+    private readonly changePasswordUseCase: ChangePassword,
     @Inject(BK_TOKEN_SERVICE) private readonly tokens: BkTokenService,
     @Inject(REFRESH_SESSION_REPOSITORY) private readonly sessions: RefreshSessionRepository,
     private readonly config: ConfigService,
@@ -255,6 +258,27 @@ export class AuthController {
   @ApiResponse({ status: 200, type: CurrentAuthUserResponseDto })
   async currentUser(@Req() request: Request): Promise<CurrentAuthUserResponseDto> {
     return this.currentUserUseCase.execute((await this.requireAccess(request)).sub);
+  }
+
+  @Post('password/change')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Change the current user’s local password and revoke other sessions',
+  })
+  @ApiResponse({ status: 204 })
+  async changePassword(@Req() request: Request, @Body() dto: ChangePasswordDto): Promise<void> {
+    const clientType = this.clientType(request);
+    if (clientType === 'web') this.requireOrigin(request);
+    const access = await this.requireAccess(request);
+    if (clientType === 'web' && !request.header('authorization'))
+      this.requireCsrf(request, access.sid);
+    await this.changePasswordUseCase.execute(
+      access.sub,
+      access.sid,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   private clientType(request: Request): ClientType {

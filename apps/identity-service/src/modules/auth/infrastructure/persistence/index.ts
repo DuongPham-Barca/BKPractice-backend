@@ -8,3 +8,4 @@ export * from '@/modules/auth/infrastructure/persistence/account-import.reposito
 export * from '@/modules/auth/infrastructure/persistence/password-reset.repository';
 export * from '@/modules/auth/infrastructure/persistence/password-reset-challenge.entity';
 export * from '@/modules/auth/infrastructure/persistence/password-reset-grant.entity';
+export * from '@/modules/auth/infrastructure/persistence/password-change.repository';
