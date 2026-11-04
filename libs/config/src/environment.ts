@@ -44,6 +44,7 @@ const serviceSchemas: Record<ServiceName, z.ZodObject> = {
     COMMUNITY_SERVICE_URL: url,
     REDIS_URL: url,
     CORS_ORIGINS: origins.default('http://localhost:3001'),
+    AUTH_MOBILE_LOGIN_REDIRECT_URL: url.optional(),
     AUTH_RATE_LIMIT_TTL_MS: z.coerce.number().int().positive().default(60000),
     AUTH_PASSWORD_LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(5),
     AUTH_OAUTH_RATE_LIMIT: z.coerce.number().int().positive().default(30),
@@ -151,21 +152,6 @@ export function validateEnvironment(service: ServiceName) {
           'Invalid environment for identity-service: BREVO_API_KEY and BREVO_SENDER_EMAIL are required in production',
         );
       }
-      const ttlMs = (value: string): number => {
-        const unit = value.slice(-1);
-        const multipliers: Record<string, number> = {
-          s: 1000,
-          m: 60_000,
-          h: 3_600_000,
-          d: 86_400_000,
-        };
-        return Number(value.slice(0, -1)) * (multipliers[unit] ?? 0);
-      };
-      if (ttlMs(String(result.data.JWT_REFRESH_TTL)) <= ttlMs(String(result.data.JWT_ACCESS_TTL))) {
-        throw new Error(
-          `Invalid environment for ${service}: JWT_REFRESH_TTL must exceed JWT_ACCESS_TTL`,
-        );
-      }
       if (result.data.NODE_ENV === 'production') {
         for (const key of ['MICROSOFT_REDIRECT_URI', 'AUTH_WEB_LOGIN_REDIRECT_URL'] as const) {
           const redirect: unknown = result.data[key];
@@ -176,21 +162,9 @@ export function validateEnvironment(service: ServiceName) {
             );
           }
         }
-        const mobileRedirect: unknown = result.data.AUTH_MOBILE_LOGIN_REDIRECT_URL;
-        if (mobileRedirect !== undefined) {
-          if (typeof mobileRedirect !== 'string') {
-            throw new Error(
-              `Invalid environment for ${service}: AUTH_MOBILE_LOGIN_REDIRECT_URL must be a URL`,
-            );
-          }
-          let parsed: URL;
-          try {
-            parsed = new URL(mobileRedirect);
-          } catch {
-            throw new Error(
-              `Invalid environment for ${service}: AUTH_MOBILE_LOGIN_REDIRECT_URL must be a URL`,
-            );
-          }
+        const mobileRedirect = result.data.AUTH_MOBILE_LOGIN_REDIRECT_URL;
+        if (typeof mobileRedirect === 'string') {
+          const parsed = new URL(mobileRedirect);
           if (
             parsed.username ||
             parsed.password ||

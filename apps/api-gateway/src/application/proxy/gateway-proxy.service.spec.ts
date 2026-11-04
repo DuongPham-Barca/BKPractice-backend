@@ -25,6 +25,7 @@ describe('GatewayProxyService', () => {
     LEARNING_SERVICE_URL: 'http://localhost:3002',
     SUBMISSION_SERVICE_URL: 'http://localhost:3003',
     COMMUNITY_SERVICE_URL: 'http://localhost:3005',
+    AUTH_MOBILE_LOGIN_REDIRECT_URL: 'bkpracticemobile:///auth/callback',
   });
 
   beforeEach(() => {
@@ -194,6 +195,50 @@ describe('GatewayProxyService', () => {
     await expect(
       new GatewayProxyService(http, config).forward(request, response),
     ).rejects.toThrow();
+  });
+
+  it('forwards the configured mobile deep link after the Microsoft callback', async () => {
+    const location = 'bkpracticemobile:///auth/callback?loginCode=opaque';
+    const http = {
+      request: jest
+        .fn()
+        .mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
+    } as unknown as HttpService;
+    await new GatewayProxyService(http, config).forward(
+      {
+        method: 'GET',
+        path: '/api/auth/microsoft/callback',
+        originalUrl: '/api/auth/microsoft/callback',
+        headers: {},
+      } as unknown as Request,
+      response,
+    );
+    expect(headers.location).toBe(location);
+    expect(response.status).toHaveBeenCalledWith(302);
+  });
+
+  it('rejects a mobile redirect outside the configured deep link', async () => {
+    for (const location of [
+      'bkpracticemobile://evil/auth/callback?loginCode=opaque',
+      'bkpracticemobile:///auth/other?loginCode=opaque',
+    ]) {
+      const http = {
+        request: jest
+          .fn()
+          .mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
+      } as unknown as HttpService;
+      await expect(
+        new GatewayProxyService(http, config).forward(
+          {
+            method: 'GET',
+            path: '/api/auth/microsoft/callback',
+            originalUrl: '/api/auth/microsoft/callback',
+            headers: {},
+          } as unknown as Request,
+          response,
+        ),
+      ).rejects.toThrow();
+    }
   });
 
   it('forwards only the approved auth cookies on a successful web login', async () => {

@@ -283,7 +283,8 @@ khi cả hành vi lẫn phần kiểm chứng được liệt kê đều đã th
 - [x] **ID-001-T029 — Chuyển tiếp các redirect OAuth an toàn qua proxy của Gateway.** Bảo toàn header
       `Location` của upstream cho các phản hồi 302 đã phê duyệt, đồng thời tiếp tục bỏ `set-cookie`
       và các header không an toàn, và đảm bảo không bearer token nào xuất hiện trong URL chuyển
-      hướng.  
+      hướng. Deep link mobile chỉ được chuyển tiếp khi trùng chính xác scheme, host và path của
+      `AUTH_MOBILE_LOGIN_REDIRECT_URL` đã cấu hình.  
       **Phụ thuộc:** ID-001-T026.  
       **Truy vết:** ID-001-FR-024; ID-001-SR-009, ID-001-SR-015, ID-001-SR-017;
       ID-001-AC-018, ID-001-AC-020.
