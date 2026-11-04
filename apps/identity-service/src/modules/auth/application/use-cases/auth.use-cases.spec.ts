@@ -15,6 +15,7 @@ import type {
 } from '@/modules/auth/application/ports';
 import {
   CompleteMicrosoftLogin,
+  ChangePassword,
   ExchangeMicrosoftLoginCode,
   GetCurrentAuthenticatedUser,
   LoginWithPassword,
@@ -94,6 +95,127 @@ function createIssuer(): AuthTokenIssuer {
 }
 
 describe('Authentication use cases', () => {
+  it('changes the current password and keeps only the current session family', async () => {
+    const passwords = {
+      findPasswordHash: jest.fn().mockResolvedValue('old-hash'),
+      changePasswordAndRevokeOtherSessions: jest.fn().mockResolvedValue(true),
+    };
+    const hasher = createHasher();
+    jest.mocked(hasher.verify).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const change = new ChangePassword(passwords, hasher);
+
+    await expect(
+      change.execute('user-1', 'session-current', 'old-password', 'new-password'),
+    ).resolves.toBeUndefined();
+    expect(passwords.changePasswordAndRevokeOtherSessions).toHaveBeenCalledWith(
+      'user-1',
+      'session-current',
+      'old-hash',
+      'hash',
+    );
+  });
+
+  it('keeps Unicode and surrounding whitespace intact in both password checks', async () => {
+    const passwords = {
+      findPasswordHash: jest.fn().mockResolvedValue('old-hash'),
+      changePasswordAndRevokeOtherSessions: jest.fn().mockResolvedValue(true),
+    };
+    const hasher = createHasher();
+    jest.mocked(hasher.verify).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const change = new ChangePassword(passwords, hasher);
+
+    await change.execute('user-1', 'session-current', '  mật khẩu cũ  ', ' new-password ');
+
+    expect(hasher.verify).toHaveBeenNthCalledWith(1, 'old-hash', '  mật khẩu cũ  ');
+    expect(hasher.hash).toHaveBeenCalledWith(' new-password ');
+  });
+
+  it('allows login with the new password and rejects the old password after change', async () => {
+    let passwordHash = 'old-hash';
+    const passwords = {
+      findPasswordHash: jest.fn().mockImplementation(async () => passwordHash),
+      changePasswordAndRevokeOtherSessions: jest
+        .fn()
+        .mockImplementation(
+          async (_userId: string, _sid: string, _oldHash: string, nextHash: string) => {
+            passwordHash = nextHash;
+            return true;
+          },
+        ),
+    };
+    const accounts = createAccounts();
+    jest.mocked(accounts.findByIdentifier).mockImplementation(async () => ({
+      ...account,
+      passwordHash,
+    }));
+    const hasher = createHasher();
+    jest
+      .mocked(hasher.verify)
+      .mockImplementation(async (hash, password) =>
+        hash === 'old-hash'
+          ? password === 'old-password'
+          : hash === 'new-hash' && password === 'new-password',
+      );
+    jest.mocked(hasher.hash).mockResolvedValue('new-hash');
+
+    await new ChangePassword(passwords, hasher).execute(
+      'user-1',
+      'session-current',
+      'old-password',
+      'new-password',
+    );
+    const login = new LoginWithPassword(accounts, hasher, createIssuer());
+
+    await expect(login.execute('2210001', 'old-password')).rejects.toEqual(
+      new AuthFailure('invalid_credentials'),
+    );
+    await expect(login.execute('2210001', 'new-password')).resolves.toEqual({
+      userId: 'user-1',
+      ...pair,
+    });
+  });
+
+  it.each([
+    { currentPassword: 'wrong-password', newPassword: 'new-password', verify: [false] },
+    { currentPassword: 'old-password', newPassword: 'old-password', verify: [true, true] },
+    { currentPassword: 'old-password', newPassword: 'short', verify: [] },
+  ])('rejects invalid password changes without updating the credential', async (input) => {
+    const passwords = {
+      findPasswordHash: jest.fn().mockResolvedValue('old-hash'),
+      changePasswordAndRevokeOtherSessions: jest.fn().mockResolvedValue(true),
+    };
+    const hasher = createHasher();
+    for (const result of input.verify) jest.mocked(hasher.verify).mockResolvedValueOnce(result);
+
+    await expect(
+      new ChangePassword(passwords, hasher).execute(
+        'user-1',
+        'session-current',
+        input.currentPassword,
+        input.newPassword,
+      ),
+    ).rejects.toBeInstanceOf(AuthFailure);
+    expect(passwords.changePasswordAndRevokeOtherSessions).not.toHaveBeenCalled();
+  });
+
+  it('rejects a concurrent password update when the stored hash changed', async () => {
+    const passwords = {
+      findPasswordHash: jest.fn().mockResolvedValue('old-hash'),
+      changePasswordAndRevokeOtherSessions: jest.fn().mockResolvedValue(false),
+    };
+    const hasher = createHasher();
+    jest.mocked(hasher.verify).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    await expect(
+      new ChangePassword(passwords, hasher).execute(
+        'user-1',
+        'session-current',
+        'old-password',
+        'new-password',
+      ),
+    ).rejects.toEqual(new AuthFailure('invalid_credentials'));
+  });
+
   it('signs in the bootstrap Admin through its technical identifier', async () => {
     const accounts = createAccounts();
     const admin = { ...account, studentId: 'admin', roles: ['ADMIN'], passwordHash: 'hash' };

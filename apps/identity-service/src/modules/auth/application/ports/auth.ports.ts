@@ -7,6 +7,16 @@ export interface AuthAccountRepository {
   findById(userId: string): Promise<AuthAccount | null>;
 }
 
+export interface PasswordChangeRepository {
+  findPasswordHash(userId: string): Promise<string | null>;
+  changePasswordAndRevokeOtherSessions(
+    userId: string,
+    currentSessionId: string,
+    expectedPasswordHash: string,
+    newPasswordHash: string,
+  ): Promise<boolean>;
+}
+
 export interface ExternalIdentityRepository {
   resolveOrLink(identity: MicrosoftIdentity): Promise<AuthAccount | null>;
 }

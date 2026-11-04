@@ -6,6 +6,7 @@ import type {
   AuthFlowStore,
   BkTokenService,
   ExternalIdentityRepository,
+  PasswordChangeRepository,
   MicrosoftIdentityProvider,
   PasswordHasher,
   RefreshSessionRepository,
@@ -35,7 +36,10 @@ export class LoginWithPassword {
       throw new AuthFailure('invalid_credentials');
     }
     requireActiveAccount(account);
-    return { userId: account.userId, ...(await this.issuer.issueNewFamily(account, metadata, account.passwordHash)) };
+    return {
+      userId: account.userId,
+      ...(await this.issuer.issueNewFamily(account, metadata, account.passwordHash)),
+    };
   }
 }
 
@@ -184,5 +188,39 @@ export class GetCurrentAuthenticatedUser {
       roles: account.roles,
       status: account.status,
     };
+  }
+}
+
+export class ChangePassword {
+  constructor(
+    private readonly passwords: PasswordChangeRepository,
+    private readonly hasher: PasswordHasher,
+  ) {}
+
+  async execute(
+    userId: string,
+    currentSessionId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    if (newPassword.length < 8 || newPassword.length > 128)
+      throw new AuthFailure('invalid_credentials');
+
+    const currentHash = await this.passwords.findPasswordHash(userId);
+    if (!currentHash || !(await this.hasher.verify(currentHash, currentPassword)))
+      throw new AuthFailure('invalid_credentials');
+    if (await this.hasher.verify(currentHash, newPassword))
+      throw new AuthFailure('invalid_credentials');
+
+    const newHash = await this.hasher.hash(newPassword);
+    if (
+      !(await this.passwords.changePasswordAndRevokeOtherSessions(
+        userId,
+        currentSessionId,
+        currentHash,
+        newHash,
+      ))
+    )
+      throw new AuthFailure('invalid_credentials');
   }
 }

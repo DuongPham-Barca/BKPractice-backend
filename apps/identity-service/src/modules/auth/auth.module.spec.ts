@@ -10,7 +10,7 @@ const testUrl = process.env.TEST_IDENTITY_DATABASE_URL;
 const describeDatabase = testUrl ? describe : describe.skip;
 
 describeDatabase('AuthModule composition', () => {
-  it('resolves all seven use cases and their adapters', async () => {
+  it('resolves the use cases and their adapters', async () => {
     if (!testUrl || !new URL(testUrl).pathname.endsWith('_test')) {
       throw new Error('TEST_IDENTITY_DATABASE_URL must name an isolated _test database');
     }
