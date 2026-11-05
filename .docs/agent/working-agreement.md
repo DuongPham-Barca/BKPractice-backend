@@ -258,6 +258,13 @@ Keep imports pointed at a specific file when importing through that file's own f
 create a circular dependency. Respect the service's layer dependency rules when choosing a barrel;
 do not import a module-wide barrel from a lower layer merely to shorten a path.
 
+### Name application ports with `.port.in` / `.port.out`
+
+An application port file lives under `application/ports/in/` or `application/ports/out/` and carries
+the matching suffix: `*.port.in.ts` for inbound ports, `*.port.out.ts` for outbound ports. Do not
+use a bare `*.port.ts` name. Keep the port interface in the narrowest folder and import it through
+the `@/` alias, not through `../`.
+
 ### Use `any` only when the type cannot be expressed
 
 Use `any` as little as possible. Use it only when the context is hard enough that a safe type cannot be written, for example a boundary with an untyped library or an external payload that is not yet checked.

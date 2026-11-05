@@ -256,6 +256,20 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
       expect((await call('POST', `/api/courses/${id}/preview`)).status).toBe(404);
     });
 
+    it("accepts the gateway's empty permissions header without a 401", async () => {
+      const { id } = await readyCourse();
+      expect((await call('POST', `/api/courses/${id}/publish`)).status).toBe(200);
+      const legacyTokenHeaders = { ...headers(), 'x-auth-permissions': '' };
+
+      expect((await call('GET', '/api/courses', { headers: legacyTokenHeaders })).status).toBe(200);
+      expect(
+        (await call('GET', `/api/courses/${id}`, { headers: legacyTokenHeaders })).status,
+      ).toBe(200);
+      expect(
+        (await call('GET', '/api/courses/managed', { headers: legacyTokenHeaders })).status,
+      ).toBe(403);
+    });
+
     it('returns the managed view with problem states and readiness', async () => {
       const { id } = await readyCourse();
       catalog.setProblem(PROBLEM_ID, { publishStatus: 'ON_HOLD' });

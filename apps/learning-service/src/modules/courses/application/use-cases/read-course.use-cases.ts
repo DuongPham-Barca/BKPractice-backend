@@ -7,7 +7,7 @@ import type {
   CourseListFilter,
   CoursePage,
   CourseRepository,
-} from '../ports/out/course-repository.port';
+} from '../ports/out/course-repository.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,

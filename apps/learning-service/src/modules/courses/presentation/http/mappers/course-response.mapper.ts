@@ -1,4 +1,4 @@
-import type { CoursePage } from '@learning/modules/courses/application/ports/out/course-repository.port';
+import type { CoursePage } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,

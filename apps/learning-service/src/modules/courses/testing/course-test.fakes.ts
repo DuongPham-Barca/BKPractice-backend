@@ -2,15 +2,15 @@ import type { Principal } from '@learning/modules/courses/application/models/pri
 import type {
   CourseProblemCatalog,
   ProblemSummary,
-} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port';
+} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
 import type {
   CourseListFilter,
   CoursePage,
   CourseReferenceChecker,
   CourseRepository,
   ManagedCourseListFilter,
-} from '@learning/modules/courses/application/ports/out/course-repository.port';
-import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port';
+} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
 import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
 import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';

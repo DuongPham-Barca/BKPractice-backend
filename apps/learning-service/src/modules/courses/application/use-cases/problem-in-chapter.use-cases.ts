@@ -5,7 +5,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { ProblemNotAttachableError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
-import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port';
+import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port.out';
 import type { ManagedCourseResult } from '../results/course.results';
 import { CourseMutationService } from '../services/course-mutation.service';
 import { CoursePublishReadinessService } from '../services/course-publish-readiness.service';
@@ -59,7 +59,7 @@ export class DetachProblemUseCase {
     problemId: ProblemReference,
     now = new Date(),
   ): Promise<void> {
-    await this.mutation.mutate(principal, 'course:update', courseId, async (course) => {
+    await this.mutation.mutateVoid(principal, 'course:update', courseId, async (course) => {
       course.removeProblemFromChapter(chapterId, problemId, now);
       if (course.isPublished) await this.readiness.assertReady(course);
     });

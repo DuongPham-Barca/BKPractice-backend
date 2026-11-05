@@ -1,4 +1,4 @@
-import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port';
+import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 

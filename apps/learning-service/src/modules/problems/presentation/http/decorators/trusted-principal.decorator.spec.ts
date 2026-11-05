@@ -64,14 +64,37 @@ describe('readTrustedPrincipal', () => {
     ).toThrow(UnauthorizedError);
   });
 
-  it('rejects empty entries, invalid patterns, and values over the cap', () => {
-    for (const roles of ['LECTURER,,STUDENT', 'LECTURER,', ',LECTURER', 'Lecturer']) {
+  it('drops empty entries and treats an empty header as no values', () => {
+    const principal = readTrustedPrincipal(
+      requestWith([
+        'x-auth-user-id',
+        USER_ID,
+        'x-auth-roles',
+        'LECTURER,,STUDENT,',
+        'x-auth-permissions',
+        'problem:create, ,problem:update',
+      ]),
+    );
+
+    expect(principal.roles).toEqual(['LECTURER', 'STUDENT']);
+    expect(principal.permissions).toEqual(['problem:create', 'problem:update']);
+
+    const empty = readTrustedPrincipal(
+      requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', '', 'x-auth-permissions', '']),
+    );
+
+    expect(empty.roles).toEqual([]);
+    expect(empty.permissions).toEqual([]);
+  });
+
+  it('rejects invalid patterns and values over the cap', () => {
+    for (const roles of ['Lecturer']) {
       expect(() =>
         readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', roles])),
       ).toThrow(UnauthorizedError);
     }
 
-    for (const permissions of ['problem:create,', 'Problem:create', 'problem', 'problem:Create']) {
+    for (const permissions of ['Problem:create', 'problem', 'problem:Create']) {
       expect(() =>
         readTrustedPrincipal(
           requestWith(['x-auth-user-id', USER_ID, 'x-auth-permissions', permissions]),
@@ -96,10 +119,6 @@ describe('readTrustedPrincipal', () => {
           permissionsOverCap.join(','),
         ]),
       ),
-    ).toThrow(UnauthorizedError);
-
-    expect(() =>
-      readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', ''])),
     ).toThrow(UnauthorizedError);
   });
 

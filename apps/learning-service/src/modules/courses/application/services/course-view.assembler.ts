@@ -2,7 +2,7 @@ import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens'
 import type { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port';
+import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
@@ -63,7 +63,7 @@ export class CourseViewAssembler {
   /** Quản lý: trạng thái từng Problem đã xếp và lỗi readiness (FR-011). */
   async toManaged(course: Course): Promise<ManagedCourseResult> {
     const found = await this.catalog.findByIds(uniqueProblemIds(course));
-    const issues = await this.readiness.check(course);
+    const issues = await this.readiness.check(course, found);
     return {
       id: course.id.value,
       slug: course.slug.value,

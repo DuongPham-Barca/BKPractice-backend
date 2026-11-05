@@ -128,6 +128,13 @@ pnpm migration:revert:community
 `synchronize` is always disabled. Migration commands load `.env`, TypeScript, and path aliases
 without requiring compiled output.
 
+After migrations, seed the RBAC catalog so Identity issues `course:*`, `problem:*` and other
+feature permissions (the catalog is seeded by a script, not by a migration):
+
+```bash
+pnpm seed:identity:rbac
+```
+
 ## Running services
 
 Run everything locally:

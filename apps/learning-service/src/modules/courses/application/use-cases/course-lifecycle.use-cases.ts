@@ -3,12 +3,16 @@ import {
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
+import { InvalidCourseState } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CourseHasReferencesError, CourseNotFoundError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
-import type { CourseReferenceChecker, CourseRepository } from '../ports/out/course-repository.port';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port';
+import type {
+  CourseReferenceChecker,
+  CourseRepository,
+} from '../ports/out/course-repository.port.out';
+import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
 import type { ManagedCourseResult } from '../results/course.results';
 import { CourseAuthorizationService } from '../services/course-authorization.service';
 import { CourseMutationService } from '../services/course-mutation.service';
@@ -23,6 +27,11 @@ export class PublishCourseUseCase {
 
   execute(principal: Principal, courseId: string, now = new Date()): Promise<ManagedCourseResult> {
     return this.mutation.mutate(principal, 'course:publish', courseId, async (course) => {
+      if (!course.isDraft)
+        throw new InvalidCourseState(
+          'status',
+          `Cannot publish a course with status ${course.status}`,
+        );
       await this.readiness.assertReady(course);
       course.publish(now);
     });
@@ -49,6 +58,11 @@ export class RepublishCourseUseCase {
 
   execute(principal: Principal, courseId: string, now = new Date()): Promise<ManagedCourseResult> {
     return this.mutation.mutate(principal, 'course:republish', courseId, async (course) => {
+      if (!course.isOnHold)
+        throw new InvalidCourseState(
+          'status',
+          `Cannot republish a course with status ${course.status}`,
+        );
       await this.readiness.assertReady(course);
       course.republish(now);
     });

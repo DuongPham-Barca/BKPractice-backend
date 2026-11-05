@@ -42,6 +42,7 @@ let dataSource: DataSource;
 let repository: CourseTypeOrmRepository;
 let runner: CourseTypeOrmTransactionRunner;
 let checker: CourseTypeOrmReferenceChecker;
+let context: CourseTypeOrmTransactionContext;
 let sequence = 0;
 
 const nextSlug = (): string => `it-course-${Date.now()}-${(sequence += 1)}`;
@@ -56,10 +57,10 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
     await upsertProblem(dataSource, { id: PROBLEM_ID });
     await upsertProblem(dataSource, { id: SECOND_PROBLEM });
 
-    const context = new CourseTypeOrmTransactionContext(dataSource);
+    context = new CourseTypeOrmTransactionContext(dataSource);
     runner = new CourseTypeOrmTransactionRunner(dataSource, context);
     repository = new CourseTypeOrmRepository(context);
-    checker = new CourseTypeOrmReferenceChecker(dataSource);
+    checker = new CourseTypeOrmReferenceChecker(context);
   });
 
   afterAll(async () => {
@@ -351,7 +352,7 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
       const course = draftCourse(nextSlug());
       await save(course);
 
-      expect(await checker.hasCourseReferences(course.id.value)).toBe(false);
+      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(false);
     });
 
     it('is true when a class references the course', async () => {
@@ -362,7 +363,7 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
         [course.id.value, `JC${Date.now()}${sequence}`.slice(0, 32), OWNER_ID],
       );
 
-      expect(await checker.hasCourseReferences(course.id.value)).toBe(true);
+      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(true);
     });
 
     it('is true when an assignment references the course', async () => {
@@ -373,7 +374,7 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
         [course.id.value, OWNER_ID],
       );
 
-      expect(await checker.hasCourseReferences(course.id.value)).toBe(true);
+      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(true);
     });
   });
 

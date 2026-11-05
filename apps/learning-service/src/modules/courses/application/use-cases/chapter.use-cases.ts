@@ -59,7 +59,7 @@ export class RemoveChapterUseCase {
     chapterId: ChapterId,
     now = new Date(),
   ): Promise<void> {
-    await this.mutation.mutate(principal, 'course:update', courseId, async (course) => {
+    await this.mutation.mutateVoid(principal, 'course:update', courseId, async (course) => {
       course.removeChapter(chapterId, now);
       if (course.isPublished) await this.readiness.assertReady(course);
     });

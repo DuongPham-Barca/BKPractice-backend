@@ -29,11 +29,10 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 
 ## Identity
 
-- [ ] **LRN-003-T003 — Seed quyền `course:*` ở Identity.** Migration
-      `apps/identity-service/src/database/migrations/<timestamp>-Lrn003CoursePermissions.ts` chèn tám
-      mã `course:create|read-managed|update|publish|hold|republish|delete|restore` và gán cho
-      `LECTURER`, idempotent; down xoá đúng những gì đã chèn. Kiểm chứng `pnpm migration:run:identity`
-      / `pnpm migration:revert:identity`; token mới của `LECTURER` có tám quyền này.
+- [ ] **LRN-003-T003 — Seed quyền `course:*` ở Identity.** Quyền `course:*` đã nằm trong
+      catalog `permission-catalog.ts` và được seed bằng `pnpm seed:identity:rbac` (idempotent) cùng
+      các quyền khác; không còn migration riêng. Kiểm chứng `pnpm seed:identity:rbac` và token mới
+      của `LECTURER` có tám quyền `course:*`.
       **Phụ thuộc:** LRN-003-T001.
       **Truy vết:** ID-003-FR-017; mục Quy tắc phân quyền của đặc tả.
 

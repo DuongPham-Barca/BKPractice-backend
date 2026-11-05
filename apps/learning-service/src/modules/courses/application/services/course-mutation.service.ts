@@ -7,8 +7,8 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { CourseNotFoundError } from '../errors/application-errors';
 import type { Principal } from '../models/principal';
-import type { CourseRepository } from '../ports/out/course-repository.port';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port';
+import type { CourseRepository } from '../ports/out/course-repository.port.out';
+import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
 import type { ManagedCourseResult } from '../results/course.results';
 
 import { CourseAuthorizationService } from './course-authorization.service';
@@ -22,7 +22,10 @@ export interface MutationOptions {
 /**
  * Khung chung cho mọi thao tác ghi lên một Course có sẵn: kiểm quyền, mở transaction, khoá dòng
  * (`loadForUpdate`), kiểm sở hữu, áp thay đổi, lưu cả aggregate rồi dựng biểu diễn quản lý.
- * Lỗi ở bất kỳ bước nào trước `save` để nguyên state (FR-016).
+ * Biểu diễn quản lý được dựng trong transaction để lỗi đọc catalog cũng rollback thay vì trả 500
+ * sau khi đã commit. Lỗi ở bất kỳ bước nào để nguyên state (FR-016).
+ *
+ * `mutateVoid` dùng cho route trả 204 để không dựng biểu diễn mà client không dùng.
  */
 @Injectable()
 export class CourseMutationService {
@@ -41,14 +44,36 @@ export class CourseMutationService {
     options: MutationOptions = {},
   ): Promise<ManagedCourseResult> {
     this.authorization.requirePermission(principal, permission);
-    const course = await this.transactionRunner.run(async () => {
-      const loaded = await this.repository.loadForUpdate(courseId, options.includeDeleted ?? false);
-      if (!loaded) throw new CourseNotFoundError('Course not found');
-      this.authorization.requireOwnership(loaded.createdBy.value, principal);
-      await change(loaded);
-      await this.repository.save(loaded);
-      return loaded;
+    return this.transactionRunner.run(async () => {
+      const course = await this.apply(principal, courseId, change, options);
+      return this.views.toManaged(course);
     });
-    return this.views.toManaged(course);
+  }
+
+  async mutateVoid(
+    principal: Principal,
+    permission: string,
+    courseId: string,
+    change: (course: Course) => void | Promise<void>,
+    options: MutationOptions = {},
+  ): Promise<void> {
+    this.authorization.requirePermission(principal, permission);
+    await this.transactionRunner.run(async () => {
+      await this.apply(principal, courseId, change, options);
+    });
+  }
+
+  private async apply(
+    principal: Principal,
+    courseId: string,
+    change: (course: Course) => void | Promise<void>,
+    options: MutationOptions,
+  ): Promise<Course> {
+    const loaded = await this.repository.loadForUpdate(courseId, options.includeDeleted ?? false);
+    if (!loaded) throw new CourseNotFoundError('Course not found');
+    this.authorization.requireOwnership(loaded.createdBy.value, principal);
+    await change(loaded);
+    await this.repository.save(loaded);
+    return loaded;
   }
 }
