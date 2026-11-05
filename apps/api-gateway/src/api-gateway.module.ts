@@ -4,7 +4,6 @@ import { GatewaySessionService } from '@gateway/application/auth/gateway-session
 import { GatewayProxyService } from '@gateway/application/proxy/gateway-proxy.service';
 import { SubmissionResultsService } from '@gateway/application/realtime/submission-results.service';
 import { IdentitySessionClient } from '@gateway/infrastructure/identity/identity-session.client';
-import { SubmissionResultSubscriber } from '@gateway/infrastructure/redis/submission-result.subscriber';
 import { GatewayProxyController } from '@gateway/presentation/controllers/gateway-proxy.controller';
 import { createGatewayThrottlers } from '@gateway/presentation/guards/gateway-throttling';
 import { GatewayAuthMiddleware } from '@gateway/presentation/middleware/gateway-auth.middleware';
@@ -15,6 +14,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+
+import { SubmissionResultSubscriber, SubmissionSocketLeases } from '@/infrastructure/redis';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     SubmissionResultsService,
     IdentitySessionClient,
     SubmissionResultSubscriber,
+    SubmissionSocketLeases,
     GatewayAuthMiddleware,
     SubmissionRealtimeGateway,
     { provide: APP_GUARD, useClass: ThrottlerGuard },

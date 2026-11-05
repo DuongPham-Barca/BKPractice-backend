@@ -21,14 +21,12 @@ export class SubmissionResultSubscriber implements OnModuleInit, OnApplicationSh
     this.subscriber.on('ready', () => {
       if (this.redisUnavailableLogged) this.logger.log('Redis realtime subscriber reconnected');
       this.redisUnavailableLogged = false;
-      void this.subscriber.subscribe(REDIS_CHANNELS.submissionResults);
+      void this.subscriber.subscribe(REDIS_CHANNELS.submissionResults).catch(() => {
+        this.logRedisUnavailable();
+      });
     });
-    this.subscriber.on('error', (error: Error) => {
-      this.logRedisUnavailable(error.message);
-    });
-    void this.subscriber.connect().catch((error: unknown) => {
-      this.logRedisUnavailable(error instanceof Error ? error.message : 'Redis connection failed');
-    });
+    this.subscriber.on('error', () => this.logRedisUnavailable());
+    void this.subscriber.connect().catch(() => this.logRedisUnavailable());
   }
 
   subscribe(handler: (message: string) => void): () => void {
@@ -38,13 +36,13 @@ export class SubmissionResultSubscriber implements OnModuleInit, OnApplicationSh
     };
   }
 
-  async onApplicationShutdown(): Promise<void> {
-    if (this.subscriber.status !== 'end') await this.subscriber.quit();
+  onApplicationShutdown(): void {
+    this.subscriber.disconnect();
   }
 
-  private logRedisUnavailable(message: string): void {
+  private logRedisUnavailable(): void {
     if (this.redisUnavailableLogged) return;
     this.redisUnavailableLogged = true;
-    this.logger.warn(`Redis realtime subscriber unavailable: ${message}`);
+    this.logger.warn('Redis realtime subscriber unavailable');
   }
 }

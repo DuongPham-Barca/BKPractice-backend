@@ -552,3 +552,97 @@ describe('Learning route transport', () => {
     );
   });
 });
+
+describe('Submission HTTP boundary (GW-008–010)', () => {
+  const http = { request: jest.fn() };
+  const proxy = new GatewayProxyService(
+    http as unknown as HttpService,
+    new ConfigService({
+      IDENTITY_SERVICE_URL: 'http://identity',
+      LEARNING_SERVICE_URL: 'http://learning',
+      SUBMISSION_SERVICE_URL: 'http://submission',
+      COMMUNITY_SERVICE_URL: 'http://community',
+    }),
+  );
+  const response = {
+    setHeader: jest.fn(),
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn(),
+  } as unknown as Response;
+  beforeEach(() => jest.clearAllMocks());
+
+  it.each([
+    ['POST', '/api/run', 202],
+    ['POST', '/api/submissions', 202],
+    ['GET', '/api/submissions', 200],
+    ['GET', '/api/submissions/public-id', 200],
+  ])('preserves %s %s and its upstream response', async (method, path, status) => {
+    const body = { sourceCode: 'opaque', language: 'cpp' };
+    const data = { opaque: true };
+    http.request.mockReturnValue(
+      of({
+        status,
+        data,
+        headers: { 'set-cookie': 'private=value', 'content-type': 'application/json' },
+      }),
+    );
+    const originalUrl = path + '?kind=RUN&cursor=a%2Fb&cursorId=id&limit=5';
+    await proxy.forward(
+      {
+        method,
+        path,
+        originalUrl,
+        body,
+        headers: {
+          'x-auth-user-id': 'verified',
+          'x-internal-secret': 'forged',
+          cookie: 'private=value',
+          'x-request-id': 'correlation',
+        },
+      } as unknown as Request,
+      response,
+    );
+    expect(http.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method,
+        url: 'http://submission' + originalUrl,
+        data: body,
+        headers: { 'x-auth-user-id': 'verified', 'x-request-id': 'correlation' },
+      }),
+    );
+    expect(response.status).toHaveBeenCalledWith(status);
+    expect(response.send).toHaveBeenCalledWith(data);
+    expect(response.setHeader).not.toHaveBeenCalledWith('set-cookie', expect.anything());
+  });
+
+  it.each([
+    ['GET', '/api/run'],
+    ['POST', '/api/run-extra'],
+    ['DELETE', '/api/submissions/id'],
+    ['GET', '/api/submissions/id/internal'],
+    ['GET', '/api/submissions-extra'],
+    ['GET', '/api/submissions/%252e%252e%252finternal'],
+    ['GET', '/api/submissions/id/../../internal'],
+  ])('rejects unapproved or unsafe %s %s', async (method, path) => {
+    await expect(
+      proxy.forward({ method, path, originalUrl: path, headers: {} } as Request, response),
+    ).rejects.toThrow();
+    expect(http.request).not.toHaveBeenCalled();
+  });
+
+  it.each([400, 403, 404, 409, 422, 500])('preserves Submission error %s', async (status) => {
+    const data = { message: 'Submission error' };
+    http.request.mockReturnValue(of({ status, data, headers: {} }));
+    await proxy.forward(
+      {
+        method: 'GET',
+        path: '/api/submissions/id',
+        originalUrl: '/api/submissions/id',
+        headers: {},
+      } as Request,
+      response,
+    );
+    expect(response.status).toHaveBeenCalledWith(status);
+    expect(response.send).toHaveBeenCalledWith(data);
+  });
+});

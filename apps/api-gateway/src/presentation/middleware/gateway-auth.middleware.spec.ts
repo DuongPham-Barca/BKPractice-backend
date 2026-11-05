@@ -41,6 +41,26 @@ describe('GatewayAuthMiddleware', () => {
 
   beforeEach(() => next.mockClear());
 
+  it.each([
+    ['POST', '/api/run'], ['POST', '/api/submissions'],
+    ['GET', '/api/submissions'], ['GET', '/api/submissions/id'],
+  ])('protects Submission %s %s and replaces spoofed identity', async (method, path) => {
+    for (const token of [undefined, 'Bearer invalid']) {
+      next.mockClear();
+      await expect(middleware.use(createRequest(method, path, token), response, next)).rejects.toThrow();
+      expect(next).not.toHaveBeenCalled();
+    }
+    const token = await jwt.signAsync(
+      { sub: 'owner', sid: 'session', jti: 'access', roles: ['LECTURER'], type: 'access' },
+      { secret: 'a'.repeat(32), expiresIn: '15m' },
+    );
+    const request = createRequest(method, path, `Bearer ${token}`);
+    await middleware.use(request, response, next);
+    expect(request.headers['x-auth-user-id']).toBe('owner');
+    expect(request.headers['x-auth-roles']).toBe('LECTURER');
+    expect(request.headers['x-auth-permissions']).toBe('');
+  });
+
   it.each(['GET', 'POST', 'DELETE'])(
     'protects %s role management and strips forged metadata',
     async (method) => {

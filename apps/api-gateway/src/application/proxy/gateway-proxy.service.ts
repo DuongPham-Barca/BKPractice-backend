@@ -17,6 +17,7 @@ import {
   learningRoutes,
   responseHeaders,
   submissionPrefixes,
+  submissionRoutes,
 } from '@/application/proxy/gateway-proxy.constants';
 
 interface RouteTarget {
@@ -47,6 +48,7 @@ export class GatewayProxyService {
       },
       {
         prefixes: submissionPrefixes,
+        routes: submissionRoutes,
         baseUrl: config.getOrThrow<string>('SUBMISSION_SERVICE_URL'),
       },
       {
@@ -63,7 +65,10 @@ export class GatewayProxyService {
     const learning = learningPrefixes.some(
       (prefix) => request.path.startsWith(prefix) || rawPath.startsWith(prefix),
     );
-    if (learning) this.rejectUnsafeLearningPath(request.path, rawPath);
+    const submission = submissionPrefixes.some(
+      (prefix) => request.path.startsWith(prefix) || rawPath.startsWith(prefix),
+    );
+    if (learning || submission) this.rejectUnsafePath(request.path, rawPath);
     const target = this.targets.find((candidate) =>
       candidate.routes
         ? candidate.routes.some(
@@ -93,7 +98,7 @@ export class GatewayProxyService {
       headers,
       data: multipart
         ? request
-        : !learning && ['GET', 'HEAD'].includes(request.method)
+        : !learning && !submission && ['GET', 'HEAD'].includes(request.method)
           ? undefined
           : (request.body as unknown),
       maxBodyLength: accountImport ? 5 * 1024 * 1024 + 64 * 1024 : undefined,
@@ -152,7 +157,7 @@ export class GatewayProxyService {
         }
         response.setHeader('location', redirect.toString());
       }
-      if (learning)
+      if (learning || submission)
         this.logger.log({ requestId: request.headers['x-request-id'], status: upstream.status });
       response.status(upstream.status).send(upstream.data);
     } catch (error) {
@@ -161,7 +166,7 @@ export class GatewayProxyService {
     }
   }
 
-  private rejectUnsafeLearningPath(path: string, rawPath: string): void {
+  private rejectUnsafePath(path: string, rawPath: string): void {
     if (path !== rawPath) throw new BadRequestException('Unsafe request path');
     let decoded = path;
     for (;;) {

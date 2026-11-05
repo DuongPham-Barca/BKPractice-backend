@@ -21,6 +21,8 @@
     "paths": {
       "@/*": ["apps/identity-service/src/*"],
       "@/application/proxy/*": ["apps/api-gateway/src/application/proxy/*"],
+      "@/infrastructure/redis": ["apps/api-gateway/src/infrastructure/redis"],
+      "@/application/realtime": ["apps/api-gateway/src/application/realtime"],
       "@app/common": ["libs/common/src"],
       "@app/common/*": ["libs/common/src/*"],
       "@app/config": ["libs/config/src"],

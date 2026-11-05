@@ -88,5 +88,12 @@ export const identityPrefixes = [
   '/api/roles',
   '/api/admin/users',
 ];
+export const submissionRoutes: ReadonlyArray<readonly [string, RegExp]> = [
+  ['POST', /^\/api\/run\/?$/],
+  ['POST', /^\/api\/submissions\/?$/],
+  ['GET', /^\/api\/submissions\/?$/],
+  ['GET', /^\/api\/submissions\/[^/]+\/?$/],
+];
+
 export const submissionPrefixes = ['/api/submissions', '/api/run'];
 export const communityPrefixes = ['/api/community'];
