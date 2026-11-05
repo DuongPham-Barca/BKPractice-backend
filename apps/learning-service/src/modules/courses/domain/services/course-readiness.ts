@@ -1,5 +1,5 @@
-import type { Course } from '../course.aggregate';
-import { DomainValidationError } from '../errors/domain-validation.error';
+import type { Course } from '@learning/modules/courses/domain/course.aggregate';
+import { DomainValidationError } from '@learning/modules/courses/domain/errors/domain-validation.error';
 
 export interface ProblemStateForReadiness {
   readonly problemId: string;

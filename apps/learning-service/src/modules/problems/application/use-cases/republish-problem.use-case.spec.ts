@@ -1,6 +1,8 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
@@ -9,9 +11,6 @@ import {
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
-
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 import { RepublishProblemUseCase } from './republish-problem.use-case';
 

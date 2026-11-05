@@ -1,10 +1,9 @@
+import type { UpdateCourseCommand } from '@learning/modules/courses/application/commands/course.commands';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
+import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
+import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
 import { Injectable } from '@nestjs/common';
-
-import type { UpdateCourseCommand } from '../commands/course.commands';
-import type { Principal } from '../models/principal';
-import type { ManagedCourseResult } from '../results/course.results';
-import { CourseMutationService } from '../services/course-mutation.service';
-import { CoursePublishReadinessService } from '../services/course-publish-readiness.service';
 
 @Injectable()
 export class UpdateCourseUseCase {

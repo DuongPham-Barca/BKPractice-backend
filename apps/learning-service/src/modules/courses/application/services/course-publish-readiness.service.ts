@@ -1,13 +1,12 @@
+import { CourseNotReadyError } from '@learning/modules/courses/application/errors/application-errors';
+import type {
+  CourseProblemCatalog,
+  ProblemSummary,
+} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
 import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens';
 import type { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { CourseNotReadyError } from '../errors/application-errors';
-import type {
-  CourseProblemCatalog,
-  ProblemSummary,
-} from '../ports/out/course-problem-catalog.port.out';
 
 @Injectable()
 export class CoursePublishReadinessService {

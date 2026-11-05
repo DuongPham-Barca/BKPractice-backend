@@ -1,4 +1,7 @@
-import type { SubmissionKind, TerminalSubmissionStatus } from '../submission-record';
+import type {
+  SubmissionKind,
+  TerminalSubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export const REALTIME_PORT = Symbol('RealtimePort');
 

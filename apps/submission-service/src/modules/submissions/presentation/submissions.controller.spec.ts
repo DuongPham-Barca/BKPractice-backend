@@ -1,13 +1,15 @@
 import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
-
-import type { GetSubmissionDetailUseCase } from '../application/get-submission-detail.use-case';
-import type { ListSubmissionHistoryUseCase } from '../application/list-submission-history.use-case';
-import type { SubmitCodeUseCase } from '../application/submit-code.use-case';
+import type { GetSubmissionDetailUseCase } from '@submission/modules/submissions/application/get-submission-detail.use-case';
+import type { ListSubmissionHistoryUseCase } from '@submission/modules/submissions/application/list-submission-history.use-case';
+import type { SubmitCodeUseCase } from '@submission/modules/submissions/application/submit-code.use-case';
 import {
   JudgePackageUnavailableError,
   ProblemNotSubmittableError,
-} from '../domain/ports/learning-judge-package.port';
-import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import { SubmissionsController } from './submissions.controller';
 

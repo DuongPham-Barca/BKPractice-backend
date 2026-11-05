@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import type { RealtimePort } from '../domain/ports/realtime.port';
+import type { RealtimePort } from '@submission/modules/submissions/domain/ports/realtime.port';
 import type {
   SubmissionExecutionError,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
 import {
   ACCEPTED_PROGRESS_SCORE,
   SubmissionKind,
@@ -12,8 +12,8 @@ import {
   isOfficiallyAccepted,
   isTerminal,
   toJudgeVerdictStatus,
-} from '../domain/submission-record';
-import type { SubmitVerdict } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/submission-record';
+import type { SubmitVerdict } from '@submission/modules/submissions/domain/submission-record';
 
 export interface SubmitJudgeResultInput {
   readonly submissionId: string;

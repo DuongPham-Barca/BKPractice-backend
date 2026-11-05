@@ -1,14 +1,13 @@
+import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
+import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
+import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
 import type {
   ChapterDescription,
   ChapterId,
   ChapterTitle,
 } from '@learning/modules/courses/domain/value-objects';
 import { Injectable } from '@nestjs/common';
-
-import type { Principal } from '../models/principal';
-import type { ManagedCourseResult } from '../results/course.results';
-import { CourseMutationService } from '../services/course-mutation.service';
-import { CoursePublishReadinessService } from '../services/course-publish-readiness.service';
 
 @Injectable()
 export class AddChapterUseCase {

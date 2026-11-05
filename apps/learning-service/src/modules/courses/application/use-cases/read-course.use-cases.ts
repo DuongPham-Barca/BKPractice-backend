@@ -1,21 +1,20 @@
-import { COURSE_REPOSITORY } from '@learning/modules/courses/course.tokens';
-import { Inject, Injectable } from '@nestjs/common';
-
-import { CourseNotFoundError } from '../errors/application-errors';
-import type { Principal } from '../models/principal';
+import { CourseNotFoundError } from '@learning/modules/courses/application/errors/application-errors';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
 import type {
   CourseListFilter,
   CoursePage,
   CourseRepository,
-} from '../ports/out/course-repository.port.out';
+} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
   ManagedCourseResult,
   ManagedCourseSummaryResult,
-} from '../results/course.results';
-import { CourseAuthorizationService } from '../services/course-authorization.service';
-import { CourseViewAssembler } from '../services/course-view.assembler';
+} from '@learning/modules/courses/application/results/course.results';
+import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
+import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
+import { COURSE_REPOSITORY } from '@learning/modules/courses/course.tokens';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetManagedCourseUseCase {

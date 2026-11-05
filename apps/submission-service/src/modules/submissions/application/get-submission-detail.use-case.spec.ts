@@ -1,8 +1,11 @@
 import type {
   SubmissionDetailRecord,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import { GetSubmissionDetailUseCase } from './get-submission-detail.use-case';
 

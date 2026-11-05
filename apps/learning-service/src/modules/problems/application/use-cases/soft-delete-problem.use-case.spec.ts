@@ -1,14 +1,13 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import {
   TEST_NOW,
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
-
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 import { SoftDeleteProblemUseCase } from './soft-delete-problem.use-case';
 

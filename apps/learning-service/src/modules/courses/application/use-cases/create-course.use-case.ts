@@ -1,3 +1,11 @@
+import type { CreateCourseCommand } from '@learning/modules/courses/application/commands/course.commands';
+import { DuplicateCourseSlugError } from '@learning/modules/courses/application/errors/application-errors';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type { CourseRepository } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
+import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
+import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
+import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
 import {
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
@@ -5,15 +13,6 @@ import {
 import { Course } from '@learning/modules/courses/domain/course.aggregate';
 import { CreatedBy } from '@learning/modules/courses/domain/value-objects';
 import { Inject, Injectable } from '@nestjs/common';
-
-import type { CreateCourseCommand } from '../commands/course.commands';
-import { DuplicateCourseSlugError } from '../errors/application-errors';
-import type { Principal } from '../models/principal';
-import type { CourseRepository } from '../ports/out/course-repository.port.out';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import type { ManagedCourseResult } from '../results/course.results';
-import { CourseAuthorizationService } from '../services/course-authorization.service';
-import { CourseViewAssembler } from '../services/course-view.assembler';
 
 @Injectable()
 export class CreateCourseUseCase {

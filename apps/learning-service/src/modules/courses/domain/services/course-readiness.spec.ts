@@ -1,3 +1,4 @@
+import { DomainValidationError } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import {
   courseWithProblem,
   draftCourse,
@@ -5,8 +6,6 @@ import {
   OTHER_ID,
   PROBLEM_ID,
 } from '@learning/modules/courses/testing/course-test.fakes';
-
-import { DomainValidationError } from '../errors/domain-validation.error';
 
 import { CourseReadiness, ProblemAttachPolicy } from './course-readiness';
 import type { ProblemStateForReadiness } from './course-readiness';

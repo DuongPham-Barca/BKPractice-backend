@@ -1,5 +1,5 @@
-import { ForbiddenError } from '../errors/application-errors';
-import type { Principal } from '../models/principal';
+import { ForbiddenError } from '@learning/modules/courses/application/errors/application-errors';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
 
 const REQUIRED_ROLE = 'LECTURER';
 

@@ -1,14 +1,17 @@
-import type { JudgeJobPort } from '../domain/ports/judge-job.port';
-import { ProblemNotSubmittableError } from '../domain/ports/learning-judge-package.port';
+import type { JudgeJobPort } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import { ProblemNotSubmittableError } from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
 import type {
   JudgePackage,
   LearningJudgePackagePort,
-} from '../domain/ports/learning-judge-package.port';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
 import type {
   PersistedSubmissionRecord,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import { SubmitCodeUseCase } from './submit-code.use-case';
 

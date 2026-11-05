@@ -1,12 +1,11 @@
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_USER_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
-
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
 
 import { ListManagedProblemsUseCase } from './list-managed-problems.use-case';
 

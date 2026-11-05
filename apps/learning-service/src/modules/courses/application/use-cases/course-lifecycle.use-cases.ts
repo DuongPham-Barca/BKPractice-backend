@@ -1,22 +1,24 @@
 import {
+  CourseHasReferencesError,
+  CourseNotFoundError,
+} from '@learning/modules/courses/application/errors/application-errors';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type {
+  CourseReferenceChecker,
+  CourseRepository,
+} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
+import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
+import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
+import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
+import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
+import {
   COURSE_REFERENCE_CHECKER,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
 import { InvalidCourseState } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { CourseHasReferencesError, CourseNotFoundError } from '../errors/application-errors';
-import type { Principal } from '../models/principal';
-import type {
-  CourseReferenceChecker,
-  CourseRepository,
-} from '../ports/out/course-repository.port.out';
-import type { TransactionRunner } from '../ports/out/transaction-runner.port.out';
-import type { ManagedCourseResult } from '../results/course.results';
-import { CourseAuthorizationService } from '../services/course-authorization.service';
-import { CourseMutationService } from '../services/course-mutation.service';
-import { CoursePublishReadinessService } from '../services/course-publish-readiness.service';
 
 @Injectable()
 export class PublishCourseUseCase {

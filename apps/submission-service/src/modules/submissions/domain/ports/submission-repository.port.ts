@@ -1,10 +1,13 @@
-import type { HistoryCursor, SubmissionHistoryFilter } from '../submission-history';
+import type {
+  HistoryCursor,
+  SubmissionHistoryFilter,
+} from '@submission/modules/submissions/domain/submission-history';
 import type {
   SubmissionKind,
   SubmissionRecord,
   SubmissionStatus,
   SubmitVerdict,
-} from '../submission-record';
+} from '@submission/modules/submissions/domain/submission-record';
 
 import type { AcceptedProgressEvent } from './accepted-event.port';
 

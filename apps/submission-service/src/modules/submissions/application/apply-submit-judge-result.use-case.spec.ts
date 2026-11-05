@@ -1,9 +1,12 @@
-import type { RealtimePort } from '../domain/ports/realtime.port';
+import type { RealtimePort } from '@submission/modules/submissions/domain/ports/realtime.port';
 import type {
   PersistedSubmissionRecord,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 import {
   ApplySubmitJudgeResultUseCase,

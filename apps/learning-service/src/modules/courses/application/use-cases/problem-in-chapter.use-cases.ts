@@ -1,14 +1,13 @@
+import { ProblemNotAttachableError } from '@learning/modules/courses/application/errors/application-errors';
+import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type { CourseProblemCatalog } from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
+import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
+import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
+import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
 import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens';
 import { ProblemAttachPolicy } from '@learning/modules/courses/domain/services/course-readiness';
 import type { ChapterId, ProblemReference } from '@learning/modules/courses/domain/value-objects';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { ProblemNotAttachableError } from '../errors/application-errors';
-import type { Principal } from '../models/principal';
-import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port.out';
-import type { ManagedCourseResult } from '../results/course.results';
-import { CourseMutationService } from '../services/course-mutation.service';
-import { CoursePublishReadinessService } from '../services/course-publish-readiness.service';
 
 @Injectable()
 export class AttachProblemUseCase {

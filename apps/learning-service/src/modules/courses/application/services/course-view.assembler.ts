@@ -1,14 +1,13 @@
-import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens';
-import type { Course } from '@learning/modules/courses/domain/course.aggregate';
-import { Inject, Injectable } from '@nestjs/common';
-
-import type { CourseProblemCatalog } from '../ports/out/course-problem-catalog.port.out';
+import type { CourseProblemCatalog } from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
   ManagedCourseResult,
   ManagedCourseSummaryResult,
-} from '../results/course.results';
+} from '@learning/modules/courses/application/results/course.results';
+import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens';
+import type { Course } from '@learning/modules/courses/domain/course.aggregate';
+import { Inject, Injectable } from '@nestjs/common';
 
 import {
   CoursePublishReadinessService,

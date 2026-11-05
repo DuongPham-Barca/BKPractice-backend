@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
+import { JUDGE_JOB_PORT } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import type { JudgeJobPort } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import { SUBMISSION_REPOSITORY_PORT } from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import type { SubmissionRepositoryPort } from '@submission/modules/submissions/domain/ports/submission-repository.port';
 import { SubmissionsModule } from '@submission/modules/submissions/submissions.module';
-
-import { JUDGE_JOB_PORT } from '../submissions/domain/ports/judge-job.port';
-import type { JudgeJobPort } from '../submissions/domain/ports/judge-job.port';
-import { SUBMISSION_REPOSITORY_PORT } from '../submissions/domain/ports/submission-repository.port';
-import type { SubmissionRepositoryPort } from '../submissions/domain/ports/submission-repository.port';
 
 import { RunCodeUseCase } from './application/run-code.use-case';
 import { RunCodeController } from './presentation/run-code.controller';

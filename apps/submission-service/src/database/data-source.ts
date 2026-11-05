@@ -1,12 +1,11 @@
 import 'reflect-metadata';
 
-import { DataSource } from 'typeorm';
-
-import { SubmissionAcceptedOutbox } from '../modules/submissions/infrastructure/persistence/submission-accepted-outbox.entity';
+import { SubmissionAcceptedOutbox } from '@submission/modules/submissions/infrastructure/persistence/submission-accepted-outbox.entity';
 import {
   Submission,
   SubmissionResult,
-} from '../modules/submissions/infrastructure/persistence/submission.entity';
+} from '@submission/modules/submissions/infrastructure/persistence/submission.entity';
+import { DataSource } from 'typeorm';
 
 export default new DataSource({
   type: 'postgres',

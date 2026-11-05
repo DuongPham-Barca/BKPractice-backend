@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from '@app/contracts';
+import type { SetHarnessCommand } from '@learning/modules/problems/application/command/test-case.commands';
 import { HarnessNotFoundError } from '@learning/modules/problems/application/errors/harness-not-found.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
@@ -24,8 +25,6 @@ import {
   TestCaseVisibility,
   TestSuiteSummary,
 } from '@learning/modules/problems/domain/value-objects';
-
-import type { SetHarnessCommand } from '../command/test-case.commands';
 
 import { AddTestCaseUseCase } from './add-test-case.use-case';
 import { BuildJudgePackageUseCase } from './build-judge-package.use-case';

@@ -1,7 +1,6 @@
+import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import { buildProblem } from '@learning/modules/problems/domain/testing/problem-test.factory';
-
-import { PublishNotReadyError } from '../errors/publish-not-ready.error';
 
 import { TestSuiteReadinessService } from './test-suite-readiness.service';
 
