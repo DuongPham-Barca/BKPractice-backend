@@ -20,6 +20,7 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": ["apps/identity-service/src/*"],
+      "@/application/proxy/*": ["apps/api-gateway/src/application/proxy/*"],
       "@app/common": ["libs/common/src"],
       "@app/common/*": ["libs/common/src/*"],
       "@app/config": ["libs/config/src"],

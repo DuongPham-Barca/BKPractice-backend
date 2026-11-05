@@ -7,21 +7,25 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { createGatewayThrottlers } from './gateway-throttling';
 
-@Controller('api/auth')
+@Controller('api')
 class TestAuthController {
-  @Post('login') login(): string {
+  @Get(':family') readLearning(): string {
     return 'ok';
   }
-  @Get('microsoft') microsoft(): string {
+
+  @Post('auth/login') login(): string {
     return 'ok';
   }
-  @Post('password/send-otp') sendOtp(): string {
+  @Get('auth/microsoft') microsoft(): string {
     return 'ok';
   }
-  @Post('password/verify-otp') verifyOtp(): string {
+  @Post('auth/password/send-otp') sendOtp(): string {
     return 'ok';
   }
-  @Post('password/reset') resetPassword(): string {
+  @Post('auth/password/verify-otp') verifyOtp(): string {
+    return 'ok';
+  }
+  @Post('auth/password/reset') resetPassword(): string {
     return 'ok';
   }
 }
@@ -54,6 +58,15 @@ describe('Gateway authentication throttling', () => {
     await app.close();
   });
 
+  it.each(['problems', 'courses', 'classes', 'assignments', 'progress', 'recommendations'])(
+    'applies the default 120 request limit to %s',
+    async (family) => {
+      for (let count = 0; count < 120; count += 1)
+        expect((await fetch(`${baseUrl}/api/${family}`)).status).toBe(200);
+      expect((await fetch(`${baseUrl}/api/${family}`)).status).toBe(429);
+    },
+  );
+
   it('limits password login to five requests per path while OAuth uses its separate limit', async () => {
     for (let count = 0; count < 5; count += 1) {
       expect((await fetch(`${baseUrl}/api/auth/login`, { method: 'POST' })).status).toBe(201);
@@ -64,8 +77,12 @@ describe('Gateway authentication throttling', () => {
 
   it.each(['send-otp', 'verify-otp', 'reset'])('limits password %s requests', async (path) => {
     for (let count = 0; count < 5; count += 1) {
-      expect((await fetch(`${baseUrl}/api/auth/password/${path}`, { method: 'POST' })).status).toBe(201);
+      expect((await fetch(`${baseUrl}/api/auth/password/${path}`, { method: 'POST' })).status).toBe(
+        201,
+      );
     }
-    expect((await fetch(`${baseUrl}/api/auth/password/${path}`, { method: 'POST' })).status).toBe(429);
+    expect((await fetch(`${baseUrl}/api/auth/password/${path}`, { method: 'POST' })).status).toBe(
+      429,
+    );
   });
 });

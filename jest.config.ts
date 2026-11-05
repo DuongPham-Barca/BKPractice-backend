@@ -9,6 +9,7 @@ const config: Config = {
   coverageDirectory: 'coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
+    '^@/application/proxy/(.*)$': '<rootDir>/apps/api-gateway/src/application/proxy/$1',
     '^@/(.*)$': '<rootDir>/apps/identity-service/src/$1',
     '^@app/common(.*)$': '<rootDir>/libs/common/src$1',
     '^@app/config(.*)$': '<rootDir>/libs/config/src$1',

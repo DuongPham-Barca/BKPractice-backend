@@ -1,20 +1,33 @@
-import { AUTH_COOKIE_NAMES, AUTH_COOKIE_REQUEST_ROUTES, AUTH_COOKIE_RESPONSE_ROUTES } from '@gateway/application/auth/auth-constants';
+import {
+  AUTH_COOKIE_NAMES,
+  AUTH_COOKIE_REQUEST_ROUTES,
+  AUTH_COOKIE_RESPONSE_ROUTES,
+} from '@gateway/application/auth/auth-constants';
 import { HttpService } from '@nestjs/axios';
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AxiosRequestConfig } from 'axios';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 
+import {
+  communityPrefixes,
+  identityPrefixes,
+  learningPrefixes,
+  learningRoutes,
+  responseHeaders,
+  submissionPrefixes,
+} from '@/application/proxy/gateway-proxy.constants';
+
 interface RouteTarget {
   prefixes: string[];
   baseUrl: string;
+  routes?: ReadonlyArray<readonly [string, RegExp]>;
 }
-
-const responseHeaders = ['content-type', 'content-length', 'etag', 'last-modified'];
 
 @Injectable()
 export class GatewayProxyService {
+  private readonly logger = new Logger(GatewayProxyService.name);
   private readonly targets: RouteTarget[];
   private readonly mobileRedirect: URL | null;
 
@@ -24,19 +37,20 @@ export class GatewayProxyService {
   ) {
     this.targets = [
       {
-        prefixes: ['/api/auth', '/api/users', '/api/profile', '/api/roles', '/api/admin/users'],
+        prefixes: identityPrefixes,
         baseUrl: config.getOrThrow<string>('IDENTITY_SERVICE_URL'),
       },
       {
-        prefixes: ['/api/problems', '/api/courses', '/api/assignments', '/api/classes'],
+        prefixes: learningPrefixes,
+        routes: learningRoutes,
         baseUrl: config.getOrThrow<string>('LEARNING_SERVICE_URL'),
       },
       {
-        prefixes: ['/api/submissions', '/api/run'],
+        prefixes: submissionPrefixes,
         baseUrl: config.getOrThrow<string>('SUBMISSION_SERVICE_URL'),
       },
       {
-        prefixes: ['/api/community'],
+        prefixes: communityPrefixes,
         baseUrl: config.getOrThrow<string>('COMMUNITY_SERVICE_URL'),
       },
     ];
@@ -45,12 +59,24 @@ export class GatewayProxyService {
   }
 
   async forward(request: Request, response: Response): Promise<void> {
+    const rawPath = request.originalUrl.split('?')[0] ?? '';
+    const learning = learningPrefixes.some(
+      (prefix) => request.path.startsWith(prefix) || rawPath.startsWith(prefix),
+    );
+    if (learning) this.rejectUnsafeLearningPath(request.path, rawPath);
     const target = this.targets.find((candidate) =>
-      candidate.prefixes.some((prefix) => request.path.startsWith(prefix)),
+      candidate.routes
+        ? candidate.routes.some(
+            ([method, path]) => method === request.method && path.test(request.path),
+          )
+        : candidate.prefixes.some((prefix) => request.path.startsWith(prefix)),
     );
     if (!target) throw new BadGatewayException('No upstream route is configured');
 
     const headers = { ...request.headers };
+    for (const header of Object.keys(headers)) {
+      if (header.startsWith('x-internal-')) delete headers[header];
+    }
     delete headers.host;
     delete headers['content-length'];
     if (!AUTH_COOKIE_REQUEST_ROUTES.has(`${request.method} ${request.path}`)) delete headers.cookie;
@@ -67,7 +93,7 @@ export class GatewayProxyService {
       headers,
       data: multipart
         ? request
-        : ['GET', 'HEAD'].includes(request.method)
+        : !learning && ['GET', 'HEAD'].includes(request.method)
           ? undefined
           : (request.body as unknown),
       maxBodyLength: accountImport ? 5 * 1024 * 1024 + 64 * 1024 : undefined,
@@ -126,10 +152,36 @@ export class GatewayProxyService {
         }
         response.setHeader('location', redirect.toString());
       }
+      if (learning)
+        this.logger.log({ requestId: request.headers['x-request-id'], status: upstream.status });
       response.status(upstream.status).send(upstream.data);
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       throw new BadGatewayException('Upstream service is unavailable');
+    }
+  }
+
+  private rejectUnsafeLearningPath(path: string, rawPath: string): void {
+    if (path !== rawPath) throw new BadRequestException('Unsafe request path');
+    let decoded = path;
+    for (;;) {
+      if (
+        [...decoded].some(
+          (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+        ) ||
+        decoded.includes('\\') ||
+        /(?:^|\/)\.{1,2}(?:\/|$)|[?#]|%2f|%5c/i.test(decoded)
+      ) {
+        throw new BadRequestException('Unsafe request path');
+      }
+      let next: string;
+      try {
+        next = decodeURIComponent(decoded);
+      } catch {
+        throw new BadRequestException('Unsafe request path');
+      }
+      if (next === decoded) return;
+      decoded = next;
     }
   }
 

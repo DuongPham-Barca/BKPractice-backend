@@ -200,9 +200,7 @@ describe('GatewayProxyService', () => {
   it('forwards the configured mobile deep link after the Microsoft callback', async () => {
     const location = 'bkpracticemobile:///auth/callback?loginCode=opaque';
     const http = {
-      request: jest
-        .fn()
-        .mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
+      request: jest.fn().mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
     } as unknown as HttpService;
     await new GatewayProxyService(http, config).forward(
       {
@@ -223,9 +221,7 @@ describe('GatewayProxyService', () => {
       'bkpracticemobile:///auth/other?loginCode=opaque',
     ]) {
       const http = {
-        request: jest
-          .fn()
-          .mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
+        request: jest.fn().mockReturnValue(of({ status: 302, headers: { location }, data: '' })),
       } as unknown as HttpService;
       await expect(
         new GatewayProxyService(http, config).forward(
@@ -351,5 +347,208 @@ describe('GatewayProxyService', () => {
     );
     expect(headers['set-cookie']).toBeUndefined();
     expect(response.send).toHaveBeenCalledWith(data);
+  });
+});
+
+// GW-002–GW-007: every approved method/path; no business DTO validation.
+describe('Learning route transport', () => {
+  const routes: Array<[string, string]> = [
+    ['GET', '/api/problems'],
+    ['POST', '/api/problems'],
+    ['GET', '/api/problems/two-sum'],
+    ['GET', '/api/problems/managed'],
+    ['GET', '/api/problems/managed/id-1'],
+    ['PATCH', '/api/problems/id-1'],
+    ['DELETE', '/api/problems/id-1'],
+    ['POST', '/api/problems/id-1/publish'],
+    ['POST', '/api/problems/id-1/hold'],
+    ['POST', '/api/problems/id-1/republish'],
+    ['POST', '/api/problems/id-1/restore'],
+    ['POST', '/api/problems/id-1/preview'],
+    ['GET', '/api/problems/managed/id-1/test-cases'],
+    ['GET', '/api/problems/managed/id-1/test-cases/testCaseId-1'],
+    ['POST', '/api/problems/id-1/test-cases'],
+    ['PUT', '/api/problems/id-1/test-cases/order'],
+    ['PATCH', '/api/problems/id-1/test-cases/testCaseId-1'],
+    ['DELETE', '/api/problems/id-1/test-cases/testCaseId-1'],
+    ['GET', '/api/problems/managed/id-1/harnesses/cpp'],
+    ['PUT', '/api/problems/id-1/harnesses/cpp'],
+    ['DELETE', '/api/problems/id-1/harnesses/cpp'],
+    ['GET', '/api/courses'],
+    ['GET', '/api/courses/managed'],
+    ['GET', '/api/courses/managed/id-1'],
+    ['GET', '/api/courses/two-sum'],
+    ['POST', '/api/courses'],
+    ['PATCH', '/api/courses/id-1'],
+    ['POST', '/api/courses/id-1/publish'],
+    ['POST', '/api/courses/id-1/hold'],
+    ['POST', '/api/courses/id-1/republish'],
+    ['DELETE', '/api/courses/id-1'],
+    ['POST', '/api/courses/id-1/restore'],
+    ['POST', '/api/courses/id-1/chapters'],
+    ['PUT', '/api/courses/id-1/chapters/order'],
+    ['PATCH', '/api/courses/id-1/chapters/chapterId-1'],
+    ['DELETE', '/api/courses/id-1/chapters/chapterId-1'],
+    ['POST', '/api/courses/id-1/chapters/chapterId-1/problems'],
+    ['PUT', '/api/courses/id-1/chapters/chapterId-1/problems/order'],
+    ['DELETE', '/api/courses/id-1/chapters/chapterId-1/problems/problemId-1'],
+    ['POST', '/api/classes'],
+    ['GET', '/api/classes/managed'],
+    ['GET', '/api/classes/managed/id-1'],
+    ['GET', '/api/classes/managed/id-1/members'],
+    ['PATCH', '/api/classes/id-1'],
+    ['POST', '/api/classes/id-1/join-code'],
+    ['POST', '/api/classes/id-1/archive'],
+    ['POST', '/api/classes/id-1/restore'],
+    ['DELETE', '/api/classes/id-1/members/studentId-1'],
+    ['POST', '/api/classes/join'],
+    ['GET', '/api/classes/enrolled'],
+    ['GET', '/api/classes/id-1'],
+    ['DELETE', '/api/classes/id-1/enrollment'],
+    ['POST', '/api/classes/classId-1/assignments'],
+    ['GET', '/api/classes/classId-1/assignments/managed'],
+    ['GET', '/api/classes/classId-1/assignments'],
+    ['GET', '/api/assignments/managed/id-1'],
+    ['GET', '/api/assignments/id-1'],
+    ['PATCH', '/api/assignments/id-1'],
+    ['PUT', '/api/assignments/id-1/problems'],
+    ['POST', '/api/assignments/id-1/publish'],
+    ['DELETE', '/api/assignments/id-1'],
+    ['POST', '/api/assignments/id-1/restore'],
+    ['GET', '/api/progress/me/problems'],
+    ['GET', '/api/progress/me/problems/status'],
+    ['GET', '/api/progress/me/courses/courseId-1'],
+    ['GET', '/api/progress/me/assignments/assignmentId-1'],
+    ['GET', '/api/progress/classes/classId-1/course'],
+    ['GET', '/api/progress/classes/classId-1/students/studentId-1/course'],
+    ['GET', '/api/progress/classes/classId-1/assignments/assignmentId-1'],
+    ['GET', '/api/recommendations'],
+  ];
+  const config = new ConfigService({
+    IDENTITY_SERVICE_URL: 'http://identity:3001',
+    LEARNING_SERVICE_URL: 'http://learning:3002',
+    SUBMISSION_SERVICE_URL: 'http://submission:3003',
+    COMMUNITY_SERVICE_URL: 'http://community:3005',
+  });
+  const upstream = { request: jest.fn() };
+  const response = {
+    setHeader: jest.fn(),
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn(),
+  } as unknown as Response;
+  const proxy = new GatewayProxyService(upstream as unknown as HttpService, config);
+  function createRequest(method: string, path: string): Request {
+    return {
+      method,
+      path,
+      originalUrl: path + '?q=a%2Fb&q=&includeDeleted=true',
+      headers: {},
+      body: { z: 1, a: ['opaque'] },
+    } as unknown as Request;
+  }
+  beforeEach(() => {
+    jest.clearAllMocks();
+    upstream.request.mockReturnValue(of({ status: 200, headers: {}, data: { opaque: true } }));
+  });
+  it.each(routes)('forwards %s %s unchanged to Learning', async (method, path) => {
+    const request = createRequest(method, path);
+    await proxy.forward(request, response);
+    expect(upstream.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method,
+        url: 'http://learning:3002' + request.originalUrl,
+        data: request.body as unknown,
+        maxRedirects: 0,
+        timeout: 15000,
+      }),
+    );
+    expect(response.status).toHaveBeenCalledWith(200);
+    expect(response.send).toHaveBeenCalledWith({ opaque: true });
+  });
+  it.each([
+    ['GET', '/api/problemsX'],
+    ['POST', '/api/problems-old'],
+    ['GET', '/api/coursesX'],
+    ['GET', '/api/classes-old'],
+    ['GET', '/api/assignmentsX'],
+    ['GET', '/api/progressX'],
+    ['GET', '/api/recommendationsX'],
+    ['DELETE', '/api/classes/class-1'],
+    ['POST', '/api/progress/me/problems'],
+    ['POST', '/api/recommendations'],
+    ['GET', '/api/recommendations/other'],
+    ['GET', '/api/problems/id/judge-package/cpp'],
+    ['POST', '/api/problems/id/unknown'],
+    ['GET', '/internal/problems/id/judge-package/cpp'],
+    ['GET', '/api/internal/problems/id/judge-package/cpp'],
+  ])('blocks unapproved %s %s without upstream', async (method, path) => {
+    await expect(proxy.forward(createRequest(method, path), response)).rejects.toMatchObject({
+      status: 502,
+    });
+    expect(upstream.request).not.toHaveBeenCalled();
+  });
+  it.each(['problems', 'courses', 'classes', 'assignments', 'progress', 'recommendations'])(
+    'blocks unsafe %s paths',
+    async (prefix) => {
+      for (const suffix of [
+        '/../../internal/problems/id/judge-package/cpp',
+        '/%2e%2e/other',
+        '/.%2e/other',
+        '/..%2finternal',
+        '/%252e%252e%252finternal',
+        '/..\\internal',
+        '/%5c..%5cinternal',
+        '/id/../other',
+      ]) {
+        await expect(
+          proxy.forward(createRequest('GET', '/api/' + prefix + suffix), response),
+        ).rejects.toMatchObject({ status: 400 });
+        expect(upstream.request).not.toHaveBeenCalled();
+      }
+    },
+  );
+  it('rejects a mismatch between matched and forwarded paths', async () => {
+    const request = createRequest('GET', '/api/problems');
+    request.originalUrl = '/api/problems/../../internal/problems/id/judge-package/cpp';
+    await expect(proxy.forward(request, response)).rejects.toMatchObject({ status: 400 });
+    expect(upstream.request).not.toHaveBeenCalled();
+  });
+  it.each([200, 302, 400, 401, 403, 404, 409, 500, 503])(
+    'preserves status/body %s and filters response headers',
+    async (status) => {
+      const data = { message: 'Learning response' };
+      upstream.request.mockReturnValue(
+        of({
+          status,
+          data,
+          headers: {
+            'content-type': 'application/json',
+            'content-length': '31',
+            etag: 'v1',
+            'last-modified': 'today',
+            'set-cookie': 'private=value',
+            location: 'http://internal',
+            'x-private': 'hidden',
+          },
+        }),
+      );
+      await proxy.forward(createRequest('GET', '/api/problems'), response);
+      expect(response.status).toHaveBeenCalledWith(status);
+      expect(response.send).toHaveBeenCalledWith(data);
+      expect(jest.mocked(response.setHeader).mock.calls).toEqual([
+        ['content-type', 'application/json'],
+        ['content-length', '31'],
+        ['etag', 'v1'],
+        ['last-modified', 'today'],
+      ]);
+    },
+  );
+  it('accepts a trailing slash without changing the query encoding', async () => {
+    await proxy.forward(createRequest('GET', '/api/problems/'), response);
+    expect(upstream.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://learning:3002/api/problems/?q=a%2Fb&q=&includeDeleted=true',
+      }),
+    );
   });
 });

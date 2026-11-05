@@ -1,5 +1,4 @@
 import { isAllowedBrowserOrigin, readCookie, verifyCsrfToken } from '@app/common';
-import { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
 import {
   AUTH_COOKIE_NAMES,
   AUTH_COOKIE_REQUEST_ROUTES,
@@ -8,7 +7,13 @@ import {
   PUBLIC_PROFILE_ROUTE,
   UNSAFE_METHODS,
 } from '@gateway/application/auth/auth-constants';
-import { ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
+import {
+  ForbiddenException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -21,6 +26,7 @@ interface AccessTokenPayload {
   roles: string[];
   permissions?: string[];
   type: 'access';
+  exp: number;
 }
 
 @Injectable()
@@ -36,9 +42,9 @@ export class GatewayAuthMiddleware implements NestMiddleware {
     const refreshCookie = this.readTokenCookie(request, AUTH_COOKIE_NAMES.refresh);
     const csrfCookie = this.readTokenCookie(request, AUTH_COOKIE_NAMES.csrf);
     delete request.headers.cookie;
-    delete request.headers['x-auth-user-id'];
-    delete request.headers['x-auth-roles'];
-    delete request.headers['x-auth-permissions'];
+    for (const header of Object.keys(request.headers)) {
+      if (header.startsWith('x-auth-')) delete request.headers[header];
+    }
     delete request.headers['x-client-ip'];
     if (request.ip) request.headers['x-client-ip'] = request.ip;
 
@@ -53,7 +59,9 @@ export class GatewayAuthMiddleware implements NestMiddleware {
         refreshCookie && `${AUTH_COOKIE_NAMES.refresh}=${refreshCookie}`,
         csrfCookie && `${AUTH_COOKIE_NAMES.csrf}=${csrfCookie}`,
         accessCookie && `${AUTH_COOKIE_NAMES.access}=${accessCookie}`,
-      ].filter(Boolean).join('; ');
+      ]
+        .filter(Boolean)
+        .join('; ');
     }
 
     if (AUTH_ORIGIN_CHECKED_ROUTES.has(route)) {
@@ -85,9 +93,13 @@ export class GatewayAuthMiddleware implements NestMiddleware {
       });
       if (
         payload.type !== 'access' ||
+        typeof payload.sub !== 'string' ||
         !payload.sub ||
+        typeof payload.sid !== 'string' ||
         !payload.sid ||
+        typeof payload.jti !== 'string' ||
         !payload.jti ||
+        typeof payload.exp !== 'number' ||
         !Array.isArray(payload.roles) ||
         !payload.roles.every((role) => typeof role === 'string')
       ) {
@@ -96,8 +108,14 @@ export class GatewayAuthMiddleware implements NestMiddleware {
       if (!(await this.sessions.isActive(token))) throw new Error('Revoked session');
       if (fromCookie && UNSAFE_METHODS.has(request.method)) {
         this.requireAllowedOrigin(request);
-        if (!verifyCsrfToken(payload.sid, csrfCookie, request.header('x-csrf-token'),
-          this.config.getOrThrow<string>('JWT_ACCESS_SECRET')))
+        if (
+          !verifyCsrfToken(
+            payload.sid,
+            csrfCookie,
+            request.header('x-csrf-token'),
+            this.config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+          )
+        )
           throw new ForbiddenException('Invalid CSRF token');
       }
       request.headers.authorization = `Bearer ${token}`;
@@ -110,7 +128,8 @@ export class GatewayAuthMiddleware implements NestMiddleware {
           : '';
       next();
     } catch (error) {
-      if (error instanceof ForbiddenException || error instanceof ServiceUnavailableException) throw error;
+      if (error instanceof ForbiddenException || error instanceof ServiceUnavailableException)
+        throw error;
       if (publicProfile && fromCookie) {
         next();
         return;
