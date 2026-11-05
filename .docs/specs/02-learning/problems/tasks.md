@@ -415,7 +415,7 @@ Approved và không thay đổi `plan.md`.
 
 ## Tích hợp API Gateway
 
-- [ ] **LRN-001-T039 — Kiểm chứng định tuyến `/api/problems` ở Gateway.** Xác nhận Gateway hiện có
+- [x] **LRN-001-T039 — Kiểm chứng định tuyến `/api/problems` ở Gateway.** Xác nhận Gateway hiện có
       chuyển tiếp mọi thao tác Problem tới Learning, bảo vệ chúng như các route không công khai (danh
       mục chỉ dành cho người đã xác thực theo quyết định đã phê duyệt 3), loại bỏ các header
       `x-auth-user-id`/`x-auth-roles` giả mạo, và chỉ chuyển tiếp ngữ cảnh đã xác minh. Không dự
@@ -423,6 +423,11 @@ Approved và không thay đổi `plan.md`.
       truyền tải.
       **Phụ thuộc:** LRN-001-T034, LRN-001-T035.
       **Truy vết:** LRN-001-FR-006; LRN-001-SR-002; LRN-001-AC-005, LRN-001-AC-007.
+
+Bằng chứng T039 (2026-11-04): GW-002 kiểm thử đủ 21 method/path Problem, metadata đã xác minh,
+không có ngoại lệ ẩn danh, cookie/CSRF, header nội bộ và traversal. Gateway có 196 tests pass;
+lint/typecheck riêng và build Gateway pass. Xem [worked Gateway Problems](../../../worked/api-gateway/learning/problems/2026-11-04-gateway-routes.md).
+Kiểm tra toàn repo và smoke test stack thật còn mở trong tasks GW-002; việc đóng T039 chỉ xác nhận contract Gateway.
 
 ## Messaging
 

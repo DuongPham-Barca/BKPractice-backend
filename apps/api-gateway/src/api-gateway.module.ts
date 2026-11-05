@@ -1,31 +1,42 @@
 import { HealthModule, RequestIdMiddleware } from '@app/common';
 import { validateEnvironment } from '@app/config';
+import { GatewaySessionService } from '@gateway/application/auth/gateway-session.service';
+import { GatewayProxyService } from '@gateway/application/proxy/gateway-proxy.service';
+import { SubmissionResultsService } from '@gateway/application/realtime/submission-results.service';
+import { IdentitySessionClient } from '@gateway/infrastructure/identity/identity-session.client';
+import { GatewayProxyController } from '@gateway/presentation/controllers/gateway-proxy.controller';
+import { createGatewayThrottlers } from '@gateway/presentation/guards/gateway-throttling';
+import { GatewayAuthMiddleware } from '@gateway/presentation/middleware/gateway-auth.middleware';
+import { SubmissionRealtimeGateway } from '@gateway/presentation/realtime/submission-realtime.gateway';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
-import { GatewayAuthMiddleware } from './auth/gateway-auth.middleware';
-import { GatewaySessionVerifier } from './auth/gateway-session-verifier';
-import { GatewayProxyController } from './proxy/gateway-proxy.controller';
-import { GatewayProxyService } from './proxy/gateway-proxy.service';
-import { SubmissionRealtimeGateway } from './realtime/submission-realtime.gateway';
+import { SubmissionResultSubscriber, SubmissionSocketLeases } from '@/infrastructure/redis';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment('api-gateway') }),
     HttpModule.register({}),
     JwtModule.register({ global: true }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: createGatewayThrottlers,
+    }),
     HealthModule.forService('api-gateway'),
   ],
   controllers: [GatewayProxyController],
   providers: [
     GatewayProxyService,
+    GatewaySessionService,
+    SubmissionResultsService,
+    IdentitySessionClient,
+    SubmissionResultSubscriber,
+    SubmissionSocketLeases,
     GatewayAuthMiddleware,
-    GatewaySessionVerifier,
     SubmissionRealtimeGateway,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],

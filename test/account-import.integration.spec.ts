@@ -11,10 +11,11 @@ import { Workbook } from 'exceljs';
 import type { NextFunction, Request, Response } from 'express';
 import { DataSource } from 'typeorm';
 
-import { GatewayAuthMiddleware } from '../apps/api-gateway/src/auth/gateway-auth.middleware';
-import { GatewaySessionVerifier } from '../apps/api-gateway/src/auth/gateway-session-verifier';
-import { GatewayProxyController } from '../apps/api-gateway/src/proxy/gateway-proxy.controller';
-import { GatewayProxyService } from '../apps/api-gateway/src/proxy/gateway-proxy.service';
+import { GatewaySessionService } from '../apps/api-gateway/src/application/auth/gateway-session.service';
+import { GatewayProxyService } from '../apps/api-gateway/src/application/proxy/gateway-proxy.service';
+import { IdentitySessionClient } from '../apps/api-gateway/src/infrastructure/identity/identity-session.client';
+import { GatewayProxyController } from '../apps/api-gateway/src/presentation/controllers/gateway-proxy.controller';
+import { GatewayAuthMiddleware } from '../apps/api-gateway/src/presentation/middleware/gateway-auth.middleware';
 import { seedRbac } from '../apps/identity-service/src/database/seed-rbac';
 
 import {
@@ -111,7 +112,8 @@ databaseTests('Account import — real Gateway, Auth and PostgreSQL', () => {
       providers: [
         GatewayProxyService,
         GatewayAuthMiddleware,
-        GatewaySessionVerifier,
+        GatewaySessionService,
+        IdentitySessionClient,
         { provide: ConfigService, useValue: gatewayConfig },
       ],
     }).compile();

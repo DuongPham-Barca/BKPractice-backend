@@ -6,22 +6,27 @@ The API Gateway uses **Layered Architecture**, as decided in
 [ADR 0002](../adr/0002-revised-service-internal-architectures.md). It is the public backend entry
 point, not a business service.
 
-Layers here are transport layers, not business layers: middleware and guards, then proxy and
-realtime adapters, then the upstream services. The Gateway has no domain layer and no repository
-layer, and adding one would be an architecture violation rather than an improvement.
+Layers here are technical transport layers, not business layers:
 
 ```text
 HTTP / Socket.IO client
           |
           v
-middleware and guards
+presentation/  (controllers, middleware, guards, realtime gateway)
           |
           v
-proxy / realtime adapters
+application/   (proxy forwarding, session check, result dispatch)
+          |
+          v
+infrastructure/ (Identity HTTP client, Redis subscriber)
           |
           v
 upstream business services
 ```
+
+The Gateway has no domain layer and no repository layer. It owns no business rule, entity or
+database; adding either layer would be an architecture violation rather than an improvement.
+Dependencies point in exactly one direction: `presentation -> application -> infrastructure`.
 
 ## Responsibilities
 
@@ -40,15 +45,30 @@ owning service; the Gateway may enforce coarse route metadata only.
 
 ## Current organization and status
 
-The current `auth`, `proxy` and `realtime` areas are transport-focused and the application has no
-TypeORM dependency or business entity. This is **ALIGNED**. A deeper domain/application structure
-must not be added.
+```text
+apps/api-gateway/src/
+├── api-gateway.module.ts     composition root
+├── main.ts
+├── presentation/
+│   ├── controllers/          REST entry points
+│   ├── middleware/           authentication middleware
+│   ├── guards/               rate-limit configuration
+│   └── realtime/             Socket.IO gateway
+├── application/
+│   ├── auth/                 session verification use case
+│   ├── proxy/                upstream forwarding
+│   └── realtime/             result parsing and dispatch
+└── infrastructure/
+    ├── identity/             Identity session HTTP client
+    └── redis/                submission-result subscriber
+```
 
-If the Gateway grows, organize technical concerns under shallow `modules/`, `common/` and `config/`
-folders. This is a naming cleanup, not a reason for a disruptive move today.
+The application has no TypeORM dependency or business entity. This is **ALIGNED**.
 
 ## Dependency rule
 
-Controllers/gateways may depend on proxy and authentication services. Those services may depend on
-NestJS transport/configuration clients and shared transport contracts. Nothing in the Gateway may
-import a business service's entity, repository, datasource or migration.
+Controllers, middleware, guards and realtime gateways may depend on application services.
+Application services may depend on infrastructure adapters. Infrastructure adapters may depend on
+NestJS transport/configuration clients and shared transport contracts. Nothing may import upward,
+and nothing in the Gateway may import a business service's entity, repository, datasource or
+migration.

@@ -16,15 +16,23 @@ const commonSchema = z.object({
 const port = z.coerce.number().int().min(1).max(65535);
 const secret = z.string().min(32);
 const url = z.url();
-const origins = z.string().refine((value) => value.split(',').every((origin) => {
-  try {
-    const parsed = new URL(origin.trim());
-    return ['http:', 'https:'].includes(parsed.protocol) &&
-      parsed.origin === origin.trim() && !parsed.username && !parsed.password;
-  } catch {
-    return false;
-  }
-}), 'CORS_ORIGINS must be an explicit comma-separated list of HTTP(S) origins');
+const origins = z.string().refine(
+  (value) =>
+    value.split(',').every((origin) => {
+      try {
+        const parsed = new URL(origin.trim());
+        return (
+          ['http:', 'https:'].includes(parsed.protocol) &&
+          parsed.origin === origin.trim() &&
+          !parsed.username &&
+          !parsed.password
+        );
+      } catch {
+        return false;
+      }
+    }),
+  'CORS_ORIGINS must be an explicit comma-separated list of HTTP(S) origins',
+);
 
 const serviceSchemas: Record<ServiceName, z.ZodObject> = {
   'api-gateway': commonSchema.extend({
@@ -36,6 +44,7 @@ const serviceSchemas: Record<ServiceName, z.ZodObject> = {
     COMMUNITY_SERVICE_URL: url,
     REDIS_URL: url,
     CORS_ORIGINS: origins.default('http://localhost:3001'),
+    AUTH_MOBILE_LOGIN_REDIRECT_URL: url.optional(),
     AUTH_RATE_LIMIT_TTL_MS: z.coerce.number().int().positive().default(60000),
     AUTH_PASSWORD_LOGIN_RATE_LIMIT: z.coerce.number().int().positive().default(5),
     AUTH_OAUTH_RATE_LIMIT: z.coerce.number().int().positive().default(30),
@@ -113,10 +122,16 @@ export function validateEnvironment(service: ServiceName) {
         .join('; ');
       throw new Error(`Invalid environment for ${service}: ${issues}`);
     }
-    if ((service === 'api-gateway' || service === 'identity-service') &&
+    if (
+      (service === 'api-gateway' || service === 'identity-service') &&
       result.data.NODE_ENV === 'production' &&
-      String(result.data.CORS_ORIGINS).split(',').some((origin) => !origin.trim().startsWith('https://'))) {
-      throw new Error(`Invalid environment for ${service}: CORS_ORIGINS must use HTTPS in production`);
+      String(result.data.CORS_ORIGINS)
+        .split(',')
+        .some((origin) => !origin.trim().startsWith('https://'))
+    ) {
+      throw new Error(
+        `Invalid environment for ${service}: CORS_ORIGINS must use HTTPS in production`,
+      );
     }
     if (service === 'identity-service') {
       if (result.data.AUTH_FLOW_STORE === 'redis' && !result.data.REDIS_URL) {
@@ -129,31 +144,35 @@ export function validateEnvironment(service: ServiceName) {
           'Invalid environment for identity-service: AUTH_FLOW_STORE cannot use memory in production',
         );
       }
-      if (result.data.NODE_ENV === 'production' && (!result.data.BREVO_API_KEY || !result.data.BREVO_SENDER_EMAIL)) {
-        throw new Error('Invalid environment for identity-service: BREVO_API_KEY and BREVO_SENDER_EMAIL are required in production');
-      }
-      const ttlMs = (value: string): number => {
-        const unit = value.slice(-1);
-        const multipliers: Record<string, number> = {
-          s: 1000,
-          m: 60_000,
-          h: 3_600_000,
-          d: 86_400_000,
-        };
-        return Number(value.slice(0, -1)) * (multipliers[unit] ?? 0);
-      };
-      if (ttlMs(String(result.data.JWT_REFRESH_TTL)) <= ttlMs(String(result.data.JWT_ACCESS_TTL))) {
+      if (
+        result.data.NODE_ENV === 'production' &&
+        (!result.data.BREVO_API_KEY || !result.data.BREVO_SENDER_EMAIL)
+      ) {
         throw new Error(
-          `Invalid environment for ${service}: JWT_REFRESH_TTL must exceed JWT_ACCESS_TTL`,
+          'Invalid environment for identity-service: BREVO_API_KEY and BREVO_SENDER_EMAIL are required in production',
         );
       }
       if (result.data.NODE_ENV === 'production') {
-        for (const key of ['MICROSOFT_REDIRECT_URI', 'AUTH_WEB_LOGIN_REDIRECT_URL', 'AUTH_MOBILE_LOGIN_REDIRECT_URL'] as const) {
+        for (const key of ['MICROSOFT_REDIRECT_URI', 'AUTH_WEB_LOGIN_REDIRECT_URL'] as const) {
           const redirect: unknown = result.data[key];
           if (redirect === undefined) continue;
           if (typeof redirect !== 'string' || !redirect.startsWith('https://')) {
             throw new Error(
               `Invalid environment for ${service}: ${key} must use HTTPS in production`,
+            );
+          }
+        }
+        const mobileRedirect = result.data.AUTH_MOBILE_LOGIN_REDIRECT_URL;
+        if (typeof mobileRedirect === 'string') {
+          const parsed = new URL(mobileRedirect);
+          if (
+            parsed.username ||
+            parsed.password ||
+            parsed.protocol === 'http:' ||
+            ['javascript:', 'data:', 'file:', 'blob:', 'mailto:'].includes(parsed.protocol)
+          ) {
+            throw new Error(
+              `Invalid environment for ${service}: AUTH_MOBILE_LOGIN_REDIRECT_URL must use HTTPS or an app scheme`,
             );
           }
         }

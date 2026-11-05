@@ -75,6 +75,28 @@ describe('Identity configuration', () => {
     ).toThrow();
   });
 
+  it('allows a mobile app scheme for the mobile redirect in production', () => {
+    const production = {
+      ...identity,
+      NODE_ENV: 'production',
+      CORS_ORIGINS: 'https://example.test',
+      MICROSOFT_REDIRECT_URI: 'https://example.test/callback',
+      AUTH_WEB_LOGIN_REDIRECT_URL: 'https://example.test/auth/callback',
+      BREVO_API_KEY: 'test-key',
+      BREVO_SENDER_EMAIL: 'verified@example.com',
+      AUTH_MOBILE_LOGIN_REDIRECT_URL: 'bkpracticemobile://auth/callback',
+    };
+    expect(validateEnvironment('identity-service')(production).AUTH_MOBILE_LOGIN_REDIRECT_URL).toBe(
+      'bkpracticemobile://auth/callback',
+    );
+    expect(() =>
+      validateEnvironment('identity-service')({
+        ...production,
+        AUTH_MOBILE_LOGIN_REDIRECT_URL: 'http://example.test/auth/callback',
+      }),
+    ).toThrow('AUTH_MOBILE_LOGIN_REDIRECT_URL');
+  });
+
   it('requires Brevo credentials in production', () => {
     const production = {
       ...identity,
@@ -84,23 +106,29 @@ describe('Identity configuration', () => {
       AUTH_WEB_LOGIN_REDIRECT_URL: 'https://example.test/auth/callback',
     };
     expect(() => validateEnvironment('identity-service')(production)).toThrow('BREVO_API_KEY');
-    expect(validateEnvironment('identity-service')({
-      ...production,
-      BREVO_API_KEY: 'test-key',
-      BREVO_SENDER_EMAIL: 'verified@example.com',
-    }).BREVO_SENDER_EMAIL).toBe('verified@example.com');
+    expect(
+      validateEnvironment('identity-service')({
+        ...production,
+        BREVO_API_KEY: 'test-key',
+        BREVO_SENDER_EMAIL: 'verified@example.com',
+      }).BREVO_SENDER_EMAIL,
+    ).toBe('verified@example.com');
   });
 
   it('defaults and validates the Brevo sender display name', () => {
     expect(validateEnvironment('identity-service')(identity).BREVO_SENDER_NAME).toBe('BKPractice');
-    expect(validateEnvironment('identity-service')({
-      ...identity,
-      BREVO_SENDER_NAME: 'BKPractice Support',
-    }).BREVO_SENDER_NAME).toBe('BKPractice Support');
-    expect(() => validateEnvironment('identity-service')({
-      ...identity,
-      BREVO_SENDER_NAME: '   ',
-    })).toThrow('BREVO_SENDER_NAME');
+    expect(
+      validateEnvironment('identity-service')({
+        ...identity,
+        BREVO_SENDER_NAME: 'BKPractice Support',
+      }).BREVO_SENDER_NAME,
+    ).toBe('BKPractice Support');
+    expect(() =>
+      validateEnvironment('identity-service')({
+        ...identity,
+        BREVO_SENDER_NAME: '   ',
+      }),
+    ).toThrow('BREVO_SENDER_NAME');
   });
 
   it('uses Redis by default and forbids memory storage in production', () => {
@@ -118,13 +146,18 @@ describe('Identity configuration', () => {
   });
 
   it('rejects wildcard credentialed origins and non-HTTPS production origins', () => {
-    expect(() => validateEnvironment('identity-service')({ ...identity, CORS_ORIGINS: '*' }))
-      .toThrow('CORS_ORIGINS');
-    expect(() => validateEnvironment('identity-service')({
-      ...identity, NODE_ENV: 'production', CORS_ORIGINS: 'http://app.example',
-      MICROSOFT_REDIRECT_URI: 'https://example.test/callback',
-      AUTH_WEB_LOGIN_REDIRECT_URL: 'https://example.test/auth/callback',
-    })).toThrow('CORS_ORIGINS must use HTTPS');
+    expect(() =>
+      validateEnvironment('identity-service')({ ...identity, CORS_ORIGINS: '*' }),
+    ).toThrow('CORS_ORIGINS');
+    expect(() =>
+      validateEnvironment('identity-service')({
+        ...identity,
+        NODE_ENV: 'production',
+        CORS_ORIGINS: 'http://app.example',
+        MICROSOFT_REDIRECT_URI: 'https://example.test/callback',
+        AUTH_WEB_LOGIN_REDIRECT_URL: 'https://example.test/auth/callback',
+      }),
+    ).toThrow('CORS_ORIGINS must use HTTPS');
   });
 
   it('does not require Redis when the local auth flow store is selected', () => {
