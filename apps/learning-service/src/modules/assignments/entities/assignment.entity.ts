@@ -1,7 +1,6 @@
+import { Classroom, Course } from '@learning/modules/courses/entities/course.entity';
+import { Problem } from '@learning/modules/problems/entities/problem.entity';
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-
-import { Classroom, Course } from '../../courses/entities/course.entity';
-import { Problem } from '../../problems/entities/problem.entity';
 
 @Entity('assignments')
 export class Assignment {

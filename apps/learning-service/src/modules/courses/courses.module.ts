@@ -1,8 +1,7 @@
 import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
+import { ProblemsModule } from '@learning/modules/problems/problems.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { ProblemsModule } from '../problems/problems.module';
 
 import { CourseAuthorizationService } from './application/services/course-authorization.service';
 import { CourseMutationService } from './application/services/course-mutation.service';

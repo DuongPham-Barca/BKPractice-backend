@@ -1,8 +1,7 @@
 import 'reflect-metadata';
 
+import { identityEntities } from '@identity/modules/identity.entities';
 import { DataSource } from 'typeorm';
-
-import { identityEntities } from '../modules/identity.entities';
 
 export default new DataSource({
   type: 'postgres',

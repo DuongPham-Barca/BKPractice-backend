@@ -1,8 +1,7 @@
 import 'reflect-metadata';
 
+import { learningEntities } from '@learning/modules/learning.entities';
 import { DataSource } from 'typeorm';
-
-import { learningEntities } from '../modules/learning.entities';
 
 export default new DataSource({
   type: 'postgres',
