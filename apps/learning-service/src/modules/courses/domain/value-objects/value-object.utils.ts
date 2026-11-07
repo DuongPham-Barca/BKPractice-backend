@@ -1,4 +1,4 @@
-import { DomainValidationError } from '@learning/modules/courses/domain/errors/domain-validation.error';
+import { DomainValidationError } from '@/modules/courses/domain/errors';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -44,7 +44,9 @@ export function assertUniqueValues(values: readonly string[], field: string): vo
 // (không import nội bộ module `problems`); frontend vẫn phải làm sạch khi render.
 const DANGEROUS_TAG_PATTERN =
   /<\s*\/?\s*(?:script|style|iframe|object|embed|form|input|button|link|meta|base|svg|math)\b/i;
+
 const EVENT_HANDLER_PATTERN = /\bon[a-z]+\s*=/i;
+
 const DANGEROUS_PROTOCOL_PATTERN = /(?:javascript|vbscript)\s*:|data\s*:\s*text\s*\/\s*html/i;
 
 export function assertSafeMarkdown(value: string, field: string): string {

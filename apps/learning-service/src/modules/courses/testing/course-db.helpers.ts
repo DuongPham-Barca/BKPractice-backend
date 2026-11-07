@@ -66,7 +66,8 @@ export async function upsertProblem(dataSource: DataSource, row: TestProblemRow)
        ("id", "title", "slug", "description", "problem_type", "difficulty", "publish_status", "created_by", "deleted_at")
      VALUES ($1, $2, $3, 'desc', 'STANDARD', 'EASY', $4, $5, $6)
      ON CONFLICT ("id") DO UPDATE SET
-       "title" = EXCLUDED."title", "publish_status" = EXCLUDED."publish_status",
+       "title" = EXCLUDED."title", "slug" = EXCLUDED."slug",
+       "publish_status" = EXCLUDED."publish_status",
        "created_by" = EXCLUDED."created_by", "deleted_at" = EXCLUDED."deleted_at"`,
     [
       row.id,

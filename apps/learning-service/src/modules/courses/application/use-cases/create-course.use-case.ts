@@ -1,19 +1,19 @@
-import type { CreateCourseCommand } from '@learning/modules/courses/application/commands/course.commands';
-import { DuplicateCourseSlugError } from '@learning/modules/courses/application/errors/application-errors';
-import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type { ICreateCoursePortIn } from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
-import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
-import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
-import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
-import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
-import {
-  COURSE_REPOSITORY,
-  COURSE_TRANSACTION_RUNNER,
-} from '@learning/modules/courses/course.tokens';
-import { Course } from '@learning/modules/courses/domain/course.aggregate';
-import type { CourseRepository } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
-import { CreatedBy } from '@learning/modules/courses/domain/value-objects';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { Inject, Injectable } from '@nestjs/common';
+
+import type { CreateCourseCommand } from '@/modules/courses/application/command';
+import { DuplicateCourseSlugError } from '@/modules/courses/application/errors';
+import type { Principal } from '@/modules/courses/application/models';
+import type { ICreateCoursePortIn } from '@/modules/courses/application/ports/in';
+import type { ManagedCourseResult } from '@/modules/courses/application/results';
+import {
+  CourseAuthorizationService,
+  CourseViewAssembler,
+} from '@/modules/courses/application/services';
+import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
+import { Course } from '@/modules/courses/domain';
+import type { CourseRepository } from '@/modules/courses/domain/repositories';
+import { CreatedBy } from '@/modules/courses/domain/value-objects';
 
 @Injectable()
 export class CreateCourseUseCase implements ICreateCoursePortIn {

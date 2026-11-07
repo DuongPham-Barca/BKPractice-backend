@@ -1,4 +1,4 @@
-import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
+import { Course as CourseAggregate } from '@/modules/courses/domain';
 import {
   ChapterDescription,
   ChapterId,
@@ -10,9 +10,12 @@ import {
   CreatedBy,
   DeletedMarker,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects';
-import { Course } from '@learning/modules/courses/entities/course.entity';
-import type { Chapter, ChapterProblem } from '@learning/modules/courses/entities/course.entity';
+} from '@/modules/courses/domain/value-objects';
+import { CourseEntity as Course } from '@/modules/courses/entities';
+import type {
+  ChapterEntity as Chapter,
+  ChapterProblemEntity as ChapterProblem,
+} from '@/modules/courses/entities';
 
 export class CoursePersistenceMapper {
   static toDomain(

@@ -3,12 +3,24 @@ import {
   ChapterNotFound,
   InvalidCourseState,
   ProblemAlreadyInCourse,
-} from './errors/domain-validation.error';
-import type { CourseSlug, CourseStatus, CourseTitle, CreatedBy } from './value-objects';
-import type { Chapter, ChapterTitle, ProblemReference } from './value-objects';
-import { CourseDescription, CourseId, DeletedMarker } from './value-objects';
-import { ChapterDescription, ChapterId } from './value-objects';
-import { assertValidDate } from './value-objects/value-object.utils';
+} from '@/modules/courses/domain/errors';
+import type {
+  CourseSlug,
+  CourseStatus,
+  CourseTitle,
+  CreatedBy,
+  Chapter,
+  ChapterTitle,
+  ProblemReference,
+} from '@/modules/courses/domain/value-objects';
+import {
+  CourseDescription,
+  CourseId,
+  DeletedMarker,
+  ChapterDescription,
+  ChapterId,
+  assertValidDate,
+} from '@/modules/courses/domain/value-objects';
 
 export interface CourseSnapshot {
   readonly id: CourseId;
@@ -53,6 +65,7 @@ export interface CreateCourseOptions {
 }
 
 const MAX_CHAPTERS = 50;
+
 const MAX_PROBLEMS_PER_CHAPTER = 50;
 
 export class Course {

@@ -1,6 +1,8 @@
-import { ChapterDescription, ChapterTitle } from './course-content';
-import { ProblemReference } from './identifiers';
-import { ChapterId } from './identifiers';
+import {
+  ChapterDescription,
+  ChapterTitle,
+} from '@/modules/courses/domain/value-objects/course-content';
+import { ProblemReference, ChapterId } from '@/modules/courses/domain/value-objects/identifiers';
 
 export { ChapterDescription, ChapterId, ChapterTitle, ProblemReference };
 

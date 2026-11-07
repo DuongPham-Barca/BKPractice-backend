@@ -1,6 +1,8 @@
-import { DomainValidationError } from '@learning/modules/courses/domain/errors/domain-validation.error';
-
-import { ChapterDescription, CourseDescription } from './course-content';
+import { DomainValidationError } from '@/modules/courses/domain/errors';
+import {
+  ChapterDescription,
+  CourseDescription,
+} from '@/modules/courses/domain/value-objects/course-content';
 
 describe('restricted Markdown in descriptions (FR-014, AC-012)', () => {
   const dangerous = [

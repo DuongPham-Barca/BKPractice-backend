@@ -1,18 +1,18 @@
-import type { CourseProblemCatalog } from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
+import { Inject, Injectable } from '@nestjs/common';
+
+import type { CourseProblemCatalog } from '@/modules/courses/application/ports/out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
   ManagedCourseResult,
   ManagedCourseSummaryResult,
-} from '@learning/modules/courses/application/results/course.results';
-import { COURSE_PROBLEM_CATALOG } from '@learning/modules/courses/course.tokens';
-import type { Course } from '@learning/modules/courses/domain/course.aggregate';
-import { Inject, Injectable } from '@nestjs/common';
-
+} from '@/modules/courses/application/results';
 import {
   CoursePublishReadinessService,
   uniqueProblemIds,
-} from './course-publish-readiness.service';
+} from '@/modules/courses/application/services/course-publish-readiness.service';
+import { COURSE_PROBLEM_CATALOG } from '@/modules/courses/course.tokens';
+import type { Course } from '@/modules/courses/domain';
 
 @Injectable()
 export class CourseViewAssembler {

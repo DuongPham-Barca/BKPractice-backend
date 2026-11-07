@@ -36,7 +36,8 @@
       "@learning/*": ["apps/learning-service/src/*"],
       "@submission/*": ["apps/submission-service/src/*"],
       "@judge/*": ["apps/judge-service/src/*"],
-      "@community/*": ["apps/community-service/src/*"]
+      "@community/*": ["apps/community-service/src/*"],
+      "@/modules/courses/*": ["apps/learning-service/src/modules/courses/*"]
     }
   },
   "include": ["apps/**/*.ts", "libs/**/*.ts", "test/**/*.ts", "jest.config.ts"],

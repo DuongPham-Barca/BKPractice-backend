@@ -1,4 +1,3 @@
-import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
 import { ProblemsModule } from '@learning/modules/problems/problems.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -22,61 +21,67 @@ import {
   RESTORE_COURSE_PORT_IN,
   UPDATE_CHAPTER_PORT_IN,
   UPDATE_COURSE_PORT_IN,
-} from './application/ports/in/course-use-cases.port.in';
-import { CourseAuthorizationService } from './application/services/course-authorization.service';
-import { CourseMutationService } from './application/services/course-mutation.service';
-import { CoursePublishReadinessService } from './application/services/course-publish-readiness.service';
-import { CourseViewAssembler } from './application/services/course-view.assembler';
+} from '@/modules/courses/application/ports/in';
+import {
+  CourseAuthorizationService,
+  CoursePublishReadinessService,
+  CourseViewAssembler,
+} from '@/modules/courses/application/services';
 import {
   AddChapterUseCase,
   RemoveChapterUseCase,
   ReorderChaptersUseCase,
   UpdateChapterUseCase,
-} from './application/use-cases/chapter.use-cases';
-import {
   DeleteCourseUseCase,
   HoldCourseUseCase,
   PublishCourseUseCase,
   RepublishCourseUseCase,
   RestoreCourseUseCase,
-} from './application/use-cases/course-lifecycle.use-cases';
-import { CreateCourseUseCase } from './application/use-cases/create-course.use-case';
-import {
+  CreateCourseUseCase,
   AttachProblemUseCase,
   DetachProblemUseCase,
   ReorderChapterProblemsUseCase,
-} from './application/use-cases/problem-in-chapter.use-cases';
-import {
   GetManagedCourseUseCase,
   GetPublishedCourseUseCase,
   ListManagedCoursesUseCase,
   ListPublishedCoursesUseCase,
-} from './application/use-cases/read-course.use-cases';
-import { UpdateCourseUseCase } from './application/use-cases/update-course.use-case';
+  UpdateCourseUseCase,
+} from '@/modules/courses/application/use-cases';
 import {
   COURSE_PROBLEM_CATALOG,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
-} from './course.tokens';
-import { Chapter, ChapterProblem, Course } from './entities/course.entity';
-import { CourseTypeOrmRepository } from './infrastructure/persistence/course.typeorm-repository';
-import { CourseTypeOrmTransactionContext } from './infrastructure/persistence/course.typeorm-transaction-context';
-import { CourseTypeOrmTransactionRunner } from './infrastructure/persistence/course.typeorm-transaction-runner';
-import { ProblemReferenceCatalogAdapter } from './infrastructure/problems/problem-catalog.adapter';
-import { CourseExceptionFilter } from './presentation/http/course-exception.filter';
-import { ManagedCoursesController } from './presentation/http/managed-courses.controller';
+} from '@/modules/courses/course.tokens';
+import { CourseReadiness } from '@/modules/courses/domain/services';
+import {
+  ChapterEntity as Chapter,
+  ChapterProblemEntity as ChapterProblem,
+  CourseEntity as Course,
+} from '@/modules/courses/entities';
+import {
+  CourseTypeOrmRepository,
+  CourseTypeOrmTransactionContext,
+  CourseTypeOrmTransactionRunner,
+} from '@/modules/courses/infrastructure/persistence';
+import { ProblemReferenceCatalogAdapter } from '@/modules/courses/infrastructure/problems';
+import {
+  ManagedCoursesController,
+  ManagedChaptersController,
+  PublicCoursesController,
+} from '@/modules/courses/presentation/http';
+import { CourseExceptionFilter } from '@/modules/courses/presentation/http/filters';
 
 @Module({
   // ProblemsModule chỉ để lấy PROBLEM_REFERENCE_READER (API đọc duy nhất courses dùng).
   imports: [TypeOrmModule.forFeature([Course, Chapter, ChapterProblem]), ProblemsModule],
-  controllers: [ManagedCoursesController],
+  controllers: [ManagedCoursesController, ManagedChaptersController, PublicCoursesController],
   providers: [
     CourseExceptionFilter,
     CourseAuthorizationService,
     CourseReadiness,
     CoursePublishReadinessService,
     CourseViewAssembler,
-    CourseMutationService,
+
     CreateCourseUseCase,
     UpdateCourseUseCase,
     PublishCourseUseCase,

@@ -2,16 +2,17 @@ import {
   ChapterDescription,
   ChapterTitle,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects';
+} from '@/modules/courses/domain/value-objects';
 import {
   courseWithProblem,
   createCourseTestKit,
   draftCourse,
   OWNER_ID,
   PROBLEM_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
+} from '@/modules/courses/testing';
 
 const SECOND = '00000000-0000-4000-8000-0000000000d4';
+
 const THIRD = '00000000-0000-4000-8000-0000000000e5';
 
 describe('CourseViewAssembler', () => {

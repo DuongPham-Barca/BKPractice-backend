@@ -1,21 +1,20 @@
-import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type {
-  CourseProblemCatalog,
-  ProblemSummary,
-} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
-import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
-import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
-import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
-import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
-import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
-import { Course } from '@learning/modules/courses/domain/course.aggregate';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+
+import type { Principal } from '@/modules/courses/application/models';
+import type { CourseProblemCatalog, ProblemSummary } from '@/modules/courses/application/ports/out';
+import {
+  CourseAuthorizationService,
+  CoursePublishReadinessService,
+  CourseViewAssembler,
+} from '@/modules/courses/application/services';
+import { Course } from '@/modules/courses/domain';
 import type {
   CourseListFilter,
   CoursePage,
   CourseRepository,
   ManagedCourseListFilter,
-} from '@learning/modules/courses/domain/repositories/course-repository.port.out';
-import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
+} from '@/modules/courses/domain/repositories';
+import { CourseReadiness } from '@/modules/courses/domain/services';
 import {
   ChapterDescription,
   ChapterTitle,
@@ -24,10 +23,12 @@ import {
   CourseTitle,
   CreatedBy,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects';
+} from '@/modules/courses/domain/value-objects';
 
 export const OWNER_ID = '00000000-0000-4000-8000-0000000000a1';
+
 export const OTHER_ID = '00000000-0000-4000-8000-0000000000b2';
+
 export const PROBLEM_ID = '00000000-0000-4000-8000-0000000000c3';
 
 export const ALL_COURSE_PERMISSIONS = [
@@ -183,7 +184,6 @@ export function createCourseTestKit() {
   const authorization = new CourseAuthorizationService();
   const readiness = new CoursePublishReadinessService(new CourseReadiness(), catalog);
   const views = new CourseViewAssembler(catalog, readiness);
-  const mutation = new CourseMutationService(authorization, views, repository, transactions);
   return {
     repository,
     catalog,
@@ -191,7 +191,6 @@ export function createCourseTestKit() {
     authorization,
     readiness,
     views,
-    mutation,
     seed(course: Course = courseWithProblem()): Course {
       repository.store.set(course.id.value, course);
       return course;

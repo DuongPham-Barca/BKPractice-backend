@@ -1,21 +1,19 @@
-import { Course } from '@learning/modules/courses/domain/course.aggregate';
+import { Course } from '@/modules/courses/domain/course.aggregate';
 import {
   ChapterNotFound,
   DomainValidationError,
   ProblemAlreadyInCourse,
-} from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@/modules/courses/domain/errors';
 import {
   ChapterDescription,
   ChapterTitle,
   CourseDescription,
   CourseSlug,
   CourseTitle,
-} from '@learning/modules/courses/domain/value-objects/course-content';
-import { ChapterId } from '@learning/modules/courses/domain/value-objects/identifiers';
-import {
+  ChapterId,
   CreatedBy,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects/identifiers';
+} from '@/modules/courses/domain/value-objects';
 
 describe('Course aggregate', () => {
   const createdBy = new CreatedBy('00000000-0000-4000-8000-000000000031');

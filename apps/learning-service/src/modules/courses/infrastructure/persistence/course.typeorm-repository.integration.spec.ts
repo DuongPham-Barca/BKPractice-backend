@@ -1,33 +1,32 @@
+import { DataSource } from 'typeorm';
+
 import {
   DuplicateCourseSlugError,
   ProblemNotAttachableError,
-} from '@learning/modules/courses/application/errors/application-errors';
-import { Course } from '@learning/modules/courses/domain/course.aggregate';
-import { ProblemAlreadyInCourse } from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@/modules/courses/application/errors';
+import { Course } from '@/modules/courses/domain';
+import { ProblemAlreadyInCourse } from '@/modules/courses/domain/errors';
 import {
   ChapterDescription,
   ChapterId,
   ChapterTitle,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects';
+} from '@/modules/courses/domain/value-objects';
+import { CourseTypeOrmRepository } from '@/modules/courses/infrastructure/persistence/course.typeorm-repository';
+import { CourseTypeOrmTransactionContext } from '@/modules/courses/infrastructure/persistence/course.typeorm-transaction-context';
+import { CourseTypeOrmTransactionRunner } from '@/modules/courses/infrastructure/persistence/course.typeorm-transaction-runner';
 import {
   assertTestDatabase,
   learningDataSourceOptions,
   TEST_DATABASE_URL,
   upsertProblem,
-} from '@learning/modules/courses/testing/course-db.helpers';
-import {
   courseWithProblem,
   draftCourse,
   PROBLEM_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
-import { DataSource } from 'typeorm';
-
-import { CourseTypeOrmRepository } from './course.typeorm-repository';
-import { CourseTypeOrmTransactionContext } from './course.typeorm-transaction-context';
-import { CourseTypeOrmTransactionRunner } from './course.typeorm-transaction-runner';
+} from '@/modules/courses/testing';
 
 assertTestDatabase();
+
 const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
 
 if (!TEST_DATABASE_URL) {
@@ -37,13 +36,19 @@ if (!TEST_DATABASE_URL) {
 const SECOND_PROBLEM = '00000000-0000-4000-8000-0000000000d4';
 
 let dataSource: DataSource;
+
 let repository: CourseTypeOrmRepository;
+
 let runner: CourseTypeOrmTransactionRunner;
+
 let context: CourseTypeOrmTransactionContext;
+
 let sequence = 0;
 
 const nextSlug = (): string => `it-course-${Date.now()}-${(sequence += 1)}`;
+
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 const save = (course: Course): Promise<void> => runner.run(() => repository.save(course));
 
 describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {

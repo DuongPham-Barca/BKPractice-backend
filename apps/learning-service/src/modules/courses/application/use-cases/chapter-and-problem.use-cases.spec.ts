@@ -1,13 +1,23 @@
 import {
   CourseNotReadyError,
   ProblemNotAttachableError,
-} from '@learning/modules/courses/application/errors/application-errors';
+} from '@/modules/courses/application/errors';
+import {
+  AddChapterUseCase,
+  RemoveChapterUseCase,
+  ReorderChaptersUseCase,
+  UpdateChapterUseCase,
+  AttachProblemUseCase,
+  DetachProblemUseCase,
+  ReorderChapterProblemsUseCase,
+} from '@/modules/courses/application/use-cases';
+import { UpdateCourseUseCase } from '@/modules/courses/application/use-cases/update-course.use-case';
 import {
   ChapterNotFound,
   DomainValidationError,
   InvalidCourseState,
   ProblemAlreadyInCourse,
-} from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@/modules/courses/domain/errors';
 import {
   ChapterDescription,
   ChapterId,
@@ -15,7 +25,7 @@ import {
   CourseDescription,
   CourseTitle,
   ProblemReference,
-} from '@learning/modules/courses/domain/value-objects';
+} from '@/modules/courses/domain/value-objects';
 import {
   courseWithProblem,
   createCourseTestKit,
@@ -23,22 +33,10 @@ import {
   admin,
   OTHER_ID,
   PROBLEM_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
-
-import {
-  AddChapterUseCase,
-  RemoveChapterUseCase,
-  ReorderChaptersUseCase,
-  UpdateChapterUseCase,
-} from './chapter.use-cases';
-import {
-  AttachProblemUseCase,
-  DetachProblemUseCase,
-  ReorderChapterProblemsUseCase,
-} from './problem-in-chapter.use-cases';
-import { UpdateCourseUseCase } from './update-course.use-case';
+} from '@/modules/courses/testing';
 
 const OTHER_PROBLEM = '00000000-0000-4000-8000-0000000000d4';
+
 const THIRD_PROBLEM = '00000000-0000-4000-8000-0000000000e5';
 
 describe('Chapter and problem use cases', () => {
@@ -49,14 +47,39 @@ describe('Chapter and problem use cases', () => {
     kit.catalog.setProblem(PROBLEM_ID);
   });
 
-  const addChapter = () => new AddChapterUseCase(kit.mutation);
-  const updateChapter = () => new UpdateChapterUseCase(kit.mutation);
-  const removeChapter = () => new RemoveChapterUseCase(kit.mutation, kit.readiness);
-  const reorderChapters = () => new ReorderChaptersUseCase(kit.mutation);
-  const attach = () => new AttachProblemUseCase(kit.mutation, kit.catalog);
-  const detach = () => new DetachProblemUseCase(kit.mutation, kit.readiness);
-  const reorderProblems = () => new ReorderChapterProblemsUseCase(kit.mutation);
-  const updateCourse = () => new UpdateCourseUseCase(kit.mutation, kit.readiness);
+  const addChapter = () =>
+    new AddChapterUseCase(kit.authorization, kit.repository, kit.transactions, kit.views);
+  const updateChapter = () =>
+    new UpdateChapterUseCase(kit.authorization, kit.repository, kit.transactions, kit.views);
+  const removeChapter = () =>
+    new RemoveChapterUseCase(kit.authorization, kit.repository, kit.transactions, kit.readiness);
+  const reorderChapters = () =>
+    new ReorderChaptersUseCase(kit.authorization, kit.repository, kit.transactions, kit.views);
+  const attach = () =>
+    new AttachProblemUseCase(
+      kit.authorization,
+      kit.repository,
+      kit.transactions,
+      kit.views,
+      kit.catalog,
+    );
+  const detach = () =>
+    new DetachProblemUseCase(kit.authorization, kit.repository, kit.transactions, kit.readiness);
+  const reorderProblems = () =>
+    new ReorderChapterProblemsUseCase(
+      kit.authorization,
+      kit.repository,
+      kit.transactions,
+      kit.views,
+    );
+  const updateCourse = () =>
+    new UpdateCourseUseCase(
+      kit.authorization,
+      kit.repository,
+      kit.transactions,
+      kit.views,
+      kit.readiness,
+    );
 
   // Luôn đọc state đã lưu: use case làm việc trên bản sao nạp từ repository.
   const chapterOf = (course: ReturnType<typeof draftCourse>, index = 0) =>

@@ -1,10 +1,8 @@
-import type {
-  CourseProblemCatalog,
-  ProblemSummary,
-} from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
 import type { ProblemReferenceReader } from '@learning/modules/problems/application/ports/out/problem-reference-reader.port.out';
 import { PROBLEM_REFERENCE_READER } from '@learning/modules/problems/problem.tokens';
 import { Inject, Injectable } from '@nestjs/common';
+
+import type { CourseProblemCatalog, ProblemSummary } from '@/modules/courses/application/ports/out';
 
 /** Cầu nối port của `courses` sang `ProblemReferenceReader` do module `problems` export. */
 @Injectable()

@@ -1,5 +1,10 @@
 import type { AddressInfo } from 'node:net';
 
+import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Test } from '@nestjs/testing';
+
 import {
   ADD_CHAPTER_PORT_IN,
   ATTACH_PROBLEM_PORT_IN,
@@ -19,43 +24,41 @@ import {
   RESTORE_COURSE_PORT_IN,
   UPDATE_CHAPTER_PORT_IN,
   UPDATE_COURSE_PORT_IN,
-} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
-import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
-import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
-import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
-import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
+} from '@/modules/courses/application/ports/in';
+import {
+  CourseAuthorizationService,
+  CoursePublishReadinessService,
+  CourseViewAssembler,
+} from '@/modules/courses/application/services';
 import {
   AddChapterUseCase,
   RemoveChapterUseCase,
   ReorderChaptersUseCase,
   UpdateChapterUseCase,
-} from '@learning/modules/courses/application/use-cases/chapter.use-cases';
-import {
   DeleteCourseUseCase,
   HoldCourseUseCase,
   PublishCourseUseCase,
   RepublishCourseUseCase,
   RestoreCourseUseCase,
-} from '@learning/modules/courses/application/use-cases/course-lifecycle.use-cases';
-import { CreateCourseUseCase } from '@learning/modules/courses/application/use-cases/create-course.use-case';
-import {
+  CreateCourseUseCase,
   AttachProblemUseCase,
   DetachProblemUseCase,
   ReorderChapterProblemsUseCase,
-} from '@learning/modules/courses/application/use-cases/problem-in-chapter.use-cases';
-import {
   GetManagedCourseUseCase,
   GetPublishedCourseUseCase,
   ListManagedCoursesUseCase,
   ListPublishedCoursesUseCase,
-} from '@learning/modules/courses/application/use-cases/read-course.use-cases';
-import { UpdateCourseUseCase } from '@learning/modules/courses/application/use-cases/update-course.use-case';
+  UpdateCourseUseCase,
+} from '@/modules/courses/application/use-cases';
 import {
   COURSE_PROBLEM_CATALOG,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
-} from '@learning/modules/courses/course.tokens';
-import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
+} from '@/modules/courses/course.tokens';
+import { CourseReadiness } from '@/modules/courses/domain/services';
+import { ManagedChaptersController } from '@/modules/courses/presentation/http/managed-chapters.controller';
+import { ManagedCoursesController } from '@/modules/courses/presentation/http/managed-courses.controller';
+import { PublicCoursesController } from '@/modules/courses/presentation/http/public-courses.controller';
 import {
   ALL_COURSE_PERMISSIONS,
   FakeProblemCatalog,
@@ -64,13 +67,7 @@ import {
   OTHER_ID,
   OWNER_ID,
   PROBLEM_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
-import { ValidationPipe } from '@nestjs/common';
-import type { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Test } from '@nestjs/testing';
-
-import { ManagedCoursesController } from './managed-courses.controller';
+} from '@/modules/courses/testing';
 
 interface ApiResponse {
   readonly status: number;
@@ -80,6 +77,7 @@ interface ApiResponse {
 type Headers = Record<string, string>;
 
 const SECOND_PROBLEM = '00000000-0000-4000-8000-0000000000d4';
+
 const MISSING_ID = '00000000-0000-4000-8000-0000000000ff';
 
 function headers(
@@ -117,13 +115,13 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
     repository = new InMemoryCourseRepository();
     catalog = new FakeProblemCatalog();
     const moduleRef = await Test.createTestingModule({
-      controllers: [ManagedCoursesController],
+      controllers: [ManagedCoursesController, ManagedChaptersController, PublicCoursesController],
       providers: [
         CourseAuthorizationService,
         CourseReadiness,
         CoursePublishReadinessService,
         CourseViewAssembler,
-        CourseMutationService,
+
         CreateCourseUseCase,
         UpdateCourseUseCase,
         PublishCourseUseCase,

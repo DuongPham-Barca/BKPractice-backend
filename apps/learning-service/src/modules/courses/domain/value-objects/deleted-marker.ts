@@ -1,4 +1,4 @@
-import { assertValidDate } from './value-object.utils';
+import { assertValidDate } from '@/modules/courses/domain/value-objects/value-object.utils';
 
 export class DeletedMarker {
   readonly deletedAt: Date | null;

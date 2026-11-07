@@ -1,16 +1,5 @@
 import type { AddressInfo } from 'node:net';
 
-import {
-  assertTestDatabase,
-  learningDataSourceOptions,
-  TEST_DATABASE_URL,
-  upsertProblem,
-} from '@learning/modules/courses/testing/course-db.helpers';
-import {
-  ALL_COURSE_PERMISSIONS,
-  OTHER_ID,
-  OWNER_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -18,9 +7,19 @@ import { Test } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
-import { CoursesModule } from './courses.module';
+import { CoursesModule } from '@/modules/courses/courses.module';
+import {
+  assertTestDatabase,
+  learningDataSourceOptions,
+  TEST_DATABASE_URL,
+  upsertProblem,
+  ALL_COURSE_PERMISSIONS,
+  OTHER_ID,
+  OWNER_ID,
+} from '@/modules/courses/testing';
 
 assertTestDatabase();
+
 const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
 
 const admin = {
@@ -29,6 +28,7 @@ const admin = {
   'x-auth-roles': 'ADMIN',
   'x-auth-permissions': ALL_COURSE_PERMISSIONS.join(','),
 };
+
 const student = {
   'content-type': 'application/json',
   'x-auth-user-id': OTHER_ID,
@@ -36,7 +36,9 @@ const student = {
 };
 
 const PUBLISHED_PROBLEM = '00000000-0000-4000-8000-0000000000c3';
+
 const HELD_PROBLEM = '00000000-0000-4000-8000-0000000000d4';
+
 const DRAFT_PROBLEM = '00000000-0000-4000-8000-0000000000e5';
 
 describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
@@ -114,14 +116,14 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
       409,
     );
 
-    // chapter + problem thật (FK), Problem của người khác không thêm được
+    // ADMIN thêm được Problem nháp của ADMIN khác; người học vẫn chỉ thấy bài công khai.
     const withChapter = await call('POST', `/api/courses/${id}/chapters`, {
       body: { title: 'Ch 1' },
     });
     const chapterId = list(withChapter.body.chapters)[0]!.id as string;
     const attach = (problemId: string) =>
       call('POST', `/api/courses/${id}/chapters/${chapterId}/problems`, { body: { problemId } });
-    expect((await attach(DRAFT_PROBLEM)).status).toBe(400);
+    expect((await attach(DRAFT_PROBLEM)).status).toBe(201);
     expect((await attach(PUBLISHED_PROBLEM)).status).toBe(201);
     expect((await attach(PUBLISHED_PROBLEM)).status).toBe(409);
     expect((await attach(HELD_PROBLEM)).status).toBe(201);
@@ -165,32 +167,17 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
     expect(detach.status).toBe(400);
     expect(detach.body.issues).toEqual(['PUBLISHED_PROBLEM_REQUIRED']);
 
-    // xoá mềm Course đã xuất bản (204) không xoá Class tham chiếu (AC-014), khôi phục về PUBLISHED
-    await dataSource.query(
-      `INSERT INTO "classes" ("course_id", "join_code", "name", "admin_id") VALUES ($1, $2, 'Keep me', $3)`,
-      [id, `K${Date.now()}`.slice(0, 32), OWNER_ID],
-    );
+    // Xoá mềm và khôi phục Course đã xuất bản.
     expect((await call('DELETE', `/api/courses/${id}`)).status).toBe(204);
-    const kept = await dataSource.query<Array<{ name: string }>>(
-      `SELECT "name" FROM "classes" WHERE "course_id" = $1`,
-      [id],
-    );
-    expect(kept.map((row) => row.name)).toEqual(['Keep me']);
     expect((await call('GET', `/api/courses/${slug}`, { headers: student })).status).toBe(404);
     const restored = await call('POST', `/api/courses/${id}/restore`);
     expect(restored.body).toMatchObject({ status: 'PUBLISHED', deletedAt: null });
 
-    // xoá hẳn Course nháp: bị Class tham chiếu thì 409, không thì 204
+    // Course nháp được xoá hẳn theo LRN-008.
     const draft = await call('POST', '/api/courses', {
       body: { slug: `${slug}-draft`, title: 'Draft' },
     });
     const draftId = draft.body.id as string;
-    await dataSource.query(
-      `INSERT INTO "classes" ("course_id", "join_code", "name", "admin_id") VALUES ($1, $2, 'C', $3)`,
-      [draftId, `W${Date.now()}`.slice(0, 32), OWNER_ID],
-    );
-    expect((await call('DELETE', `/api/courses/${draftId}`)).status).toBe(409);
-    await dataSource.query(`DELETE FROM "classes" WHERE "course_id" = $1`, [draftId]);
     expect((await call('DELETE', `/api/courses/${draftId}`)).status).toBe(204);
     expect((await call('GET', `/api/courses/managed/${draftId}`)).status).toBe(404);
   });

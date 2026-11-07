@@ -1,12 +1,10 @@
-import { DomainValidationError } from '@learning/modules/courses/domain/errors/domain-validation.error';
+import { DomainValidationError } from '@/modules/courses/domain/errors';
 import {
-  courseWithProblem,
-  draftCourse,
-  PROBLEM_ID,
-} from '@learning/modules/courses/testing/course-test.fakes';
-
-import { CourseReadiness, ProblemAttachPolicy } from './course-readiness';
-import type { ProblemStateForReadiness } from './course-readiness';
+  CourseReadiness,
+  ProblemAttachPolicy,
+} from '@/modules/courses/domain/services/course-readiness';
+import type { ProblemStateForReadiness } from '@/modules/courses/domain/services/course-readiness';
+import { courseWithProblem, draftCourse, PROBLEM_ID } from '@/modules/courses/testing';
 
 const state = (overrides: Partial<ProblemStateForReadiness> = {}): ProblemStateForReadiness => ({
   problemId: PROBLEM_ID,

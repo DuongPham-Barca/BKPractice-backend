@@ -217,3 +217,11 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 
 > File này là danh sách kiểm tra triển khai, không phải đặc tả. Không thêm yêu cầu và không âm thầm
 > thay đổi `spec.md` hay `plan.md` đã Approved.
+
+## Refactor bố trí theo Problem — 2026-11-07
+
+- [x] Mỗi use case và inbound port một file; command và lỗi có tên riêng.
+- [x] Use case ghi tự điều phối transaction và aggregate; bỏ `CourseMutationService`, dùng chung hợp đồng `TransactionRunner` của Problem.
+- [x] Tách controller Course quản lý, Chapter quản lý và Course công khai; giữ 18 route và thứ tự route tĩnh trước route động.
+- [x] Tách request mapper, DTO và thư mục filters; thêm barrel và alias theo working agreement.
+- [x] Xác minh unit/API, DI với PostgreSQL, lint/typecheck/build và ghi worked entry. Course có 145 test qua; build cả sáu service qua. Lint/typecheck/test toàn repo còn lỗi có sẵn ở test Identity (`officialName`), xem worked entry `learning/courses/2026-11-07-align-layout-with-problems.md`.

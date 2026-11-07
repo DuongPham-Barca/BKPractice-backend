@@ -1,17 +1,18 @@
 import type {
   LearnerCourseResult,
   ManagedCourseResult,
-} from '@learning/modules/courses/application/results/course.results';
-
+} from '@/modules/courses/application/results';
 import {
   toCourseDetailResponse,
   toCourseListResponse,
   toManagedCourseListResponse,
   toManagedCourseResponse,
-} from './course-response.mapper';
+} from '@/modules/courses/presentation/http/mappers/course-response.mapper';
 
 const CREATED = new Date('2026-10-01T00:00:00.000Z');
+
 const UPDATED = new Date('2026-10-02T00:00:00.000Z');
+
 const DELETED = new Date('2026-10-03T00:00:00.000Z');
 
 const managed: ManagedCourseResult = {

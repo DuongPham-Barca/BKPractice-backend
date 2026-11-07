@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { assertCanonicalUuid } from './value-object.utils';
+import { assertCanonicalUuid } from '@/modules/courses/domain/value-objects/value-object.utils';
 
 export class CourseId {
   readonly value: string;

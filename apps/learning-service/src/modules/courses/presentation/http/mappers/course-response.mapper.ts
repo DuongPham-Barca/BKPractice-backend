@@ -3,15 +3,15 @@ import type {
   LearnerCourseSummaryResult,
   ManagedCourseResult,
   ManagedCourseSummaryResult,
-} from '@learning/modules/courses/application/results/course.results';
-import type { CoursePage } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
+} from '@/modules/courses/application/results';
+import type { CoursePage } from '@/modules/courses/domain/repositories';
 import type {
   CourseDetailResponseDto,
   CourseListResponseDto,
   ManagedCourseListResponseDto,
   ManagedCourseResponseDto,
   ManagedCourseSummaryResponseDto,
-} from '@learning/modules/courses/presentation/http/dto/course.response.dto';
+} from '@/modules/courses/presentation/http/dto';
 
 const iso = (date: Date | null): string | null => (date === null ? null : date.toISOString());
 

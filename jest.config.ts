@@ -9,6 +9,7 @@ const config: Config = {
   coverageDirectory: 'coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
+    '^@/modules/courses/(.*)$': '<rootDir>/apps/learning-service/src/modules/courses/$1',
     '^@/infrastructure/redis$': '<rootDir>/apps/api-gateway/src/infrastructure/redis',
     '^@/application/realtime$': '<rootDir>/apps/api-gateway/src/application/realtime',
     '^@/application/proxy/(.*)$': '<rootDir>/apps/api-gateway/src/application/proxy/$1',

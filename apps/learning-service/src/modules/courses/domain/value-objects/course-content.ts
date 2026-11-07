@@ -3,7 +3,7 @@ import {
   assertSafeMarkdown,
   assertString,
   assertTrimmedNonEmpty,
-} from './value-object.utils';
+} from '@/modules/courses/domain/value-objects/value-object.utils';
 
 export class CourseSlug {
   readonly value: string;

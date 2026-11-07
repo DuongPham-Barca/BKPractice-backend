@@ -1,27 +1,42 @@
-import type { UpdateCourseCommand } from '@learning/modules/courses/application/commands/course.commands';
-import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type { IUpdateCoursePortIn } from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
-import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
-import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
-import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
-import { Injectable } from '@nestjs/common';
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import { Inject, Injectable } from '@nestjs/common';
+
+import type { UpdateCourseCommand } from '@/modules/courses/application/command';
+import { CourseNotFoundError } from '@/modules/courses/application/errors';
+import type { Principal } from '@/modules/courses/application/models';
+import type { IUpdateCoursePortIn } from '@/modules/courses/application/ports/in';
+import type { ManagedCourseResult } from '@/modules/courses/application/results';
+import {
+  CourseAuthorizationService,
+  CourseViewAssembler,
+  CoursePublishReadinessService,
+} from '@/modules/courses/application/services';
+import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
+import type { CourseRepository } from '@/modules/courses/domain/repositories';
 
 @Injectable()
 export class UpdateCourseUseCase implements IUpdateCoursePortIn {
   constructor(
-    private readonly mutation: CourseMutationService,
+    private readonly authorization: CourseAuthorizationService,
+    @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
+    @Inject(COURSE_TRANSACTION_RUNNER) private readonly transactionRunner: TransactionRunner,
+    private readonly views: CourseViewAssembler,
     private readonly readiness: CoursePublishReadinessService,
   ) {}
-
-  execute(
+  async execute(
     principal: Principal,
     courseId: string,
     command: UpdateCourseCommand,
     now = new Date(),
   ): Promise<ManagedCourseResult> {
-    return this.mutation.mutate(principal, 'course:update', courseId, async (course) => {
+    this.authorization.requirePermission(principal, 'course:update');
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
       course.update(command, now);
       if (course.isPublished) await this.readiness.assertReady(course);
+      await this.repository.save(course);
+      return this.views.toManaged(course);
     });
   }
 }

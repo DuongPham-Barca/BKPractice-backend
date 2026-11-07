@@ -1,5 +1,5 @@
-import { ForbiddenError } from '@learning/modules/courses/application/errors/application-errors';
-import type { Principal } from '@learning/modules/courses/application/models/principal';
+import { ForbiddenError } from '@/modules/courses/application/errors';
+import type { Principal } from '@/modules/courses/application/models';
 
 const REQUIRED_ROLE = 'ADMIN';
 

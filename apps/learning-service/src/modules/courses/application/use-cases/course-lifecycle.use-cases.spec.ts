@@ -2,8 +2,15 @@ import {
   CourseNotFoundError,
   CourseNotReadyError,
   ForbiddenError,
-} from '@learning/modules/courses/application/errors/application-errors';
-import { InvalidCourseState } from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@/modules/courses/application/errors';
+import {
+  DeleteCourseUseCase,
+  HoldCourseUseCase,
+  PublishCourseUseCase,
+  RepublishCourseUseCase,
+  RestoreCourseUseCase,
+} from '@/modules/courses/application/use-cases';
+import { InvalidCourseState } from '@/modules/courses/domain/errors';
 import {
   courseWithProblem,
   createCourseTestKit,
@@ -12,15 +19,7 @@ import {
   OTHER_ID,
   PROBLEM_ID,
   student,
-} from '@learning/modules/courses/testing/course-test.fakes';
-
-import {
-  DeleteCourseUseCase,
-  HoldCourseUseCase,
-  PublishCourseUseCase,
-  RepublishCourseUseCase,
-  RestoreCourseUseCase,
-} from './course-lifecycle.use-cases';
+} from '@/modules/courses/testing';
 
 describe('Course lifecycle use cases', () => {
   let kit: ReturnType<typeof createCourseTestKit>;
@@ -29,10 +28,26 @@ describe('Course lifecycle use cases', () => {
     kit = createCourseTestKit();
   });
 
-  const publish = () => new PublishCourseUseCase(kit.mutation, kit.readiness);
-  const hold = () => new HoldCourseUseCase(kit.mutation);
-  const republish = () => new RepublishCourseUseCase(kit.mutation, kit.readiness);
-  const restore = () => new RestoreCourseUseCase(kit.mutation);
+  const publish = () =>
+    new PublishCourseUseCase(
+      kit.authorization,
+      kit.repository,
+      kit.transactions,
+      kit.views,
+      kit.readiness,
+    );
+  const hold = () =>
+    new HoldCourseUseCase(kit.authorization, kit.repository, kit.transactions, kit.views);
+  const republish = () =>
+    new RepublishCourseUseCase(
+      kit.authorization,
+      kit.repository,
+      kit.transactions,
+      kit.views,
+      kit.readiness,
+    );
+  const restore = () =>
+    new RestoreCourseUseCase(kit.authorization, kit.repository, kit.transactions, kit.views);
   const remove = () => new DeleteCourseUseCase(kit.authorization, kit.repository, kit.transactions);
 
   describe('PublishCourseUseCase', () => {

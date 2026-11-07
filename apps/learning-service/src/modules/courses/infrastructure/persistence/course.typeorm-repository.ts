@@ -1,26 +1,22 @@
+import { Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
+import { QueryFailedError, Repository } from 'typeorm';
+
 import {
   DuplicateCourseSlugError,
   ProblemNotAttachableError,
-} from '@learning/modules/courses/application/errors/application-errors';
-import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
-import { ProblemAlreadyInCourse } from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@/modules/courses/application/errors';
+import { Course as CourseAggregate } from '@/modules/courses/domain';
+import { ProblemAlreadyInCourse } from '@/modules/courses/domain/errors';
 import type {
   CourseRepository,
   CourseListFilter,
   ManagedCourseListFilter,
   CoursePage,
-} from '@learning/modules/courses/domain/repositories/course-repository.port.out';
-import {
-  Course as CourseEntity,
-  Chapter as ChapterEntity,
-  ChapterProblem as ChapterProblemEntity,
-} from '@learning/modules/courses/entities/course.entity';
-import { Injectable } from '@nestjs/common';
-import { isUUID } from 'class-validator';
-import { QueryFailedError, Repository } from 'typeorm';
-
-import { CoursePersistenceMapper } from './course.persistence-mapper';
-import { CourseTypeOrmTransactionContext } from './course.typeorm-transaction-context';
+} from '@/modules/courses/domain/repositories';
+import { CourseEntity, ChapterEntity, ChapterProblemEntity } from '@/modules/courses/entities';
+import { CoursePersistenceMapper } from '@/modules/courses/infrastructure/persistence/course.persistence-mapper';
+import { CourseTypeOrmTransactionContext } from '@/modules/courses/infrastructure/persistence/course.typeorm-transaction-context';
 
 @Injectable()
 export class CourseTypeOrmRepository implements CourseRepository {
@@ -203,8 +199,11 @@ export class CourseTypeOrmRepository implements CourseRepository {
 }
 
 const UNIQUE_VIOLATION = '23505';
+
 const FOREIGN_KEY_VIOLATION = '23503';
+
 const PROBLEM_UNIQUE_CONSTRAINT = 'UQ_chapter_problems_course_problem';
+
 const PROBLEM_FOREIGN_KEY = 'FK_chapter_problems_problem';
 
 /** Ánh xạ vi phạm ràng buộc DB sang lỗi nghiệp vụ (plan: DuplicateSlug, ProblemAlreadyInCourse). */

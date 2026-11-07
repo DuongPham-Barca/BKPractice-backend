@@ -1,4 +1,4 @@
-import type { CourseStatus } from '@learning/modules/courses/domain/value-objects';
+import type { CourseStatus } from '@/modules/courses/domain/value-objects';
 
 export interface ProblemSummaryResult {
   readonly id: string;

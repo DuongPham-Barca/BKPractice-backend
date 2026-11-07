@@ -2,6 +2,18 @@
 
 > Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
 
+## Bố trí code theo Problem (2026-11-07)
+
+Refactor theo yêu cầu chủ dự án, giữ hợp đồng LRN-003 và quyền ADMIN của LRN-008:
+
+- Mỗi workflow nằm trong một `application/use-cases/<action>.use-case.ts`; interface và token tương ứng nằm trong `application/ports/in/<action>.port.in.ts`.
+- Từng use case ghi tự điều phối quyền, transaction, `loadForUpdate`, thay đổi aggregate và lưu; bỏ wrapper callback `CourseMutationService`.
+- Dùng `TransactionRunner` do Problem sở hữu, với adapter và context transaction riêng cho Course.
+- `application/command` chứa command tạo/cập nhật riêng; lỗi application/domain tách theo tên lỗi, repository port ở `domain/repositories/course.repository.port.out.ts`.
+- Presentation gồm `ManagedCoursesController`, `ManagedChaptersController`, `PublicCoursesController`; đăng ký controller quản lý trước controller có route `:idOrSlug`. Route và response giữ nguyên.
+- `CourseRequestMapper` chuyển DTO tạo/cập nhật sang command; filter ở `presentation/http/filters`. DTO tách theo tạo, cập nhật, chapter, sắp xếp và query.
+- Duy trì barrel trong mỗi thư mục và import qua alias `@/modules/courses/*`. Alias cụ thể được khai báo trong TypeScript/Jest để không đè alias của Identity.
+
 ## Trạng thái
 
 Approved
