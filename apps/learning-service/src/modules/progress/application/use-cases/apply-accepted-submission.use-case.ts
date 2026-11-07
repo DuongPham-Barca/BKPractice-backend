@@ -1,13 +1,14 @@
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
-import type { IApplyAcceptedSubmissionPortIn } from '@learning/modules/progress/application/ports/in/apply-accepted-submission.port.in';
-import { AcceptedSubmission } from '@learning/modules/progress/domain/accepted-submission';
-import { ProblemProgress } from '@learning/modules/progress/domain/problem-progress';
-import type { ProgressRepository } from '@learning/modules/progress/domain/repositories/progress-repository.port.out';
+import { Inject, Injectable } from '@nestjs/common';
+
+import type { IApplyAcceptedSubmissionPortIn } from '@/modules/progress/application/ports/in';
+import { AcceptedSubmission } from '@/modules/progress/domain';
+import { ProblemProgress } from '@/modules/progress/domain';
+import type { ProgressRepository } from '@/modules/progress/domain/repositories';
 import {
   PROGRESS_REPOSITORY,
   PROGRESS_TRANSACTION_RUNNER,
-} from '@learning/modules/progress/progress.tokens';
-import { Inject, Injectable } from '@nestjs/common';
+} from '@/modules/progress/progress.tokens';
 
 @Injectable()
 export class ApplyAcceptedSubmissionUseCase implements IApplyAcceptedSubmissionPortIn {

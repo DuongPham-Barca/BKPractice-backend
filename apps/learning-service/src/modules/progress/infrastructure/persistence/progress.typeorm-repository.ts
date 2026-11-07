@@ -1,14 +1,58 @@
-import type { AcceptedSubmission } from '@learning/modules/progress/domain/accepted-submission';
-import { ProblemProgress } from '@learning/modules/progress/domain/problem-progress';
-import type { ProgressRepository } from '@learning/modules/progress/domain/repositories/progress-repository.port.out';
-import { Progress, ProgressStatus } from '@learning/modules/progress/entities/progress.entity';
 import { Injectable } from '@nestjs/common';
 
-import { ProgressTransactionContext } from './progress-transaction-context';
+import type { AcceptedSubmission } from '@/modules/progress/domain';
+import { ProblemProgress } from '@/modules/progress/domain';
+import type { ProgressRepository, SolvedProblemPage } from '@/modules/progress/domain/repositories';
+import { Progress, ProgressStatus } from '@/modules/progress/entities';
+import { ProgressTransactionContext } from '@/modules/progress/infrastructure/persistence/progress-transaction-context';
 
 @Injectable()
 export class ProgressTypeOrmRepository implements ProgressRepository {
   constructor(private readonly context: ProgressTransactionContext) {}
+
+  async findSolved(
+    userId: string,
+    problemIds: readonly string[],
+  ): Promise<ReadonlyMap<string, Date>> {
+    if (!problemIds.length) return new Map();
+    const rows = await this.context
+      .getManager()
+      .getRepository(Progress)
+      .createQueryBuilder('progress')
+      .select('progress.problemId', 'problemId')
+      .addSelect('progress.solvedAt', 'solvedAt')
+      .where('progress.userId = :userId', { userId })
+      .andWhere('progress.problemId IN (:...problemIds)', { problemIds: [...problemIds] })
+      .andWhere('progress.status = :status', { status: ProgressStatus.Solved })
+      .andWhere('progress.solvedAt IS NOT NULL')
+      .getRawMany<{ problemId: string; solvedAt: Date }>();
+    return new Map(rows.map((row) => [row.problemId, row.solvedAt]));
+  }
+
+  async listSolved(userId: string, page: number, limit: number): Promise<SolvedProblemPage> {
+    const query = this.context
+      .getManager()
+      .getRepository(Progress)
+      .createQueryBuilder('progress')
+      .innerJoin(
+        'problems',
+        'problem',
+        "problem.id = progress.problemId AND problem.publish_status = 'PUBLISHED' AND problem.deleted_at IS NULL",
+      )
+      .where('progress.userId = :userId', { userId })
+      .andWhere('progress.status = :status', { status: ProgressStatus.Solved })
+      .andWhere('progress.solvedAt IS NOT NULL');
+    const total = await query.getCount();
+    const items = await query
+      .select('progress.problemId', 'problemId')
+      .addSelect('progress.solvedAt', 'solvedAt')
+      .orderBy('progress.solvedAt', 'DESC')
+      .addOrderBy('progress.problemId', 'ASC')
+      .offset((page - 1) * limit)
+      .limit(limit)
+      .getRawMany<{ problemId: string; solvedAt: Date }>();
+    return { items, total, page, limit };
+  }
 
   async recordReceipt(event: AcceptedSubmission): Promise<boolean> {
     const rows: unknown = await this.context.requireManager().query(

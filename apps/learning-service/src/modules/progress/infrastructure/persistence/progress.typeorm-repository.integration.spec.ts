@@ -5,13 +5,13 @@ import {
   learningDataSourceOptions,
   TEST_DATABASE_URL,
 } from '@learning/modules/courses/testing/course-db.helpers';
-import { ApplyAcceptedSubmissionUseCase } from '@learning/modules/progress/application/use-cases/apply-accepted-submission.use-case';
-import type { ProgressRepository } from '@learning/modules/progress/domain/repositories/progress-repository.port.out';
 import { DataSource } from 'typeorm';
 
-import { ProgressTransactionContext } from './progress-transaction-context';
-import { ProgressTransactionRunner } from './progress-transaction-runner';
-import { ProgressTypeOrmRepository } from './progress.typeorm-repository';
+import { ApplyAcceptedSubmissionUseCase } from '@/modules/progress/application/use-cases';
+import type { ProgressRepository } from '@/modules/progress/domain/repositories';
+import { ProgressTransactionContext } from '@/modules/progress/infrastructure/persistence/progress-transaction-context';
+import { ProgressTransactionRunner } from '@/modules/progress/infrastructure/persistence/progress-transaction-runner';
+import { ProgressTypeOrmRepository } from '@/modules/progress/infrastructure/persistence/progress.typeorm-repository';
 
 assertTestDatabase();
 const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
@@ -88,6 +88,8 @@ describeIntegration('Progress accepted event persistence (real PostgreSQL)', () 
       score: 50,
     };
     const failingRepository: ProgressRepository = {
+      findSolved: (userId, ids) => repository.findSolved(userId, ids),
+      listSolved: (userId, page, limit) => repository.listSolved(userId, page, limit),
       recordReceipt: (value) => repository.recordReceipt(value),
       insertIfAbsent: async () => {
         throw new Error('simulated persistence failure');

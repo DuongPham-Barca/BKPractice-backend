@@ -1,17 +1,25 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
+import type { AsyncLocalStorage } from 'node:async_hooks';
 
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import type { EntityManager } from 'typeorm';
 
+import { getTransactionStorage } from '@/infrastructure/persistence';
+
 @Injectable()
 export class ProgressTransactionContext {
-  private readonly storage = new AsyncLocalStorage<EntityManager>();
+  private readonly storage: AsyncLocalStorage<EntityManager>;
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource) {
+    this.storage = getTransactionStorage(dataSource);
+  }
 
   current(): EntityManager | null {
     return this.storage.getStore() ?? null;
+  }
+
+  getManager(): EntityManager {
+    return this.current() ?? this.dataSource.manager;
   }
 
   requireManager(): EntityManager {

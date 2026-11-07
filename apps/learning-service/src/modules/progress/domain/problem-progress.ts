@@ -1,4 +1,4 @@
-import type { AcceptedSubmission } from './accepted-submission';
+import type { AcceptedSubmission } from '@/modules/progress/domain/accepted-submission';
 
 export interface ProblemProgressSnapshot {
   readonly userId: string;

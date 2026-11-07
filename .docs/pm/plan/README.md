@@ -29,3 +29,5 @@ A feature implementation still follows the Approved `spec.md` and the reviewed `
 - [API Gateway implementation plan](api-gateway/identity/README.md): các lát cắt nhỏ cho GW-001, chia lớp Gateway `presentation -> application -> infrastructure`.
 - [Learning — Quản lý Test Case](learning/problems/test-case-management.md): ghi chú migration, judge-package và rủi ro chỉnh sửa tại chỗ của LRN-002.
 - [Identity implementation plan](identity/README.md): smaller execution plans for Authentication, Profile and RBAC, linked to their Approved specs, plans and task checklists.
+
+- [Learning — Progress cá nhân](learning/progress/personal-progress.md): ba API đọc, quy tắc visibility, test cách ly và vận hành retry/DLQ.

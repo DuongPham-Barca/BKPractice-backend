@@ -1,5 +1,8 @@
-import { AcceptedSubmission, InvalidAcceptedSubmission } from './accepted-submission';
-import { ProblemProgress } from './problem-progress';
+import {
+  AcceptedSubmission,
+  InvalidAcceptedSubmission,
+} from '@/modules/progress/domain/accepted-submission';
+import { ProblemProgress } from '@/modules/progress/domain/problem-progress';
 
 const EVENT = {
   eventId: '11111111-1111-4111-8111-111111111111',
@@ -63,7 +66,7 @@ describe('AcceptedSubmission and ProblemProgress', () => {
       }),
     ];
 
-    for (const order of [events, [...events].reverse()]) {
+    for (const order of permutations([...events, events[0]!])) {
       const first = order[0]!;
       const progress = order
         .slice(1)
@@ -73,3 +76,10 @@ describe('AcceptedSubmission and ProblemProgress', () => {
     }
   });
 });
+
+function permutations<T>(items: readonly T[]): T[][] {
+  if (items.length === 0) return [[]];
+  return items.flatMap((item, index) =>
+    permutations(items.filter((_, current) => current !== index)).map((rest) => [item, ...rest]),
+  );
+}
