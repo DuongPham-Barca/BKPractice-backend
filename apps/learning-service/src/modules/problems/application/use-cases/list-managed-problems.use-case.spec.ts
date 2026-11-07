@@ -11,7 +11,7 @@ import { ListManagedProblemsUseCase } from './list-managed-problems.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:read-managed'],
 };
 
@@ -39,7 +39,6 @@ describe('ListManagedProblemsUseCase', () => {
 
     expect(authorization.requireManagedList).toHaveBeenCalledTimes(1);
     expect(repository.listManaged).toHaveBeenCalledWith({
-      ownerId: TEST_USER_ID,
       includeDeleted: true,
       page: 1,
       limit: 100,
@@ -116,7 +115,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

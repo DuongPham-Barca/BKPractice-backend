@@ -11,7 +11,7 @@ import { TestSuiteSummary } from '@learning/modules/problems/domain/value-object
 
 import { PreviewProblemUseCase } from './preview-problem.use-case';
 
-const PRINCIPAL = { userId: 'user-1', roles: ['LECTURER'], permissions: ['problem:read-managed'] };
+const PRINCIPAL = { userId: 'user-1', roles: ['ADMIN'], permissions: ['problem:read-managed'] };
 
 describe('PreviewProblemUseCase', () => {
   it('returns a managed detail for a deleted problem without mutating it', async () => {
@@ -57,7 +57,7 @@ describe('PreviewProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('checks ownership before exposing preview data', async () => {
@@ -67,7 +67,7 @@ describe('PreviewProblemUseCase', () => {
     const problem = buildProblem();
 
     repository.findByIdIncludingDeleted.mockResolvedValue(problem);
-    authorization.requireOwned.mockImplementation(() => {
+    authorization.requireManaged.mockImplementation(() => {
       throw new Error('forbidden');
     });
 
@@ -104,7 +104,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

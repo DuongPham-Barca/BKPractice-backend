@@ -1,5 +1,7 @@
 # GW-006 Định tuyến Progress qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** Chỉ giữ route tiến độ cá nhân theo Problem/Course; các route điểm Assignment và tiến độ Class bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved
@@ -7,7 +9,6 @@ Approved
 Phiên bản `0.1`, ngày `2026-11-03`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
-
 
 ## Mục tiêu
 
@@ -58,15 +59,15 @@ LRN-006 Tiến độ học tập (Progress) đã Approved và `plan.md` của t�
 
 Gateway công khai các route sau theo kế hoạch đã Approved của LRN-006 Tiến độ học tập (Progress):
 
-| Method | Route | Thao tác Learning |
-| --- | --- | --- |
-| `GET` | `/api/progress/me/problems` | Problem đã giải của tôi |
-| `GET` | `/api/progress/me/problems/status?problemIds=...` | Trạng thái các Problem của tôi |
-| `GET` | `/api/progress/me/courses/:courseId` | Tiến độ Course của tôi |
-| `GET` | `/api/progress/me/assignments/:assignmentId` | Điểm Assignment của tôi |
-| `GET` | `/api/progress/classes/:classId/course` | Tiến độ Course của Class |
-| `GET` | `/api/progress/classes/:classId/students/:studentId/course` | Tiến độ một sinh viên |
-| `GET` | `/api/progress/classes/:classId/assignments/:assignmentId` | Điểm Assignment của Class |
+| Method | Route                                                       | Thao tác Learning              |
+| ------ | ----------------------------------------------------------- | ------------------------------ |
+| `GET`  | `/api/progress/me/problems`                                 | Problem đã giải của tôi        |
+| `GET`  | `/api/progress/me/problems/status?problemIds=...`           | Trạng thái các Problem của tôi |
+| `GET`  | `/api/progress/me/courses/:courseId`                        | Tiến độ Course của tôi         |
+| `GET`  | `/api/progress/me/assignments/:assignmentId`                | Điểm Assignment của tôi        |
+| `GET`  | `/api/progress/classes/:classId/course`                     | Tiến độ Course của Class       |
+| `GET`  | `/api/progress/classes/:classId/students/:studentId/course` | Tiến độ một sinh viên          |
+| `GET`  | `/api/progress/classes/:classId/assignments/:assignmentId`  | Điểm Assignment của Class      |
 
 Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, route không có trong bảng và route ghi ngoài danh sách MUST NOT được mở thêm theo đặc tả này.
 
@@ -78,16 +79,16 @@ Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, 
 
 ## Tình huống lỗi
 
-| Trường hợp | Kết quả |
-| --- | --- |
-| Thiếu/sai/hết hạn/thu hồi token | `401`, không gọi Learning |
-| Identity không khả dụng khi xác minh session | `503`, không gọi Learning |
-| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning |
-| Header định danh/tin cậy giả mạo | Bị loại bỏ và thay bằng metadata tin cậy |
-| Path traversal/dot segment làm đổi đích | `400`, không gọi Learning |
-| Learning không khả dụng/timeout | `502` |
-| Learning trả lỗi nghiệp vụ | Giữ nguyên status/body của Learning |
-| Vượt rate limit mặc định | `429` |
+| Trường hợp                                                | Kết quả                                  |
+| --------------------------------------------------------- | ---------------------------------------- |
+| Thiếu/sai/hết hạn/thu hồi token                           | `401`, không gọi Learning                |
+| Identity không khả dụng khi xác minh session              | `503`, không gọi Learning                |
+| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning                |
+| Header định danh/tin cậy giả mạo                          | Bị loại bỏ và thay bằng metadata tin cậy |
+| Path traversal/dot segment làm đổi đích                   | `400`, không gọi Learning                |
+| Learning không khả dụng/timeout                           | `502`                                    |
+| Learning trả lỗi nghiệp vụ                                | Giữ nguyên status/body của Learning      |
+| Vượt rate limit mặc định                                  | `429`                                    |
 
 ## Tình huống biên
 
@@ -137,7 +138,7 @@ Không có câu hỏi về route hoặc quyền nghiệp vụ trong nguồn đã
 
 ## Lịch sử sửa đổi
 
-| Ngày | Phiên bản | Tác giả/Người review | Tóm tắt |
-| --- | --- | --- | --- |
-| 2026-11-04 | 0.1 | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
-| 2026-11-03 | 0.1 | Codex | Đề xuất hợp đồng Gateway cho LRN-006 Tiến độ học tập (Progress) |
+| Ngày       | Phiên bản | Tác giả/Người review          | Tóm tắt                                                            |
+| ---------- | --------- | ----------------------------- | ------------------------------------------------------------------ |
+| 2026-11-04 | 0.1       | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
+| 2026-11-03 | 0.1       | Codex                         | Đề xuất hợp đồng Gateway cho LRN-006 Tiến độ học tập (Progress)    |

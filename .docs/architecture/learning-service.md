@@ -11,8 +11,10 @@ languages, per-language contracts, starter code and execution limits, and a voca
 as a real ubiquitous language: Draft, Publish, Hold, Readiness, Visible Example, Hidden Harness.
 DDD names how that model is built; Hexagonal names how it is kept free of framework details.
 
-Problem/TestCase, Course, Assignment, Enrollment, Progress and Recommendation stay inside this one
+Problem/TestCase, Course, Progress and Recommendation stay inside this one
 bounded context. They must not be split into a Problem Service or Recommendation Service.
+
+LRN-008 (2026-11-07) chuyển Learning sang tự học: `ADMIN` quản lý nội dung, mọi `ADMIN` có thể quản lý nội dung của nhau; Class, Enrollment và Assignment không còn thuộc sản phẩm Learning.
 
 ## The hexagon
 
@@ -67,18 +69,15 @@ Preferred feature-first growth:
 modules/
 ├── problems/
 ├── courses/
-├── assignments/
-├── enrollments/
 ├── progress/
 └── recommendation/
 ```
 
 A module with real domain behavior adds `domain` (including `domain/repositories` for aggregate
 repositories), `application/ports/out`, `application/use-cases`, `infrastructure` and `presentation`.
-A module that is still small stays shallow. Test cases, topics,
-tags, starter code and supported languages belong to Problems. Chapters stay with Courses. Class
-and Enrollment move to their own `enrollments` module: the join code, the enrolment lifecycle and
-the class-size limit are behaviour of their own and no longer depend on the Course lifecycle.
+A module that is still small stays shallow. Test cases, topics, tags, starter code and supported
+languages belong to Problems. Chapters stay with Courses. Progress stores personal achievement;
+Recommendation reads public Courses and personal progress.
 
 Creating the four layers for a module that has no invariants is prohibited, exactly as under
 ADR 0001.
@@ -127,7 +126,7 @@ prohibited), and do not add empty layers for diagram symmetry.
 
 Learning is one bounded context in one database (`bkpractice_learning`). A module may read tables
 owned by another Learning module, but only through **its own read port** (e.g.
-`CourseStructureReader`, `ClassMembershipReader`, `AssignmentReader`, `RecommendationCandidateReader`).
+`CourseStructureReader`, `RecommendationCandidateReader`).
 
 Rules:
 
@@ -135,7 +134,7 @@ Rules:
 - Do not call another module's write repository.
 - If the owning module exports a read query (a projection), prefer calling that query instead of
   re-implementing the same visibility rules.
-- No cross-database TypeORM relations; `lecturer_id`, `student_id`, `user_id` are plain external IDs.
+- No cross-database TypeORM relations; `created_by` and `user_id` are plain external IDs.
 
 ### Ports shared between modules
 
@@ -146,27 +145,24 @@ principal port. Avoid creating a generic shared Learning service.
 
 ## Current implementation and status
 
-The service correctly owns all 13 current Learning entities, migrations and `bkpractice_learning`
-(as of 2026-10-21). Problems, Courses, Assignments and Progress remain in the same service; the
-accepted-submission event updates Progress without querying Submission's database. Hidden judge data
-is exposed only through a protected internal endpoint.
+Problems and Courses use domain aggregates, application use cases and TypeORM adapters. The accepted
+submission event currently updates personal Progress; its full LRN-006 implementation is still open.
+Hidden judge data is exposed only through a protected internal endpoint. LRN-008 removes the old
+Class, Enrollment and Assignment entities with a new migration; historical migrations remain intact.
 
-Status: **PARTIALLY ALIGNED**. Domain grouping exists, but `ProblemsController` directly queries
-TypeORM and constructs the judge package, while `ProgressConsumer` directly applies persistence
-updates. TypeORM entities currently combine persistence and domain representation, so no aggregate
-or value object exists yet.
+Status: **PARTIALLY ALIGNED**. Progress still needs a use case and repository boundary; Recommendation
+still needs implementation. The retired classroom schema must be removed by the LRN-008 migration
+before deployment is considered complete.
 
 ## Incremental alignment
 
-- Extract `ListPublishedProblems`, `BuildJudgePackage` and `ApplyAcceptedSubmission` use cases as
-  part of LRN-001, LRN-002 and LRN-006 respectively; implement these before introducing new flows.
-- Introduce the Problem aggregate, its value objects and its publish validator as part of LRN-001;
-  write those tests without a database.
+- Complete `ApplyAcceptedSubmission` and personal progress reads under the revised LRN-006 scope.
+- Implement recommendations over every published Course under the revised LRN-007 scope.
 - Put repository and message implementations behind focused driven ports (see Ports above).
 - Keep the TypeORM entity as the persistence model and map it to the domain object at the
   infrastructure boundary. Do not move either into `libs/`.
-- Add modules for Enrollment (LRN-004), Progress (LRN-006) and Recommendation (LRN-007) only with
-  real behavior; do not create empty folders.
+- Add module behavior for Progress (LRN-006) and Recommendation (LRN-007) only when implemented;
+  do not create empty folders.
 - Keep internal cross-module interaction explicit via read ports; avoid a generic shared Learning
   service.
 

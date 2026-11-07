@@ -9,7 +9,7 @@ import type { ProblemResponseMapper } from './mappers/problem-response.mapper';
 
 const PRINCIPAL: Principal = {
   userId: '00000000-0000-4000-8000-000000000031',
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:create'],
 };
 const RESULT = { id: 'problem-id' };

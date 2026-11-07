@@ -36,7 +36,7 @@ export class GetTestCaseUseCase implements IGetTestCasePortIn {
       throw new ProblemNotFoundError(problemId);
     }
 
-    this.authorization.requireOwned(principal, problem, 'read-managed');
+    this.authorization.requireManaged(principal, 'read-managed');
 
     const testCase = await this.testCaseRepository.findById(problemId, testCaseId);
 

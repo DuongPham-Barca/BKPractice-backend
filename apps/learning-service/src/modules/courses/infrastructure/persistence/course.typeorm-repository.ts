@@ -76,12 +76,8 @@ export class CourseTypeOrmRepository implements CourseRepository {
     return this.loadAggregate(entity.id);
   }
 
-  async findManagedById(
-    id: string,
-    ownerId: string,
-    includeDeleted: boolean,
-  ): Promise<CourseAggregate | null> {
-    const entity = await this.courseRepo.findOne({ where: { id, createdBy: ownerId } });
+  async findManagedById(id: string, includeDeleted: boolean): Promise<CourseAggregate | null> {
+    const entity = await this.courseRepo.findOne({ where: { id } });
     if (!entity) return null;
     if (entity.deletedAt !== null && !includeDeleted) return null;
     return this.loadAggregate(id);
@@ -121,9 +117,7 @@ export class CourseTypeOrmRepository implements CourseRepository {
   }
 
   async listManaged(filter: ManagedCourseListFilter): Promise<CoursePage<CourseAggregate>> {
-    const qb = this.courseRepo
-      .createQueryBuilder('c')
-      .where('c.created_by = :owner', { owner: filter.ownerId });
+    const qb = this.courseRepo.createQueryBuilder('c');
     if (!filter.includeDeleted) qb.andWhere('c.deleted_at IS NULL');
     if (filter.search) qb.andWhere('c.title ILIKE :q', { q: `%${escapeLike(filter.search)}%` });
     const total = await qb.getCount();
@@ -202,11 +196,8 @@ export class CourseTypeOrmRepository implements CourseRepository {
     }
   }
 
-  async hardDelete(id: string, ownerId: string): Promise<boolean> {
-    const result = await this.context
-      .requireManager()
-      .getRepository(CourseEntity)
-      .delete({ id, createdBy: ownerId });
+  async hardDelete(id: string): Promise<boolean> {
+    const result = await this.context.requireManager().getRepository(CourseEntity).delete({ id });
     return (result.affected ?? 0) > 0;
   }
 }

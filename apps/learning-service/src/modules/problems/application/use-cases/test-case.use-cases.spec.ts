@@ -41,7 +41,7 @@ const CASE_ID = '00000000-0000-4000-8000-000000000011';
 const SECOND_CASE_ID = '00000000-0000-4000-8000-000000000012';
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:update', 'problem:read-managed'],
 };
 
@@ -544,7 +544,7 @@ function functionProblem() {
 }
 
 function authorizationMock() {
-  return { requireOwned: jest.fn() };
+  return { requireManaged: jest.fn() };
 }
 
 function problemRepositoryMock() {

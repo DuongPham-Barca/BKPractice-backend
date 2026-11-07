@@ -4,6 +4,8 @@
 
 Approved
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
 Phiên bản `1.0`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-30`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`

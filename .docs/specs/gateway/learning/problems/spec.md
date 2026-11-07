@@ -1,5 +1,7 @@
 # GW-002 Định tuyến và bảo vệ Problem qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** `ADMIN` có quyền tương ứng quản lý mọi Problem, không giới hạn người tạo; mọi câu trái ngược bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved
@@ -7,7 +9,6 @@ Approved
 Phiên bản `0.1`, ngày `2026-11-03`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
-
 
 ## Mục tiêu
 
@@ -341,7 +342,7 @@ Không còn câu hỏi về hành vi hoặc hợp đồng. Spec được phê du
 
 ## Lịch sử sửa đổi
 
-| Ngày       | Phiên bản | Tác giả/Người review | Tóm tắt                                                                  |
-| ---------- | --------- | -------------------- | ------------------------------------------------------------------------ |
-| 2026-11-04 | 0.1       | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
-| 2026-11-03 | 0.1       | opencode             | Đề xuất hợp đồng biên cho họ route Problem; đóng lỗ hổng path/header hẹp |
+| Ngày       | Phiên bản | Tác giả/Người review          | Tóm tắt                                                                  |
+| ---------- | --------- | ----------------------------- | ------------------------------------------------------------------------ |
+| 2026-11-04 | 0.1       | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc       |
+| 2026-11-03 | 0.1       | opencode                      | Đề xuất hợp đồng biên cho họ route Problem; đóng lỗ hổng path/header hẹp |

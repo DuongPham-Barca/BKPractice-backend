@@ -284,7 +284,7 @@ describeIntegration('TestCase management integration', () => {
     );
     const principal = {
       userId: OWNER_ID,
-      roles: ['LECTURER'],
+      roles: ['ADMIN'],
       permissions: ['problem:update'],
     };
 
@@ -341,7 +341,7 @@ describeIntegration('TestCase management integration', () => {
     );
     const principal = {
       userId: OWNER_ID,
-      roles: ['LECTURER'],
+      roles: ['ADMIN'],
       permissions: ['problem:update'],
     };
 

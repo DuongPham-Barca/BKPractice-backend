@@ -2,8 +2,6 @@ import { DomainValidationError } from '@learning/modules/courses/domain/errors/d
 import {
   courseWithProblem,
   draftCourse,
-  OWNER_ID,
-  OTHER_ID,
   PROBLEM_ID,
 } from '@learning/modules/courses/testing/course-test.fakes';
 
@@ -50,19 +48,16 @@ describe('ProblemAttachPolicy', () => {
   const policy = new ProblemAttachPolicy();
 
   it('allows any published, non-deleted problem', () => {
-    expect(policy.isAttachable(state(), OTHER_ID, OWNER_ID)).toBe(true);
+    expect(policy.isAttachable(state())).toBe(true);
   });
 
-  it.each(['DRAFT', 'ON_HOLD'] as const)('allows own %s problem only', (publishStatus) => {
-    expect(policy.isAttachable(state({ publishStatus }), OWNER_ID, OWNER_ID)).toBe(true);
-    expect(policy.isAttachable(state({ publishStatus }), OTHER_ID, OWNER_ID)).toBe(false);
+  it.each(['DRAFT', 'ON_HOLD'] as const)('allows a non-deleted %s problem', (publishStatus) => {
+    expect(policy.isAttachable(state({ publishStatus }))).toBe(true);
   });
 
   it('rejects deleted or unknown problems the same way', () => {
-    expect(policy.isAttachable(state({ isDeleted: true }), OWNER_ID, OWNER_ID)).toBe(false);
-    expect(policy.isAttachable(undefined, OWNER_ID, OWNER_ID)).toBe(false);
-    expect(() => policy.assertAttachable(undefined, OWNER_ID, OWNER_ID)).toThrow(
-      DomainValidationError,
-    );
+    expect(policy.isAttachable(state({ isDeleted: true }))).toBe(false);
+    expect(policy.isAttachable(undefined)).toBe(false);
+    expect(() => policy.assertAttachable(undefined)).toThrow(DomainValidationError);
   });
 });

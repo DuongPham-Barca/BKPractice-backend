@@ -244,7 +244,7 @@ export class ManagedCoursesController {
   }
 
   @ApiOperation({
-    summary: 'Delete a course: hard-delete an unreferenced draft, soft-delete otherwise',
+    summary: 'Delete a course: hard-delete a draft, soft-delete otherwise',
   })
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)

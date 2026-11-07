@@ -23,9 +23,6 @@ export class CourseNotReadyError extends ApplicationError {
     super('Course is not ready to publish');
   }
 }
-export class CourseHasReferencesError extends ApplicationError {
-  readonly code = 'COURSE_HAS_REFERENCES';
-}
 export class ConcurrentModificationError extends ApplicationError {
   readonly code = 'CONCURRENT_MODIFICATION';
 }

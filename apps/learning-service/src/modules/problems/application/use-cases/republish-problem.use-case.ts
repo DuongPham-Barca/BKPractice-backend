@@ -38,7 +38,7 @@ export class RepublishProblemUseCase implements IRepublishProblemPortIn {
         throw new ProblemNotFoundError(id);
       }
 
-      this.authorization.requireOwned(principal, problem, 'republish');
+      this.authorization.requireManaged(principal, 'republish');
       problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(id));
 
       const expectedUpdatedAt = problem.updatedAt;

@@ -1,5 +1,7 @@
 # LRN-005 Công việc triển khai Quản lý Assignment
 
+> ĐÃ HUỶ theo [LRN-008](../self-study/spec.md), quyết định ngày 2026-11-07. Tài liệu bên dưới chỉ lưu lịch sử; không triển khai Class, Enrollment hoặc Assignment.
+
 ## Trạng thái
 
 Approved — Sẵn sàng triển khai sau LRN-001, LRN-004 và LRN-006

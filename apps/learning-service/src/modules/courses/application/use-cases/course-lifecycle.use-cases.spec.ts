@@ -1,5 +1,4 @@
 import {
-  CourseHasReferencesError,
   CourseNotFoundError,
   CourseNotReadyError,
   ForbiddenError,
@@ -9,7 +8,7 @@ import {
   courseWithProblem,
   createCourseTestKit,
   draftCourse,
-  lecturer,
+  admin,
   OTHER_ID,
   PROBLEM_ID,
   student,
@@ -34,15 +33,14 @@ describe('Course lifecycle use cases', () => {
   const hold = () => new HoldCourseUseCase(kit.mutation);
   const republish = () => new RepublishCourseUseCase(kit.mutation, kit.readiness);
   const restore = () => new RestoreCourseUseCase(kit.mutation);
-  const remove = () =>
-    new DeleteCourseUseCase(kit.authorization, kit.repository, kit.checker, kit.transactions);
+  const remove = () => new DeleteCourseUseCase(kit.authorization, kit.repository, kit.transactions);
 
   describe('PublishCourseUseCase', () => {
     it('publishes a course that has a published problem and reports it ready', async () => {
       kit.catalog.setProblem(PROBLEM_ID);
       const course = kit.seed();
 
-      const result = await publish().execute(lecturer(), course.id.value);
+      const result = await publish().execute(admin(), course.id.value);
 
       expect(result.status).toBe('PUBLISHED');
       expect(result.readiness).toEqual({ ready: true, issues: [] });
@@ -59,7 +57,7 @@ describe('Course lifecycle use cases', () => {
         kit.catalog.setProblem(PROBLEM_ID, { publishStatus, isDeleted });
         const course = kit.seed();
 
-        await expect(publish().execute(lecturer(), course.id.value)).rejects.toMatchObject({
+        await expect(publish().execute(admin(), course.id.value)).rejects.toMatchObject({
           issues: ['PUBLISHED_PROBLEM_REQUIRED'],
         });
         expect(course.status).toBe('DRAFT');
@@ -70,7 +68,7 @@ describe('Course lifecycle use cases', () => {
     it('rejects publish when a referenced problem no longer exists', async () => {
       const course = kit.seed();
 
-      await expect(publish().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
+      await expect(publish().execute(admin(), course.id.value)).rejects.toBeInstanceOf(
         CourseNotReadyError,
       );
     });
@@ -79,37 +77,36 @@ describe('Course lifecycle use cases', () => {
       const course = kit.seed(draftCourse());
 
       const error = await publish()
-        .execute(lecturer(), course.id.value)
+        .execute(admin(), course.id.value)
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(CourseNotReadyError);
       expect((error as CourseNotReadyError).issues).toContain('CHAPTER_REQUIRED');
     });
 
-    it('requires the LECTURER role and course:publish permission (AC-002)', async () => {
+    it('requires the ADMIN role and course:publish permission (AC-002)', async () => {
       const course = kit.seed();
 
       await expect(publish().execute(student(), course.id.value)).rejects.toBeInstanceOf(
         ForbiddenError,
       );
       await expect(
-        publish().execute({ ...lecturer(), permissions: ['course:create'] }, course.id.value),
+        publish().execute({ ...admin(), permissions: ['course:create'] }, course.id.value),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
 
-    it('rejects a lecturer who is not the owner without changing state', async () => {
+    it('lets another ADMIN publish a course', async () => {
       kit.catalog.setProblem(PROBLEM_ID);
       const course = kit.seed();
 
-      await expect(publish().execute(lecturer(OTHER_ID), course.id.value)).rejects.toBeInstanceOf(
-        ForbiddenError,
-      );
-      expect(course.status).toBe('DRAFT');
+      await expect(publish().execute(admin(OTHER_ID), course.id.value)).resolves.toMatchObject({
+        status: 'PUBLISHED',
+      });
     });
 
     it('reports a missing course as not found', async () => {
       await expect(
-        publish().execute(lecturer(), '00000000-0000-4000-8000-0000000000ff'),
+        publish().execute(admin(), '00000000-0000-4000-8000-0000000000ff'),
       ).rejects.toBeInstanceOf(CourseNotFoundError);
     });
   });
@@ -120,18 +117,18 @@ describe('Course lifecycle use cases', () => {
       const course = kit.seed();
       course.publish();
 
-      expect((await hold().execute(lecturer(), course.id.value)).status).toBe('ON_HOLD');
-      expect((await republish().execute(lecturer(), course.id.value)).status).toBe('PUBLISHED');
+      expect((await hold().execute(admin(), course.id.value)).status).toBe('ON_HOLD');
+      expect((await republish().execute(admin(), course.id.value)).status).toBe('PUBLISHED');
     });
 
     it('blocks republish when the problem was held in the meantime', async () => {
       kit.catalog.setProblem(PROBLEM_ID);
       const course = kit.seed();
       course.publish();
-      await hold().execute(lecturer(), course.id.value);
+      await hold().execute(admin(), course.id.value);
       kit.catalog.setProblem(PROBLEM_ID, { publishStatus: 'ON_HOLD' });
 
-      await expect(republish().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
+      await expect(republish().execute(admin(), course.id.value)).rejects.toBeInstanceOf(
         CourseNotReadyError,
       );
       expect(kit.stored(course).status).toBe('ON_HOLD');
@@ -140,41 +137,30 @@ describe('Course lifecycle use cases', () => {
     it('rejects hold of a draft course', async () => {
       const course = kit.seed();
 
-      await expect(hold().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
+      await expect(hold().execute(admin(), course.id.value)).rejects.toBeInstanceOf(
         InvalidCourseState,
       );
     });
   });
 
   describe('DeleteCourseUseCase', () => {
-    it('hard-deletes an unreferenced draft course', async () => {
+    it('hard-deletes a draft course', async () => {
       const course = kit.seed();
 
-      await remove().execute(lecturer(), course.id.value);
+      await remove().execute(admin(), course.id.value);
 
       expect(kit.repository.hardDeleted).toEqual([course.id.value]);
       expect(kit.repository.store.has(course.id.value)).toBe(false);
     });
 
-    it('rejects a draft course that a class or assignment references (AC-017)', async () => {
-      kit.checker.referenced = true;
-      const course = kit.seed();
-
-      await expect(remove().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
-        CourseHasReferencesError,
-      );
-      expect(kit.repository.store.has(course.id.value)).toBe(true);
-    });
-
     it.each(['PUBLISHED', 'ON_HOLD'] as const)(
       'soft-deletes a %s course, keeps its status and never hard-deletes (AC-014)',
       async (status) => {
-        kit.checker.referenced = true; // có Class tham chiếu: vẫn xoá mềm được, Class không bị đụng
         const course = kit.seed();
         course.publish();
         if (status === 'ON_HOLD') course.hold();
 
-        await remove().execute(lecturer(), course.id.value);
+        await remove().execute(admin(), course.id.value);
 
         expect(kit.stored(course).isDeleted).toBe(true);
         expect(kit.stored(course).status).toBe(status);
@@ -185,23 +171,21 @@ describe('Course lifecycle use cases', () => {
     it('hides an already deleted course as not found', async () => {
       const course = kit.seed();
       course.publish();
-      await remove().execute(lecturer(), course.id.value);
+      await remove().execute(admin(), course.id.value);
 
-      await expect(remove().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
+      await expect(remove().execute(admin(), course.id.value)).rejects.toBeInstanceOf(
         CourseNotFoundError,
       );
     });
 
-    it('rejects delete by a non-owner and without permission', async () => {
+    it('allows another ADMIN to delete and rejects a caller without permission', async () => {
       const course = kit.seed();
 
-      await expect(remove().execute(lecturer(OTHER_ID), course.id.value)).rejects.toBeInstanceOf(
-        ForbiddenError,
-      );
       await expect(remove().execute(student(), course.id.value)).rejects.toBeInstanceOf(
         ForbiddenError,
       );
-      expect(kit.repository.store.has(course.id.value)).toBe(true);
+      await expect(remove().execute(admin(OTHER_ID), course.id.value)).resolves.toBeUndefined();
+      expect(kit.repository.store.has(course.id.value)).toBe(false);
     });
   });
 
@@ -210,9 +194,9 @@ describe('Course lifecycle use cases', () => {
       kit.catalog.setProblem(PROBLEM_ID);
       const course = kit.seed(courseWithProblem());
       course.publish();
-      await remove().execute(lecturer(), course.id.value);
+      await remove().execute(admin(), course.id.value);
 
-      const restored = await restore().execute(lecturer(), course.id.value);
+      const restored = await restore().execute(admin(), course.id.value);
 
       expect(restored.deletedAt).toBeNull();
       expect(restored.status).toBe('PUBLISHED');
@@ -221,19 +205,19 @@ describe('Course lifecycle use cases', () => {
     it('rejects restore of a course that is not deleted', async () => {
       const course = kit.seed();
 
-      await expect(restore().execute(lecturer(), course.id.value)).rejects.toBeInstanceOf(
+      await expect(restore().execute(admin(), course.id.value)).rejects.toBeInstanceOf(
         InvalidCourseState,
       );
     });
 
-    it('rejects restore by a non-owner', async () => {
+    it('allows another ADMIN to restore', async () => {
       const course = kit.seed();
       course.publish();
-      await remove().execute(lecturer(), course.id.value);
+      await remove().execute(admin(), course.id.value);
 
-      await expect(restore().execute(lecturer(OTHER_ID), course.id.value)).rejects.toBeInstanceOf(
-        ForbiddenError,
-      );
+      await expect(restore().execute(admin(OTHER_ID), course.id.value)).resolves.toMatchObject({
+        status: 'PUBLISHED',
+      });
     });
   });
 });

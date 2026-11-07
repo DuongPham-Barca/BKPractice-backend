@@ -41,14 +41,14 @@ never reads Learning's database.
 
 ## Application boundaries
 
-| Application | Kind                | Owns                                                                                                                |
-| ----------- | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| API Gateway | Edge infrastructure | Authentication verification, routing, rate limiting, request identity, realtime client connection                   |
-| Identity    | Business service    | Authentication, users, profiles, refresh tokens, roles, permissions, account status                                 |
-| Learning    | Business service    | Problems, test cases, topics, tags, courses, chapters, classes, enrollments, assignments, progress, recommendations |
-| Submission  | Business service    | Run/Submit coordination, lifecycle, history, persisted results, judge messaging, realtime result publication        |
-| Judge       | Compute worker      | Compilation, sandbox execution, evaluation, diagnostics and result generation                                       |
-| Community   | Business service    | Posts, comments, replies, reactions, bookmarks, reports and moderation                                              |
+| Application | Kind                | Owns                                                                                                         |
+| ----------- | ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| API Gateway | Edge infrastructure | Authentication verification, routing, rate limiting, request identity, realtime client connection            |
+| Identity    | Business service    | Authentication, users, profiles, refresh tokens, roles, permissions, account status                          |
+| Learning    | Business service    | Problems, test cases, topics, tags, courses, chapters, personal progress, recommendations                    |
+| Submission  | Business service    | Run/Submit coordination, lifecycle, history, persisted results, judge messaging, realtime result publication |
+| Judge       | Compute worker      | Compilation, sandbox execution, evaluation, diagnostics and result generation                                |
+| Community   | Business service    | Posts, comments, replies, reactions, bookmarks, reports and moderation                                       |
 
 `STUDENT`, `LECTURER`, and `ADMIN` are authorization roles owned by Identity. They are not
 applications or deployment boundaries.

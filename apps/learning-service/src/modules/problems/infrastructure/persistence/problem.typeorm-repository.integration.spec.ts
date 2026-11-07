@@ -226,7 +226,7 @@ describeIntegration('ProblemTypeOrmRepository', () => {
   });
 
   describe('managed list', () => {
-    it('filters by owner, includes deleted rows only when requested, and orders by updated_at', async () => {
+    it('lists every creator, includes deleted rows only when requested, and orders by updated_at', async () => {
       const ownedEarlier = publishedProblem({}, new Date('2026-03-01T00:00:00.000Z'));
       const ownedLater = publishedProblem({}, new Date('2026-03-02T00:00:00.000Z'));
       const ownedDeleted = publishedProblem({}, new Date('2026-03-03T00:00:00.000Z'));
@@ -242,32 +242,33 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       await persist(otherOwned);
 
       const active = await repository.listManaged({
-        ownerId: OWNER_ID,
         includeDeleted: false,
         page: 1,
         limit: 20,
       });
 
-      expect(active.total).toBe(2);
+      expect(active.total).toBe(3);
       expect(active.items.map((problem) => problem.id.value)).toEqual([
+        otherOwned.id.value,
         ownedLater.id.value,
         ownedEarlier.id.value,
       ]);
 
       const includingDeleted = await repository.listManaged({
-        ownerId: OWNER_ID,
         includeDeleted: true,
         page: 1,
         limit: 20,
       });
 
-      expect(includingDeleted.total).toBe(3);
+      expect(includingDeleted.total).toBe(4);
       expect(new Set(includingDeleted.items.map((problem) => problem.id.value))).toEqual(
-        new Set([ownedEarlier.id.value, ownedLater.id.value, ownedDeleted.id.value]),
+        new Set([
+          ownedEarlier.id.value,
+          ownedLater.id.value,
+          ownedDeleted.id.value,
+          otherOwned.id.value,
+        ]),
       );
-      expect(
-        includingDeleted.items.some((problem) => problem.id.value === otherOwned.id.value),
-      ).toBe(false);
     });
   });
 
@@ -330,7 +331,7 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       expect(await repository.findPublishedByIdOrSlug(onHold.id.value)).toBeNull();
     });
 
-    it('scopes managed lookups to the owner and honors includeDeleted', async () => {
+    it('finds every creator and honors includeDeleted', async () => {
       const deleted = publishedProblem();
       deleted.softDelete(new Date(TEST_NOW.getTime() + 1_000));
       const otherOwned = publishedProblem({
@@ -340,11 +341,13 @@ describeIntegration('ProblemTypeOrmRepository', () => {
       await persist(deleted);
       await persist(otherOwned);
 
-      expect(await repository.findManagedById(deleted.id.value, OWNER_ID, false)).toBeNull();
-      expect((await repository.findManagedById(deleted.id.value, OWNER_ID, true))?.id.value).toBe(
+      expect(await repository.findManagedById(deleted.id.value, false)).toBeNull();
+      expect((await repository.findManagedById(deleted.id.value, true))?.id.value).toBe(
         deleted.id.value,
       );
-      expect(await repository.findManagedById(otherOwned.id.value, OWNER_ID, true)).toBeNull();
+      expect((await repository.findManagedById(otherOwned.id.value, true))?.id.value).toBe(
+        otherOwned.id.value,
+      );
     });
   });
 
@@ -643,18 +646,16 @@ describeIntegration('ProblemTypeOrmRepository', () => {
 
       const publishedDeleteAt = new Date('2026-06-01T00:00:00.000Z');
       expect(
-        await runner.run(() =>
-          repository.softDelete(published.id.value, OWNER_ID, publishedDeleteAt),
-        ),
+        await runner.run(() => repository.softDelete(published.id.value, publishedDeleteAt)),
       ).toBe(true);
       expect(
         await runner.run(() =>
-          repository.softDelete(published.id.value, OWNER_ID, new Date('2026-06-02T00:00:00.000Z')),
+          repository.softDelete(published.id.value, new Date('2026-06-02T00:00:00.000Z')),
         ),
       ).toBe(false);
       expect(
         await runner.run(() =>
-          repository.softDelete(draft.id.value, OWNER_ID, new Date('2026-06-03T00:00:00.000Z')),
+          repository.softDelete(draft.id.value, new Date('2026-06-03T00:00:00.000Z')),
         ),
       ).toBe(false);
 
@@ -674,12 +675,12 @@ describeIntegration('ProblemTypeOrmRepository', () => {
 
       expect(
         await runner.run(() =>
-          repository.restore(published.id.value, OWNER_ID, new Date('2026-06-04T00:00:00.000Z')),
+          repository.restore(published.id.value, new Date('2026-06-04T00:00:00.000Z')),
         ),
       ).toBe(true);
       expect(
         await runner.run(() =>
-          repository.restore(published.id.value, OWNER_ID, new Date('2026-06-05T00:00:00.000Z')),
+          repository.restore(published.id.value, new Date('2026-06-05T00:00:00.000Z')),
         ),
       ).toBe(false);
 

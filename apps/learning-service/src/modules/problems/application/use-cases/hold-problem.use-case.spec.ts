@@ -15,7 +15,7 @@ import { HoldProblemUseCase } from './hold-problem.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:hold'],
 };
 
@@ -60,7 +60,7 @@ describe('HoldProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('rejects holding a draft problem before saving', async () => {
@@ -84,7 +84,7 @@ describe('HoldProblemUseCase', () => {
 
     problem.publish(TEST_NOW);
     repository.findById.mockResolvedValue(problem);
-    authorization.requireOwned.mockImplementation(() => {
+    authorization.requireManaged.mockImplementation(() => {
       throw new Error('forbidden');
     });
 
@@ -124,7 +124,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

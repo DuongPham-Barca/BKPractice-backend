@@ -392,36 +392,9 @@ describe('Learning route transport', () => {
     ['POST', '/api/courses/id-1/chapters/chapterId-1/problems'],
     ['PUT', '/api/courses/id-1/chapters/chapterId-1/problems/order'],
     ['DELETE', '/api/courses/id-1/chapters/chapterId-1/problems/problemId-1'],
-    ['POST', '/api/classes'],
-    ['GET', '/api/classes/managed'],
-    ['GET', '/api/classes/managed/id-1'],
-    ['GET', '/api/classes/managed/id-1/members'],
-    ['PATCH', '/api/classes/id-1'],
-    ['POST', '/api/classes/id-1/join-code'],
-    ['POST', '/api/classes/id-1/archive'],
-    ['POST', '/api/classes/id-1/restore'],
-    ['DELETE', '/api/classes/id-1/members/studentId-1'],
-    ['POST', '/api/classes/join'],
-    ['GET', '/api/classes/enrolled'],
-    ['GET', '/api/classes/id-1'],
-    ['DELETE', '/api/classes/id-1/enrollment'],
-    ['POST', '/api/classes/classId-1/assignments'],
-    ['GET', '/api/classes/classId-1/assignments/managed'],
-    ['GET', '/api/classes/classId-1/assignments'],
-    ['GET', '/api/assignments/managed/id-1'],
-    ['GET', '/api/assignments/id-1'],
-    ['PATCH', '/api/assignments/id-1'],
-    ['PUT', '/api/assignments/id-1/problems'],
-    ['POST', '/api/assignments/id-1/publish'],
-    ['DELETE', '/api/assignments/id-1'],
-    ['POST', '/api/assignments/id-1/restore'],
     ['GET', '/api/progress/me/problems'],
     ['GET', '/api/progress/me/problems/status'],
     ['GET', '/api/progress/me/courses/courseId-1'],
-    ['GET', '/api/progress/me/assignments/assignmentId-1'],
-    ['GET', '/api/progress/classes/classId-1/course'],
-    ['GET', '/api/progress/classes/classId-1/students/studentId-1/course'],
-    ['GET', '/api/progress/classes/classId-1/assignments/assignmentId-1'],
     ['GET', '/api/recommendations'],
   ];
   const config = new ConfigService({
@@ -473,6 +446,10 @@ describe('Learning route transport', () => {
     ['GET', '/api/assignmentsX'],
     ['GET', '/api/progressX'],
     ['GET', '/api/recommendationsX'],
+    ['GET', '/api/classes/enrolled'],
+    ['GET', '/api/assignments/id'],
+    ['GET', '/api/progress/me/assignments/id'],
+    ['GET', '/api/progress/classes/id/course'],
     ['DELETE', '/api/classes/class-1'],
     ['POST', '/api/progress/me/problems'],
     ['POST', '/api/recommendations'],
@@ -487,7 +464,7 @@ describe('Learning route transport', () => {
     });
     expect(upstream.request).not.toHaveBeenCalled();
   });
-  it.each(['problems', 'courses', 'classes', 'assignments', 'progress', 'recommendations'])(
+  it.each(['problems', 'courses', 'progress', 'recommendations'])(
     'blocks unsafe %s paths',
     async (prefix) => {
       for (const suffix of [

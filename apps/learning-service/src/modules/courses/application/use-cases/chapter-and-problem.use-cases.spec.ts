@@ -1,6 +1,5 @@
 import {
   CourseNotReadyError,
-  ForbiddenError,
   ProblemNotAttachableError,
 } from '@learning/modules/courses/application/errors/application-errors';
 import {
@@ -21,9 +20,8 @@ import {
   courseWithProblem,
   createCourseTestKit,
   draftCourse,
-  lecturer,
+  admin,
   OTHER_ID,
-  OWNER_ID,
   PROBLEM_ID,
 } from '@learning/modules/courses/testing/course-test.fakes';
 
@@ -69,10 +67,10 @@ describe('Chapter and problem use cases', () => {
     it('adds a chapter at the end or at a position and returns the managed view', async () => {
       const course = kit.seed(draftCourse());
 
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('B'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('B'));
       const view = await addChapter().execute(
-        lecturer(),
+        admin(),
         course.id.value,
         new ChapterTitle('First'),
         new ChapterDescription(null),
@@ -86,7 +84,7 @@ describe('Chapter and problem use cases', () => {
       const course = kit.seed(draftCourse());
 
       await expect(
-        addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'), null, 5),
+        addChapter().execute(admin(), course.id.value, new ChapterTitle('A'), null, 5),
       ).rejects.toBeInstanceOf(DomainValidationError);
       expect(chaptersOf(course)).toHaveLength(0);
       expect(kit.repository.saveCount).toBe(0);
@@ -95,11 +93,11 @@ describe('Chapter and problem use cases', () => {
     it('rejects the 51st chapter (AC-013)', async () => {
       const course = kit.seed(draftCourse());
       for (let i = 0; i < 50; i += 1) {
-        await addChapter().execute(lecturer(), course.id.value, new ChapterTitle(`C${i}`));
+        await addChapter().execute(admin(), course.id.value, new ChapterTitle(`C${i}`));
       }
 
       await expect(
-        addChapter().execute(lecturer(), course.id.value, new ChapterTitle('one too many')),
+        addChapter().execute(admin(), course.id.value, new ChapterTitle('one too many')),
       ).rejects.toBeInstanceOf(DomainValidationError);
       expect(chaptersOf(course)).toHaveLength(50);
     });
@@ -109,7 +107,7 @@ describe('Chapter and problem use cases', () => {
 
       await expect(
         updateChapter().execute(
-          lecturer(),
+          admin(),
           course.id.value,
           ChapterId.from('00000000-0000-4000-8000-0000000000aa'),
           new ChapterTitle('X'),
@@ -120,19 +118,19 @@ describe('Chapter and problem use cases', () => {
 
     it('rejects a reorder that is not exactly the current set (AC-009)', async () => {
       const course = kit.seed(draftCourse());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('B'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('B'));
       const [a, b] = chaptersOf(course).map((c) => c.id);
       const stranger = ChapterId.from('00000000-0000-4000-8000-0000000000aa');
 
       for (const bad of [[a!], [a!, stranger], [a!, a!]]) {
         await expect(
-          reorderChapters().execute(lecturer(), course.id.value, bad),
+          reorderChapters().execute(admin(), course.id.value, bad),
         ).rejects.toBeInstanceOf(DomainValidationError);
       }
       expect(chaptersOf(course).map((c) => c.id.value)).toEqual([a!.value, b!.value]);
 
-      const view = await reorderChapters().execute(lecturer(), course.id.value, [b!, a!]);
+      const view = await reorderChapters().execute(admin(), course.id.value, [b!, a!]);
       expect(view.chapters.map((c) => c.id)).toEqual([b!.value, a!.value]);
     });
 
@@ -142,7 +140,7 @@ describe('Chapter and problem use cases', () => {
       course.hold();
 
       await expect(
-        addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A')),
+        addChapter().execute(admin(), course.id.value, new ChapterTitle('A')),
       ).rejects.toBeInstanceOf(InvalidCourseState);
     });
   });
@@ -150,18 +148,13 @@ describe('Chapter and problem use cases', () => {
   describe('attach and detach problems', () => {
     it('attaches a published problem at a position', async () => {
       const course = kit.seed(draftCourse());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
       kit.catalog.setProblem(OTHER_PROBLEM);
       const chapterId = chapterOf(course);
 
-      await attach().execute(
-        lecturer(),
-        course.id.value,
-        chapterId,
-        new ProblemReference(PROBLEM_ID),
-      );
+      await attach().execute(admin(), course.id.value, chapterId, new ProblemReference(PROBLEM_ID));
       const view = await attach().execute(
-        lecturer(),
+        admin(),
         course.id.value,
         chapterId,
         new ProblemReference(OTHER_PROBLEM),
@@ -177,26 +170,13 @@ describe('Chapter and problem use cases', () => {
     it.each([
       ['unknown problem', undefined],
       ['deleted problem', { isDeleted: true }],
-      [
-        "another lecturer's draft problem",
-        { publishStatus: 'DRAFT' as const, createdBy: OTHER_ID },
-      ],
-      [
-        "another lecturer's held problem",
-        { publishStatus: 'ON_HOLD' as const, createdBy: OTHER_ID },
-      ],
-    ])('refuses a %s with one indistinguishable error (AC-008, AC-020)', async (_name, state) => {
+    ])('refuses a %s with one indistinguishable error', async (_name, state) => {
       const course = kit.seed(draftCourse());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
       if (state) kit.catalog.setProblem(OTHER_PROBLEM, state);
 
       const error = await attach()
-        .execute(
-          lecturer(),
-          course.id.value,
-          chapterOf(course),
-          new ProblemReference(OTHER_PROBLEM),
-        )
+        .execute(admin(), course.id.value, chapterOf(course), new ProblemReference(OTHER_PROBLEM))
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(ProblemNotAttachableError);
@@ -204,29 +184,32 @@ describe('Chapter and problem use cases', () => {
       expect(chaptersOf(course)[0]!.problemRefs).toHaveLength(0);
     });
 
-    it('lets the owner attach their own draft problem (hidden from learners, AC-020)', async () => {
-      const course = kit.seed(draftCourse());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
-      kit.catalog.setProblem(OTHER_PROBLEM, { publishStatus: 'DRAFT', createdBy: OWNER_ID });
+    it.each(['DRAFT', 'ON_HOLD'] as const)(
+      "lets an ADMIN attach another ADMIN's %s problem without showing it to learners",
+      async (publishStatus) => {
+        const course = kit.seed(draftCourse());
+        await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
+        kit.catalog.setProblem(OTHER_PROBLEM, { publishStatus, createdBy: OTHER_ID });
 
-      await attach().execute(
-        lecturer(),
-        course.id.value,
-        chapterOf(course),
-        new ProblemReference(OTHER_PROBLEM),
-      );
+        await attach().execute(
+          admin(),
+          course.id.value,
+          chapterOf(course),
+          new ProblemReference(OTHER_PROBLEM),
+        );
 
-      expect((await kit.views.toLearner(kit.stored(course))).chapters[0]!.problems).toEqual([]);
-    });
+        expect((await kit.views.toLearner(kit.stored(course))).chapters[0]!.problems).toEqual([]);
+      },
+    );
 
     it('rejects the same problem twice, in the same or another chapter (AC-018)', async () => {
       const course = kit.seed(courseWithProblem());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('Two'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('Two'));
 
       for (const index of [0, 1]) {
         await expect(
           attach().execute(
-            lecturer(),
+            admin(),
             course.id.value,
             chapterOf(course, index),
             new ProblemReference(PROBLEM_ID),
@@ -237,12 +220,12 @@ describe('Chapter and problem use cases', () => {
 
     it('rejects the 51st problem in a chapter (AC-013)', async () => {
       const course = kit.seed(draftCourse());
-      await addChapter().execute(lecturer(), course.id.value, new ChapterTitle('A'));
+      await addChapter().execute(admin(), course.id.value, new ChapterTitle('A'));
       for (let i = 0; i < 50; i += 1) {
         const id = `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`;
         kit.catalog.setProblem(id);
         await attach().execute(
-          lecturer(),
+          admin(),
           course.id.value,
           chapterOf(course),
           new ProblemReference(id),
@@ -252,12 +235,7 @@ describe('Chapter and problem use cases', () => {
       kit.catalog.setProblem(extra);
 
       await expect(
-        attach().execute(
-          lecturer(),
-          course.id.value,
-          chapterOf(course),
-          new ProblemReference(extra),
-        ),
+        attach().execute(admin(), course.id.value, chapterOf(course), new ProblemReference(extra)),
       ).rejects.toBeInstanceOf(DomainValidationError);
       expect(chaptersOf(course)[0]!.problemRefs).toHaveLength(50);
     });
@@ -266,7 +244,7 @@ describe('Chapter and problem use cases', () => {
       const course = kit.seed(courseWithProblem());
 
       await expect(
-        reorderProblems().execute(lecturer(), course.id.value, chapterOf(course), [
+        reorderProblems().execute(admin(), course.id.value, chapterOf(course), [
           new ProblemReference(OTHER_PROBLEM),
         ]),
       ).rejects.toBeInstanceOf(DomainValidationError);
@@ -280,7 +258,7 @@ describe('Chapter and problem use cases', () => {
       kit.catalog.setProblem(OTHER_PROBLEM);
       kit.catalog.setProblem(THIRD_PROBLEM, { publishStatus: 'DRAFT' });
       await attach().execute(
-        lecturer(),
+        admin(),
         course.id.value,
         chapterOf(course),
         new ProblemReference(OTHER_PROBLEM),
@@ -296,7 +274,7 @@ describe('Chapter and problem use cases', () => {
 
       await expect(
         detach().execute(
-          lecturer(),
+          admin(),
           course.id.value,
           chapterOf(course),
           new ProblemReference(PROBLEM_ID),
@@ -309,7 +287,7 @@ describe('Chapter and problem use cases', () => {
       const course = await publishedWithTwoProblems();
 
       await detach().execute(
-        lecturer(),
+        admin(),
         course.id.value,
         chapterOf(course),
         new ProblemReference(OTHER_PROBLEM),
@@ -323,7 +301,7 @@ describe('Chapter and problem use cases', () => {
       course.publish();
 
       await expect(
-        removeChapter().execute(lecturer(), course.id.value, chapterOf(course)),
+        removeChapter().execute(admin(), course.id.value, chapterOf(course)),
       ).rejects.toBeInstanceOf(CourseNotReadyError);
       expect(chaptersOf(course)).toHaveLength(1);
     });
@@ -332,7 +310,7 @@ describe('Chapter and problem use cases', () => {
       const course = kit.seed(courseWithProblem());
 
       await detach().execute(
-        lecturer(),
+        admin(),
         course.id.value,
         chapterOf(course),
         new ProblemReference(PROBLEM_ID),
@@ -345,7 +323,7 @@ describe('Chapter and problem use cases', () => {
       const course = kit.seed(courseWithProblem());
       course.publish();
 
-      const view = await updateCourse().execute(lecturer(), course.id.value, {
+      const view = await updateCourse().execute(admin(), course.id.value, {
         title: new CourseTitle('New title'),
         description: new CourseDescription('**ok** markdown'),
       });
@@ -353,15 +331,15 @@ describe('Chapter and problem use cases', () => {
       expect(view).toMatchObject({ title: 'New title', status: 'PUBLISHED' });
     });
 
-    it('rejects owner and permission violations before touching state', async () => {
+    it('allows another ADMIN to update the course', async () => {
       const course = kit.seed(courseWithProblem());
 
       await expect(
-        updateCourse().execute(lecturer(OTHER_ID), course.id.value, {
+        updateCourse().execute(admin(OTHER_ID), course.id.value, {
           title: new CourseTitle('x'),
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
-      expect(kit.stored(course).title.value).toBe('Intro C');
+      ).resolves.toMatchObject({ title: 'x' });
+      expect(kit.stored(course).title.value).toBe('x');
     });
   });
 });

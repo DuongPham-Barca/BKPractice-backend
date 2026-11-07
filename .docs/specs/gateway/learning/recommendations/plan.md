@@ -1,5 +1,7 @@
 # GW-007 Kế hoạch triển khai Gateway — Định tuyến Recommendation qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** Gợi ý từ mọi Course công khai, không dựa vào Enrollment; các câu trái ngược bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Đặc tả liên quan
 
 - [GW-007 spec](./spec.md), phiên bản `0.1`, trạng thái `Approved`.

@@ -35,12 +35,10 @@ import {
 import { UpdateCourseUseCase } from './application/use-cases/update-course.use-case';
 import {
   COURSE_PROBLEM_CATALOG,
-  COURSE_REFERENCE_CHECKER,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
 } from './course.tokens';
 import { Chapter, ChapterProblem, Course } from './entities/course.entity';
-import { CourseTypeOrmReferenceChecker } from './infrastructure/persistence/course-reference.checker';
 import { CourseTypeOrmRepository } from './infrastructure/persistence/course.typeorm-repository';
 import { CourseTypeOrmTransactionContext } from './infrastructure/persistence/course.typeorm-transaction-context';
 import { CourseTypeOrmTransactionRunner } from './infrastructure/persistence/course.typeorm-transaction-runner';
@@ -80,10 +78,8 @@ import { ManagedCoursesController } from './presentation/http/managed-courses.co
     CourseTypeOrmRepository,
     CourseTypeOrmTransactionContext,
     CourseTypeOrmTransactionRunner,
-    CourseTypeOrmReferenceChecker,
     ProblemReferenceCatalogAdapter,
     { provide: COURSE_REPOSITORY, useExisting: CourseTypeOrmRepository },
-    { provide: COURSE_REFERENCE_CHECKER, useExisting: CourseTypeOrmReferenceChecker },
     { provide: COURSE_PROBLEM_CATALOG, useExisting: ProblemReferenceCatalogAdapter },
     { provide: COURSE_TRANSACTION_RUNNER, useExisting: CourseTypeOrmTransactionRunner },
   ],

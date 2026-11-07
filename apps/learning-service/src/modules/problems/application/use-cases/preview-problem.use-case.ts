@@ -32,7 +32,7 @@ export class PreviewProblemUseCase implements IPreviewProblemPortIn {
       throw new ProblemNotFoundError(id);
     }
 
-    this.authorization.requireOwned(principal, problem, 'read-managed');
+    this.authorization.requireManaged(principal, 'read-managed');
 
     problem.attachTestSuiteSummary(await this.repository.loadTestSuiteSummary(problem.id.value));
     const [slugAvailable, samples] = await Promise.all([

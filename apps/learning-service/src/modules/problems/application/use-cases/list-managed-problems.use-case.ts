@@ -37,7 +37,6 @@ export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
     const normalizedPage = normalizePage(page);
     const normalizedLimit = normalizeLimit(limit);
     const result = await this.repository.listManaged({
-      ownerId: principal.userId,
       includeDeleted,
       page: normalizedPage,
       limit: normalizedLimit,

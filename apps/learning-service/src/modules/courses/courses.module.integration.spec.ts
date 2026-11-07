@@ -23,10 +23,10 @@ import { CoursesModule } from './courses.module';
 assertTestDatabase();
 const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
 
-const lecturer = {
+const admin = {
   'content-type': 'application/json',
   'x-auth-user-id': OWNER_ID,
-  'x-auth-roles': 'LECTURER',
+  'x-auth-roles': 'ADMIN',
   'x-auth-permissions': ALL_COURSE_PERMISSIONS.join(','),
 };
 const student = {
@@ -91,7 +91,7 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
   ) => {
     const response = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: options.headers ?? lecturer,
+      headers: options.headers ?? admin,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
     const text = await response.text();
@@ -167,7 +167,7 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
 
     // xoá mềm Course đã xuất bản (204) không xoá Class tham chiếu (AC-014), khôi phục về PUBLISHED
     await dataSource.query(
-      `INSERT INTO "classes" ("course_id", "join_code", "name", "lecturer_id") VALUES ($1, $2, 'Keep me', $3)`,
+      `INSERT INTO "classes" ("course_id", "join_code", "name", "admin_id") VALUES ($1, $2, 'Keep me', $3)`,
       [id, `K${Date.now()}`.slice(0, 32), OWNER_ID],
     );
     expect((await call('DELETE', `/api/courses/${id}`)).status).toBe(204);
@@ -186,7 +186,7 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
     });
     const draftId = draft.body.id as string;
     await dataSource.query(
-      `INSERT INTO "classes" ("course_id", "join_code", "name", "lecturer_id") VALUES ($1, $2, 'C', $3)`,
+      `INSERT INTO "classes" ("course_id", "join_code", "name", "admin_id") VALUES ($1, $2, 'C', $3)`,
       [draftId, `W${Date.now()}`.slice(0, 32), OWNER_ID],
     );
     expect((await call('DELETE', `/api/courses/${draftId}`)).status).toBe(409);

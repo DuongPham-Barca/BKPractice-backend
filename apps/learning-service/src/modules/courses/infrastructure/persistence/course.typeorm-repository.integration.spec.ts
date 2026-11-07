@@ -19,12 +19,10 @@ import {
 import {
   courseWithProblem,
   draftCourse,
-  OWNER_ID,
   PROBLEM_ID,
 } from '@learning/modules/courses/testing/course-test.fakes';
 import { DataSource } from 'typeorm';
 
-import { CourseTypeOrmReferenceChecker } from './course-reference.checker';
 import { CourseTypeOrmRepository } from './course.typeorm-repository';
 import { CourseTypeOrmTransactionContext } from './course.typeorm-transaction-context';
 import { CourseTypeOrmTransactionRunner } from './course.typeorm-transaction-runner';
@@ -41,7 +39,6 @@ const SECOND_PROBLEM = '00000000-0000-4000-8000-0000000000d4';
 let dataSource: DataSource;
 let repository: CourseTypeOrmRepository;
 let runner: CourseTypeOrmTransactionRunner;
-let checker: CourseTypeOrmReferenceChecker;
 let context: CourseTypeOrmTransactionContext;
 let sequence = 0;
 
@@ -60,7 +57,6 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
     context = new CourseTypeOrmTransactionContext(dataSource);
     runner = new CourseTypeOrmTransactionRunner(dataSource, context);
     repository = new CourseTypeOrmRepository(context);
-    checker = new CourseTypeOrmReferenceChecker(context);
   });
 
   afterAll(async () => {
@@ -179,7 +175,6 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
       const hit = await repository.listPublished({ page: 1, limit: 100, search: 'INTRO c' });
       const wildcard = await repository.listPublished({ page: 1, limit: 100, search: '%' });
       const managed = await repository.listManaged({
-        ownerId: OWNER_ID,
         includeDeleted: false,
         page: 1,
         limit: 100,
@@ -335,7 +330,7 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
       const course = courseWithProblem(PROBLEM_ID, nextSlug());
       await save(course);
 
-      expect(await runner.run(() => repository.hardDelete(course.id.value, OWNER_ID))).toBe(true);
+      expect(await runner.run(() => repository.hardDelete(course.id.value))).toBe(true);
 
       for (const table of ['chapters', 'chapter_problems']) {
         const rows: unknown[] = await dataSource.query(
@@ -347,54 +342,28 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
     });
   });
 
-  describe('CourseTypeOrmReferenceChecker.hasCourseReferences', () => {
-    it('is false for an unreferenced course', async () => {
-      const course = draftCourse(nextSlug());
-      await save(course);
-
-      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(false);
-    });
-
-    it('is true when a class references the course', async () => {
-      const course = draftCourse(nextSlug());
-      await save(course);
-      await dataSource.query(
-        `INSERT INTO "classes" ("course_id", "join_code", "name", "lecturer_id") VALUES ($1, $2, 'Class A', $3)`,
-        [course.id.value, `JC${Date.now()}${sequence}`.slice(0, 32), OWNER_ID],
-      );
-
-      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(true);
-    });
-
-    it('is true when an assignment references the course', async () => {
-      const course = draftCourse(nextSlug());
-      await save(course);
-      await dataSource.query(
-        `INSERT INTO "assignments" ("title", "course_id", "lecturer_id") VALUES ('HW', $1, $2)`,
-        [course.id.value, OWNER_ID],
-      );
-
-      expect(await runner.run(() => checker.hasCourseReferences(course.id.value))).toBe(true);
-    });
-  });
-
-  describe('migration 1700000009000 (T016)', () => {
-    it('reverts and re-applies cleanly, keeping existing courses as they were', async () => {
+  describe('migration 1700000010000 (LRN-008)', () => {
+    it('drops retired tables and restores their empty schema on revert', async () => {
       const course = courseWithProblem(PROBLEM_ID, nextSlug());
       course.publish();
       await save(course);
 
+      for (const table of ['classes', 'enrollments', 'assignments', 'assignment_problems']) {
+        const [row] = await dataSource.query<Array<{ exists: string | null }>>(
+          'SELECT to_regclass($1) AS "exists"',
+          [table],
+        );
+        expect(row?.exists).toBeNull();
+      }
+
       await dataSource.undoLastMigration();
-      const [reverted] = await dataSource.query<Array<{ data_type: string }>>(
-        `SELECT data_type FROM information_schema.columns WHERE table_name = 'courses' AND column_name = 'publish_status'`,
+      const [restored] = await dataSource.query<Array<{ exists: string | null }>>(
+        'SELECT to_regclass($1) AS "exists"',
+        ['classes'],
       );
-      expect(reverted?.data_type).toBe('character varying');
+      expect(restored?.exists).toBe('classes');
       await dataSource.runMigrations();
 
-      const [enumColumn] = await dataSource.query<Array<{ udt_name: string }>>(
-        `SELECT udt_name FROM information_schema.columns WHERE table_name = 'courses' AND column_name = 'status'`,
-      );
-      expect(enumColumn?.udt_name).toBe('courses_status_enum');
       expect((await repository.findById(course.id.value))?.status).toBe('PUBLISHED');
       expect((await repository.findById(course.id.value))?.chapters[0]!.problemRefs).toHaveLength(
         1,

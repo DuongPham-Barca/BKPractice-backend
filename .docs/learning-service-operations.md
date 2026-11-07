@@ -1,7 +1,7 @@
-# Learning Service — Ghi chú triển khai LRN-001 / LRN-002
+# Learning Service — Ghi chú triển khai LRN-001 / LRN-002 / LRN-008
 
 Tài liệu này ghi lại các điểm cần biết khi triển khai Problem Management (LRN-001) và Test Case
-Management (LRN-002). Nội dung chỉ mô tả những gì đã hiện thực; các tính năng ngoài phạm vi (ví dụ
+Management (LRN-002) và thay đổi phân quyền LRN-008. Nội dung chỉ mô tả những gì đã hiện thực; các tính năng ngoài phạm vi (ví dụ
 versioning nội dung problem) không được mô tả như thể đã có.
 
 ## 1. Swagger
@@ -10,7 +10,7 @@ versioning nội dung problem) không được mô tả như thể đã có.
   `ProblemsController` đã có decorator Swagger cho route, DTO và mã lỗi.
 - Route nội bộ `GET /internal/problems/:id/judge-package/:language` được đánh dấu
   `@ApiExcludeEndpoint()` và không xuất hiện trong Swagger công khai.
-- Swagger chỉ phản ánh hình dạng request/response. Việc thực thi quyền, sở hữu, vòng đời và chính
+- Swagger chỉ phản ánh hình dạng request/response. Việc thực thi quyền, vòng đời và chính
   sách trường nằm ở use case/domain, không phải ở DTO.
 - Khi đổi route hoặc DTO, cập nhật decorator Swagger trong cùng thay đổi.
 
@@ -18,21 +18,17 @@ versioning nội dung problem) không được mô tả như thể đã có.
 
 - Learning đọc ngữ cảnh tin cậy từ các header đơn trị do Gateway/service gửi:
   `x-auth-user-id`, `x-auth-roles`, `x-auth-permissions`.
-- `ProblemAuthorizationService` yêu cầu role `LECTURER` và đúng mã quyền cần thiết:
+- `ProblemAuthorizationService` yêu cầu role `ADMIN` và đúng mã quyền cần thiết:
   `problem:create`, `problem:read-managed`, `problem:update`, `problem:publish`, `problem:hold`,
   `problem:republish`, `problem:delete`, `problem:restore`.
-- Quyền sở hữu luôn suy ra từ `x-auth-user-id`; body/query không thể đặt `createdBy`, trạng thái
-  xuất bản, mốc thời gian hay quyền.
+- `createdBy` được suy ra từ `x-auth-user-id` khi tạo để truy vết; mọi `ADMIN` có quyền tương ứng
+  được quản lý Problem do `ADMIN` khác tạo. Body/query không thể đặt `createdBy`, trạng thái xuất bản,
+  mốc thời gian hay quyền.
 - Header trùng lặp, sai định dạng hoặc thiếu `x-auth-user-id` trả `401`; thiếu role/quyền trả `403`.
   Không có fallback theo vai trò và không có chế độ "cho qua" khi thiếu quyền (fail-closed).
-- **Tình trạng seam:** Gateway hiện chỉ gắn `x-auth-user-id` và `x-auth-roles`, chưa gắn
-  `x-auth-permissions` (LRN-001-T002 và LRN-001-T039 đang mở). Vì vậy, khi đi qua Gateway, các thao
-  tác quản lý problem sẽ nhận `403` cho tới khi seam quyền được hoàn tất. Không thêm phương án tạm
-  ánh xạ vai trò sang quyền.
-- **Rủi ro bảo mật còn lại:** `GatewayAuthMiddleware` xoá `x-auth-user-id` và `x-auth-roles` do
-  client gửi nhưng chưa xoá `x-auth-permissions`. Nếu Gateway tiếp tục chuyển tiếp header này,
-  client có thể tự gắn quyền. Phải xử lý trong LRN-001-T002/T039 trước khi mở route qua Gateway;
-  không coi cấu hình hiện tại là an toàn cho production.
+- Gateway xoá mọi header `x-auth-*` do client gửi và đặt lại `x-auth-user-id`, `x-auth-roles`,
+  `x-auth-permissions` từ access token đã xác minh; không suy quyền từ vai trò. Token thiếu claim
+  quyền tạo danh sách quyền rỗng, nên thao tác quản lý bị từ chối.
 - Route nội bộ dùng `x-internal-service-secret` (`INTERNAL_SERVICE_SECRET`), không dùng
   `problem:*`, và không cấp quyền quản lý problem.
 
@@ -70,6 +66,6 @@ LRN-002:
 
 ## 5. Giới hạn đã biết
 
-- Seam quyền `problem:*` phía Gateway chưa hoàn tất (LRN-001-T002, LRN-001-T039).
+- Tiến độ cá nhân mới có consumer ghi nhận sự kiện; API đọc đầy đủ và module gợi ý vẫn chờ LRN-006/007.
 - Kiểm thử API hiện dùng adapter in-memory ở ranh giới HTTP, chưa có E2E với PostgreSQL thật.
 - Các spec Judge đang ở trạng thái `Proposed` và chưa được hiện thực.

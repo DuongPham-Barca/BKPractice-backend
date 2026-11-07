@@ -54,27 +54,3 @@ export class ChapterProblem {
   @Column({ name: 'problem_id', type: 'uuid' }) problemId!: string;
   @Column({ name: 'display_order', type: 'integer', default: 0 }) displayOrder!: number;
 }
-
-@Entity('classes')
-export class Classroom {
-  @PrimaryGeneratedColumn('uuid') id!: string;
-  @ManyToOne(() => Course, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'course_id' })
-  course!: Course;
-  @Index({ unique: true })
-  @Column({ name: 'join_code', type: 'varchar', length: 32 })
-  joinCode!: string;
-  @Column({ name: 'name', type: 'varchar', length: 120 }) name!: string;
-  @Column({ name: 'lecturer_id', type: 'uuid' }) lecturerId!: string;
-}
-
-@Index(['classroom', 'studentId'], { unique: true })
-@Entity('enrollments')
-export class Enrollment {
-  @PrimaryGeneratedColumn('uuid') id!: string;
-  @ManyToOne(() => Classroom, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'class_id' })
-  classroom!: Classroom;
-  @Column({ name: 'student_id', type: 'uuid' }) studentId!: string;
-  @CreateDateColumn({ name: 'enrolled_at', type: 'timestamptz' }) enrolledAt!: Date;
-}

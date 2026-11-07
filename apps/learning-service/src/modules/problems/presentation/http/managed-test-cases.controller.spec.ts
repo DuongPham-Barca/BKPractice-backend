@@ -12,7 +12,7 @@ import { ProblemRequestMapper } from './mappers/problem-request.mapper';
 
 const PROBLEM_ID = '00000000-0000-4000-8000-000000000001';
 const CASE_ID = '00000000-0000-4000-8000-000000000011';
-const PRINCIPAL = { userId: 'user-1', roles: ['LECTURER'], permissions: [] };
+const PRINCIPAL = { userId: 'user-1', roles: ['ADMIN'], permissions: [] };
 
 describe('ManagedTestCasesController routes', () => {
   it('keeps managed reads under the managed prefix', () => {

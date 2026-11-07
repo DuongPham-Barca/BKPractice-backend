@@ -1,6 +1,5 @@
 import {
   ConcurrentModificationError,
-  CourseHasReferencesError,
   CourseNotFoundError,
   CourseNotReadyError,
   DuplicateCourseSlugError,
@@ -46,7 +45,6 @@ function statusOf(exception: unknown): HttpStatus {
     return HttpStatus.BAD_REQUEST;
   }
   if (
-    exception instanceof CourseHasReferencesError ||
     exception instanceof DuplicateCourseSlugError ||
     exception instanceof ProblemAlreadyInCourse ||
     exception instanceof ConcurrentModificationError ||

@@ -32,7 +32,6 @@ import {
 import { UpdateCourseUseCase } from '@learning/modules/courses/application/use-cases/update-course.use-case';
 import {
   COURSE_PROBLEM_CATALOG,
-  COURSE_REFERENCE_CHECKER,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
@@ -40,7 +39,6 @@ import { CourseReadiness } from '@learning/modules/courses/domain/services/cours
 import {
   ALL_COURSE_PERMISSIONS,
   FakeProblemCatalog,
-  FakeReferenceChecker,
   InlineTransactionRunner,
   InMemoryCourseRepository,
   OTHER_ID,
@@ -66,7 +64,7 @@ const MISSING_ID = '00000000-0000-4000-8000-0000000000ff';
 
 function headers(
   userId = OWNER_ID,
-  roles = 'LECTURER',
+  roles = 'ADMIN',
   permissions = ALL_COURSE_PERMISSIONS.join(','),
 ): Headers {
   return {
@@ -94,12 +92,10 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
   let baseUrl: string;
   let repository: InMemoryCourseRepository;
   let catalog: FakeProblemCatalog;
-  let checker: FakeReferenceChecker;
 
   beforeAll(async () => {
     repository = new InMemoryCourseRepository();
     catalog = new FakeProblemCatalog();
-    checker = new FakeReferenceChecker();
     const moduleRef = await Test.createTestingModule({
       controllers: [ManagedCoursesController],
       providers: [
@@ -128,7 +124,6 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
         ListPublishedCoursesUseCase,
         { provide: COURSE_REPOSITORY, useValue: repository },
         { provide: COURSE_PROBLEM_CATALOG, useValue: catalog },
-        { provide: COURSE_REFERENCE_CHECKER, useValue: checker },
         { provide: COURSE_TRANSACTION_RUNNER, useValue: new InlineTransactionRunner() },
       ],
     }).compile();
@@ -155,7 +150,6 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
     repository.saveCount = 0;
     repository.hardDeleted = [];
     catalog.problems.clear();
-    checker.referenced = false;
     catalog.setProblem(PROBLEM_ID, { title: 'Hello World', slug: 'hello-world' });
   });
 
@@ -444,40 +438,40 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
         headers: [
           ['x-auth-user-id', OWNER_ID],
           ['x-auth-user-id', OTHER_ID],
-          ['x-auth-roles', 'LECTURER'],
+          ['x-auth-roles', 'ADMIN'],
           ['x-auth-permissions', 'course:read-managed'],
         ],
       });
       expect(res.status).toBe(401);
     });
 
-    it('returns 403 for a missing permission, a non-lecturer role and a non-owner (AC-002)', async () => {
+    it('rejects a missing permission or ADMIN role while allowing another ADMIN to edit', async () => {
       const id = await createCourse();
       const before = repository.saveCount;
 
       const noPermission = await call('POST', '/api/courses', {
-        headers: headers(OWNER_ID, 'LECTURER', 'course:read-managed'),
+        headers: headers(OWNER_ID, 'ADMIN', 'course:read-managed'),
         body: { slug: 'x', title: 'X' },
       });
       const wrongRole = await call('POST', '/api/courses', {
         headers: headers(OTHER_ID, 'STUDENT', 'course:create'),
         body: { slug: 'x', title: 'X' },
       });
-      const notOwner = await call('PATCH', `/api/courses/${id}`, {
+      const otherAdmin = await call('PATCH', `/api/courses/${id}`, {
         headers: headers(OTHER_ID),
-        body: { title: 'Hijacked' },
+        body: { title: 'Updated by another ADMIN' },
       });
 
-      expect([noPermission.status, wrongRole.status, notOwner.status]).toEqual([403, 403, 403]);
-      expect(repository.saveCount).toBe(before);
+      expect([noPermission.status, wrongRole.status, otherAdmin.status]).toEqual([403, 403, 200]);
+      expect(repository.saveCount).toBe(before + 1);
     });
 
-    it("does not reveal another lecturer's courses in the managed list", async () => {
+    it("lists another ADMIN's courses in the managed list", async () => {
       await createCourse();
 
       const res = await call('GET', '/api/courses/managed', { headers: headers(OTHER_ID) });
 
-      expect(res.body.total).toBe(0);
+      expect(res.body.total).toBe(1);
     });
   });
 
@@ -633,7 +627,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
       expect(res.body.issues).toEqual(['PUBLISHED_PROBLEM_REQUIRED']);
     });
 
-    it('returns 400 for a problem that cannot be attached, without revealing why (AC-008)', async () => {
+    it("allows another ADMIN's draft but still rejects an unknown problem", async () => {
       const id = await createCourse();
       const chapterId = await addChapter(id);
       catalog.setProblem(SECOND_PROBLEM, {
@@ -645,10 +639,9 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
       const foreign = await attach(id, chapterId, SECOND_PROBLEM);
       const unknown = await attach(id, chapterId, MISSING_ID);
 
-      expect(foreign.status).toBe(400);
+      expect(foreign.status).toBe(201);
       expect(unknown.status).toBe(400);
-      expect(foreign.body).toEqual(unknown.body);
-      expect(JSON.stringify(foreign.body)).not.toContain('Secret');
+      expect(JSON.stringify(unknown.body)).not.toContain('Secret');
     });
 
     it('returns 409 when the same problem is attached twice, in any chapter (AC-018)', async () => {
@@ -745,21 +738,15 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
   });
 
   describe('delete and restore (FR-007, FR-018)', () => {
-    it('hard-deletes an unreferenced draft and rejects a referenced one (AC-017)', async () => {
+    it('hard-deletes a draft', async () => {
       const id = await createCourse();
-      checker.referenced = true;
-      expect((await call('DELETE', `/api/courses/${id}`)).status).toBe(409);
-      expect(repository.store.has(id)).toBe(true);
-
-      checker.referenced = false;
       expect((await call('DELETE', `/api/courses/${id}`)).status).toBe(204);
       expect(repository.store.has(id)).toBe(false);
     });
 
-    it('soft-deletes a published course even if referenced, then restores its status (AC-014)', async () => {
+    it('soft-deletes a published course, then restores its status', async () => {
       const { id } = await readyCourse();
       await call('POST', `/api/courses/${id}/publish`);
-      checker.referenced = true;
 
       expect((await call('DELETE', `/api/courses/${id}`)).status).toBe(204);
       expect(repository.store.has(id)).toBe(true);

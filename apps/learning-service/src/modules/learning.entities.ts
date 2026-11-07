@@ -1,11 +1,4 @@
-import { Assignment, AssignmentProblem } from './assignments/entities/assignment.entity';
-import {
-  Chapter,
-  ChapterProblem,
-  Classroom,
-  Course,
-  Enrollment,
-} from './courses/entities/course.entity';
+import { Chapter, ChapterProblem, Course } from './courses/entities/course.entity';
 import {
   Problem,
   ProblemHarness,
@@ -28,9 +21,5 @@ export const learningEntities = [
   Course,
   Chapter,
   ChapterProblem,
-  Classroom,
-  Enrollment,
-  Assignment,
-  AssignmentProblem,
   Progress,
 ];

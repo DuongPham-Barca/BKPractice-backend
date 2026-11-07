@@ -1,5 +1,7 @@
 # LRN-006 Công việc triển khai Tiến độ học tập
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
 ## Trạng thái
 
 Approved — Sẵn sàng triển khai sau LRN-001; phần đọc tổng hợp cần LRN-003, LRN-004, LRN-005

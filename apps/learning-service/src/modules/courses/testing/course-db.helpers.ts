@@ -6,6 +6,7 @@ import { Lrn007RecommendationIndexes1700000006000 } from '@learning/database/mig
 import { Lrn002TestCaseManagement1700000007000 } from '@learning/database/migrations/1700000007000-Lrn002TestCaseManagement';
 import { Lrn003CourseManagement1700000008000 } from '@learning/database/migrations/1700000008000-Lrn003CourseManagement';
 import { Lrn003CourseConstraints1700000009000 } from '@learning/database/migrations/1700000009000-Lrn003CourseConstraints';
+import { Lrn008SelfStudy1700000010000 } from '@learning/database/migrations/1700000010000-Lrn008SelfStudy';
 import { learningEntities } from '@learning/modules/learning.entities';
 import type { DataSource, DataSourceOptions } from 'typeorm';
 
@@ -18,6 +19,7 @@ export const ALL_LEARNING_MIGRATIONS = [
   Lrn002TestCaseManagement1700000007000,
   Lrn003CourseManagement1700000008000,
   Lrn003CourseConstraints1700000009000,
+  Lrn008SelfStudy1700000010000,
 ];
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;

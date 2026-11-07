@@ -28,25 +28,12 @@ export class CourseReadiness {
 }
 
 export class ProblemAttachPolicy {
-  isAttachable(
-    problemState: ProblemStateForReadiness | undefined,
-    principalUserId: string,
-    problemCreatedBy: string | undefined,
-  ): boolean {
-    if (problemState === undefined || problemState.isDeleted) return false;
-    if (problemState.publishStatus === 'PUBLISHED') return true;
-    if (problemState.publishStatus === 'DRAFT' || problemState.publishStatus === 'ON_HOLD') {
-      return problemCreatedBy === principalUserId;
-    }
-    return false;
+  isAttachable(problemState: ProblemStateForReadiness | undefined): boolean {
+    return problemState !== undefined && !problemState.isDeleted;
   }
 
-  assertAttachable(
-    problemState: ProblemStateForReadiness | undefined,
-    principalUserId: string,
-    problemCreatedBy: string | undefined,
-  ): void {
-    if (!this.isAttachable(problemState, principalUserId, problemCreatedBy)) {
+  assertAttachable(problemState: ProblemStateForReadiness | undefined): void {
+    if (!this.isAttachable(problemState)) {
       throw new DomainValidationError('problemId', 'Problem is not attachable');
     }
   }

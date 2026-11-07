@@ -35,8 +35,6 @@ export class AttachProblemUseCase {
           publishStatus: problem.publishStatus,
           isDeleted: problem.isDeleted,
         },
-        principal.userId,
-        problem?.createdBy,
       );
       if (!attachable) throw new ProblemNotAttachableError('Problem is not attachable');
       course.addProblemToChapter(chapterId, problemId, now, position);

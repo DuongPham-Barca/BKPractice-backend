@@ -11,7 +11,7 @@ import { TestSuiteSummary } from '@learning/modules/problems/domain/value-object
 
 import { GetManagedProblemUseCase } from './get-managed-problem.use-case';
 
-const PRINCIPAL = { userId: 'user-1', roles: ['LECTURER'], permissions: [] };
+const PRINCIPAL = { userId: 'user-1', roles: ['ADMIN'], permissions: [] };
 
 describe('GetManagedProblemUseCase', () => {
   it('returns a managed detail with readiness and slug availability', async () => {
@@ -52,7 +52,7 @@ describe('GetManagedProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing', false)).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('hides a soft-deleted problem unless includeDeleted is true', async () => {
@@ -80,7 +80,7 @@ describe('GetManagedProblemUseCase', () => {
 
     repository.findByIdIncludingDeleted.mockResolvedValue(problem);
     repository.isSlugAvailable.mockResolvedValue(true);
-    authorization.requireOwned.mockImplementation(() => {
+    authorization.requireManaged.mockImplementation(() => {
       throw new Error('forbidden');
     });
 
@@ -117,7 +117,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

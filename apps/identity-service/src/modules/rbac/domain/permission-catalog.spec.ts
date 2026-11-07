@@ -3,18 +3,12 @@ import { RoleName, rbacPermissionCatalog, validatePermissionCode } from '@/modul
 describe('RBAC permission catalog', () => {
   it('contains the approved codes and unique role-permission mappings', () => {
     const codes = rbacPermissionCatalog.map(({ code }) => code);
-    expect(new Set(codes).size).toBe(36);
+    expect(new Set(codes).size).toBe(20);
     expect(new Set(rbacPermissionCatalog.map(({ code, role }) => `${role}:${code}`)).size).toBe(
       rbacPermissionCatalog.length,
     );
     expect(codes.every(validatePermissionCode)).toBe(true);
-    const student = [
-      'class:join',
-      'class:leave',
-      'class:read-enrolled',
-      'assignment:read-enrolled',
-    ];
-    const lecturer = [
+    const learningAdmin = [
       'problem:create',
       'problem:read-managed',
       'problem:update',
@@ -31,26 +25,20 @@ describe('RBAC permission catalog', () => {
       'course:republish',
       'course:delete',
       'course:restore',
-      'class:create',
-      'class:read-managed',
-      'class:update',
-      'class:archive',
-      'class:restore',
-      'class:manage-members',
-      'assignment:create',
-      'assignment:read-managed',
-      'assignment:update',
-      'assignment:publish',
-      'assignment:delete',
-      'assignment:restore',
     ];
     const approved: Record<RoleName, string[]> = {
-      [RoleName.Student]: student,
-      [RoleName.Lecturer]: lecturer,
-      [RoleName.Admin]: [...student, ...lecturer, 'community:moderate', 'user:import', 'user:read', 'user:delete'],
+      [RoleName.Student]: [],
+      [RoleName.Lecturer]: [],
+      [RoleName.Admin]: [
+        ...learningAdmin,
+        'community:moderate',
+        'user:import',
+        'user:read',
+        'user:delete',
+      ],
     };
 
-    expect(rbacPermissionCatalog).toHaveLength(68);
+    expect(rbacPermissionCatalog).toHaveLength(20);
     for (const role of Object.values(RoleName)) {
       expect(
         rbacPermissionCatalog

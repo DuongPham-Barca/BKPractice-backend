@@ -1,12 +1,11 @@
 import { ForbiddenError } from '@learning/modules/problems/application/errors/forbidden.error';
 import type { Principal } from '@learning/modules/problems/application/models/principal';
-import type { Problem } from '@learning/modules/problems/domain/problem.aggregate';
 import { Injectable } from '@nestjs/common';
 
-export type OwnedProblemAction =
+export type ManagedProblemAction =
   'read-managed' | 'update' | 'publish' | 'hold' | 'republish' | 'delete' | 'restore';
 
-const ACTION_PERMISSIONS: Record<OwnedProblemAction, string> = {
+const ACTION_PERMISSIONS: Record<ManagedProblemAction, string> = {
   'read-managed': 'problem:read-managed',
   update: 'problem:update',
   publish: 'problem:publish',
@@ -16,31 +15,27 @@ const ACTION_PERMISSIONS: Record<OwnedProblemAction, string> = {
   restore: 'problem:restore',
 };
 
-const LECTURER_ROLE = 'LECTURER';
+const ADMIN_ROLE = 'ADMIN';
 
 @Injectable()
 export class ProblemAuthorizationService {
   requireCreate(principal: Principal): void {
-    this.requireLecturer(principal);
+    this.requireAdmin(principal);
     this.requirePermission(principal, 'problem:create');
   }
 
   requireManagedList(principal: Principal): void {
-    this.requireLecturer(principal);
+    this.requireAdmin(principal);
     this.requirePermission(principal, 'problem:read-managed');
   }
 
-  requireOwned(principal: Principal, problem: Problem, action: OwnedProblemAction): void {
-    this.requireLecturer(principal);
+  requireManaged(principal: Principal, action: ManagedProblemAction): void {
+    this.requireAdmin(principal);
     this.requirePermission(principal, ACTION_PERMISSIONS[action]);
-
-    if (problem.createdBy.value !== principal.userId) {
-      throw new ForbiddenError();
-    }
   }
 
-  private requireLecturer(principal: Principal): void {
-    if (!principal.roles.includes(LECTURER_ROLE)) {
+  private requireAdmin(principal: Principal): void {
+    if (!principal.roles.includes(ADMIN_ROLE)) {
       throw new ForbiddenError();
     }
   }

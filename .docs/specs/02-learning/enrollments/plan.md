@@ -1,5 +1,7 @@
 # LRN-004 Kế hoạch triển khai Class & Enrollment
 
+> ĐÃ HUỶ theo [LRN-008](../self-study/spec.md), quyết định ngày 2026-11-07. Tài liệu bên dưới chỉ lưu lịch sử; không triển khai Class, Enrollment hoặc Assignment.
+
 ## Trạng thái
 
 Approved

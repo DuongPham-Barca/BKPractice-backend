@@ -25,7 +25,7 @@ import { UpdateProblemUseCase } from './update-problem.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:update'],
 };
 
@@ -83,7 +83,7 @@ describe('UpdateProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing', {})).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('rejects updating a problem on hold', async () => {
@@ -292,7 +292,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

@@ -6,7 +6,6 @@ import type {
 import type {
   CourseListFilter,
   CoursePage,
-  CourseReferenceChecker,
   CourseRepository,
   ManagedCourseListFilter,
 } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
@@ -42,8 +41,8 @@ export const ALL_COURSE_PERMISSIONS = [
   'course:read-managed',
 ] as const;
 
-export function lecturer(userId = OWNER_ID): Principal {
-  return { userId, roles: ['LECTURER'], permissions: ALL_COURSE_PERMISSIONS };
+export function admin(userId = OWNER_ID): Principal {
+  return { userId, roles: ['ADMIN'], permissions: ALL_COURSE_PERMISSIONS };
 }
 
 export function student(): Principal {
@@ -89,9 +88,9 @@ export class InMemoryCourseRepository implements CourseRepository {
     );
     return Promise.resolve(found ? clone(found) : null);
   }
-  findManagedById(id: string, ownerId: string, includeDeleted: boolean): Promise<Course | null> {
+  findManagedById(id: string, includeDeleted: boolean): Promise<Course | null> {
     const course = this.store.get(id);
-    if (!course || course.createdBy.value !== ownerId) return Promise.resolve(null);
+    if (!course) return Promise.resolve(null);
     return Promise.resolve(course.isDeleted && !includeDeleted ? null : clone(course));
   }
   loadForUpdate(id: string, includeDeleted = false): Promise<Course | null> {
@@ -104,7 +103,6 @@ export class InMemoryCourseRepository implements CourseRepository {
   listManaged(filter: ManagedCourseListFilter): Promise<CoursePage<Course>> {
     const all = [...this.store.values()].filter(
       (c) =>
-        c.createdBy.value === filter.ownerId &&
         (filter.includeDeleted || !c.isDeleted) &&
         (!filter.search || c.title.value.toLowerCase().includes(filter.search.toLowerCase())),
     );
@@ -171,14 +169,6 @@ export class FakeProblemCatalog implements CourseProblemCatalog {
   }
 }
 
-export class FakeReferenceChecker implements CourseReferenceChecker {
-  referenced = false;
-
-  hasCourseReferences(): Promise<boolean> {
-    return Promise.resolve(this.referenced);
-  }
-}
-
 export class InlineTransactionRunner implements TransactionRunner {
   run<T>(work: () => Promise<T>): Promise<T> {
     return work();
@@ -189,7 +179,6 @@ export class InlineTransactionRunner implements TransactionRunner {
 export function createCourseTestKit() {
   const repository = new InMemoryCourseRepository();
   const catalog = new FakeProblemCatalog();
-  const checker = new FakeReferenceChecker();
   const transactions = new InlineTransactionRunner();
   const authorization = new CourseAuthorizationService();
   const readiness = new CoursePublishReadinessService(new CourseReadiness(), catalog);
@@ -198,7 +187,6 @@ export function createCourseTestKit() {
   return {
     repository,
     catalog,
-    checker,
     transactions,
     authorization,
     readiness,

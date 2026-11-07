@@ -12,7 +12,7 @@ describe('readTrustedPrincipal', () => {
         'X-Auth-User-Id',
         USER_ID,
         'x-auth-roles',
-        ' LECTURER , STUDENT ,LECTURER ',
+        ' ADMIN , STUDENT ,ADMIN ',
         'x-auth-permissions',
         'problem:create, problem:read-managed,problem:create',
       ]),
@@ -20,7 +20,7 @@ describe('readTrustedPrincipal', () => {
 
     expect(principal).toEqual({
       userId: USER_ID,
-      roles: ['LECTURER', 'STUDENT'],
+      roles: ['ADMIN', 'STUDENT'],
       permissions: ['problem:create', 'problem:read-managed'],
     });
   });
@@ -45,7 +45,7 @@ describe('readTrustedPrincipal', () => {
           'x-auth-roles',
           'STUDENT',
           'x-auth-roles',
-          'LECTURER',
+          'ADMIN',
         ]),
       ),
     ).toThrow(UnauthorizedError);
@@ -70,13 +70,13 @@ describe('readTrustedPrincipal', () => {
         'x-auth-user-id',
         USER_ID,
         'x-auth-roles',
-        'LECTURER,,STUDENT,',
+        'ADMIN,,STUDENT,',
         'x-auth-permissions',
         'problem:create, ,problem:update',
       ]),
     );
 
-    expect(principal.roles).toEqual(['LECTURER', 'STUDENT']);
+    expect(principal.roles).toEqual(['ADMIN', 'STUDENT']);
     expect(principal.permissions).toEqual(['problem:create', 'problem:update']);
 
     const empty = readTrustedPrincipal(
@@ -88,7 +88,7 @@ describe('readTrustedPrincipal', () => {
   });
 
   it('rejects invalid patterns and values over the cap', () => {
-    for (const roles of ['Lecturer']) {
+    for (const roles of ['Admin']) {
       expect(() =>
         readTrustedPrincipal(requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', roles])),
       ).toThrow(UnauthorizedError);
@@ -124,7 +124,7 @@ describe('readTrustedPrincipal', () => {
 
   it('defaults missing permissions to an empty array', () => {
     const principal = readTrustedPrincipal(
-      requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', 'LECTURER']),
+      requestWith(['x-auth-user-id', USER_ID, 'x-auth-roles', 'ADMIN']),
     );
 
     expect(principal.permissions).toEqual([]);
@@ -163,14 +163,14 @@ describe('readTrustedPrincipal', () => {
   });
 
   it('does not retain references to the request header array', () => {
-    const rawHeaders = ['x-auth-user-id', USER_ID, 'x-auth-roles', 'LECTURER'];
+    const rawHeaders = ['x-auth-user-id', USER_ID, 'x-auth-roles', 'ADMIN'];
     const principal = readTrustedPrincipal(requestWith(rawHeaders));
 
     rawHeaders[1] = '00000000-0000-4000-8000-000000000099';
     rawHeaders[3] = 'ADMIN';
 
     expect(principal.userId).toBe(USER_ID);
-    expect(principal.roles).toEqual(['LECTURER']);
+    expect(principal.roles).toEqual(['ADMIN']);
   });
 });
 

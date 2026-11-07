@@ -62,14 +62,8 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     return entity === null ? null : this.mapper.toDomain(entity);
   }
 
-  async findManagedById(
-    id: string,
-    ownerId: string,
-    includeDeleted: boolean,
-  ): Promise<Problem | null> {
-    const query = this.baseQuery(this.transactionContext.getManager())
-      .where('p.id = :id', { id })
-      .andWhere('p.createdBy = :ownerId', { ownerId });
+  async findManagedById(id: string, includeDeleted: boolean): Promise<Problem | null> {
+    const query = this.baseQuery(this.transactionContext.getManager()).where('p.id = :id', { id });
 
     if (!includeDeleted) {
       query.andWhere('p.deletedAt IS NULL');
@@ -301,14 +295,13 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     await this.syncRelations(manager, problem);
   }
 
-  async softDelete(id: string, ownerId: string, at: Date): Promise<boolean> {
+  async softDelete(id: string, at: Date): Promise<boolean> {
     const result = await this.transactionContext
       .requireManager()
       .createQueryBuilder()
       .update(ProblemEntity)
       .set({ deletedAt: at, updatedAt: at })
       .where('id = :id', { id })
-      .andWhere('createdBy = :ownerId', { ownerId })
       .andWhere('deletedAt IS NULL')
       .andWhere('publishStatus IN (:...statuses)', {
         statuses: [EntityPublishStatus.Published, EntityPublishStatus.OnHold],
@@ -318,14 +311,13 @@ export class ProblemTypeOrmRepository implements ProblemRepository {
     return result.affected === 1;
   }
 
-  async restore(id: string, ownerId: string, at: Date): Promise<boolean> {
+  async restore(id: string, at: Date): Promise<boolean> {
     const result = await this.transactionContext
       .requireManager()
       .createQueryBuilder()
       .update(ProblemEntity)
       .set({ deletedAt: null, updatedAt: at })
       .where('id = :id', { id })
-      .andWhere('createdBy = :ownerId', { ownerId })
       .andWhere('deletedAt IS NOT NULL')
       .execute();
 
@@ -487,10 +479,8 @@ function applyManagedFilters(
   query: SelectQueryBuilder<ProblemEntity>,
   filter: ManagedProblemListFilter,
 ): SelectQueryBuilder<ProblemEntity> {
-  query.where('p.createdBy = :ownerId', { ownerId: filter.ownerId });
-
   if (!filter.includeDeleted) {
-    query.andWhere('p.deletedAt IS NULL');
+    query.where('p.deletedAt IS NULL');
   }
 
   return query;

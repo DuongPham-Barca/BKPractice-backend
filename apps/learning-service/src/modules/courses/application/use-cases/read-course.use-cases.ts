@@ -30,11 +30,7 @@ export class GetManagedCourseUseCase {
     includeDeleted: boolean,
   ): Promise<ManagedCourseResult> {
     this.authorization.requirePermission(principal, 'course:read-managed');
-    const course = await this.repository.findManagedById(
-      courseId,
-      principal.userId,
-      includeDeleted,
-    );
+    const course = await this.repository.findManagedById(courseId, includeDeleted);
     if (!course) throw new CourseNotFoundError('Course not found');
     return this.views.toManaged(course);
   }
@@ -57,7 +53,6 @@ export class ListManagedCoursesUseCase {
   ): Promise<CoursePage<ManagedCourseSummaryResult>> {
     this.authorization.requirePermission(principal, 'course:read-managed');
     const result = await this.repository.listManaged({
-      ownerId: principal.userId,
       includeDeleted,
       page,
       limit,

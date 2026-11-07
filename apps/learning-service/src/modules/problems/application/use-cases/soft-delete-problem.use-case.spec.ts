@@ -13,7 +13,7 @@ import { SoftDeleteProblemUseCase } from './soft-delete-problem.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:delete'],
 };
 
@@ -35,11 +35,7 @@ describe('SoftDeleteProblemUseCase', () => {
       publishStatus: 'PUBLISHED',
       deletedAt: problem.deletedAt,
     });
-    expect(repository.softDelete).toHaveBeenCalledWith(
-      problem.id.value,
-      TEST_USER_ID,
-      expect.any(Date),
-    );
+    expect(repository.softDelete).toHaveBeenCalledWith(problem.id.value, expect.any(Date));
     expect(transactionRunner.run).toHaveBeenCalledTimes(1);
   });
 
@@ -53,7 +49,7 @@ describe('SoftDeleteProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('rejects deleting a draft problem', async () => {
@@ -125,7 +121,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

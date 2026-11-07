@@ -20,7 +20,7 @@ export interface MutationOptions {
 
 /**
  * Khung chung cho mọi thao tác ghi lên một Course có sẵn: kiểm quyền, mở transaction, khoá dòng
- * (`loadForUpdate`), kiểm sở hữu, áp thay đổi, lưu cả aggregate rồi dựng biểu diễn quản lý.
+ * (`loadForUpdate`), áp thay đổi, lưu cả aggregate rồi dựng biểu diễn quản lý.
  * Biểu diễn quản lý được dựng trong transaction để lỗi đọc catalog cũng rollback thay vì trả 500
  * sau khi đã commit. Lỗi ở bất kỳ bước nào để nguyên state (FR-016).
  *
@@ -70,7 +70,6 @@ export class CourseMutationService {
   ): Promise<Course> {
     const loaded = await this.repository.loadForUpdate(courseId, options.includeDeleted ?? false);
     if (!loaded) throw new CourseNotFoundError('Course not found');
-    this.authorization.requireOwnership(loaded.createdBy.value, principal);
     await change(loaded);
     await this.repository.save(loaded);
     return loaded;
