@@ -26,6 +26,26 @@ describe('AcceptedSubmission and ProblemProgress', () => {
     expect(() => AcceptedSubmission.parse(value)).toThrow(InvalidAcceptedSubmission);
   });
 
+  it('canonicalizes every UUID before comparing progress identity', () => {
+    const identifiers = {
+      eventId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      submissionId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      userId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      problemId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    };
+    const event = AcceptedSubmission.parse({
+      ...EVENT,
+      ...Object.fromEntries(
+        Object.entries(identifiers).map(([key, value]) => [key, value.toUpperCase()]),
+      ),
+    });
+    expect(event).toMatchObject(identifiers);
+    const existing = ProblemProgress.firstSolve(
+      AcceptedSubmission.parse({ ...EVENT, ...identifiers }),
+    );
+    expect(existing.applyAccepted(event).bestScore).toBe(EVENT.score);
+  });
+
   it('uses the earliest solve time and highest score regardless of event order', () => {
     const events = [
       AcceptedSubmission.parse(EVENT),

@@ -38,10 +38,10 @@ export class AcceptedSubmission {
     const occurredAt = new Date(event.occurredAt);
     if (Number.isNaN(occurredAt.getTime())) throw new InvalidAcceptedSubmission();
     return new AcceptedSubmission(
-      event.eventId,
-      event.submissionId,
-      event.userId,
-      event.problemId,
+      event.eventId.toLowerCase(),
+      event.submissionId.toLowerCase(),
+      event.userId.toLowerCase(),
+      event.problemId.toLowerCase(),
       occurredAt,
       event.score as number,
     );

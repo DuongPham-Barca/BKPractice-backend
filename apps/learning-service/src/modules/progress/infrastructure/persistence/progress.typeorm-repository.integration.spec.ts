@@ -106,6 +106,41 @@ describeIntegration('Progress accepted event persistence (real PostgreSQL)', () 
     expect(await useCase.execute(event)).toBe('APPLIED');
   });
 
+  it('applies mixed-case UUIDs to existing progress and deduplicates an event across casing', async () => {
+    const mixedProblemId = randomUUID();
+    const first = {
+      eventId: randomUUID(),
+      submissionId: randomUUID(),
+      userId,
+      problemId: mixedProblemId,
+      occurredAt: '2026-03-02T00:00:00.000Z',
+      score: 40,
+    };
+    expect(await useCase.execute(first)).toBe('APPLIED');
+    const second = {
+      ...first,
+      eventId: randomUUID(),
+      submissionId: randomUUID(),
+      occurredAt: '2026-03-01T00:00:00.000Z',
+      score: 90,
+    };
+    const uppercase = {
+      ...second,
+      eventId: second.eventId.toUpperCase(),
+      submissionId: second.submissionId.toUpperCase(),
+      userId: userId.toUpperCase(),
+      problemId: mixedProblemId.toUpperCase(),
+    };
+    expect(await useCase.execute(uppercase)).toBe('APPLIED');
+    expect(await useCase.execute(second)).toBe('DUPLICATE');
+    const rows: Array<{ best_score: number; solved_at: Date }> = await dataSource.query(
+      'SELECT best_score, solved_at FROM progress WHERE user_id = $1 AND problem_id = $2',
+      [userId, mixedProblemId],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ best_score: 90, solved_at: new Date(second.occurredAt) });
+  });
+
   it('upgrades a historical ATTEMPTED row when an accepted event arrives', async () => {
     const historicalProblemId = randomUUID();
     await dataSource.query(

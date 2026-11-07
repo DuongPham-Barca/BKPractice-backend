@@ -4,17 +4,19 @@ import type {
 } from '@learning/modules/problems/application/ports/out/problem-reference-reader.port.out';
 import { Problem } from '@learning/modules/problems/entities/problem.entity';
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+
+import { TypeOrmTransactionContext } from '@/modules/problems/infrastructure/persistence/typeorm-transaction-context';
 
 @Injectable()
 export class ProblemReferenceReaderAdapter implements ProblemReferenceReader {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly context: TypeOrmTransactionContext) {}
 
   async getProblemReferences(
     problemIds: readonly string[],
   ): Promise<readonly ProblemReferenceInfo[]> {
     if (problemIds.length === 0) return [];
-    const rows = await this.dataSource
+    const rows = await this.context
+      .getManager()
       .getRepository(Problem)
       .createQueryBuilder('p')
       .select([

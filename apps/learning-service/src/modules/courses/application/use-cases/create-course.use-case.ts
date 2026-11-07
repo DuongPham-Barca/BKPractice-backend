@@ -12,6 +12,7 @@ import {
 } from '@/modules/courses/application/services';
 import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
 import { Course } from '@/modules/courses/domain';
+import { DomainValidationError } from '@/modules/courses/domain/errors';
 import type { CourseRepository } from '@/modules/courses/domain/repositories';
 import { CreatedBy } from '@/modules/courses/domain/value-objects';
 
@@ -26,6 +27,9 @@ export class CreateCourseUseCase implements ICreateCoursePortIn {
 
   async execute(principal: Principal, command: CreateCourseCommand): Promise<ManagedCourseResult> {
     this.authorization.requirePermission(principal, 'course:create');
+    if (command.slug.value.toLowerCase() === 'managed') {
+      throw new DomainValidationError('slug', 'This slug is reserved for course management');
+    }
     const course = await this.transactionRunner.run(async () => {
       if (!(await this.repository.isSlugAvailable(command.slug.value))) {
         throw new DuplicateCourseSlugError('Course slug is already in use');

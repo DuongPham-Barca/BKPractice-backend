@@ -307,3 +307,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 > File này là danh sách kiểm tra triển khai, không phải đặc tả. Không thêm yêu cầu và không âm thầm
 > thay đổi `spec.md` hay `plan.md` đã Approved trong lúc thực hiện.
+
+## Sửa lỗi review PR — 2026-11-07
+
+- [x] Chuẩn hoá bốn UUID của accepted event sau validation.
+- [x] Kiểm thử event hoa/thường, retry/idempotency trên PostgreSQL và ghi worked entry.

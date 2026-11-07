@@ -2,7 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCourseRequestDto {
-  @ApiProperty({ maxLength: 220, description: 'Unique, immutable after creation.' })
+  @ApiProperty({
+    maxLength: 220,
+    description:
+      'Unique, immutable after creation. The slug managed is reserved (case-insensitive).',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(220)

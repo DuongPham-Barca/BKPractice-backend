@@ -8,6 +8,8 @@ import { DataSource } from 'typeorm';
 
 import { ProblemReferenceReaderAdapter } from './problem-reference-reader.adapter';
 
+import { TypeOrmTransactionContext } from '@/modules/problems/infrastructure/persistence/typeorm-transaction-context';
+
 assertTestDatabase();
 const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
 
@@ -36,7 +38,7 @@ describeIntegration('ProblemReferenceReaderAdapter (real PostgreSQL)', () => {
       publishStatus: 'ON_HOLD',
       deleted: true,
     });
-    reader = new ProblemReferenceReaderAdapter(dataSource);
+    reader = new ProblemReferenceReaderAdapter(new TypeOrmTransactionContext(dataSource));
   });
 
   afterAll(async () => {

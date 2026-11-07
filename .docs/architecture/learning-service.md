@@ -143,6 +143,11 @@ it and do not move it into `libs/`. The trusted principal is a transport concern
 `@TrustedPrincipal()`/`TrustedPrincipalGuard` in presentation instead of introducing a shared
 principal port. Avoid creating a generic shared Learning service.
 
+Course and Problem transaction contexts reuse the same infrastructure-only AsyncLocalStorage for
+each DataSource. Read adapters use the active manager so a Course workflow does not acquire a
+second pool connection to read Problem references. Separate requests and DataSources retain
+isolated transaction state.
+
 ## Current implementation and status
 
 Problems and Courses use domain aggregates, application use cases and TypeORM adapters. Course

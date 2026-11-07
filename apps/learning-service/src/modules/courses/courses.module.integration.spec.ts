@@ -54,7 +54,10 @@ describeIntegration('CoursesModule wiring (real PostgreSQL)', () => {
           ignoreEnvFile: true,
           load: [() => ({ INTERNAL_SERVICE_SECRET: 'integration-test-only' })],
         }),
-        TypeOrmModule.forRoot({ ...learningDataSourceOptions(), migrationsRun: true }),
+        TypeOrmModule.forRoot({
+          ...learningDataSourceOptions({ extra: { max: 1, connectionTimeoutMillis: 1500 } }),
+          migrationsRun: true,
+        }),
         CoursesModule,
       ],
     }).compile();

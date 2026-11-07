@@ -59,6 +59,7 @@ import { CourseReadiness } from '@/modules/courses/domain/services';
 import { ManagedChaptersController } from '@/modules/courses/presentation/http/managed-chapters.controller';
 import { ManagedCoursesController } from '@/modules/courses/presentation/http/managed-courses.controller';
 import { PublicCoursesController } from '@/modules/courses/presentation/http/public-courses.controller';
+import { courseWithProblem } from '@/modules/courses/testing';
 import {
   ALL_COURSE_PERMISSIONS,
   FakeProblemCatalog,
@@ -231,6 +232,30 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
     expect((await attach(id, chapterId)).status).toBe(201);
     return { id, chapterId };
   }
+
+  it.each(['managed', 'Managed', 'MANAGED', ' managed '])(
+    'rejects reserved slug %s without persisting a course',
+    async (slug) => {
+      const response = await call('POST', '/api/courses', { body: { slug, title: 'Reserved' } });
+      expect(response.status).toBe(400);
+      expect(repository.store.size).toBe(0);
+      expect(repository.saveCount).toBe(0);
+    },
+  );
+
+  it('still serves a historical course with a reserved slug by id', async () => {
+    const course = courseWithProblem(PROBLEM_ID, 'managed');
+    course.publish();
+    repository.store.set(course.id.value, course);
+    const response = await call('GET', `/api/courses/${course.id.value}`, {
+      headers: studentHeaders(),
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.slug).toBe('managed');
+    expect((await call('GET', '/api/courses/managed', { headers: studentHeaders() })).status).toBe(
+      403,
+    );
+  });
 
   describe('status codes and shapes per route', () => {
     it('follows the plan table for every route', async () => {

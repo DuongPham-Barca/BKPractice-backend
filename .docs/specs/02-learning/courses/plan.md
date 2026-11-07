@@ -14,6 +14,12 @@ Refactor theo yêu cầu chủ dự án, giữ hợp đồng LRN-003 và quyền
 - `CourseRequestMapper` chuyển DTO tạo/cập nhật sang command; filter ở `presentation/http/filters`. DTO tách theo tạo, cập nhật, chapter, sắp xếp và query.
 - Duy trì barrel trong mỗi thư mục và import qua alias `@/modules/courses/*`. Alias cụ thể được khai báo trong TypeScript/Jest để không đè alias của Identity.
 
+## Sửa lỗi review PR — 2026-11-07
+
+- Course và Problem dùng chung AsyncLocalStorage transaction được phân vùng theo DataSource ở infrastructure của Learning. Context của từng module giữ API hiện tại; `ProblemReferenceReaderAdapter` đọc bằng manager của transaction đang chạy, không lấy connection thứ hai.
+- Từ chối tạo Course có slug `managed` (không phân biệt hoa/thường sau chuẩn hoá) vì trùng route quản lý. Kiểm tra trong use case tạo, giữ khả năng rehydrate và đọc bằng ID cho dữ liệu cũ. Swagger ghi rõ slug dành riêng.
+- Kiểm thử toàn bộ vòng đời qua CoursesModule thật với pool PostgreSQL chỉ có một connection; kiểm thử cô lập context giữa request/DataSource; kiểm thử API từ chối slug và không ghi state.
+
 ## Trạng thái
 
 Approved
