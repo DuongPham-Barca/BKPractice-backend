@@ -2,6 +2,8 @@
 
 > Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
 
+> Cập nhật triển khai 2026-11-07: Luồng ghi `submission.accepted` đã chuyển sang domain aggregate, use case, port và adapter TypeORM; đã thử trên PostgreSQL cách ly. API đọc tiến độ cá nhân vẫn thuộc phần việc tiếp theo.
+
 ## Trạng thái
 
 Approved

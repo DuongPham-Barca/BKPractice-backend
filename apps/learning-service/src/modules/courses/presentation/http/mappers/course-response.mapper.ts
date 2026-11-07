@@ -1,10 +1,10 @@
-import type { CoursePage } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
   ManagedCourseResult,
   ManagedCourseSummaryResult,
 } from '@learning/modules/courses/application/results/course.results';
+import type { CoursePage } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import type {
   CourseDetailResponseDto,
   CourseListResponseDto,

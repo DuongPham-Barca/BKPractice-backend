@@ -2,6 +2,8 @@
 
 > Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
 
+> Cập nhật pattern 2026-11-07: `CourseRepository` đã ở `domain/repositories`; controller Course inject inbound port của từng use case qua token. Các task chưa đánh dấu bên dưới còn phụ thuộc các phần kiểm chứng khác của LRN-003.
+
 ## Trạng thái
 
 Approved — Sẵn sàng triển khai sau LRN-001

@@ -1,5 +1,25 @@
 import type { AddressInfo } from 'node:net';
 
+import {
+  ADD_CHAPTER_PORT_IN,
+  ATTACH_PROBLEM_PORT_IN,
+  CREATE_COURSE_PORT_IN,
+  DELETE_COURSE_PORT_IN,
+  DETACH_PROBLEM_PORT_IN,
+  GET_MANAGED_COURSE_PORT_IN,
+  GET_PUBLISHED_COURSE_PORT_IN,
+  HOLD_COURSE_PORT_IN,
+  LIST_MANAGED_COURSES_PORT_IN,
+  LIST_PUBLISHED_COURSES_PORT_IN,
+  PUBLISH_COURSE_PORT_IN,
+  REMOVE_CHAPTER_PORT_IN,
+  REORDER_CHAPTER_PROBLEMS_PORT_IN,
+  REORDER_CHAPTERS_PORT_IN,
+  REPUBLISH_COURSE_PORT_IN,
+  RESTORE_COURSE_PORT_IN,
+  UPDATE_CHAPTER_PORT_IN,
+  UPDATE_COURSE_PORT_IN,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
 import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
 import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
@@ -125,6 +145,24 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
         { provide: COURSE_REPOSITORY, useValue: repository },
         { provide: COURSE_PROBLEM_CATALOG, useValue: catalog },
         { provide: COURSE_TRANSACTION_RUNNER, useValue: new InlineTransactionRunner() },
+        { provide: CREATE_COURSE_PORT_IN, useExisting: CreateCourseUseCase },
+        { provide: UPDATE_COURSE_PORT_IN, useExisting: UpdateCourseUseCase },
+        { provide: PUBLISH_COURSE_PORT_IN, useExisting: PublishCourseUseCase },
+        { provide: HOLD_COURSE_PORT_IN, useExisting: HoldCourseUseCase },
+        { provide: REPUBLISH_COURSE_PORT_IN, useExisting: RepublishCourseUseCase },
+        { provide: DELETE_COURSE_PORT_IN, useExisting: DeleteCourseUseCase },
+        { provide: RESTORE_COURSE_PORT_IN, useExisting: RestoreCourseUseCase },
+        { provide: ADD_CHAPTER_PORT_IN, useExisting: AddChapterUseCase },
+        { provide: UPDATE_CHAPTER_PORT_IN, useExisting: UpdateChapterUseCase },
+        { provide: REMOVE_CHAPTER_PORT_IN, useExisting: RemoveChapterUseCase },
+        { provide: REORDER_CHAPTERS_PORT_IN, useExisting: ReorderChaptersUseCase },
+        { provide: ATTACH_PROBLEM_PORT_IN, useExisting: AttachProblemUseCase },
+        { provide: DETACH_PROBLEM_PORT_IN, useExisting: DetachProblemUseCase },
+        { provide: REORDER_CHAPTER_PROBLEMS_PORT_IN, useExisting: ReorderChapterProblemsUseCase },
+        { provide: GET_MANAGED_COURSE_PORT_IN, useExisting: GetManagedCourseUseCase },
+        { provide: LIST_MANAGED_COURSES_PORT_IN, useExisting: ListManagedCoursesUseCase },
+        { provide: GET_PUBLISHED_COURSE_PORT_IN, useExisting: GetPublishedCourseUseCase },
+        { provide: LIST_PUBLISHED_COURSES_PORT_IN, useExisting: ListPublishedCoursesUseCase },
       ],
     }).compile();
     app = moduleRef.createNestApplication<NestExpressApplication>();
@@ -333,6 +371,9 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
           expect.arrayContaining(['400', '401', '403', '404', '409']),
         );
       }
+      expect(JSON.stringify(document.paths)).not.toMatch(
+        /\bown courses\b|\bnot the owner\b|\bor referenced\b/i,
+      );
       const schemas = Object.keys(document.components?.schemas ?? {});
       expect(schemas).toEqual(
         expect.arrayContaining([

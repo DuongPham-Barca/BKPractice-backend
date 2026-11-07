@@ -1,10 +1,11 @@
 import { CourseNotFoundError } from '@learning/modules/courses/application/errors/application-errors';
 import type { Principal } from '@learning/modules/courses/application/models/principal';
 import type {
-  CourseListFilter,
-  CoursePage,
-  CourseRepository,
-} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+  IGetManagedCoursePortIn,
+  IGetPublishedCoursePortIn,
+  IListManagedCoursesPortIn,
+  IListPublishedCoursesPortIn,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import type {
   LearnerCourseResult,
   LearnerCourseSummaryResult,
@@ -14,10 +15,15 @@ import type {
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
 import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
 import { COURSE_REPOSITORY } from '@learning/modules/courses/course.tokens';
+import type {
+  CourseListFilter,
+  CoursePage,
+  CourseRepository,
+} from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class GetManagedCourseUseCase {
+export class GetManagedCourseUseCase implements IGetManagedCoursePortIn {
   constructor(
     private readonly authorization: CourseAuthorizationService,
     private readonly views: CourseViewAssembler,
@@ -37,7 +43,7 @@ export class GetManagedCourseUseCase {
 }
 
 @Injectable()
-export class ListManagedCoursesUseCase {
+export class ListManagedCoursesUseCase implements IListManagedCoursesPortIn {
   constructor(
     private readonly authorization: CourseAuthorizationService,
     private readonly views: CourseViewAssembler,
@@ -63,7 +69,7 @@ export class ListManagedCoursesUseCase {
 }
 
 @Injectable()
-export class GetPublishedCourseUseCase {
+export class GetPublishedCourseUseCase implements IGetPublishedCoursePortIn {
   constructor(
     private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
@@ -77,7 +83,7 @@ export class GetPublishedCourseUseCase {
 }
 
 @Injectable()
-export class ListPublishedCoursesUseCase {
+export class ListPublishedCoursesUseCase implements IListPublishedCoursesPortIn {
   constructor(
     private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,

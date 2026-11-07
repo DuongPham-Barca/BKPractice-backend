@@ -1,7 +1,7 @@
 import type { CreateCourseCommand } from '@learning/modules/courses/application/commands/course.commands';
 import { DuplicateCourseSlugError } from '@learning/modules/courses/application/errors/application-errors';
 import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type { CourseRepository } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+import type { ICreateCoursePortIn } from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
@@ -11,11 +11,12 @@ import {
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
 import { Course } from '@learning/modules/courses/domain/course.aggregate';
+import type { CourseRepository } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import { CreatedBy } from '@learning/modules/courses/domain/value-objects';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class CreateCourseUseCase {
+export class CreateCourseUseCase implements ICreateCoursePortIn {
   constructor(
     private readonly authorization: CourseAuthorizationService,
     private readonly views: CourseViewAssembler,

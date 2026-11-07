@@ -1,6 +1,12 @@
 import { CourseNotFoundError } from '@learning/modules/courses/application/errors/application-errors';
 import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type { CourseRepository } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
+import type {
+  IDeleteCoursePortIn,
+  IHoldCoursePortIn,
+  IPublishCoursePortIn,
+  IRepublishCoursePortIn,
+  IRestoreCoursePortIn,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
@@ -11,10 +17,11 @@ import {
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
 import { InvalidCourseState } from '@learning/modules/courses/domain/errors/domain-validation.error';
+import type { CourseRepository } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class PublishCourseUseCase {
+export class PublishCourseUseCase implements IPublishCoursePortIn {
   constructor(
     private readonly mutation: CourseMutationService,
     private readonly readiness: CoursePublishReadinessService,
@@ -34,7 +41,7 @@ export class PublishCourseUseCase {
 }
 
 @Injectable()
-export class HoldCourseUseCase {
+export class HoldCourseUseCase implements IHoldCoursePortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(principal: Principal, courseId: string, now = new Date()): Promise<ManagedCourseResult> {
@@ -45,7 +52,7 @@ export class HoldCourseUseCase {
 }
 
 @Injectable()
-export class RepublishCourseUseCase {
+export class RepublishCourseUseCase implements IRepublishCoursePortIn {
   constructor(
     private readonly mutation: CourseMutationService,
     private readonly readiness: CoursePublishReadinessService,
@@ -65,7 +72,7 @@ export class RepublishCourseUseCase {
 }
 
 @Injectable()
-export class RestoreCourseUseCase {
+export class RestoreCourseUseCase implements IRestoreCoursePortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(principal: Principal, courseId: string, now = new Date()): Promise<ManagedCourseResult> {
@@ -86,7 +93,7 @@ export class RestoreCourseUseCase {
  * `PUBLISHED`/`ON_HOLD` chỉ xoá mềm, giữ nguyên trạng thái để khôi phục (FR-007, FR-018).
  */
 @Injectable()
-export class DeleteCourseUseCase {
+export class DeleteCourseUseCase implements IDeleteCoursePortIn {
   constructor(
     private readonly authorization: CourseAuthorizationService,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,

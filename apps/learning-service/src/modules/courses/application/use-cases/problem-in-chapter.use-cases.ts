@@ -1,5 +1,10 @@
 import { ProblemNotAttachableError } from '@learning/modules/courses/application/errors/application-errors';
 import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type {
+  IAttachProblemPortIn,
+  IDetachProblemPortIn,
+  IReorderChapterProblemsPortIn,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import type { CourseProblemCatalog } from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
 import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
 import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
@@ -10,7 +15,7 @@ import type { ChapterId, ProblemReference } from '@learning/modules/courses/doma
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class AttachProblemUseCase {
+export class AttachProblemUseCase implements IAttachProblemPortIn {
   private readonly attachPolicy = new ProblemAttachPolicy();
 
   constructor(
@@ -43,7 +48,7 @@ export class AttachProblemUseCase {
 }
 
 @Injectable()
-export class DetachProblemUseCase {
+export class DetachProblemUseCase implements IDetachProblemPortIn {
   constructor(
     private readonly mutation: CourseMutationService,
     private readonly readiness: CoursePublishReadinessService,
@@ -64,7 +69,7 @@ export class DetachProblemUseCase {
 }
 
 @Injectable()
-export class ReorderChapterProblemsUseCase {
+export class ReorderChapterProblemsUseCase implements IReorderChapterProblemsPortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(

@@ -1,4 +1,10 @@
 import type { Principal } from '@learning/modules/courses/application/models/principal';
+import type {
+  IAddChapterPortIn,
+  IRemoveChapterPortIn,
+  IReorderChaptersPortIn,
+  IUpdateChapterPortIn,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
 import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
 import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
@@ -10,7 +16,7 @@ import type {
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class AddChapterUseCase {
+export class AddChapterUseCase implements IAddChapterPortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(
@@ -28,7 +34,7 @@ export class AddChapterUseCase {
 }
 
 @Injectable()
-export class UpdateChapterUseCase {
+export class UpdateChapterUseCase implements IUpdateChapterPortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(
@@ -46,7 +52,7 @@ export class UpdateChapterUseCase {
 }
 
 @Injectable()
-export class RemoveChapterUseCase {
+export class RemoveChapterUseCase implements IRemoveChapterPortIn {
   constructor(
     private readonly mutation: CourseMutationService,
     private readonly readiness: CoursePublishReadinessService,
@@ -66,7 +72,7 @@ export class RemoveChapterUseCase {
 }
 
 @Injectable()
-export class ReorderChaptersUseCase {
+export class ReorderChaptersUseCase implements IReorderChaptersPortIn {
   constructor(private readonly mutation: CourseMutationService) {}
 
   execute(

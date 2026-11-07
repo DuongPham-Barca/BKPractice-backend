@@ -1,6 +1,5 @@
 import { CourseNotFoundError } from '@learning/modules/courses/application/errors/application-errors';
 import type { Principal } from '@learning/modules/courses/application/models/principal';
-import type { CourseRepository } from '@learning/modules/courses/application/ports/out/course-repository.port.out';
 import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import type { ManagedCourseResult } from '@learning/modules/courses/application/results/course.results';
 import {
@@ -8,6 +7,7 @@ import {
   COURSE_TRANSACTION_RUNNER,
 } from '@learning/modules/courses/course.tokens';
 import type { Course } from '@learning/modules/courses/domain/course.aggregate';
+import type { CourseRepository } from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CourseAuthorizationService } from './course-authorization.service';
@@ -44,7 +44,7 @@ export class CourseMutationService {
   ): Promise<ManagedCourseResult> {
     this.authorization.requirePermission(principal, permission);
     return this.transactionRunner.run(async () => {
-      const course = await this.apply(principal, courseId, change, options);
+      const course = await this.apply(courseId, change, options);
       return this.views.toManaged(course);
     });
   }
@@ -58,12 +58,11 @@ export class CourseMutationService {
   ): Promise<void> {
     this.authorization.requirePermission(principal, permission);
     await this.transactionRunner.run(async () => {
-      await this.apply(principal, courseId, change, options);
+      await this.apply(courseId, change, options);
     });
   }
 
   private async apply(
-    principal: Principal,
     courseId: string,
     change: (course: Course) => void | Promise<void>,
     options: MutationOptions,

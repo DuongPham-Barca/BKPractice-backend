@@ -2,14 +2,14 @@ import {
   DuplicateCourseSlugError,
   ProblemNotAttachableError,
 } from '@learning/modules/courses/application/errors/application-errors';
+import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
+import { ProblemAlreadyInCourse } from '@learning/modules/courses/domain/errors/domain-validation.error';
 import type {
   CourseRepository,
   CourseListFilter,
   ManagedCourseListFilter,
   CoursePage,
-} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
-import { Course as CourseAggregate } from '@learning/modules/courses/domain/course.aggregate';
-import { ProblemAlreadyInCourse } from '@learning/modules/courses/domain/errors/domain-validation.error';
+} from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import {
   Course as CourseEntity,
   Chapter as ChapterEntity,

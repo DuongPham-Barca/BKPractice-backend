@@ -8,6 +8,7 @@ import {
   TestCase,
   Topic,
 } from './problems/entities/problem.entity';
+import { ProgressEventReceipt } from './progress/entities/progress-event-receipt.entity';
 import { Progress } from './progress/entities/progress.entity';
 
 export const learningEntities = [
@@ -22,4 +23,5 @@ export const learningEntities = [
   Chapter,
   ChapterProblem,
   Progress,
+  ProgressEventReceipt,
 ];

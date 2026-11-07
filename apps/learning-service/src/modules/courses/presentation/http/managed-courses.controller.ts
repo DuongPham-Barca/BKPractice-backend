@@ -1,30 +1,44 @@
 import type { Principal } from '@learning/modules/courses/application/models/principal';
 import {
-  AddChapterUseCase,
-  RemoveChapterUseCase,
-  ReorderChaptersUseCase,
-  UpdateChapterUseCase,
-} from '@learning/modules/courses/application/use-cases/chapter.use-cases';
-import {
-  DeleteCourseUseCase,
-  HoldCourseUseCase,
-  PublishCourseUseCase,
-  RepublishCourseUseCase,
-  RestoreCourseUseCase,
-} from '@learning/modules/courses/application/use-cases/course-lifecycle.use-cases';
-import { CreateCourseUseCase } from '@learning/modules/courses/application/use-cases/create-course.use-case';
-import {
-  AttachProblemUseCase,
-  DetachProblemUseCase,
-  ReorderChapterProblemsUseCase,
-} from '@learning/modules/courses/application/use-cases/problem-in-chapter.use-cases';
-import {
-  GetManagedCourseUseCase,
-  GetPublishedCourseUseCase,
-  ListManagedCoursesUseCase,
-  ListPublishedCoursesUseCase,
-} from '@learning/modules/courses/application/use-cases/read-course.use-cases';
-import { UpdateCourseUseCase } from '@learning/modules/courses/application/use-cases/update-course.use-case';
+  ADD_CHAPTER_PORT_IN,
+  ATTACH_PROBLEM_PORT_IN,
+  CREATE_COURSE_PORT_IN,
+  DELETE_COURSE_PORT_IN,
+  DETACH_PROBLEM_PORT_IN,
+  GET_MANAGED_COURSE_PORT_IN,
+  GET_PUBLISHED_COURSE_PORT_IN,
+  HOLD_COURSE_PORT_IN,
+  LIST_MANAGED_COURSES_PORT_IN,
+  LIST_PUBLISHED_COURSES_PORT_IN,
+  PUBLISH_COURSE_PORT_IN,
+  REMOVE_CHAPTER_PORT_IN,
+  REORDER_CHAPTER_PROBLEMS_PORT_IN,
+  REORDER_CHAPTERS_PORT_IN,
+  REPUBLISH_COURSE_PORT_IN,
+  RESTORE_COURSE_PORT_IN,
+  UPDATE_CHAPTER_PORT_IN,
+  UPDATE_COURSE_PORT_IN,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
+import type {
+  IAddChapterPortIn,
+  IAttachProblemPortIn,
+  ICreateCoursePortIn,
+  IDeleteCoursePortIn,
+  IDetachProblemPortIn,
+  IGetManagedCoursePortIn,
+  IGetPublishedCoursePortIn,
+  IHoldCoursePortIn,
+  IListManagedCoursesPortIn,
+  IListPublishedCoursesPortIn,
+  IPublishCoursePortIn,
+  IRemoveChapterPortIn,
+  IReorderChapterProblemsPortIn,
+  IReorderChaptersPortIn,
+  IRepublishCoursePortIn,
+  IRestoreCoursePortIn,
+  IUpdateChapterPortIn,
+  IUpdateCoursePortIn,
+} from '@learning/modules/courses/application/ports/in/course-use-cases.port.in';
 import {
   ChapterDescription,
   ChapterId,
@@ -67,6 +81,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -97,33 +112,37 @@ import {
 @ApiTags('courses')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Missing or malformed trusted principal headers.' })
-@ApiForbiddenResponse({ description: 'Missing role/permission or not the owner.' })
+@ApiForbiddenResponse({ description: 'Missing ADMIN role or required course permission.' })
 @ApiBadRequestResponse({ description: 'Validation, limit or readiness failure.' })
-@ApiConflictResponse({ description: 'Invalid state, duplicate slug/problem or referenced.' })
+@ApiConflictResponse({ description: 'Invalid state or duplicate slug/problem.' })
 @ApiNotFoundResponse({ description: 'Course or chapter not found.' })
 @UseGuards(TrustedPrincipalGuard)
 @UseFilters(CourseExceptionFilter)
 @Controller('api/courses')
 export class ManagedCoursesController {
   constructor(
-    private readonly createCourse: CreateCourseUseCase,
-    private readonly updateCourse: UpdateCourseUseCase,
-    private readonly publishCourse: PublishCourseUseCase,
-    private readonly holdCourse: HoldCourseUseCase,
-    private readonly republishCourse: RepublishCourseUseCase,
-    private readonly deleteCourse: DeleteCourseUseCase,
-    private readonly restoreCourse: RestoreCourseUseCase,
-    private readonly addChapter: AddChapterUseCase,
-    private readonly updateChapter: UpdateChapterUseCase,
-    private readonly removeChapter: RemoveChapterUseCase,
-    private readonly reorderChapters: ReorderChaptersUseCase,
-    private readonly attachProblem: AttachProblemUseCase,
-    private readonly detachProblem: DetachProblemUseCase,
-    private readonly reorderProblems: ReorderChapterProblemsUseCase,
-    private readonly getManagedCourse: GetManagedCourseUseCase,
-    private readonly listManagedCourses: ListManagedCoursesUseCase,
-    private readonly getPublishedCourse: GetPublishedCourseUseCase,
-    private readonly listPublishedCourses: ListPublishedCoursesUseCase,
+    @Inject(CREATE_COURSE_PORT_IN) private readonly createCourse: ICreateCoursePortIn,
+    @Inject(UPDATE_COURSE_PORT_IN) private readonly updateCourse: IUpdateCoursePortIn,
+    @Inject(PUBLISH_COURSE_PORT_IN) private readonly publishCourse: IPublishCoursePortIn,
+    @Inject(HOLD_COURSE_PORT_IN) private readonly holdCourse: IHoldCoursePortIn,
+    @Inject(REPUBLISH_COURSE_PORT_IN) private readonly republishCourse: IRepublishCoursePortIn,
+    @Inject(DELETE_COURSE_PORT_IN) private readonly deleteCourse: IDeleteCoursePortIn,
+    @Inject(RESTORE_COURSE_PORT_IN) private readonly restoreCourse: IRestoreCoursePortIn,
+    @Inject(ADD_CHAPTER_PORT_IN) private readonly addChapter: IAddChapterPortIn,
+    @Inject(UPDATE_CHAPTER_PORT_IN) private readonly updateChapter: IUpdateChapterPortIn,
+    @Inject(REMOVE_CHAPTER_PORT_IN) private readonly removeChapter: IRemoveChapterPortIn,
+    @Inject(REORDER_CHAPTERS_PORT_IN) private readonly reorderChapters: IReorderChaptersPortIn,
+    @Inject(ATTACH_PROBLEM_PORT_IN) private readonly attachProblem: IAttachProblemPortIn,
+    @Inject(DETACH_PROBLEM_PORT_IN) private readonly detachProblem: IDetachProblemPortIn,
+    @Inject(REORDER_CHAPTER_PROBLEMS_PORT_IN)
+    private readonly reorderProblems: IReorderChapterProblemsPortIn,
+    @Inject(GET_MANAGED_COURSE_PORT_IN) private readonly getManagedCourse: IGetManagedCoursePortIn,
+    @Inject(LIST_MANAGED_COURSES_PORT_IN)
+    private readonly listManagedCourses: IListManagedCoursesPortIn,
+    @Inject(GET_PUBLISHED_COURSE_PORT_IN)
+    private readonly getPublishedCourse: IGetPublishedCoursePortIn,
+    @Inject(LIST_PUBLISHED_COURSES_PORT_IN)
+    private readonly listPublishedCourses: IListPublishedCoursesPortIn,
   ) {}
 
   @ApiOperation({ summary: 'List published courses' })
@@ -139,7 +158,7 @@ export class ManagedCoursesController {
     );
   }
 
-  @ApiOperation({ summary: 'List own courses in any state' })
+  @ApiOperation({ summary: 'List courses managed by ADMIN in any state' })
   @ApiOkResponse({ type: ManagedCourseListResponseDto })
   @Get('managed')
   async listManaged(
@@ -157,7 +176,7 @@ export class ManagedCoursesController {
     );
   }
 
-  @ApiOperation({ summary: 'Get own course with problem states and readiness' })
+  @ApiOperation({ summary: 'Get a managed course with problem states and readiness' })
   @ApiOkResponse({ type: ManagedCourseResponseDto })
   @Get('managed/:id')
   async getManaged(

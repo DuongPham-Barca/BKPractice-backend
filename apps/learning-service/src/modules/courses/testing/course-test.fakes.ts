@@ -3,18 +3,18 @@ import type {
   CourseProblemCatalog,
   ProblemSummary,
 } from '@learning/modules/courses/application/ports/out/course-problem-catalog.port.out';
-import type {
-  CourseListFilter,
-  CoursePage,
-  CourseRepository,
-  ManagedCourseListFilter,
-} from '@learning/modules/courses/application/ports/out/course-repository.port.out';
 import type { TransactionRunner } from '@learning/modules/courses/application/ports/out/transaction-runner.port.out';
 import { CourseAuthorizationService } from '@learning/modules/courses/application/services/course-authorization.service';
 import { CourseMutationService } from '@learning/modules/courses/application/services/course-mutation.service';
 import { CoursePublishReadinessService } from '@learning/modules/courses/application/services/course-publish-readiness.service';
 import { CourseViewAssembler } from '@learning/modules/courses/application/services/course-view.assembler';
 import { Course } from '@learning/modules/courses/domain/course.aggregate';
+import type {
+  CourseListFilter,
+  CoursePage,
+  CourseRepository,
+  ManagedCourseListFilter,
+} from '@learning/modules/courses/domain/repositories/course-repository.port.out';
 import { CourseReadiness } from '@learning/modules/courses/domain/services/course-readiness';
 import {
   ChapterDescription,

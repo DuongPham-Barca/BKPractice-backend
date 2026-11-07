@@ -145,18 +145,21 @@ principal port. Avoid creating a generic shared Learning service.
 
 ## Current implementation and status
 
-Problems and Courses use domain aggregates, application use cases and TypeORM adapters. The accepted
-submission event currently updates personal Progress; its full LRN-006 implementation is still open.
+Problems and Courses use domain aggregates, application use cases and TypeORM adapters. Course
+controllers depend on inbound use case ports, and its aggregate repository port lives in the domain.
+The accepted submission event updates personal Progress through a use case, domain aggregate and
+TypeORM adapter; the read side of LRN-006 is still open.
 Hidden judge data is exposed only through a protected internal endpoint. LRN-008 removes the old
 Class, Enrollment and Assignment entities with a new migration; historical migrations remain intact.
 
-Status: **PARTIALLY ALIGNED**. Progress still needs a use case and repository boundary; Recommendation
-still needs implementation. The retired classroom schema must be removed by the LRN-008 migration
-before deployment is considered complete.
+Status: **PARTIALLY ALIGNED**. Personal Progress reads and Recommendation still need implementation.
+The retired classroom schema must be removed by the LRN-008 migration before deployment is considered
+complete.
 
 ## Incremental alignment
 
-- Complete `ApplyAcceptedSubmission` and personal progress reads under the revised LRN-006 scope.
+- Complete personal progress reads under the revised LRN-006 scope and verify the accepted event
+  persistence flow on isolated PostgreSQL.
 - Implement recommendations over every published Course under the revised LRN-007 scope.
 - Put repository and message implementations behind focused driven ports (see Ports above).
 - Keep the TypeORM entity as the persistence model and map it to the domain object at the
