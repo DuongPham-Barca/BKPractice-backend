@@ -1,27 +1,62 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { APPLY_ACCEPTED_SUBMISSION_PORT_IN } from './application/ports/in/apply-accepted-submission.port.in';
-import { ApplyAcceptedSubmissionUseCase } from './application/use-cases/apply-accepted-submission.use-case';
-import { ProgressEventReceipt } from './entities/progress-event-receipt.entity';
-import { Progress } from './entities/progress.entity';
-import { ProgressTransactionContext } from './infrastructure/persistence/progress-transaction-context';
-import { ProgressTransactionRunner } from './infrastructure/persistence/progress-transaction-runner';
-import { ProgressTypeOrmRepository } from './infrastructure/persistence/progress.typeorm-repository';
-import { ProgressConsumer } from './presentation/messaging/progress.consumer';
-import { PROGRESS_REPOSITORY, PROGRESS_TRANSACTION_RUNNER } from './progress.tokens';
-
+import {
+  APPLY_ACCEPTED_SUBMISSION_PORT_IN,
+  GET_MY_COURSE_PROGRESS_PORT_IN,
+  GET_MY_SOLVED_STATUS_PORT_IN,
+  LIST_MY_SOLVED_PROBLEMS_PORT_IN,
+} from '@/modules/progress/application/ports/in';
+import {
+  ApplyAcceptedSubmissionUseCase,
+  GetMyCourseProgressUseCase,
+  GetMySolvedStatusUseCase,
+  ListMySolvedProblemsUseCase,
+} from '@/modules/progress/application/use-cases';
+import { CourseCompletionCalculator } from '@/modules/progress/domain/services';
+import { Progress, ProgressEventReceipt } from '@/modules/progress/entities';
+import {
+  ProgressTransactionContext,
+  ProgressTransactionRunner,
+  ProgressTypeOrmRepository,
+} from '@/modules/progress/infrastructure/persistence';
+import {
+  CourseStructureTypeOrmReader,
+  PublishedProblemTypeOrmFilter,
+} from '@/modules/progress/infrastructure/readers';
+import { MyProgressController } from '@/modules/progress/presentation/http';
+import { ProgressExceptionFilter } from '@/modules/progress/presentation/http/filters';
+import { ProgressConsumer } from '@/modules/progress/presentation/messaging';
+import {
+  PROGRESS_REPOSITORY,
+  PROGRESS_TRANSACTION_RUNNER,
+  COURSE_STRUCTURE_READER,
+  PUBLISHED_PROBLEM_FILTER,
+} from '@/modules/progress/progress.tokens';
 @Module({
   imports: [TypeOrmModule.forFeature([Progress, ProgressEventReceipt])],
+  controllers: [MyProgressController],
   providers: [
     ProgressConsumer,
     ApplyAcceptedSubmissionUseCase,
     ProgressTransactionContext,
     ProgressTransactionRunner,
     ProgressTypeOrmRepository,
+    ProgressExceptionFilter,
+    CourseCompletionCalculator,
+    CourseStructureTypeOrmReader,
+    PublishedProblemTypeOrmFilter,
+    GetMyCourseProgressUseCase,
+    GetMySolvedStatusUseCase,
+    ListMySolvedProblemsUseCase,
     { provide: APPLY_ACCEPTED_SUBMISSION_PORT_IN, useExisting: ApplyAcceptedSubmissionUseCase },
+    { provide: GET_MY_COURSE_PROGRESS_PORT_IN, useExisting: GetMyCourseProgressUseCase },
+    { provide: GET_MY_SOLVED_STATUS_PORT_IN, useExisting: GetMySolvedStatusUseCase },
+    { provide: LIST_MY_SOLVED_PROBLEMS_PORT_IN, useExisting: ListMySolvedProblemsUseCase },
     { provide: PROGRESS_REPOSITORY, useExisting: ProgressTypeOrmRepository },
     { provide: PROGRESS_TRANSACTION_RUNNER, useExisting: ProgressTransactionRunner },
+    { provide: COURSE_STRUCTURE_READER, useExisting: CourseStructureTypeOrmReader },
+    { provide: PUBLISHED_PROBLEM_FILTER, useExisting: PublishedProblemTypeOrmFilter },
   ],
 })
 export class ProgressModule {}

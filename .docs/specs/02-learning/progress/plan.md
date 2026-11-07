@@ -2,11 +2,22 @@
 
 > Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
 
-> Cập nhật triển khai 2026-11-07: Luồng ghi `submission.accepted` đã chuyển sang domain aggregate, use case, port và adapter TypeORM; đã thử trên PostgreSQL cách ly. API đọc tiến độ cá nhân vẫn thuộc phần việc tiếp theo.
+> Cập nhật triển khai 2026-11-07: Luồng ghi `submission.accepted` và ba API đọc tiến độ cá nhân đã triển khai theo domain/use case/port/adapter, dưới phạm vi LRN-008. Phần đọc được kiểm thử trên PostgreSQL cách ly; phần retry/DLQ được kiểm thử với RabbitMQ thật.
 
 ## Sửa lỗi review PR — 2026-11-07
 
 Chuẩn hoá bốn UUID của accepted event thành chữ thường sau khi kiểm tra định dạng. Ghi nhận, so identity và chống trùng dùng cùng biểu diễn với PostgreSQL. Kiểm thử sự kiện hoa/thường cho cùng một cặp user/Problem trên PostgreSQL, bao gồm gửi lại cùng eventId ở kiểu chữ khác.
+
+## Triển khai phần đọc tự học — 2026-11-07
+
+Theo yêu cầu chủ dự án, hoàn thiện ba use case/API `ListMySolvedProblems`, `GetMySolvedStatus`, `GetMyCourseProgress` của LRN-006, dưới phạm vi LRN-008. Các phần Class/Assignment và Clock phục vụ hạn chót đã bị thay thế, không phải phụ thuộc chặn phần đọc.
+
+- Mỗi use case/inbound port một file; controller, DTO, mapper, filter ở `presentation/http`; barrel và alias theo working agreement.
+- `ProgressRepository` bổ sung `findSolved` và `listSolved`. `listSolved` lọc Problem công khai bằng join trong cùng truy vấn trước phân trang và đếm tổng; tránh lộ số lượng bài bị ẩn. `PublishedProblemFilter` phục vụ tra trạng thái theo danh sách; kết quả giữ thứ tự đầu vào, UUID chuẩn hoá trước kiểm trùng.
+- `CourseStructureReader` là port riêng của Progress, adapter chỉ SELECT trên bảng Learning, không import entity/repository của Course/Problem. Course chưa export truy vấn cấu trúc công khai nên reader dùng một truy vấn left join có lọc, giữ Chapter rỗng. Test so với API Course trên cùng dữ liệu để ngăn lệch chính sách hiển thị.
+- `CompletionCount` và `CourseCompletionCalculator` chỉ tính trong domain; đọc tiến độ không mở transaction ghi, không lưu số liệu tổng hợp. Progress context dùng storage chung của Learning và cung cấp manager mặc định cho SELECT.
+- Gateway đã có allowlist ba route, chỉ kiểm chứng lại; không sửa transport contract hay thêm route ghi.
+- Test PostgreSQL/Nest module thật: dữ liệu nhiều người dùng, ẩn/mở Problem, gỡ khỏi Course, Course không công khai, Chapter rỗng, phân trang và query sai; các response chỉ chứa trường đã được plan liệt kê.
 
 ## Trạng thái
 

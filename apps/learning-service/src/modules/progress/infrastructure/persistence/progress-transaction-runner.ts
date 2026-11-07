@@ -1,7 +1,7 @@
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
 import { Injectable } from '@nestjs/common';
 
-import { ProgressTransactionContext } from './progress-transaction-context';
+import { ProgressTransactionContext } from '@/modules/progress/infrastructure/persistence/progress-transaction-context';
 
 @Injectable()
 export class ProgressTransactionRunner implements TransactionRunner {

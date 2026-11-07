@@ -1,8 +1,8 @@
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
-import type { ProblemProgress } from '@learning/modules/progress/domain/problem-progress';
-import type { ProgressRepository } from '@learning/modules/progress/domain/repositories/progress-repository.port.out';
 
-import { ApplyAcceptedSubmissionUseCase } from './apply-accepted-submission.use-case';
+import { ApplyAcceptedSubmissionUseCase } from '@/modules/progress/application/use-cases/apply-accepted-submission.use-case';
+import type { ProblemProgress } from '@/modules/progress/domain';
+import type { ProgressRepository } from '@/modules/progress/domain/repositories';
 
 const EVENT = {
   eventId: '11111111-1111-4111-8111-111111111111',
@@ -18,6 +18,8 @@ describe('ApplyAcceptedSubmissionUseCase', () => {
     const receipts = new Set<string>();
     const state: { saved: ProblemProgress | null } = { saved: null };
     const repository: ProgressRepository = {
+      findSolved: jest.fn().mockResolvedValue(new Map()),
+      listSolved: jest.fn().mockResolvedValue({ items: [], page: 1, limit: 20, total: 0 }),
       recordReceipt: jest.fn(async (event) => {
         if (receipts.has(event.eventId)) return false;
         receipts.add(event.eventId);
@@ -52,6 +54,8 @@ describe('ApplyAcceptedSubmissionUseCase', () => {
 
   it('replaces an old ATTEMPTED row with a solved row', async () => {
     const repository: ProgressRepository = {
+      findSolved: jest.fn().mockResolvedValue(new Map()),
+      listSolved: jest.fn().mockResolvedValue({ items: [], page: 1, limit: 20, total: 0 }),
       recordReceipt: jest.fn().mockResolvedValue(true),
       insertIfAbsent: jest.fn().mockResolvedValue(false),
       loadForUpdate: jest.fn().mockResolvedValue(null),
