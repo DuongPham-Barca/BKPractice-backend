@@ -1,5 +1,7 @@
 # GW-004 Công việc triển khai Gateway — Định tuyến Class và Enrollment qua API Gateway
 
+> **Ngừng áp dụng theo LRN-008 (2026-11-07):** Gateway không định tuyến Class/Enrollment/Assignment. Nội dung dưới đây lưu lại lịch sử; xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 Đặc tả liên quan: `./spec.md`  
 Kế hoạch liên quan: `./plan.md`
 

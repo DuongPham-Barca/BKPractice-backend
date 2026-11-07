@@ -1,5 +1,7 @@
 # GW-002 Kế hoạch triển khai định tuyến và bảo vệ Problem qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** `ADMIN` có quyền tương ứng quản lý mọi Problem, không giới hạn người tạo; mọi câu trái ngược bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Đã rà soát — đặc tả Approved

@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from '@app/contracts';
+import type { SetHarnessCommand } from '@learning/modules/problems/application/command/test-case.commands';
 import { HarnessNotFoundError } from '@learning/modules/problems/application/errors/harness-not-found.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
@@ -25,8 +26,6 @@ import {
   TestSuiteSummary,
 } from '@learning/modules/problems/domain/value-objects';
 
-import type { SetHarnessCommand } from '../command/test-case.commands';
-
 import { AddTestCaseUseCase } from './add-test-case.use-case';
 import { BuildJudgePackageUseCase } from './build-judge-package.use-case';
 import { GetHarnessUseCase } from './get-harness.use-case';
@@ -42,7 +41,7 @@ const CASE_ID = '00000000-0000-4000-8000-000000000011';
 const SECOND_CASE_ID = '00000000-0000-4000-8000-000000000012';
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:update', 'problem:read-managed'],
 };
 
@@ -545,7 +544,7 @@ function functionProblem() {
 }
 
 function authorizationMock() {
-  return { requireOwned: jest.fn() };
+  return { requireManaged: jest.fn() };
 }
 
 function problemRepositoryMock() {

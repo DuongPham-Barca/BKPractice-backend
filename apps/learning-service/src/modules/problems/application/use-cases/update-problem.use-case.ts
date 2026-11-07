@@ -54,7 +54,7 @@ export class UpdateProblemUseCase implements IUpdateProblemPortIn {
         throw new ProblemNotFoundError(id);
       }
 
-      this.authorization.requireOwned(principal, existing, 'update');
+      this.authorization.requireManaged(principal, 'update');
       const previousSummary = await this.repository.loadTestSuiteSummary(id);
       existing.attachTestSuiteSummary(previousSummary);
 

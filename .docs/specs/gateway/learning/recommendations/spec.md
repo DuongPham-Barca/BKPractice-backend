@@ -1,5 +1,7 @@
 # GW-007 Định tuyến Recommendation qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** Gợi ý từ mọi Course công khai, không dựa vào Enrollment; các câu trái ngược bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved
@@ -7,7 +9,6 @@ Approved
 Phiên bản `0.1`, ngày `2026-11-03`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
-
 
 ## Mục tiêu
 
@@ -55,9 +56,9 @@ LRN-007 Gợi ý bài (Recommendation) đã Approved và `plan.md` của tính n
 
 Gateway công khai các route sau theo kế hoạch đã Approved của LRN-007 Gợi ý bài (Recommendation):
 
-| Method | Route | Thao tác Learning |
-| --- | --- | --- |
-| `GET` | `/api/recommendations` | Lấy tối đa 10 gợi ý cho người gọi |
+| Method | Route                  | Thao tác Learning                 |
+| ------ | ---------------------- | --------------------------------- |
+| `GET`  | `/api/recommendations` | Lấy tối đa 10 gợi ý cho người gọi |
 
 Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, route không có trong bảng và route ghi ngoài danh sách MUST NOT được mở thêm theo đặc tả này.
 
@@ -69,16 +70,16 @@ Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, 
 
 ## Tình huống lỗi
 
-| Trường hợp | Kết quả |
-| --- | --- |
-| Thiếu/sai/hết hạn/thu hồi token | `401`, không gọi Learning |
-| Identity không khả dụng khi xác minh session | `503`, không gọi Learning |
-| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning |
-| Header định danh/tin cậy giả mạo | Bị loại bỏ và thay bằng metadata tin cậy |
-| Path traversal/dot segment làm đổi đích | `400`, không gọi Learning |
-| Learning không khả dụng/timeout | `502` |
-| Learning trả lỗi nghiệp vụ | Giữ nguyên status/body của Learning |
-| Vượt rate limit mặc định | `429` |
+| Trường hợp                                                | Kết quả                                  |
+| --------------------------------------------------------- | ---------------------------------------- |
+| Thiếu/sai/hết hạn/thu hồi token                           | `401`, không gọi Learning                |
+| Identity không khả dụng khi xác minh session              | `503`, không gọi Learning                |
+| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning                |
+| Header định danh/tin cậy giả mạo                          | Bị loại bỏ và thay bằng metadata tin cậy |
+| Path traversal/dot segment làm đổi đích                   | `400`, không gọi Learning                |
+| Learning không khả dụng/timeout                           | `502`                                    |
+| Learning trả lỗi nghiệp vụ                                | Giữ nguyên status/body của Learning      |
+| Vượt rate limit mặc định                                  | `429`                                    |
 
 ## Tình huống biên
 
@@ -128,7 +129,7 @@ Không có câu hỏi về route hoặc quyền nghiệp vụ trong nguồn đã
 
 ## Lịch sử sửa đổi
 
-| Ngày | Phiên bản | Tác giả/Người review | Tóm tắt |
-| --- | --- | --- | --- |
-| 2026-11-04 | 0.1 | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
-| 2026-11-03 | 0.1 | Codex | Đề xuất hợp đồng Gateway cho LRN-007 Gợi ý bài (Recommendation) |
+| Ngày       | Phiên bản | Tác giả/Người review          | Tóm tắt                                                            |
+| ---------- | --------- | ----------------------------- | ------------------------------------------------------------------ |
+| 2026-11-04 | 0.1       | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
+| 2026-11-03 | 0.1       | Codex                         | Đề xuất hợp đồng Gateway cho LRN-007 Gợi ý bài (Recommendation)    |

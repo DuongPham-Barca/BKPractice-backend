@@ -60,8 +60,8 @@ import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 
-export const LECTURER_A_ID = '00000000-0000-4000-8000-000000000031';
-export const LECTURER_B_ID = '00000000-0000-4000-8000-000000000032';
+export const ADMIN_A_ID = '00000000-0000-4000-8000-000000000031';
+export const ADMIN_B_ID = '00000000-0000-4000-8000-000000000032';
 export const STUDENT_ID = '00000000-0000-4000-8000-000000000041';
 export const HIDDEN_EXPECTED_OUTPUT = 'hidden-expected-output-must-never-leak';
 
@@ -89,8 +89,8 @@ export function principalHeaders(userId: string, roles: string, permissions?: st
   };
 }
 
-export function lecturerHeaders(userId = LECTURER_A_ID): AuthHeaders {
-  return principalHeaders(userId, 'LECTURER', ALL_PROBLEM_PERMISSIONS);
+export function adminHeaders(userId = ADMIN_A_ID): AuthHeaders {
+  return principalHeaders(userId, 'ADMIN', ALL_PROBLEM_PERMISSIONS);
 }
 
 export function studentHeaders(): AuthHeaders {
@@ -161,18 +161,10 @@ export class InMemoryProblemRepository implements ProblemRepository {
     return snapshot === undefined ? null : Problem.rehydrate(snapshot);
   }
 
-  async findManagedById(
-    id: string,
-    ownerId: string,
-    includeDeleted: boolean,
-  ): Promise<Problem | null> {
+  async findManagedById(id: string, includeDeleted: boolean): Promise<Problem | null> {
     const snapshot = this.stored.get(id);
 
-    if (
-      snapshot === undefined ||
-      snapshot.createdBy.value !== ownerId ||
-      (snapshot.deletedMarker.isDeleted && !includeDeleted)
-    ) {
+    if (snapshot === undefined || (snapshot.deletedMarker.isDeleted && !includeDeleted)) {
       return null;
     }
 
@@ -204,7 +196,6 @@ export class InMemoryProblemRepository implements ProblemRepository {
 
   async listManaged(filter: ManagedProblemListFilter): Promise<ProblemPage<Problem>> {
     const items = [...this.stored.values()]
-      .filter((item) => item.createdBy.value === filter.ownerId)
       .filter((item) => filter.includeDeleted || !item.deletedMarker.isDeleted)
       .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
 
@@ -231,14 +222,10 @@ export class InMemoryProblemRepository implements ProblemRepository {
     this.stored.set(problem.id.value, snapshotOf(problem));
   }
 
-  async softDelete(id: string, ownerId: string, at: Date): Promise<boolean> {
+  async softDelete(id: string, at: Date): Promise<boolean> {
     const snapshot = this.stored.get(id);
 
-    if (
-      snapshot === undefined ||
-      snapshot.createdBy.value !== ownerId ||
-      snapshot.deletedMarker.isDeleted
-    ) {
+    if (snapshot === undefined || snapshot.deletedMarker.isDeleted) {
       return false;
     }
 
@@ -249,14 +236,10 @@ export class InMemoryProblemRepository implements ProblemRepository {
     return true;
   }
 
-  async restore(id: string, ownerId: string, at: Date): Promise<boolean> {
+  async restore(id: string, at: Date): Promise<boolean> {
     const snapshot = this.stored.get(id);
 
-    if (
-      snapshot === undefined ||
-      snapshot.createdBy.value !== ownerId ||
-      !snapshot.deletedMarker.isDeleted
-    ) {
+    if (snapshot === undefined || !snapshot.deletedMarker.isDeleted) {
       return false;
     }
 

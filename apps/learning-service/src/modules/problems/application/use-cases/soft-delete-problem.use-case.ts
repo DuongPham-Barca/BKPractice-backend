@@ -26,13 +26,11 @@ export class SoftDeleteProblemUseCase implements ISoftDeleteProblemPortIn {
       throw new ProblemNotFoundError(id);
     }
 
-    this.authorization.requireOwned(principal, problem, 'delete');
+    this.authorization.requireManaged(principal, 'delete');
     const now = new Date();
     problem.softDelete(now);
 
-    const deleted = await this.transactionRunner.run(() =>
-      this.repository.softDelete(id, principal.userId, now),
-    );
+    const deleted = await this.transactionRunner.run(() => this.repository.softDelete(id, now));
 
     if (!deleted) {
       const current = await this.repository.findByIdIncludingDeleted(id);

@@ -34,7 +34,7 @@ export class GetHarnessUseCase implements IGetHarnessPortIn {
       throw new ProblemNotFoundError(problemId);
     }
 
-    this.authorization.requireOwned(principal, problem, 'read-managed');
+    this.authorization.requireManaged(principal, 'read-managed');
 
     const harness = await this.harnessRepository.find(problemId, language);
 

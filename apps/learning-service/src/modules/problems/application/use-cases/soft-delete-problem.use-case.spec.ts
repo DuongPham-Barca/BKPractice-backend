@@ -1,6 +1,7 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import {
   TEST_NOW,
   TEST_USER_ID,
@@ -8,13 +9,11 @@ import {
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
-
 import { SoftDeleteProblemUseCase } from './soft-delete-problem.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:delete'],
 };
 
@@ -36,11 +35,7 @@ describe('SoftDeleteProblemUseCase', () => {
       publishStatus: 'PUBLISHED',
       deletedAt: problem.deletedAt,
     });
-    expect(repository.softDelete).toHaveBeenCalledWith(
-      problem.id.value,
-      TEST_USER_ID,
-      expect.any(Date),
-    );
+    expect(repository.softDelete).toHaveBeenCalledWith(problem.id.value, expect.any(Date));
     expect(transactionRunner.run).toHaveBeenCalledTimes(1);
   });
 
@@ -54,7 +49,7 @@ describe('SoftDeleteProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('rejects deleting a draft problem', async () => {
@@ -126,7 +121,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

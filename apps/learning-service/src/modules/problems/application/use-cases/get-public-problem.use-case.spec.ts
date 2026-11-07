@@ -1,12 +1,11 @@
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import {
   TEST_PROBLEM_ID,
   buildProblem,
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
-
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
 
 import { GetPublicProblemUseCase } from './get-public-problem.use-case';
 

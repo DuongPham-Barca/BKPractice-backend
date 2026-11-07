@@ -1,7 +1,6 @@
+import { PostScope } from '@community/modules/posts/entities/post.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator';
-
-import { PostScope } from '../entities/post.entity';
 
 export class CreatePostDto {
   @ApiProperty({ enum: PostScope })

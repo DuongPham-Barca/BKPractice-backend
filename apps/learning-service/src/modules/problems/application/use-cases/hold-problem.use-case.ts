@@ -36,7 +36,7 @@ export class HoldProblemUseCase implements IHoldProblemPortIn {
       throw new ProblemNotFoundError(id);
     }
 
-    this.authorization.requireOwned(principal, problem, 'hold');
+    this.authorization.requireManaged(principal, 'hold');
 
     const expectedUpdatedAt = problem.updatedAt;
     const [summary, samples] = await Promise.all([

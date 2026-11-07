@@ -1,8 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiTags } from '@nestjs/swagger';
+import { RunCodeUseCase } from '@submission/modules/run-code/application/run-code.use-case';
 import { TrustedOwner } from '@submission/modules/submissions/presentation/decorators/trusted-owner.decorator';
-
-import { RunCodeUseCase } from '../application/run-code.use-case';
 
 import { RunCodeResponseDto } from './dto/run-code-response.dto';
 import { RunCodeDto } from './dto/run-code.dto';

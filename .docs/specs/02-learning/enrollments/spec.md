@@ -4,6 +4,8 @@
 
 Approved
 
+> ĐÃ HUỶ theo [LRN-008](../self-study/spec.md), quyết định ngày 2026-11-07. Tài liệu bên dưới chỉ lưu lịch sử; không triển khai Class, Enrollment hoặc Assignment.
+
 Phiên bản `1.0`, được chủ sở hữu sản phẩm phê duyệt ngày `2026-09-30` (phê duyệt gộp: chủ sở hữu
 duyệt trước các phương án đề xuất).
 

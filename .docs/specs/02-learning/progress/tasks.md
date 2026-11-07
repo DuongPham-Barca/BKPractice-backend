@@ -1,5 +1,7 @@
 # LRN-006 Công việc triển khai Tiến độ học tập
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
 ## Trạng thái
 
 Approved — Sẵn sàng triển khai sau LRN-001; phần đọc tổng hợp cần LRN-003, LRN-004, LRN-005
@@ -42,13 +44,13 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 ## Domain
 
-- [ ] **LRN-006-T004 — Value object `AcceptedSubmission`.** `parse(unknown)` kiểm UUID của `eventId`,
+- [x] **LRN-006-T004 — Value object `AcceptedSubmission`.** `parse(unknown)` kiểm UUID của `eventId`,
       `submissionId`, `userId`, `problemId`; `occurredAt` ISO hợp lệ; `score` nguyên ≥ 0; sai thì ném
       `InvalidAcceptedSubmission`. Không import NestJS, TypeORM hay class-validator.
       **Phụ thuộc:** LRN-006-T001.
       **Truy vết:** LRN-006-FR-009; AC-007.
 
-- [ ] **LRN-006-T005 — Aggregate `ProblemProgress`.** `firstSolve(e)`; `applyAccepted(e)` với
+- [x] **LRN-006-T005 — Aggregate `ProblemProgress`.** `firstSolve(e)`; `applyAccepted(e)` với
       `solvedAt = min`, `bestScore = max`, `lastEventId = e.eventId`. Không có trạng thái `ATTEMPTED`.
       **Phụ thuộc:** LRN-006-T004.
       **Truy vết:** LRN-006-FR-003, FR-005, FR-006, FR-007.
@@ -81,7 +83,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
       **Phụ thuộc:** LRN-006-T005.
       **Truy vết:** Mục Port của kế hoạch.
 
-- [ ] **LRN-006-T010 — Hiện thực `ApplyAcceptedSubmission`.** `parse`; trong `TransactionRunner`:
+- [x] **LRN-006-T010 — Hiện thực `ApplyAcceptedSubmission`.** `parse`; trong `TransactionRunner`:
       `recordReceipt` (trùng → `DUPLICATE`), `insertIfAbsent(firstSolve)`, nếu đã có dòng thì
       `loadForUpdate` → `applyAccepted` → `save`; trả `APPLIED`. Lỗi thì ném lại để transaction
       rollback.
@@ -116,7 +118,7 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 ## Lưu trữ
 
-- [ ] **LRN-006-T014 — Entity biên nhận và cập nhật entity `Progress`.** Thêm
+- [x] **LRN-006-T014 — Entity biên nhận và cập nhật entity `Progress`.** Thêm
       `ProgressEventReceipt` cho `progress_event_receipts`, đăng ký trong `learning.entities.ts`. Giữ
       `Progress` và enum `ProgressStatus` (không xoá `Attempted` vì cột enum còn giá trị đó); mapper
       entity ↔ `ProblemProgress` ở adapter. Không chuyển entity vào `libs/`.
@@ -173,12 +175,13 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 ## Messaging
 
-- [ ] **LRN-006-T021 — Thay consumer.** Tạo `presentation/submission-accepted.consumer.ts`: ở
+- [x] **LRN-006-T021 — Thay consumer.** Tạo `presentation/messaging/progress.consumer.ts`: ở
       `onModuleInit` gọi `RabbitMqService.consume(RABBIT_QUEUES.learningAccepted, ...)`, chuyển payload
       cho `ApplyAcceptedSubmission`, không bắt `InvalidAcceptedSubmission` hay lỗi lưu trữ để cơ chế
       retry/DLQ hiện có xử lý. Xoá `progress.consumer.ts`. Không sửa `libs/common` hay `libs/contracts`.
       **Phụ thuộc:** LRN-006-T010, LRN-006-T015.
       **Truy vết:** LRN-006-FR-009, FR-010; SR-006; mục Messaging của kế hoạch.
+      Đã kiểm chứng consumer/use case và luồng persistence trên PostgreSQL cách ly. Phần reader của T015 vẫn mở.
 
 - [ ] **LRN-006-T022 — Integration test messaging.** Với RabbitMQ thật hoặc container test: sự kiện hợp
       lệ được ACK và áp dụng; gửi lại cùng message được ACK không đổi gì; payload hỏng qua 3 lần thử rồi
@@ -304,3 +307,8 @@ không thêm hành vi ngoài `spec.md` và không thay đổi `plan.md`.
 
 > File này là danh sách kiểm tra triển khai, không phải đặc tả. Không thêm yêu cầu và không âm thầm
 > thay đổi `spec.md` hay `plan.md` đã Approved trong lúc thực hiện.
+
+## Sửa lỗi review PR — 2026-11-07
+
+- [x] Chuẩn hoá bốn UUID của accepted event sau validation.
+- [x] Kiểm thử event hoa/thường, retry/idempotency trên PostgreSQL và ghi worked entry.

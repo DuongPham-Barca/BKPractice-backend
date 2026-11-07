@@ -1,5 +1,7 @@
 # ID-003 Công việc triển khai RBAC
 
+> **Cập nhật LRN-008 (2026-11-07):** Các quyền `problem:*`/`course:*` thuộc `ADMIN`; quyền `class:*`/`assignment:*` ngừng áp dụng. Các câu hoặc task cũ gán quyền Learning cho `LECTURER` đã bị thay thế bởi [LRN-008](../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved — checklist seed riêng/user–role baseline 0.5; baseline 0.4 giữ để truy vết. Các quality gate toàn repo còn bị chặn bởi Learning.

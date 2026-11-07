@@ -1,5 +1,7 @@
 # LRN-007 Kế hoạch triển khai Gợi ý bài (Recommendation)
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
 ## Trạng thái
 
 Approved

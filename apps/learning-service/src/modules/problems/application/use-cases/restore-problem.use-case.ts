@@ -37,13 +37,11 @@ export class RestoreProblemUseCase implements IRestoreProblemPortIn {
       throw new ProblemNotFoundError(id);
     }
 
-    this.authorization.requireOwned(principal, problem, 'restore');
+    this.authorization.requireManaged(principal, 'restore');
     const now = new Date();
     problem.restore(now);
 
-    const restored = await this.transactionRunner.run(() =>
-      this.repository.restore(id, principal.userId, now),
-    );
+    const restored = await this.transactionRunner.run(() => this.repository.restore(id, now));
 
     if (!restored) {
       const current = await this.repository.findByIdIncludingDeleted(id);

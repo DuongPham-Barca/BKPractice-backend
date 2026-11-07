@@ -1,4 +1,4 @@
-import type { SubmissionKind } from '../submission-record';
+import type { SubmissionKind } from '@submission/modules/submissions/domain/submission-record';
 
 import type { JudgePackage } from './learning-judge-package.port';
 

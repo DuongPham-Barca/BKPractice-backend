@@ -8,8 +8,8 @@ import {
   createProblemPayload,
   createProblemsTestApp,
   HIDDEN_EXPECTED_OUTPUT,
-  LECTURER_A_ID,
-  lecturerHeaders,
+  ADMIN_A_ID,
+  adminHeaders,
   principalHeaders,
   studentHeaders,
   type ProblemsTestApp,
@@ -58,11 +58,11 @@ describe('Problems API security contract', () => {
     return { status: response.status, body };
   }
 
-  function post(path: string, body: unknown, headers = lecturerHeaders()): Promise<ApiResponse> {
+  function post(path: string, body: unknown, headers = adminHeaders()): Promise<ApiResponse> {
     return send(path, { method: 'POST', headers, body: JSON.stringify(body) });
   }
 
-  function patch(path: string, body: unknown, headers = lecturerHeaders()): Promise<ApiResponse> {
+  function patch(path: string, body: unknown, headers = adminHeaders()): Promise<ApiResponse> {
     return send(path, { method: 'PATCH', headers, body: JSON.stringify(body) });
   }
 
@@ -77,7 +77,7 @@ describe('Problems API security contract', () => {
     const response = await post('/api/problems', {
       ...createProblemPayload(),
       id: PROBLEM_ID,
-      createdBy: LECTURER_A_ID,
+      createdBy: ADMIN_A_ID,
       publishStatus: 'PUBLISHED',
       deletedAt: new Date().toISOString(),
     });
@@ -85,7 +85,7 @@ describe('Problems API security contract', () => {
     expect(response.status).toBe(400);
     expect(harness.problems.storedSnapshot(PROBLEM_ID)).toBeUndefined();
 
-    const managed = await send('/api/problems/managed', { headers: lecturerHeaders() });
+    const managed = await send('/api/problems/managed', { headers: adminHeaders() });
     expect(managed.body.total).toBe(0);
   });
 
@@ -95,7 +95,7 @@ describe('Problems API security contract', () => {
     const response = await patch(`/api/problems/${id}`, {
       title: 'Changed',
       slug: 'hijacked-slug',
-      createdBy: LECTURER_A_ID,
+      createdBy: ADMIN_A_ID,
       publishStatus: 'PUBLISHED',
       deletedAt: new Date().toISOString(),
     });
@@ -109,9 +109,9 @@ describe('Problems API security contract', () => {
   it('rejects duplicate identity headers instead of trusting the last one', async () => {
     const headers = new Headers();
     headers.append('content-type', 'application/json');
-    headers.append('x-auth-user-id', LECTURER_A_ID);
-    headers.append('x-auth-user-id', LECTURER_A_ID);
-    headers.append('x-auth-roles', 'LECTURER');
+    headers.append('x-auth-user-id', ADMIN_A_ID);
+    headers.append('x-auth-user-id', ADMIN_A_ID);
+    headers.append('x-auth-roles', 'ADMIN');
     headers.append('x-auth-permissions', 'problem:create');
 
     const response = await fetch(`${harness.baseUrl}/api/problems`, {
@@ -125,26 +125,26 @@ describe('Problems API security contract', () => {
 
   it('rejects malformed identity and role headers', async () => {
     const nonUuid = await send('/api/problems', {
-      headers: principalHeaders('not-a-uuid', 'LECTURER', 'problem:create'),
+      headers: principalHeaders('not-a-uuid', 'ADMIN', 'problem:create'),
     });
     expect(nonUuid.status).toBe(401);
 
     const lowercaseRole = await send('/api/problems', {
-      headers: principalHeaders(LECTURER_A_ID, 'lecturer', 'problem:create'),
+      headers: principalHeaders(ADMIN_A_ID, 'admin', 'problem:create'),
     });
     expect(lowercaseRole.status).toBe(401);
 
     const malformedPermission = await send('/api/problems', {
-      headers: principalHeaders(LECTURER_A_ID, 'LECTURER', 'not-a-permission'),
+      headers: principalHeaders(ADMIN_A_ID, 'ADMIN', 'not-a-permission'),
     });
     expect(malformedPermission.status).toBe(401);
   });
 
-  it('rejects a lecturer without the required permission', async () => {
+  it('rejects a admin without the required permission', async () => {
     const response = await post(
       '/api/problems',
       createProblemPayload(),
-      principalHeaders(LECTURER_A_ID, 'LECTURER', 'problem:read-managed'),
+      principalHeaders(ADMIN_A_ID, 'ADMIN', 'problem:read-managed'),
     );
 
     expect(response.status).toBe(403);
@@ -182,7 +182,7 @@ describe('Problems API security contract', () => {
     expect(JSON.stringify(publicDetail.body)).not.toContain(HIDDEN_EXPECTED_OUTPUT);
 
     const managedDetail = await send(`/api/problems/managed/${id}`, {
-      headers: lecturerHeaders(),
+      headers: adminHeaders(),
     });
     expect(managedDetail.status).toBe(200);
     expect(JSON.stringify(managedDetail.body)).not.toContain(HIDDEN_EXPECTED_OUTPUT);

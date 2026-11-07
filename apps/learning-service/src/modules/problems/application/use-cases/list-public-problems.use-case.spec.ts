@@ -1,7 +1,6 @@
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
 import { buildProblem } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
-
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
 
 import { ListPublicProblemsUseCase } from './list-public-problems.use-case';
 

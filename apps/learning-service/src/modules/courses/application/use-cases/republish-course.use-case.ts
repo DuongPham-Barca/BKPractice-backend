@@ -1,0 +1,46 @@
+import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { CourseNotFoundError } from '@/modules/courses/application/errors';
+import type { Principal } from '@/modules/courses/application/models';
+import type { IRepublishCoursePortIn } from '@/modules/courses/application/ports/in';
+import type { ManagedCourseResult } from '@/modules/courses/application/results';
+import {
+  CourseAuthorizationService,
+  CourseViewAssembler,
+  CoursePublishReadinessService,
+} from '@/modules/courses/application/services';
+import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
+import { InvalidCourseState } from '@/modules/courses/domain/errors';
+import type { CourseRepository } from '@/modules/courses/domain/repositories';
+
+@Injectable()
+export class RepublishCourseUseCase implements IRepublishCoursePortIn {
+  constructor(
+    private readonly authorization: CourseAuthorizationService,
+    @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
+    @Inject(COURSE_TRANSACTION_RUNNER) private readonly transactionRunner: TransactionRunner,
+    private readonly views: CourseViewAssembler,
+    private readonly readiness: CoursePublishReadinessService,
+  ) {}
+  async execute(
+    principal: Principal,
+    courseId: string,
+    now = new Date(),
+  ): Promise<ManagedCourseResult> {
+    this.authorization.requirePermission(principal, 'course:republish');
+    return this.transactionRunner.run(async () => {
+      const course = await this.repository.loadForUpdate(courseId);
+      if (!course) throw new CourseNotFoundError('Course not found');
+      if (!course.isOnHold)
+        throw new InvalidCourseState(
+          'status',
+          `Cannot republish a course with status ${course.status}`,
+        );
+      await this.readiness.assertReady(course);
+      course.republish(now);
+      await this.repository.save(course);
+      return this.views.toManaged(course);
+    });
+  }
+}

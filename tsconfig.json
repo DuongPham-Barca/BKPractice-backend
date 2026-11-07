@@ -36,7 +36,10 @@
       "@learning/*": ["apps/learning-service/src/*"],
       "@submission/*": ["apps/submission-service/src/*"],
       "@judge/*": ["apps/judge-service/src/*"],
-      "@community/*": ["apps/community-service/src/*"]
+      "@community/*": ["apps/community-service/src/*"],
+      "@/modules/courses/*": ["apps/learning-service/src/modules/courses/*"],
+      "@/infrastructure/persistence": ["apps/learning-service/src/infrastructure/persistence"],
+      "@/modules/problems/*": ["apps/learning-service/src/modules/problems/*"]
     }
   },
   "include": ["apps/**/*.ts", "libs/**/*.ts", "test/**/*.ts", "jest.config.ts"],

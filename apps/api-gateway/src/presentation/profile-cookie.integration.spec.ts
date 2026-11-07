@@ -142,8 +142,6 @@ describe('Learning authenticated transport', () => {
     ['PUT', '/api/problems/id/harnesses/cpp'],
     ['POST', '/api/problems/id/test-cases'],
     ['GET', '/api/courses'],
-    ['GET', '/api/classes/enrolled'],
-    ['GET', '/api/assignments/id'],
     ['GET', '/api/progress/me/problems'],
     ['GET', '/api/recommendations'],
   ];

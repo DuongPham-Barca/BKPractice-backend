@@ -1,3 +1,5 @@
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
   TEST_USER_ID,
@@ -5,14 +7,11 @@ import {
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
-
 import { ListManagedProblemsUseCase } from './list-managed-problems.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:read-managed'],
 };
 
@@ -40,7 +39,6 @@ describe('ListManagedProblemsUseCase', () => {
 
     expect(authorization.requireManagedList).toHaveBeenCalledTimes(1);
     expect(repository.listManaged).toHaveBeenCalledWith({
-      ownerId: TEST_USER_ID,
       includeDeleted: true,
       page: 1,
       limit: 100,
@@ -117,7 +115,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

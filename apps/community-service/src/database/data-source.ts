@@ -1,8 +1,7 @@
 import 'reflect-metadata';
 
+import { communityEntities } from '@community/modules/community.entities';
 import { DataSource } from 'typeorm';
-
-import { communityEntities } from '../modules/community.entities';
 
 export default new DataSource({
   type: 'postgres',

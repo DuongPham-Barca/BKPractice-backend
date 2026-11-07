@@ -1,5 +1,7 @@
 # ID-003 Kế hoạch triển khai RBAC
 
+> **Cập nhật LRN-008 (2026-11-07):** Các quyền `problem:*`/`course:*` thuộc `ADMIN`; quyền `class:*`/`assignment:*` ngừng áp dụng. Các câu hoặc task cũ gán quyền Learning cho `LECTURER` đã bị thay thế bởi [LRN-008](../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved — kế hoạch seed riêng/user–role baseline ngày 2026-10-25. Xem [phần mục tiêu mới](#kế-hoạch-mục-tiêu-05--seed-rbac-và-quản-lý-userrole) ở cuối tài liệu. Phần kế hoạch 0.3/0.4 bên dưới là baseline; mục tiêu 0.5 giữ role cố định và seed riêng, FE quản lý user–role.
@@ -681,10 +683,10 @@ Phần seed chỉ đọc dữ liệu/chính sách được review, đảm bảo 
 
 ### Ranh giới FE và ID-004
 
-| Khả năng | Cách vận hành | Chủ sở hữu |
-| --- | --- | --- |
-| Role/permission/role–permission ban đầu | Seed riêng trong DB Identity | RBAC |
-| Xem/gán/thu hồi role của user | FE gọi API có bảo vệ; tái dùng route baseline | RBAC |
+| Khả năng                                                     | Cách vận hành                                        | Chủ sở hữu        |
+| ------------------------------------------------------------ | ---------------------------------------------------- | ----------------- |
+| Role/permission/role–permission ban đầu                      | Seed riêng trong DB Identity                         | RBAC              |
+| Xem/gán/thu hồi role của user                                | FE gọi API có bảo vệ; tái dùng route baseline        | RBAC              |
 | CRUD account và import Excel `mssv`, `name`, `email`, `role` | FE upload; parser/validation/transaction cấp account | ID-004 trong Auth |
 
 ID-004 kiểm tra `role` từng dòng chỉ là `STUDENT` hoặc `LECTURER`, tra danh mục đã seed và tạo account–credential–role nguyên tử. Student có MSSV; Lecturer để trống. File không tạo role/permission, không cấp Admin. Thiếu role trong DB là lỗi điều kiện dữ liệu cần được báo theo contract ID-004; không tự tạo role trong import.

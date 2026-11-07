@@ -1,5 +1,7 @@
 # GW-006 Kế hoạch triển khai Gateway — Định tuyến Progress qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** Chỉ giữ route tiến độ cá nhân theo Problem/Course; các route điểm Assignment và tiến độ Class bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Đặc tả liên quan
 
 - [GW-006 spec](./spec.md), phiên bản `0.1`, trạng thái `Approved`.

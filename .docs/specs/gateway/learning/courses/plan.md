@@ -1,5 +1,7 @@
 # GW-003 Kế hoạch triển khai Gateway — Định tuyến Course qua API Gateway
 
+> **Cập nhật LRN-008 (2026-11-07):** `ADMIN` có quyền tương ứng quản lý mọi Course, không giới hạn người tạo; mọi câu trái ngược bên dưới đã ngừng áp dụng. Xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Đặc tả liên quan
 
 - [GW-003 spec](./spec.md), phiên bản `0.1`, trạng thái `Approved`.

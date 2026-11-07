@@ -4,6 +4,8 @@
 
 Approved
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
 Phiên bản này (1.1) thay thế vòng đời của phiên bản Approved 1.0 theo bản sửa đổi ngày 2026-09-06.
 Việc phê duyệt được ghi lại trong Lịch sử sửa đổi.
 

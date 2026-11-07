@@ -1,15 +1,18 @@
 import type {
   SubmissionHistoryRecord,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
-import { matchesFilter } from '../domain/submission-history';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import { matchesFilter } from '@submission/modules/submissions/domain/submission-history';
 import type {
   HistoryCursor,
   HistoryPage,
   SubmissionHistoryFilter,
-} from '../domain/submission-history';
-import { isTerminal } from '../domain/submission-record';
-import type { SubmissionKind, SubmissionStatus } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/submission-history';
+import { isTerminal } from '@submission/modules/submissions/domain/submission-record';
+import type {
+  SubmissionKind,
+  SubmissionStatus,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;

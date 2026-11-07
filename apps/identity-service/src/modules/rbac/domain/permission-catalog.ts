@@ -1,6 +1,6 @@
 import { RoleName } from '@/modules/rbac/domain/role-name';
 
-const lecturerPermissionCodes = [
+const learningAdminPermissionCodes = [
   'problem:create',
   'problem:read-managed',
   'problem:update',
@@ -17,30 +17,10 @@ const lecturerPermissionCodes = [
   'course:republish',
   'course:delete',
   'course:restore',
-  'class:create',
-  'class:read-managed',
-  'class:update',
-  'class:archive',
-  'class:restore',
-  'class:manage-members',
-  'assignment:create',
-  'assignment:read-managed',
-  'assignment:update',
-  'assignment:publish',
-  'assignment:delete',
-  'assignment:restore',
-];
-
-const studentPermissionCodes = [
-  'class:join',
-  'class:leave',
-  'class:read-enrolled',
-  'assignment:read-enrolled',
 ];
 
 const adminPermissionCodes = [
-  ...studentPermissionCodes,
-  ...lecturerPermissionCodes,
+  ...learningAdminPermissionCodes,
   'community:moderate',
   'user:import',
   'user:read',
@@ -48,7 +28,5 @@ const adminPermissionCodes = [
 ];
 
 export const rbacPermissionCatalog = [
-  ...studentPermissionCodes.map((code) => ({ code, role: RoleName.Student })),
-  ...lecturerPermissionCodes.map((code) => ({ code, role: RoleName.Lecturer })),
   ...adminPermissionCodes.map((code) => ({ code, role: RoleName.Admin })),
 ];

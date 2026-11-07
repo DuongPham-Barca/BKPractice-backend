@@ -24,7 +24,7 @@ const USER_ID = '00000000-0000-4000-8000-000000000031';
 const AUTH_HEADERS = {
   'content-type': 'application/json',
   'x-auth-user-id': USER_ID,
-  'x-auth-roles': 'LECTURER',
+  'x-auth-roles': 'ADMIN',
   'x-auth-permissions': 'problem:update,problem:read-managed',
 };
 

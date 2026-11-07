@@ -1,5 +1,9 @@
 # LRN-003 Công việc triển khai Quản lý Course
 
+> Cập nhật 2026-11-07: [LRN-008](../self-study/spec.md) thay thế mọi quy định về LECTURER, sở hữu riêng của người tạo, Class, Enrollment, Assignment và tiến độ theo lớp trong tài liệu này. Các yêu cầu còn lại vẫn áp dụng.
+
+> Cập nhật pattern 2026-11-07: `CourseRepository` đã ở `domain/repositories`; controller Course inject inbound port của từng use case qua token. Các task chưa đánh dấu bên dưới còn phụ thuộc các phần kiểm chứng khác của LRN-003.
+
 ## Trạng thái
 
 Approved — Sẵn sàng triển khai sau LRN-001
@@ -21,7 +25,7 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
       **Phụ thuộc:** Không có.
       **Truy vết:** Mục Thứ tự triển khai bước 1 của kế hoạch.
 
-- [ ] **LRN-003-T002 — Xác nhận ranh giới.** Không tạo Class, Enrollment, Assignment, Progress; không
+- [x] **LRN-003-T002 — Xác nhận ranh giới.** Không tạo Class, Enrollment, Assignment, Progress; không
       bài giảng/tài liệu; không đồng sở hữu; không microservice mới; `courses` chỉ đọc Problem qua
       `ProblemReferenceReader`.
       **Phụ thuộc:** LRN-003-T001.
@@ -29,11 +33,10 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 
 ## Identity
 
-- [ ] **LRN-003-T003 — Seed quyền `course:*` ở Identity.** Migration
-      `apps/identity-service/src/database/migrations/<timestamp>-Lrn003CoursePermissions.ts` chèn tám
-      mã `course:create|read-managed|update|publish|hold|republish|delete|restore` và gán cho
-      `LECTURER`, idempotent; down xoá đúng những gì đã chèn. Kiểm chứng `pnpm migration:run:identity`
-      / `pnpm migration:revert:identity`; token mới của `LECTURER` có tám quyền này.
+- [ ] **LRN-003-T003 — Seed quyền `course:*` ở Identity.** Quyền `course:*` đã nằm trong
+      catalog `permission-catalog.ts` và được seed bằng `pnpm seed:identity:rbac` (idempotent) cùng
+      các quyền khác; không còn migration riêng. Kiểm chứng `pnpm seed:identity:rbac` và token mới
+      của `LECTURER` có tám quyền `course:*`.
       **Phụ thuộc:** LRN-003-T001.
       **Truy vết:** ID-003-FR-017; mục Quy tắc phân quyền của đặc tả.
 
@@ -45,24 +48,24 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
       **Phụ thuộc:** LRN-003-T001.
       **Truy vết:** LRN-003-FR-002, FR-014, FR-015.
 
-- [ ] **LRN-003-T005 — Aggregate `Course`.** Chapter và `ChapterProblemRef` bên trong; bất biến ≤ 50
+- [x] **LRN-003-T005 — Aggregate `Course`.** Chapter và `ChapterProblemRef` bên trong; bất biến ≤ 50
       Chapter, ≤ 50 Problem mỗi Chapter, mỗi Problem một lần mỗi Course, thứ tự liên tục; thêm, sửa,
       gỡ, sắp xếp lại Chapter và Problem.
       **Phụ thuộc:** LRN-003-T004.
       **Truy vết:** LRN-003-FR-005, FR-006, FR-015; AC-009, AC-013, AC-018.
 
-- [ ] **LRN-003-T006 — Máy trạng thái.** Publish, hold, republish, xoá mềm, khôi phục, xoá hẳn nháp;
+- [x] **LRN-003-T006 — Máy trạng thái.** Publish, hold, republish, xoá mềm, khôi phục, xoá hẳn nháp;
       bước chuyển bị cấm trả `InvalidCourseState`. Chỉ `DRAFT`/`PUBLISHED` chưa xoá mềm sửa được.
       **Phụ thuộc:** LRN-003-T005.
       **Truy vết:** LRN-003-FR-007, FR-018, FR-019.
 
-- [ ] **LRN-003-T007 — `CourseReadiness` và `ProblemAttachPolicy`.** Readiness: tiêu đề, ≥ 1 Chapter,
+- [x] **LRN-003-T007 — `CourseReadiness` và `ProblemAttachPolicy`.** Readiness: tiêu đề, ≥ 1 Chapter,
       ≥ 1 Problem `PUBLISHED` chưa xoá. Attach: Problem chưa xoá và (`PUBLISHED` hoặc nháp/tạm giữ của
       chính mình); lỗi không phân biệt không tồn tại với không được phép.
       **Phụ thuộc:** LRN-003-T005.
       **Truy vết:** LRN-003-FR-006, FR-008, FR-019; SR-003; AC-006, AC-008, AC-019, AC-020.
 
-- [ ] **LRN-003-T008 — Unit test domain.** Không cần PostgreSQL.
+- [x] **LRN-003-T008 — Unit test domain.** Không cần PostgreSQL.
       **Phụ thuộc:** LRN-003-T004 tới LRN-003-T007.
       **Truy vết:** AC-006, AC-008, AC-009, AC-013, AC-018, AC-019, AC-020.
 
@@ -74,38 +77,38 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
       **Phụ thuộc:** LRN-003-T005.
       **Truy vết:** Mục Port của kế hoạch.
 
-- [ ] **LRN-003-T010 — `CourseAuthorization`.** Kiểm mã quyền trong `principal.permissions` và
+- [x] **LRN-003-T010 — `CourseAuthorization`.** Kiểm mã quyền trong `principal.permissions` và
       `createdBy == principal.userId`; không ngoại lệ cho `ADMIN`.
       **Phụ thuộc:** LRN-003-T003, LRN-003-T009.
       **Truy vết:** LRN-003-SR-001, SR-002; AC-002.
 
-- [ ] **LRN-003-T011 — Use case quản lý Course.** `CreateCourse`, `UpdateCourse`, `PublishCourse`,
+- [x] **LRN-003-T011 — Use case quản lý Course.** `CreateCourse`, `UpdateCourse`, `PublishCourse`,
       `HoldCourse`, `RepublishCourse`, `DeleteCourse` (xoá hẳn nháp khi không bị tham chiếu, ngược lại
       xoá mềm), `RestoreCourse`. Mỗi use case trong transaction có `loadForUpdate`.
       **Phụ thuộc:** LRN-003-T006, LRN-003-T007, LRN-003-T010.
       **Truy vết:** LRN-003-FR-003, FR-004, FR-007, FR-008, FR-018, FR-019; AC-001, AC-006, AC-007,
       AC-014, AC-017.
 
-- [ ] **LRN-003-T012 — Use case Chapter và Problem.** `AddChapter`, `UpdateChapter`, `RemoveChapter`,
+- [x] **LRN-003-T012 — Use case Chapter và Problem.** `AddChapter`, `UpdateChapter`, `RemoveChapter`,
       `ReorderChapters`, `AttachProblem`, `DetachProblem`, `ReorderChapterProblems`; Course `PUBLISHED`
       phải giữ readiness sau thay đổi.
       **Phụ thuộc:** LRN-003-T007, LRN-003-T010.
       **Truy vết:** LRN-003-FR-005, FR-006, FR-019; AC-008, AC-009, AC-013, AC-018, AC-019, AC-020.
 
-- [ ] **LRN-003-T013 — Use case đọc.** `ListPublishedCourses`, `GetPublishedCourse` (id hoặc slug; chỉ
+- [x] **LRN-003-T013 — Use case đọc.** `ListPublishedCourses`, `GetPublishedCourse` (id hoặc slug; chỉ
       Problem `PUBLISHED` chưa xoá), `ListManagedCourses` (`includeDeleted`), `GetManagedCourse` (trạng
       thái từng Problem, lỗi readiness).
       **Phụ thuộc:** LRN-003-T009, LRN-003-T010.
       **Truy vết:** LRN-003-FR-009, FR-010, FR-011, FR-013; AC-004, AC-005, AC-010.
 
-- [ ] **LRN-003-T014 — Unit test application.** Port giả: quyền, sở hữu, trạng thái, xoá hẳn nháp bị
+- [x] **LRN-003-T014 — Unit test application.** Port giả: quyền, sở hữu, trạng thái, xoá hẳn nháp bị
       tham chiếu, giữ readiness, lỗi không để lại thay đổi dở dang.
       **Phụ thuộc:** LRN-003-T011 tới LRN-003-T013.
       **Truy vết:** AC-002, AC-014, AC-017, AC-019.
 
 ## Lưu trữ và migration
 
-- [ ] **LRN-003-T015 — Migration Learning.** `<timestamp>-Lrn003CourseManagement.ts`: enum
+- [x] **LRN-003-T015 — Migration Learning.** `<timestamp>-Lrn003CourseManagement.ts`: enum
       `courses_status_enum`; `courses.status` (mặc định `DRAFT`), `updated_at`, `deleted_at`, CHECK mô
       tả; `chapters.description`, CHECK, `UNIQUE (id, course_id)`, index; bảng `chapter_problems` với
       FK kép, FK `problem_id` `ON DELETE RESTRICT`, `UNIQUE (course_id, problem_id)`, index; partial
@@ -118,49 +121,49 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
       **Phụ thuộc:** LRN-003-T015.
       **Truy vết:** Định nghĩa Hoàn thành.
 
-- [ ] **LRN-003-T017 — Entity.** Cập nhật `Course`, `Chapter`; thêm `ChapterProblem`; đăng ký trong
+- [x] **LRN-003-T017 — Entity.** Cập nhật `Course`, `Chapter`; thêm `ChapterProblem`; đăng ký trong
       `learning.entities.ts`. Không chuyển entity vào `libs/`.
       **Phụ thuộc:** LRN-003-T015.
       **Truy vết:** Mục Lưu trữ của kế hoạch.
 
-- [ ] **LRN-003-T018 — `ProblemReferenceReader` ở module `problems`.** Provider chỉ đọc trả `id`,
+- [x] **LRN-003-T018 — `ProblemReferenceReader` ở module `problems`.** Provider chỉ đọc trả `id`,
       `slug`, `title`, `problemType`, `difficulty`, `publishStatus`, `deletedAt`, `createdBy` cho một tập
       ID; export từ `problems.module.ts`. Không trả nội dung đề, Test Case, harness.
       **Phụ thuộc:** LRN-003-T009.
       **Truy vết:** LRN-003-FR-012; SR-004; AC-015.
 
-- [ ] **LRN-003-T019 — Adapter `CourseRepository` và `CourseReferenceChecker`.** Ánh xạ hai chiều,
+- [x] **LRN-003-T019 — Adapter `CourseRepository` và `CourseReferenceChecker`.** Ánh xạ hai chiều,
       lưu cả khối, `FOR UPDATE`, truy vấn người học join `problems` có lọc trạng thái, liệt kê phân
       trang tìm `ILIKE`; ánh xạ vi phạm UNIQUE thành `DuplicateSlug` / `ProblemAlreadyInCourse`.
       **Phụ thuộc:** LRN-003-T009, LRN-003-T017.
       **Truy vết:** LRN-003-FR-002, FR-009, FR-010, FR-018; SR-003, SR-007.
 
-- [ ] **LRN-003-T020 — Integration test.** Ánh xạ aggregate; FK kép; trùng Problem dưới đồng thời;
+- [x] **LRN-003-T020 — Integration test.** Ánh xạ aggregate; FK kép; trùng Problem dưới đồng thời;
       Problem `ON_HOLD`/xoá mềm ẩn rồi hiện lại đúng vị trí; xoá hẳn nháp bị Class tham chiếu bị từ chối.
       **Phụ thuộc:** LRN-003-T016, LRN-003-T018, LRN-003-T019.
       **Truy vết:** AC-004, AC-010, AC-017, AC-018.
 
 ## API / Presentation
 
-- [ ] **LRN-003-T021 — DTO.** Request và response theo mục DTO của kế hoạch; ánh xạ tường minh;
+- [x] **LRN-003-T021 — DTO.** Request và response theo mục DTO của kế hoạch; ánh xạ tường minh;
       `ValidationPipe` toàn cục chặn trường lạ.
       **Phụ thuộc:** LRN-003-T004.
       **Truy vết:** LRN-003-SR-005; AC-016.
 
-- [ ] **LRN-003-T022 — Controller.** Mười tám route theo bảng API của kế hoạch; `managed` trước
+- [x] **LRN-003-T022 — Controller.** Mười tám route theo bảng API của kế hoạch; `managed` trước
       `:idOrSlug`; mỗi route gọi đúng một use case; không logic nghiệp vụ trong controller.
       **Phụ thuộc:** LRN-003-T011 tới LRN-003-T013, LRN-003-T021.
       **Truy vết:** Mục API của kế hoạch.
 
-- [ ] **LRN-003-T023 — Ánh xạ lỗi.** Theo bảng Xử lý lỗi của kế hoạch; không cấu trúc lỗi mới.
+- [x] **LRN-003-T023 — Ánh xạ lỗi.** Theo bảng Xử lý lỗi của kế hoạch; không cấu trúc lỗi mới.
       **Phụ thuộc:** LRN-003-T022.
       **Truy vết:** Mục Tình huống lỗi của đặc tả; SR-008.
 
-- [ ] **LRN-003-T024 — Swagger.** Mô tả route, DTO, Bearer, mã lỗi; ví dụ không chứa dữ liệu judge.
+- [x] **LRN-003-T024 — Swagger.** Mô tả route, DTO, Bearer, mã lỗi; ví dụ không chứa dữ liệu judge.
       **Phụ thuộc:** LRN-003-T022.
       **Truy vết:** Định nghĩa Hoàn thành; SR-004.
 
-- [ ] **LRN-003-T025 — `CoursesModule`.** Nối dây use case, port, adapter; import `ProblemsModule` chỉ
+- [x] **LRN-003-T025 — `CoursesModule`.** Nối dây use case, port, adapter; import `ProblemsModule` chỉ
       để lấy `ProblemReferenceReader`; nạp vào `learning-service.module.ts`.
       **Phụ thuộc:** LRN-003-T018, LRN-003-T019, LRN-003-T022.
       **Truy vết:** Mục Kiến trúc của kế hoạch.
@@ -172,18 +175,18 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 
 ## Kiểm thử, bảo mật, kiểm chứng
 
-- [ ] **LRN-003-T026 — Test API/E2E.** `401`, `403`, liệt kê và xem đã xuất bản, Course nháp/tạm giữ/
+- [x] **LRN-003-T026 — Test API/E2E.** `401`, `403`, liệt kê và xem đã xuất bản, Course nháp/tạm giữ/
       xoá trả `404` cho người học, slug trùng, mô tả có HTML, xoá mềm không xoá Class, không có dữ liệu
       judge, trường lạ.
       **Phụ thuộc:** LRN-003-T022 tới LRN-003-T025.
       **Truy vết:** AC-001 tới AC-020.
 
-- [ ] **LRN-003-T027 — Rà soát bảo mật.** Không lộ Course/Problem chưa công khai qua liệt kê, tìm,
+- [x] **LRN-003-T027 — Rà soát bảo mật.** Không lộ Course/Problem chưa công khai qua liệt kê, tìm,
       chi tiết, lỗi, số đếm; không có dữ liệu judge; không truy cập CSDL service khác.
       **Phụ thuộc:** LRN-003-T026.
       **Truy vết:** LRN-003-SR-001 tới SR-008.
 
-- [ ] **LRN-003-T028 — Chạy lệnh kiểm chứng.** `pnpm lint`, `pnpm typecheck`, `pnpm test`,
+- [x] **LRN-003-T028 — Chạy lệnh kiểm chứng.** `pnpm lint`, `pnpm typecheck`, `pnpm test`,
       `pnpm build`; không che lỗi bằng `any`, `@ts-ignore` hay tắt lint.
       **Phụ thuộc:** LRN-003-T026, LRN-003-T027.
       **Truy vết:** Định nghĩa Hoàn thành.
@@ -214,3 +217,17 @@ phần kiểm chứng đã xong. Các mục N/A là những mục duy nhất đ�
 
 > File này là danh sách kiểm tra triển khai, không phải đặc tả. Không thêm yêu cầu và không âm thầm
 > thay đổi `spec.md` hay `plan.md` đã Approved.
+
+## Refactor bố trí theo Problem — 2026-11-07
+
+- [x] Mỗi use case và inbound port một file; command và lỗi có tên riêng.
+- [x] Use case ghi tự điều phối transaction và aggregate; bỏ `CourseMutationService`, dùng chung hợp đồng `TransactionRunner` của Problem.
+- [x] Tách controller Course quản lý, Chapter quản lý và Course công khai; giữ 18 route và thứ tự route tĩnh trước route động.
+- [x] Tách request mapper, DTO và thư mục filters; thêm barrel và alias theo working agreement.
+- [x] Xác minh unit/API, DI với PostgreSQL, lint/typecheck/build và ghi worked entry. Course có 145 test qua; build cả sáu service qua. Lint/typecheck/test toàn repo còn lỗi có sẵn ở test Identity (`officialName`), xem worked entry `learning/courses/2026-11-07-align-layout-with-problems.md`.
+
+## Sửa lỗi review PR — 2026-11-07
+
+- [x] Chia sẻ transaction storage theo DataSource giữa Course/Problem; reader dùng manager hiện tại.
+- [x] Chặn slug `managed` khi tạo mới, giữ rehydrate dữ liệu cũ và cập nhật Swagger.
+- [x] Kiểm thử regression với pool một connection, cô lập request/DataSource, API slug và chạy kiểm tra chất lượng.

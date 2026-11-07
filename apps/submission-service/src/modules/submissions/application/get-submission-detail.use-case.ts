@@ -1,9 +1,9 @@
 import type {
   SubmissionExecutionError,
   SubmissionRepositoryPort,
-} from '../domain/ports/submission-repository.port';
-import type { SubmissionStatus } from '../domain/submission-record';
-import { SubmissionKind } from '../domain/submission-record';
+} from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import type { SubmissionStatus } from '@submission/modules/submissions/domain/submission-record';
+import { SubmissionKind } from '@submission/modules/submissions/domain/submission-record';
 
 export interface GetSubmissionDetailInput {
   readonly ownerId: string;

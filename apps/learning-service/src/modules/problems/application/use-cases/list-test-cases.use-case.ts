@@ -32,7 +32,7 @@ export class ListTestCasesUseCase implements IListTestCasesPortIn {
       throw new ProblemNotFoundError(problemId);
     }
 
-    this.authorization.requireOwned(principal, problem, 'read-managed');
+    this.authorization.requireManaged(principal, 'read-managed');
 
     const [testCases, summary] = await Promise.all([
       this.testCaseRepository.listByProblem(problemId),

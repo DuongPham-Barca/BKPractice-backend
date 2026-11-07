@@ -1,6 +1,8 @@
 import { ConcurrentModificationError } from '@learning/modules/problems/application/errors/concurrent-modification.error';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import type { TransactionRunner } from '@learning/modules/problems/application/ports/out/transaction-runner.port.out';
+import type { ProblemResultMapper } from '@learning/modules/problems/application/results/problem-result.mapper';
+import type { ProblemAuthorizationService } from '@learning/modules/problems/application/services/problem-authorization.service';
 import type { TestCaseRepository } from '@learning/modules/problems/domain/repositories/test-case.repository.port.out';
 import type { PublishValidator } from '@learning/modules/problems/domain/services/publish.validator';
 import {
@@ -10,14 +12,11 @@ import {
 } from '@learning/modules/problems/domain/testing/problem-test.factory';
 import { TestSuiteSummary } from '@learning/modules/problems/domain/value-objects';
 
-import type { ProblemResultMapper } from '../results/problem-result.mapper';
-import type { ProblemAuthorizationService } from '../services/problem-authorization.service';
-
 import { RestoreProblemUseCase } from './restore-problem.use-case';
 
 const PRINCIPAL = {
   userId: TEST_USER_ID,
-  roles: ['LECTURER'],
+  roles: ['ADMIN'],
   permissions: ['problem:restore'],
 };
 
@@ -46,11 +45,7 @@ describe('RestoreProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, problem.id.value)).resolves.toBe(detail);
 
     expect(problem.deletedAt).toBeNull();
-    expect(repository.restore).toHaveBeenCalledWith(
-      problem.id.value,
-      TEST_USER_ID,
-      expect.any(Date),
-    );
+    expect(repository.restore).toHaveBeenCalledWith(problem.id.value, expect.any(Date));
     expect(resultMapper.toManagedDetail).toHaveBeenCalledWith(problem, readiness, []);
   });
 
@@ -64,7 +59,7 @@ describe('RestoreProblemUseCase', () => {
     await expect(useCase.execute(PRINCIPAL, 'missing')).rejects.toBeInstanceOf(
       ProblemNotFoundError,
     );
-    expect(authorization.requireOwned).not.toHaveBeenCalled();
+    expect(authorization.requireManaged).not.toHaveBeenCalled();
   });
 
   it('reports a concurrent modification when the restore loses the race', async () => {
@@ -150,7 +145,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

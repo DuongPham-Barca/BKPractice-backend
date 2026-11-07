@@ -4,6 +4,11 @@
 
 Approved — phạm vi 0.5 seed riêng và user–role giữ baseline, theo yêu cầu triển khai của chủ sở hữu ngày 2026-10-25; không mở CRUD/catalog động hoặc bootstrap account Admin.
 
+> **Cập nhật Learning LRN-008 (2026-11-07):** Mọi câu trong tài liệu này gán quyền `problem:*` hoặc
+> `course:*` cho `LECTURER`, hoặc giữ quyền `class:*`/`assignment:*`, đã được thay thế bởi
+> [LRN-008](../../02-learning/self-study/spec.md). Identity vẫn giữ vai trò nền tảng `LECTURER` cho
+> phạm vi khác; riêng Learning chỉ cấp quyền quản lý Problem/Course cho `ADMIN`.
+
 > Phạm vi mới theo yêu cầu ngày 2026-10-24 nằm ở [Bản sửa đổi 0.5](#bản-sửa-đổi-05--seed-danh-mục-và-quản-lý-userrole). Không triển khai seed/user–role 0.5 chỉ từ các quyết định phạm vi khi câu hỏi mở chưa được giải quyết.
 
 ## Baseline 0.4 — lịch sử phê duyệt

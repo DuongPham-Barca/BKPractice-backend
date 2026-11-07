@@ -115,12 +115,12 @@ export class ManagedProblemsController {
   @ApiOperation({
     summary: 'Create a draft problem',
     description:
-      'Creates a new DRAFT problem. Requires LECTURER role and problem:create permission. The slug must be unique. Minimum required fields: slug, title, statement, problemType, difficulty. Other fields use sensible defaults.',
+      'Creates a new DRAFT problem. Requires ADMIN role and problem:create permission. The slug must be unique. Minimum required fields: slug, title, statement, problemType, difficulty. Other fields use sensible defaults.',
   })
   @ApiOkResponse({ type: ManagedProblemResponseDto, description: 'Created draft problem' })
   @ApiBadRequestResponse({ description: 'Validation error, duplicate slug, or unknown reference' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
-  @ApiForbiddenResponse({ description: 'Missing LECTURER role or problem:create permission' })
+  @ApiForbiddenResponse({ description: 'Missing ADMIN role or problem:create permission' })
   @ApiConflictResponse({ description: 'Slug already exists' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async create(
@@ -136,9 +136,9 @@ export class ManagedProblemsController {
 
   @Get('managed')
   @ApiOperation({
-    summary: 'List problems owned by the current lecturer',
+    summary: 'List problems owned by the current admin',
     description:
-      'Returns paginated list of problems owned by the authenticated lecturer. Supports includeDeleted filter. Only problems where the lecturer is the creator are returned.',
+      'Returns paginated list of problems owned by the authenticated admin. Supports includeDeleted filter. Only problems where the admin is the creator are returned.',
   })
   @ApiOkResponse({
     type: ManagedProblemListResponseDto,
@@ -146,7 +146,7 @@ export class ManagedProblemsController {
   })
   @ApiBadRequestResponse({ description: 'Invalid query parameters' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
-  @ApiForbiddenResponse({ description: 'Missing LECTURER role or problem:read-managed permission' })
+  @ApiForbiddenResponse({ description: 'Missing ADMIN role or problem:read-managed permission' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async listManaged(
     @TrustedPrincipal() principal: Principal,
@@ -171,7 +171,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Invalid UUID' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:read-managed permission, or not the owner',
+    description: 'Missing ADMIN role, problem:read-managed permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })
@@ -186,7 +186,7 @@ export class ManagedProblemsController {
 
   @Patch(':id')
   @ApiOperation({
-    summary: 'Update a problem owned by the current lecturer',
+    summary: 'Update a problem owned by the current admin',
     description:
       'Updates a problem. Only the owner (creator) can update. DRAFT and PUBLISHED problems can be updated; ON_HOLD problems return 409. Semantics: field absent = keep current value, null = clear nullable field, empty array = clear collection. The slug field is not accepted.',
   })
@@ -194,7 +194,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Validation error, unknown reference, or slug in body' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:update permission, or not the owner',
+    description: 'Missing ADMIN role, problem:update permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is ON_HOLD or concurrent modification' })
@@ -226,7 +226,7 @@ export class ManagedProblemsController {
   })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:publish permission, or not the owner',
+    description: 'Missing ADMIN role, problem:publish permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not DRAFT or concurrent modification' })
@@ -250,7 +250,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Validation error' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:hold permission, or not the owner',
+    description: 'Missing ADMIN role, problem:hold permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not PUBLISHED or concurrent modification' })
@@ -273,7 +273,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Validation error' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:republish permission, or not the owner',
+    description: 'Missing ADMIN role, problem:republish permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not ON_HOLD or concurrent modification' })
@@ -297,7 +297,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Validation error' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:delete permission, or not the owner',
+    description: 'Missing ADMIN role, problem:delete permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is DRAFT or concurrent modification' })
@@ -321,7 +321,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Validation error' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:restore permission, or not the owner',
+    description: 'Missing ADMIN role, problem:restore permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiConflictResponse({ description: 'Problem is not deleted or concurrent modification' })
@@ -345,7 +345,7 @@ export class ManagedProblemsController {
   @ApiBadRequestResponse({ description: 'Invalid UUID' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid access token' })
   @ApiForbiddenResponse({
-    description: 'Missing LECTURER role, problem:read-managed permission, or not the owner',
+    description: 'Missing ADMIN role, problem:read-managed permission, or not the owner',
   })
   @ApiNotFoundResponse({ description: 'Problem not found' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error' })

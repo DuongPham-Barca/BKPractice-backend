@@ -1,7 +1,11 @@
-import type { JudgeJobPort } from '../domain/ports/judge-job.port';
-import type { LearningJudgePackagePort } from '../domain/ports/learning-judge-package.port';
-import type { SubmissionRepositoryPort } from '../domain/ports/submission-repository.port';
-import { SubmissionKind, SubmissionStatus, createSubmitRecord } from '../domain/submission-record';
+import type { JudgeJobPort } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import type { LearningJudgePackagePort } from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
+import type { SubmissionRepositoryPort } from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import {
+  SubmissionKind,
+  SubmissionStatus,
+  createSubmitRecord,
+} from '@submission/modules/submissions/domain/submission-record';
 
 export interface SubmitCodeInput {
   readonly userId: string;

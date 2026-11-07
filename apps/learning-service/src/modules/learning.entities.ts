@@ -1,5 +1,4 @@
-import { Assignment, AssignmentProblem } from './assignments/entities/assignment.entity';
-import { Chapter, Classroom, Course, Enrollment } from './courses/entities/course.entity';
+import { Chapter, ChapterProblem, Course } from './courses/entities/course.entity';
 import {
   Problem,
   ProblemHarness,
@@ -9,6 +8,7 @@ import {
   TestCase,
   Topic,
 } from './problems/entities/problem.entity';
+import { ProgressEventReceipt } from './progress/entities/progress-event-receipt.entity';
 import { Progress } from './progress/entities/progress.entity';
 
 export const learningEntities = [
@@ -21,9 +21,7 @@ export const learningEntities = [
   Tag,
   Course,
   Chapter,
-  Classroom,
-  Enrollment,
-  Assignment,
-  AssignmentProblem,
+  ChapterProblem,
   Progress,
+  ProgressEventReceipt,
 ];

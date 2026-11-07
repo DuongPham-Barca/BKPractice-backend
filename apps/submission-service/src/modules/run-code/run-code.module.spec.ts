@@ -1,9 +1,8 @@
 import { MODULE_METADATA } from '@nestjs/common/constants';
-
-import { JUDGE_JOB_PORT } from '../submissions/domain/ports/judge-job.port';
-import { LEARNING_JUDGE_PACKAGE_PORT } from '../submissions/domain/ports/learning-judge-package.port';
-import { SUBMISSION_REPOSITORY_PORT } from '../submissions/domain/ports/submission-repository.port';
-import { SubmissionsModule } from '../submissions/submissions.module';
+import { JUDGE_JOB_PORT } from '@submission/modules/submissions/domain/ports/judge-job.port';
+import { LEARNING_JUDGE_PACKAGE_PORT } from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
+import { SUBMISSION_REPOSITORY_PORT } from '@submission/modules/submissions/domain/ports/submission-repository.port';
+import { SubmissionsModule } from '@submission/modules/submissions/submissions.module';
 
 import { RunCodeModule } from './run-code.module';
 

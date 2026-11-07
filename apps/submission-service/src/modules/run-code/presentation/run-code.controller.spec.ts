@@ -1,9 +1,8 @@
+import type { RunCodeUseCase } from '@submission/modules/run-code/application/run-code.use-case';
 import {
   SubmissionKind,
   SubmissionStatus,
 } from '@submission/modules/submissions/domain/submission-record';
-
-import type { RunCodeUseCase } from '../application/run-code.use-case';
 
 import { RunCodeController } from './run-code.controller';
 

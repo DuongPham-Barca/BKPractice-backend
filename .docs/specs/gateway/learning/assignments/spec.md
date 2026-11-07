@@ -1,5 +1,7 @@
 # GW-005 Định tuyến Assignment qua API Gateway
 
+> **Ngừng áp dụng theo LRN-008 (2026-11-07):** Gateway không định tuyến Class/Enrollment/Assignment. Nội dung dưới đây lưu lại lịch sử; xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Trạng thái
 
 Approved
@@ -7,7 +9,6 @@ Approved
 Phiên bản `0.1`, ngày `2026-11-03`.
 
 Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`
-
 
 ## Mục tiêu
 
@@ -58,18 +59,18 @@ LRN-005 Quản lý Assignment đã Approved và `plan.md` của tính năng xác
 
 Gateway công khai các route sau theo kế hoạch đã Approved của LRN-005 Quản lý Assignment:
 
-| Method | Route | Thao tác Learning |
-| --- | --- | --- |
-| `POST` | `/api/classes/:classId/assignments` | Tạo Assignment trong Class |
-| `GET` | `/api/classes/:classId/assignments/managed` | Danh sách quản lý |
-| `GET` | `/api/classes/:classId/assignments` | Danh sách hướng sinh viên |
-| `GET` | `/api/assignments/managed/:id` | Chi tiết quản lý |
-| `GET` | `/api/assignments/:id` | Chi tiết hướng sinh viên |
-| `PATCH` | `/api/assignments/:id` | Cập nhật |
-| `PUT` | `/api/assignments/:id/problems` | Thay danh sách Problem |
-| `POST` | `/api/assignments/:id/publish` | Xuất bản |
-| `DELETE` | `/api/assignments/:id` | Xóa/xóa mềm |
-| `POST` | `/api/assignments/:id/restore` | Khôi phục |
+| Method   | Route                                       | Thao tác Learning          |
+| -------- | ------------------------------------------- | -------------------------- |
+| `POST`   | `/api/classes/:classId/assignments`         | Tạo Assignment trong Class |
+| `GET`    | `/api/classes/:classId/assignments/managed` | Danh sách quản lý          |
+| `GET`    | `/api/classes/:classId/assignments`         | Danh sách hướng sinh viên  |
+| `GET`    | `/api/assignments/managed/:id`              | Chi tiết quản lý           |
+| `GET`    | `/api/assignments/:id`                      | Chi tiết hướng sinh viên   |
+| `PATCH`  | `/api/assignments/:id`                      | Cập nhật                   |
+| `PUT`    | `/api/assignments/:id/problems`             | Thay danh sách Problem     |
+| `POST`   | `/api/assignments/:id/publish`              | Xuất bản                   |
+| `DELETE` | `/api/assignments/:id`                      | Xóa/xóa mềm                |
+| `POST`   | `/api/assignments/:id/restore`              | Khôi phục                  |
 
 Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, route không có trong bảng và route ghi ngoài danh sách MUST NOT được mở thêm theo đặc tả này.
 
@@ -81,16 +82,16 @@ Mọi route giữ nguyên query/body contract của Learning. Route nội bộ, 
 
 ## Tình huống lỗi
 
-| Trường hợp | Kết quả |
-| --- | --- |
-| Thiếu/sai/hết hạn/thu hồi token | `401`, không gọi Learning |
-| Identity không khả dụng khi xác minh session | `503`, không gọi Learning |
-| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning |
-| Header định danh/tin cậy giả mạo | Bị loại bỏ và thay bằng metadata tin cậy |
-| Path traversal/dot segment làm đổi đích | `400`, không gọi Learning |
-| Learning không khả dụng/timeout | `502` |
-| Learning trả lỗi nghiệp vụ | Giữ nguyên status/body của Learning |
-| Vượt rate limit mặc định | `429` |
+| Trường hợp                                                | Kết quả                                  |
+| --------------------------------------------------------- | ---------------------------------------- |
+| Thiếu/sai/hết hạn/thu hồi token                           | `401`, không gọi Learning                |
+| Identity không khả dụng khi xác minh session              | `503`, không gọi Learning                |
+| Cookie trên method không an toàn thiếu Origin/CSRF hợp lệ | `403`, không gọi Learning                |
+| Header định danh/tin cậy giả mạo                          | Bị loại bỏ và thay bằng metadata tin cậy |
+| Path traversal/dot segment làm đổi đích                   | `400`, không gọi Learning                |
+| Learning không khả dụng/timeout                           | `502`                                    |
+| Learning trả lỗi nghiệp vụ                                | Giữ nguyên status/body của Learning      |
+| Vượt rate limit mặc định                                  | `429`                                    |
 
 ## Tình huống biên
 
@@ -140,7 +141,7 @@ Không có câu hỏi về route hoặc quyền nghiệp vụ trong nguồn đã
 
 ## Lịch sử sửa đổi
 
-| Ngày | Phiên bản | Tác giả/Người review | Tóm tắt |
-| --- | --- | --- | --- |
-| 2026-11-04 | 0.1 | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
-| 2026-11-03 | 0.1 | Codex | Đề xuất hợp đồng Gateway cho LRN-005 Quản lý Assignment |
+| Ngày       | Phiên bản | Tác giả/Người review          | Tóm tắt                                                            |
+| ---------- | --------- | ----------------------------- | ------------------------------------------------------------------ |
+| 2026-11-04 | 0.1       | Codex theo chỉ đạo người dùng | Phê duyệt sau review Gateway contract, route Learning và kiến trúc |
+| 2026-11-03 | 0.1       | Codex                         | Đề xuất hợp đồng Gateway cho LRN-005 Quản lý Assignment            |

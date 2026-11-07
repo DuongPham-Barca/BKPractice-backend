@@ -1,5 +1,8 @@
-import type { AcceptedEventOutboxPort } from '../domain/ports/accepted-event-outbox.port';
-import type { AcceptedEventPort, AcceptedProgressEvent } from '../domain/ports/accepted-event.port';
+import type { AcceptedEventOutboxPort } from '@submission/modules/submissions/domain/ports/accepted-event-outbox.port';
+import type {
+  AcceptedEventPort,
+  AcceptedProgressEvent,
+} from '@submission/modules/submissions/domain/ports/accepted-event.port';
 
 import {
   ACCEPTED_EVENT_RELAY_BATCH_SIZE,

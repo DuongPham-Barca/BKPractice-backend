@@ -12,14 +12,13 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-
-import { GetSubmissionDetailUseCase } from '../application/get-submission-detail.use-case';
-import { ListSubmissionHistoryUseCase } from '../application/list-submission-history.use-case';
-import { SubmitCodeUseCase } from '../application/submit-code.use-case';
+import { GetSubmissionDetailUseCase } from '@submission/modules/submissions/application/get-submission-detail.use-case';
+import { ListSubmissionHistoryUseCase } from '@submission/modules/submissions/application/list-submission-history.use-case';
+import { SubmitCodeUseCase } from '@submission/modules/submissions/application/submit-code.use-case';
 import {
   JudgePackageUnavailableError,
   ProblemNotSubmittableError,
-} from '../domain/ports/learning-judge-package.port';
+} from '@submission/modules/submissions/domain/ports/learning-judge-package.port';
 
 import { TrustedOwner } from './decorators/trusted-owner.decorator';
 import { ListSubmissionHistoryQueryDto } from './dto/list-submission-history.query.dto';

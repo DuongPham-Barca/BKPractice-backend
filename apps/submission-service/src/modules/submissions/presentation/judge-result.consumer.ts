@@ -1,9 +1,8 @@
 import { RabbitMqService } from '@app/common';
 import { RABBIT_QUEUES } from '@app/contracts';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-
-import { ApplyRunJudgeResultUseCase } from '../application/apply-run-judge-result.use-case';
-import { ApplySubmitJudgeResultUseCase } from '../application/apply-submit-judge-result.use-case';
+import { ApplyRunJudgeResultUseCase } from '@submission/modules/submissions/application/apply-run-judge-result.use-case';
+import { ApplySubmitJudgeResultUseCase } from '@submission/modules/submissions/application/apply-submit-judge-result.use-case';
 
 import { parseJudgeResult } from './judge-result.parser';
 

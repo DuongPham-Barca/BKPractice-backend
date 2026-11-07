@@ -1,9 +1,9 @@
 import {
   createProblemPayload,
   createProblemsTestApp,
-  LECTURER_A_ID,
-  LECTURER_B_ID,
-  lecturerHeaders,
+  ADMIN_A_ID,
+  ADMIN_B_ID,
+  adminHeaders,
   studentHeaders,
   type ProblemsTestApp,
 } from './testing/problems-e2e.harness';
@@ -52,11 +52,11 @@ describe('Problems API end-to-end contract', () => {
     return { status: response.status, body };
   }
 
-  function post(path: string, body: unknown, headers = lecturerHeaders()): Promise<ApiResponse> {
+  function post(path: string, body: unknown, headers = adminHeaders()): Promise<ApiResponse> {
     return send(path, { method: 'POST', headers, body: JSON.stringify(body) });
   }
 
-  function patch(path: string, body: unknown, headers = lecturerHeaders()): Promise<ApiResponse> {
+  function patch(path: string, body: unknown, headers = adminHeaders()): Promise<ApiResponse> {
     return send(path, { method: 'PATCH', headers, body: JSON.stringify(body) });
   }
 
@@ -75,7 +75,7 @@ describe('Problems API end-to-end contract', () => {
     expect(response.body.slug).toBe('two-sum');
 
     const snapshot = harness.problems.storedSnapshot(text(response.body.id));
-    expect(snapshot?.createdBy.value).toBe(LECTURER_A_ID);
+    expect(snapshot?.createdBy.value).toBe(ADMIN_A_ID);
     expect(snapshot?.publishStatus).toBe('DRAFT');
   });
 
@@ -98,12 +98,12 @@ describe('Problems API end-to-end contract', () => {
     const publicBySlug = await send('/api/problems/two-sum', { headers: studentHeaders() });
     expect(publicBySlug.status).toBe(404);
 
-    const managedList = await send('/api/problems/managed', { headers: lecturerHeaders() });
+    const managedList = await send('/api/problems/managed', { headers: adminHeaders() });
     expect(managedList.status).toBe(200);
     expect(managedList.body.total).toBe(1);
 
     const managedDetail = await send(`/api/problems/managed/${id}`, {
-      headers: lecturerHeaders(),
+      headers: adminHeaders(),
     });
     expect(managedDetail.status).toBe(200);
     expect(managedDetail.body.publishStatus).toBe('DRAFT');
@@ -138,21 +138,21 @@ describe('Problems API end-to-end contract', () => {
     const issues = asArray(published.body.issues).map((issue) => asObject(issue).code);
     expect(issues).toContain('ENABLED_LANGUAGE_REQUIRED');
 
-    const managed = await send(`/api/problems/managed/${id}`, { headers: lecturerHeaders() });
+    const managed = await send(`/api/problems/managed/${id}`, { headers: adminHeaders() });
     expect(managed.body.publishStatus).toBe('DRAFT');
     expect(harness.problems.storedSnapshot(id)?.publishStatus).toBe('DRAFT');
   });
 
-  it('lets only the owner update and never mutates on rejected updates', async () => {
+  it('lets another ADMIN update a problem', async () => {
     const id = await createDraft();
 
-    const forbidden = await patch(
+    const crossAdmin = await patch(
       `/api/problems/${id}`,
       { title: 'Hijacked title' },
-      lecturerHeaders(LECTURER_B_ID),
+      adminHeaders(ADMIN_B_ID),
     );
-    expect(forbidden.status).toBe(403);
-    expect(harness.problems.storedSnapshot(id)?.title.value).toBe('Two Sum');
+    expect(crossAdmin.status).toBe(200);
+    expect(harness.problems.storedSnapshot(id)?.title.value).toBe('Hijacked title');
 
     const updated = await patch(`/api/problems/${id}`, { title: 'Updated title' });
     expect(updated.status).toBe(200);
@@ -183,19 +183,19 @@ describe('Problems API end-to-end contract', () => {
 
     const deleted = await send(`/api/problems/${id}`, {
       method: 'DELETE',
-      headers: lecturerHeaders(),
+      headers: adminHeaders(),
     });
     expect(deleted.status).toBe(200);
     expect(deleted.body.publishStatus).toBe('PUBLISHED');
     expect(typeof deleted.body.deletedAt).toBe('string');
 
     expect((await send(`/api/problems/${id}`, { headers: studentHeaders() })).status).toBe(404);
-    expect((await send(`/api/problems/managed/${id}`, { headers: lecturerHeaders() })).status).toBe(
+    expect((await send(`/api/problems/managed/${id}`, { headers: adminHeaders() })).status).toBe(
       404,
     );
 
     const withDeleted = await send(`/api/problems/managed/${id}?includeDeleted=true`, {
-      headers: lecturerHeaders(),
+      headers: adminHeaders(),
     });
     expect(withDeleted.status).toBe(200);
     expect(withDeleted.body.deletedAt).not.toBeNull();
@@ -215,16 +215,16 @@ describe('Problems API end-to-end contract', () => {
       (
         await send(`/api/problems/${id}`, {
           method: 'DELETE',
-          headers: lecturerHeaders(),
+          headers: adminHeaders(),
         })
       ).status,
     ).toBe(200);
 
-    const active = await send('/api/problems/managed', { headers: lecturerHeaders() });
+    const active = await send('/api/problems/managed', { headers: adminHeaders() });
     expect(active.body.total).toBe(0);
 
     const withDeleted = await send('/api/problems/managed?includeDeleted=true', {
-      headers: lecturerHeaders(),
+      headers: adminHeaders(),
     });
     expect(withDeleted.body.total).toBe(1);
   });

@@ -21,7 +21,7 @@ import { TestSuiteSummary } from '@learning/modules/problems/domain/value-object
 
 import { CreateProblemUseCase } from './create-problem.use-case';
 
-const PRINCIPAL = { userId: TEST_USER_ID, roles: ['LECTURER'], permissions: ['problem:create'] };
+const PRINCIPAL = { userId: TEST_USER_ID, roles: ['ADMIN'], permissions: ['problem:create'] };
 
 describe('CreateProblemUseCase', () => {
   it('creates and saves a draft problem and returns the managed detail', async () => {
@@ -159,7 +159,7 @@ function authorizationMock() {
   return {
     requireCreate: jest.fn(),
     requireManagedList: jest.fn(),
-    requireOwned: jest.fn(),
+    requireManaged: jest.fn(),
   };
 }
 

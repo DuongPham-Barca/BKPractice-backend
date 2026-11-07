@@ -1,5 +1,7 @@
 # GW-005 Kế hoạch triển khai Gateway — Định tuyến Assignment qua API Gateway
 
+> **Ngừng áp dụng theo LRN-008 (2026-11-07):** Gateway không định tuyến Class/Enrollment/Assignment. Nội dung dưới đây lưu lại lịch sử; xem [Learning tự học](../../../02-learning/self-study/spec.md).
+
 ## Đặc tả liên quan
 
 - [GW-005 spec](./spec.md), phiên bản `0.1`, trạng thái `Approved`.

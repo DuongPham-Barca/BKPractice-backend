@@ -1,5 +1,5 @@
-import type { AcceptedEventOutboxPort } from '../domain/ports/accepted-event-outbox.port';
-import type { AcceptedEventPort } from '../domain/ports/accepted-event.port';
+import type { AcceptedEventOutboxPort } from '@submission/modules/submissions/domain/ports/accepted-event-outbox.port';
+import type { AcceptedEventPort } from '@submission/modules/submissions/domain/ports/accepted-event.port';
 
 export const ACCEPTED_EVENT_RELAY_BATCH_SIZE = 20;
 

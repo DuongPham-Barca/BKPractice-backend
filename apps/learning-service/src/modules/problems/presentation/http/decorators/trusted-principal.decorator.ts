@@ -61,11 +61,10 @@ function parseList(
     return [];
   }
 
-  const values = rawValue.split(',').map((value) => value.trim());
-
-  if (values.some((value) => value.length === 0)) {
-    throw new UnauthorizedError();
-  }
+  const values = rawValue
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
 
   const uniqueValues = [...new Set(values)];
 

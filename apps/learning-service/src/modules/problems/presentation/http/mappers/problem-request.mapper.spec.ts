@@ -1,6 +1,5 @@
 import { DomainValidationError } from '@learning/modules/problems/domain/errors/domain-validation.error';
-
-import type { CreateProblemRequestDto } from '../dto/create-problem.request.dto';
+import type { CreateProblemRequestDto } from '@learning/modules/problems/presentation/http/dto/create-problem.request.dto';
 
 import { ProblemRequestMapper } from './problem-request.mapper';
 

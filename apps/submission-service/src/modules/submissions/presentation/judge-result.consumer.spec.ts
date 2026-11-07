@@ -1,7 +1,6 @@
 import type { RabbitMqService } from '@app/common';
-
-import type { ApplyRunJudgeResultUseCase } from '../application/apply-run-judge-result.use-case';
-import type { ApplySubmitJudgeResultUseCase } from '../application/apply-submit-judge-result.use-case';
+import type { ApplyRunJudgeResultUseCase } from '@submission/modules/submissions/application/apply-run-judge-result.use-case';
+import type { ApplySubmitJudgeResultUseCase } from '@submission/modules/submissions/application/apply-submit-judge-result.use-case';
 
 import { JudgeResultConsumer } from './judge-result.consumer';
 
