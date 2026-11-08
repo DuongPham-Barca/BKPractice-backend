@@ -114,6 +114,7 @@ export class CourseTypeOrmRepository implements CourseRepository {
 
   async listManaged(filter: ManagedCourseListFilter): Promise<CoursePage<CourseAggregate>> {
     const qb = this.courseRepo.createQueryBuilder('c');
+    if (filter.createdBy) qb.andWhere('c.created_by = :createdBy', { createdBy: filter.createdBy });
     if (!filter.includeDeleted) qb.andWhere('c.deleted_at IS NULL');
     if (filter.search) qb.andWhere('c.title ILIKE :q', { q: `%${escapeLike(filter.search)}%` });
     const total = await qb.getCount();
@@ -187,6 +188,12 @@ export class CourseTypeOrmRepository implements CourseRepository {
           await chapterProblemRepo.save(row);
         }
       }
+      await manager.query(
+        `INSERT INTO course_problem_history (course_id, problem_id)
+        SELECT DISTINCT course_id, problem_id FROM chapter_problems WHERE course_id = $1
+        ON CONFLICT DO NOTHING`,
+        [courseId],
+      );
     } catch (error) {
       throw translatePersistenceError(error);
     }

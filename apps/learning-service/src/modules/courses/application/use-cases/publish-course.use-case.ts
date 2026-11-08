@@ -32,6 +32,7 @@ export class PublishCourseUseCase implements IPublishCoursePortIn {
     return this.transactionRunner.run(async () => {
       const course = await this.repository.loadForUpdate(courseId);
       if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(principal, course.createdBy.value);
       if (!course.isDraft)
         throw new InvalidCourseState(
           'status',

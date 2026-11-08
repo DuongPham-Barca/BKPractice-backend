@@ -33,6 +33,7 @@ export class UpdateCourseUseCase implements IUpdateCoursePortIn {
     return this.transactionRunner.run(async () => {
       const course = await this.repository.loadForUpdate(courseId);
       if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(principal, course.createdBy.value);
       course.update(command, now);
       if (course.isPublished) await this.readiness.assertReady(course);
       await this.repository.save(course);

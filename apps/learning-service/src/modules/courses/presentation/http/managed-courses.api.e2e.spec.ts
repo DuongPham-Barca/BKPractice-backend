@@ -233,6 +233,68 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
     return { id, chapterId };
   }
 
+  it('lets a Lecturer manage own Course, hides it from another Lecturer, and lets Admin manage all', async () => {
+    const lecturerA = headers(OWNER_ID, 'LECTURER');
+    const lecturerB = headers(OTHER_ID, 'LECTURER');
+    const created = await call('POST', '/api/courses', {
+      headers: lecturerA,
+      body: { slug: 'lecturer-course', title: 'Lecturer Course' },
+    });
+    expect(created.status).toBe(201);
+    const courseId = created.body.id as string;
+    expect((await call('GET', '/api/courses/managed', { headers: lecturerA })).body.total).toBe(1);
+    expect((await call('GET', '/api/courses/managed', { headers: lecturerB })).body.total).toBe(0);
+    expect(
+      (await call('GET', `/api/courses/managed/${courseId}`, { headers: lecturerB })).status,
+    ).toBe(403);
+    expect(
+      (
+        await call('PATCH', `/api/courses/${courseId}`, {
+          headers: lecturerB,
+          body: { title: 'Forbidden edit' },
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await call('PATCH', `/api/courses/${courseId}`, {
+          headers: headers(OTHER_ID),
+          body: { title: 'Admin edit' },
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  it('lets a Lecturer attach own Problem and rejects another Lecturer Problem without revealing it', async () => {
+    const lecturer = headers(OWNER_ID, 'LECTURER');
+    const created = await call('POST', '/api/courses', {
+      headers: lecturer,
+      body: { slug: 'lecturer-attach', title: 'Lecturer Attach' },
+    });
+    expect(created.status).toBe(201);
+    const courseId = created.body.id as string;
+    const chapter = await call('POST', `/api/courses/${courseId}/chapters`, {
+      headers: lecturer,
+      body: { title: 'Chapter' },
+    });
+    expect(chapter.status).toBe(201);
+    const chapterId = asList(chapter.body.chapters).at(-1)!.id as string;
+    expect(
+      (
+        await call('POST', `/api/courses/${courseId}/chapters/${chapterId}/problems`, {
+          headers: lecturer,
+          body: { problemId: PROBLEM_ID },
+        })
+      ).status,
+    ).toBe(201);
+    catalog.setProblem(SECOND_PROBLEM, { createdBy: OTHER_ID });
+    const denied = await call('POST', `/api/courses/${courseId}/chapters/${chapterId}/problems`, {
+      headers: lecturer,
+      body: { problemId: SECOND_PROBLEM },
+    });
+    expect(denied.status).toBe(400);
+  });
+
   it.each(['managed', 'Managed', 'MANAGED', ' managed '])(
     'rejects reserved slug %s without persisting a course',
     async (slug) => {

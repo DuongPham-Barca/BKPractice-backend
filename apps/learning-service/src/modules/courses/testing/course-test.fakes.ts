@@ -105,6 +105,7 @@ export class InMemoryCourseRepository implements CourseRepository {
     const all = [...this.store.values()].filter(
       (c) =>
         (filter.includeDeleted || !c.isDeleted) &&
+        (!filter.createdBy || c.createdBy.value === filter.createdBy) &&
         (!filter.search || c.title.value.toLowerCase().includes(filter.search.toLowerCase())),
     );
     return Promise.resolve(this.paginate(all, filter.page, filter.limit));

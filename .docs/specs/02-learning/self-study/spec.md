@@ -1,5 +1,7 @@
 # LRN-008 — Learning tự học, không có vai trò giảng viên
 
+> **SRS v3 (2026-11-08):** [LRN-009](../srs-v3-lecturer/spec.md) thay thế chính sách chỉ ADMIN quản lý nội dung và chỉ có tiến độ cá nhân; Giảng viên quản lý nội dung mình tạo và xem báo cáo mọi Sinh viên theo Course. Quy tắc tự học không Class/Enrollment/Assignment vẫn áp dụng. Quiz tạm giữ.
+
 ## Trạng thái
 
 Approved — quyết định của chủ sở hữu sản phẩm ngày 2026-11-07.

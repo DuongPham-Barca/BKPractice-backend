@@ -1,6 +1,6 @@
 import { RoleName } from '@/modules/rbac/domain/role-name';
 
-const learningAdminPermissionCodes = [
+const learningContentPermissionCodes = [
   'problem:create',
   'problem:read-managed',
   'problem:update',
@@ -20,13 +20,16 @@ const learningAdminPermissionCodes = [
 ];
 
 const adminPermissionCodes = [
-  ...learningAdminPermissionCodes,
+  ...learningContentPermissionCodes,
   'community:moderate',
   'user:import',
   'user:read',
   'user:delete',
+  'user:create',
+  'user:status',
 ];
 
 export const rbacPermissionCatalog = [
   ...adminPermissionCodes.map((code) => ({ code, role: RoleName.Admin })),
+  ...learningContentPermissionCodes.map((code) => ({ code, role: RoleName.Lecturer })),
 ];
