@@ -4,7 +4,7 @@
 
 Approved
 
-Phiên bản `1.2`, cập nhật chính sách riêng tư/chia sẻ theo xác nhận mới nhất ngày `2026-11-11`.
+Phiên bản `1.3`, toàn bộ phương án MVP được chủ sở hữu phê duyệt ngày `2026-11-11`.
 Phiên bản `1.0` đã được phê duyệt cùng ngày. Chủ sở hữu yêu cầu viết spec riêng
 sau khi thống nhất hướng Quiz cho mobile và ngân hàng câu hỏi. Các quyết định đã xác nhận được ghi
 riêng bên dưới; nguyên tắc Q-001 đã được cập nhật, các chi tiết chia sẻ và Q-002 tới Q-008 tại mục **Câu hỏi mở** vẫn phải được chốt trước khi
@@ -14,7 +14,8 @@ Giá trị hợp lệ: `Proposed` | `Approved` | `Implemented` | `Verified`.
 
 Lần soạn spec ban đầu chỉ đặc tả sản phẩm. Theo yêu cầu tiếp theo ngày 2026-11-11, đã bổ sung
 [plan](./plan.md) và [tasks](./tasks.md) ở trạng thái draft để review; chưa tạo code, migration
-hoặc thay đổi cấu hình. Plan và tasks vẫn là draft cho tới khi được review riêng.
+hoặc thay đổi cấu hình. Plan và tasks đã được review và cho phép triển khai cùng phê duyệt 1.3
+ngày 2026-11-11; trạng thái hiện hành của hai file đó ghi ở đầu từng file.
 
 ## Mục tiêu
 
@@ -418,27 +419,24 @@ và liên kết Chapter trước triển khai transport; không coi route dự k
 
 
 
-## Câu hỏi mở
+## Quyết định đã chốt (Q-001 tới Q-008)
 
-Q-001 đã chốt riêng tư mặc định, chia sẻ theo từng LECTURER cụ thể do chủ sở hữu cấp/thu hồi;
-người nhận dùng hoặc nhân bản, không sửa gốc. Ảnh hưởng thu hồi lên các nội dung đã dùng vẫn
-cần chốt. Các mục khác chưa chốt vẫn giữ mở.
+Chủ sở hữu phê duyệt toàn bộ gói MVP trong hội thoại ngày 2026-11-11. Phần này thay mọi câu
+“chờ Q”/“chưa chốt” trong bản 1.2 ở trên; không còn câu hỏi chặn implementation.
 
+| Mã | Quyết định có hiệu lực |
+| --- | --- |
+| Q-001 | Riêng tư mặc định. Owner/ADMIN cấp hoặc thu hồi cho từng LECTURER. Người nhận dùng/clone, không sửa gốc. Thu hồi chặn chọn mới, clone mới và publish nháp dùng nguồn đó; giữ Quiz đã publish, bản sao đã tạo và attempt cũ. |
+| Q-002 | Tìm/lọc, chọn nhiều, tạo tại chỗ, clone câu/Quiz. Clone Quiz sao chép toàn bộ câu ở phiên bản được chia sẻ thành câu riêng của người clone. Không import Excel/CSV hoặc chế độ ôn riêng. |
+| Q-003 | Giữ lịch sử và dấu hoàn thành khi đổi phiên bản; hiển thị phiên bản đạt. |
+| Q-004 | Hoàn thành theo user + Quiz ở mọi Chapter/Course; không đổi % Progress Course hay mở khoá. |
+| Q-005 | Chỉ học qua Course PUBLISHED chưa xoá. Quiz DRAFT/PUBLISHED/ON_HOLD và xoá mềm; sửa qua draft mới. Câu ngân hàng không có publish riêng. Hide/delete chặn lượt mới, cho tiếp tục lượt cũ. |
+| Q-006 | Không giới hạn thời gian/số lượt; một IN_PROGRESS/user/Quiz, start lặp trả lượt hiện có. First answer tính điểm; trả lời đủ rồi finish tường minh; same-answer replay cả sau finish. |
+| Q-007 | Title 200; content/description/explanation 20.000 ký tự; option 5.000; 2–6 options/câu; 50 câu/Quiz; 50 Quiz/Chapter; page/limit mặc định 1/20, tối đa 100. clientRequestId UUID cho create/clone; cùng ID khác payload 409. Permission question/quiz theo hành động, LECTURER/ADMIN; STUDENT không quản lý. |
+| Q-008 | Tái dùng Topic/Tag và EASY/MEDIUM/HARD hiện có trong Learning qua own read port. |
 
-| ID        | Quyết định cần chốt                                                                                                                    | Đề xuất để review, chưa Approved                                                                                                                                   |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Q-001 — CHỐT PHẠM VI CHIA SẺ** | Riêng tư mặc định; chủ sở hữu cấp/thu hồi cho từng LECTURER cụ thể. Còn cần chốt ảnh hưởng thu hồi lên nội dung đã dùng. | Người được chia sẻ dùng hoặc nhân bản, không sửa gốc. Không chia sẻ toàn bộ/nhóm hoặc tự chia sẻ khi publish. Chủ sở hữu xác nhận “ok chốt” với cơ chế chọn từng LECTURER. |
-| **Q-002 — CHỐT MỘT PHẦN** | Nhân bản đã được yêu cầu; cần chốt cách clone các câu tham chiếu trong Quiz và phạm vi import/ôn. | FR-026 quy định bản sao có ID/owner mới và không sửa gốc. Tìm/lọc, chọn nhiều, tạo tại chỗ theo FR-005/006; import và chế độ ôn riêng chưa được chốt. |
-| **Q-003** | Quiz thay đổi nội dung/đáp án: dấu hoàn thành trước đó còn hiệu lực hay cần đạt lại bản mới?                                           | Giữ lịch sử và dấu hoàn thành, hiển thị phiên bản đã đạt; không reset ngầm.                                                                                        |
-| **Q-004** | Một lượt đạt có được công nhận ở mọi Chapter/Course cùng gắn Quiz? Quiz có tham gia tính hoàn thành Chapter/Course hoặc mở khoá không? | Công nhận theo người học + Quiz ở mọi nơi; hiển thị riêng, chưa đổi tỷ lệ Progress Course.                                                                         |
-| **Q-005** | Có danh sách luyện Quiz độc lập? Vòng đời câu hỏi/Quiz, sửa bản publish, thu hồi và lượt đang làm khi bị ẩn/xoá xử lý thế nào?         | DRAFT → PUBLISHED ↔ ON_HOLD, xoá mềm; sửa qua bản mới, bảo toàn lịch sử. Khả năng bắt đầu/tiếp tục cần chốt rõ theo từng trạng thái và khả năng truy cập Course.   |
-| **Q-006** | Có giới hạn số lượt, thời gian, nhiều lượt đang làm, bỏ câu hoặc tự kết thúc khi trả lời câu cuối không?                               | Không giới hạn thời gian/số lượt, một lượt đang làm/người/Quiz; không bỏ câu, kết thúc tường minh khi đủ câu. Chỉ lựa chọn đầu tiên tính điểm.                     |
-| **Q-007** | Bộ quyền, giới hạn nội dung/số câu/lựa chọn/Quiz trong Chapter, phân trang và hợp đồng retry tạo mới là gì?                            | Tách quyền quản lý ngân hàng/Quiz và cập nhật Course; giới hạn hữu hạn cần được chủ sở hữu review trước plan. Không dùng giới hạn Problem để thay quyết định Quiz. |
-| **Q-008** | Chủ đề/tag và độ khó của ngân hàng dùng danh mục Learning hiện có hay danh mục riêng?                                                  | Ưu tiên tái dùng khái niệm hiện có nếu phù hợp qua ranh giới đọc; không tự import entity của Problems hoặc tạo danh mục trùng.                                     |
-
-
-Xung đột ADMIN-only ở LRN-008 và thiếu Quiz trong LRN-003 cũng là điều kiện chặn triển khai;
-không chỉ đóng câu hỏi trên rồi bỏ qua việc đồng bộ các nguồn chân lý.
+Plan/tasks được chủ sở hữu cho phép triển khai cùng gói này. Chính sách LECTURER owner/ADMIN
+mọi nội dung thay ADMIN-only của LRN-008; Class/Enrollment/Assignment vẫn ngoài phạm vi.
 
 ## Lịch sử sửa đổi
 
@@ -454,3 +452,7 @@ không chỉ đóng câu hỏi trên rồi bỏ qua việc đồng bộ các ngu
 > `spec.md` mô tả CÁI GÌ. Bảng/cột, endpoint, class, port, migration và thứ tự triển khai thuộc
 > `plan.md` sau khi yêu cầu được review; không suy ra các phần đó đã tồn tại từ tài liệu này.
 
+
+## Phê duyệt triển khai 1.3
+
+2026-11-11 — Chủ sở hữu: “approved tất cả cho tôi”. Giữ Approved; chưa coi implementation là Verified.

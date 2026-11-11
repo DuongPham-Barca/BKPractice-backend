@@ -1,23 +1,21 @@
- Q-001–Q-008# LRN-009 — Kế hoạch Quiz và ngân hàng câu hỏi
+# LRN-009 — Kế hoạch Quiz và ngân hàng câu hỏi
 
 ## Trạng thái
 
-**Draft for review**, ngày `2026-11-11`, được viết theo yêu cầu trực tiếp của chủ sở hữu để có
-plan và checklist chi tiết. [Spec 1.2](./spec.md) đã `Approved`; plan này vẫn là draft, không đóng
-thay câu hỏi sản phẩm và không cho phép bắt đầu implementation.
-
-Mọi thiết kế dưới đây là phương án kỹ thuật dự kiến cho các FR hiện có. Các nhánh phụ thuộc
-Q-001 đã chốt riêng tư/chia sẻ có kiểm soát; scope/thu hồi và Q-002 tới Q-008 chỉ được triển khai sau khi được chốt trong spec. Không lấy ví dụ endpoint,
-schema hoặc policy trong plan làm quyết định sản phẩm thay cho spec Approved.
+**Reviewed và được phép triển khai**, ngày `2026-11-11`, theo phê duyệt toàn bộ MVP/spec 1.3.
+Code backend đã triển khai; kết quả kiểm chứng và giới hạn hiện hành ở [tasks](./tasks.md),
+[worked](../../../worked/learning/quizzes/2026-11-11-quiz-implementation.md) và
+[hướng dẫn vận hành](../../../pm/plan/learning/quizzes/README.md).
+Không tự chuyển spec sang Verified khi quality gate toàn repo còn baseline lỗi.
 
 ## Đặc tả liên quan
 
-- Nguồn: [LRN-009 — Quiz và ngân hàng câu hỏi](./spec.md), 1.2, `Approved`, 2026-11-11.
+- Nguồn: [LRN-009 — Quiz và ngân hàng câu hỏi](./spec.md), 1.3, `Approved`, 2026-11-11.
 - Checklist: [tasks.md](./tasks.md). Mỗi task có đầu ra, kiểm chứng, phụ thuộc và truy vết.
 - Phụ thuộc: [LRN-003](../courses/spec.md), [LRN-006](../progress/spec.md),
 [LRN-008](../self-study/spec.md), [Identity RBAC](../../01-identity/rbac/spec.md).
 - Trước implementation: spec Approved, không còn câu hỏi ảnh hưởng hành vi và không còn xung
-đột với spec/kiến trúc hiện hành. Việc viết draft này là phạm vi tài liệu được yêu cầu riêng.
+đột với spec/kiến trúc hiện hành. Các điều kiện này đã được đóng bằng phê duyệt 1.3.
 
 
 
@@ -31,22 +29,19 @@ schema hoặc policy trong plan làm quyết định sản phẩm thay cho spec 
 
 
 
-## Điều kiện chặn và cách chốt quyết định
+## Quyết định triển khai đã chốt
 
+| Gate | Quyết định được duyệt |
+| --- | --- |
+| G-01 / Q-001 | Private mặc định; grant cho từng LECTURER; dùng/clone, không sửa gốc. Thu hồi chặn dùng mới/publish draft; giữ bản phát hành/copy/history. |
+| G-02 / Q-002 | Search/filter, bulk pick, create-in-picker, deep clone; không import/AI/ôn riêng. |
+| G-03 / Q-003–004 | Completion user + Quiz, giữ qua revisions và mọi Chapter/Course; Progress vẫn Problem-only. |
+| G-04 / Q-005–006 | Học qua Course published; immutable revisions; một active attempt, first answer, finish tường minh, unlimited time/retries. Hide/delete cho tiếp tục lượt cũ. |
+| G-05 / Q-007–008 | Limits/title/taxonomy/pagination/idempotency theo bảng Q của spec 1.3; permission riêng theo hành động. |
+| G-06 | Amendment lecturer-owner/admin-all đã đồng bộ vào LRN-008, Problems/TestCases/Courses, RBAC và architecture. |
+| G-07 | Chủ sở hữu: “approved tất cả cho tôi”, 2026-11-11. Không còn gate chặn code. |
 
-| Gate | Nguồn cần chốt                                  | Ảnh hưởng kỹ thuật                                                      | Đầu ra trước khi qua gate                                                         |
-| ---- | ----------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| G-01 | Q-001: riêng tư mặc định; owner cấp/thu hồi theo từng LECTURER cụ thể | Read/use/clone theo grant cá nhân; edit theo owner/ADMIN; publish không tự cấp dùng lại | Người nhận và quyền cấp/thu hồi đã chốt; tác động thu hồi lên nội dung đã dùng còn cần chốt |
-| G-02 | Q-002: tiện ích bản đầu                         | Nhân bản, import, tạo câu tại chỗ, ôn câu sai                           | Danh sách bắt buộc/ngoài phạm vi; thêm FR/AC nếu chọn phần chưa có yêu cầu        |
-| G-03 | Q-003/Q-004: phiên bản và hoàn thành            | Truy vấn thành tích, liên kết nhiều Course, Progress                    | Đơn vị hoàn thành: user/Quiz hay user/QuizRevision; có/không ảnh hưởng Course     |
-| G-04 | Q-005/Q-006: visibility, vòng đời, lượt làm     | State machine, sửa bản publish, bắt đầu/tiếp tục, số lượt/timeout       | Bảng chuyển trạng thái và ma trận truy cập; chính sách nhiều lượt, bỏ câu, finish |
-| G-05 | Q-007/Q-008: quyền, giới hạn, taxonomy          | DTO, DB/index, idempotency và catalog Identity                          | Bảng giới hạn cụ thể, permission, phân trang, bộ lọc, danh mục dùng lại           |
-| G-06 | LRN-008 ADMIN-only; LRN-003 chỉ có Problem      | Toàn bộ quyền Learning và API Course                                    | Bản sửa đổi được duyệt của spec/kiến trúc liên quan; không hồi sinh lớp/bài tập   |
-| G-07 | Spec/plan/tasks và contract cuối cùng           | Tất cả lát cắt code                                                     | Spec Approved, plan được review, tasks cập nhật theo quyết định thật              |
-
-
-Không triển khai riêng một phần schema hoặc API để né G-07. Có thể đọc code và hoàn thiện tài
-liệu trong khi chờ; không sửa product code từ draft này.
+Các tham chiếu G/Q trong thiết kế dưới đây dùng quyết định đã duyệt ở bảng này.
 
 ## Kiến trúc service bắt buộc
 
@@ -148,7 +143,8 @@ owner mới theo FR-026, không sửa gốc. Cách sao chép các câu tham chi�
 ### Ports có lý do tồn tại
 
 - `QuestionRepository`, `QuizRepository`, `QuizAttemptRepository`: ba aggregate persistence.
-- `BankTaxonomyReader`: chỉ khi G-05 chọn danh mục ngoài module; không tạo nếu không có boundary.
+- `BankTaxonomyReader`: kiểm Topic/Tag Learning hiện có theo Q-008.
+- `ShareRecipientReader`: HTTP nội bộ Identity, chỉ nhận `{userId, roles}` của user ACTIVE.
 - `QuizCourseAccessReader`: visibility người học qua Course/Chapter, đọc bằng own projection.
 - `QuizReferenceReader`: projection Quizzes export cho Courses; tuyệt đối không trả đáp án.
 - `CourseQuizCatalog`: port ở Courses để dùng projection trên; không là repository ghi.
@@ -172,20 +168,21 @@ không được tính lại từ nội dung hiện hành sau khi người dùng 
 Learning sở hữu toàn bộ bảng dưới đây trong `bkpractice_learning`. Dùng UUID, `timestamptz`,
 TypeORM entity tách domain, migration với `synchronize: false` như hiện hành.
 
-### Phương án tám bảng
+### Mười bảng của MVP
 
 
-| Bảng dự kiến                   | Các trường chính                                                                                                               | Ràng buộc / lý do                                                                                     |
+| Bảng                   | Các trường chính                                                                                                               | Ràng buộc / lý do                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `quiz_bank_questions`          | `id`, `created_by`, current revision, state/visibility theo gate, timestamps/soft delete; create request ID/hash nếu được chốt | Root độc lập; owner và discoverability; không FK Identity                                             |
-| `quiz_bank_question_revisions` | `id`, `question_id`, `revision_number`, `content`, `explanation`, `options` JSONB, difficulty/taxonomy theo gate, `created_at` | Unique question/revision; bất biến; options chứa ID/text/isCorrect/order và chỉ server đọc đầy đủ     |
+| `quiz_bank_question_revisions` | `id`, `question_id`, `revision`, `content`, `explanation`, `options` JSONB, difficulty/taxonomy theo gate, `created_at` | Unique question/revision; bất biến; options chứa ID/text/isCorrect/order và chỉ server đọc đầy đủ     |
 | `quizzes`                      | `id`, `created_by`, state, `published_revision_id`, timestamps/soft delete; creation request ID/hash nếu chốt                  | Root sở hữu, con trỏ bản phát hành; title/description cụ thể thuộc revision                           |
-| `quiz_revisions`               | `id`, `quiz_id`, `revision_number`, title/description, draft/published marker, `published_at`                                  | Unique quiz/revision; draft sửa được, bản published bất biến                                          |
+| `quiz_revisions`               | `id`, `quiz_id`, `revision`, title/description, draft/published marker, `published_at`                                  | Unique quiz/revision; draft sửa được, bản published bất biến                                          |
 | `quiz_revision_questions`      | `quiz_revision_id`, `question_id`, `question_revision_id`, `display_order`                                                     | Unique revision/câu gốc và revision/order; FK composite bảo revision thuộc đúng câu                   |
 | `chapter_quizzes`              | `id`, `chapter_id`, `quiz_id`, `display_order`                                                                                 | Entity thuộc Courses; unique chapter/quiz và chapter/order; cùng Quiz được dùng ở Chapter/Course khác |
 | `quiz_attempts`                | `id`, `quiz_id`, `quiz_revision_id`, `user_id`, status, total/correct count, passed, started/finished time                     | Quiz revision phải thuộc Quiz; score/tổng hợp do server; lưu kết quả chỉ khi FINISHED                 |
 | `quiz_attempt_answers`         | `attempt_id`, `question_id`, `question_revision_id`, `selected_option_id`, `is_correct`, `answered_at`                         | Unique attempt/câu gốc; version lấy từ đề cố định, lựa chọn kiểm trong revision                       |
-
+| `quiz_grants`                   | `quiz_id`, `user_id`                                                                                                           | Grant cá nhân dùng/clone Quiz; unique resource/recipient, không FK Identity                           |
+| `quiz_question_grants`          | `question_id`, `user_id`                                                                                                       | Grant cá nhân dùng/clone câu; unique resource/recipient, không FK Identity                           |
 
 JSONB choices giúp giữ một revision nguyên khối và tránh thêm repository/table cho từng lựa
 chọn. Validate hình dạng/ID duy nhất/đúng một đáp án ở domain; DB kiểm hình dạng mảng và các
@@ -202,7 +199,7 @@ Quiz mới có draft revision ban đầu. Theo state machine sau G-04, sửa b�
 mới, còn learner tiếp tục thấy published pointer cũ cho tới lần publish tiếp. Không chỉnh rows
 của published revision tại chỗ. Root được khoá khi tăng số revision hoặc đổi published pointer.
 
-### Khoá ngoại, index và các biến thể chờ gate
+### Khoá ngoại, index và scope
 
 - `chapter_id` có thể cascade **liên kết** khi Chapter bị xoá; `quiz_id` không cascade nội dung
 hoặc attempt. Revision/attempt dependencies dùng RESTRICT để giữ lịch sử; Quiz xoá mềm.
@@ -212,15 +209,12 @@ nếu cần composite FK chống gắn nhầm root; không chỉ kiểm bằng U
 mới chọn index filter; không thêm search engine/dependency mới cho tìm kiếm bản đầu.
 - Index `chapter_quizzes(quiz_id)` để usage/reverse read; order index theo Chapter.
 - Index attempt `(user_id, quiz_id, started_at DESC, id)` và các lượt FINISHED cho best/pass.
-- Một active attempt/user/Quiz chỉ có partial unique index nếu G-04 chốt đúng policy đó.
-Nếu completion theo phiên bản thì query/index phải gồm revision; không đoán trước G-03.
+- Một active attempt/user/Quiz có partial unique index; completion theo user + Quiz, giữ revision đã đạt.
 - Riêng tư là mặc định; quyền đọc/dùng/clone phải được lưu và kiểm theo scope chia sẻ sau G-01.
-  Tám bảng trên là phần core. Đối tượng nhận đã chốt là từng LECTURER cụ thể: dự kiến bổ sung
-  bảng grant câu hỏi và grant Quiz riêng, FK tới root và unique resource/recipient. Không xây
+  Đối tượng nhận là từng LECTURER cụ thể; hai bảng grant có FK tới root và unique resource/recipient. Không xây
   ACL nhóm hoặc policy engine tổng quát. Owner vẫn là điều kiện sửa gốc; thu hồi theo quyết định gate.
 - Có thể suy ra completion từ FINISHED attempts, không thêm `quiz_progress` hoặc sửa bảng
-`progress` hiện có khi chưa có yêu cầu lưu tổng hợp. Nếu G-03 đòi Course context riêng, phải
-cập nhật spec/schema trước vì tám bảng cơ sở này chưa lưu context hoàn thành theo Course.
+`progress` hiện có; không lưu context hoàn thành riêng theo Course.
 - Điểm tốt nhất so theo tỷ lệ đúng, không lấy `MAX(correct_count)` giữa các đề có số câu khác
 nhau. Những revision nào được phép so/gộp phụ thuộc G-03; chỉ dùng FINISHED và total > 0.
 
@@ -285,8 +279,8 @@ Quiz chỉ vì một workflow Problem cũ chưa load chúng; cập nhật cả m
 
 ## API
 
-Endpoint dưới đây là contract dự kiến để review ở G-07, không phải route đã có. UUID path,
-payload allowlist và status phải đồng bộ Swagger/Gateway/mobile trước code.
+Endpoint dưới đây đã được triển khai. UUID path/payload allowlist và response có Swagger riêng cho management/learner.
+Hợp đồng chi tiết và route lifecycle/share/clone ở [tài liệu module](../../../pm/plan/learning/quizzes/README.md).
 
 ### Ngân hàng và soạn Quiz
 
@@ -300,15 +294,14 @@ payload allowlist và status phải đồng bộ Swagger/Gateway/mobile trước
 | `GET /api/question-bank/questions/:id/usage`      | Quiz đang dùng, chỉ lộ các metadata được phép                                               | `200` usage             |
 | `POST /api/quizzes`                               | Tạo root và draft revision rỗng                                                             | `201` managed Quiz      |
 | `GET /api/quizzes/managed`                        | Danh sách trong phạm vi quản lý                                                             | `200` page              |
-| `GET /api/quizzes/managed/:id`                    | Draft, published info, readiness, version updates                                           | `200` managed Quiz      |
+| `GET /api/quizzes/managed/:id`                    | Draft và published metadata; preview trả readiness/version updates                                           | `200` managed Quiz      |
 | `PATCH /api/quizzes/:id/draft`                    | Sửa title/description của draft                                                             | `200` draft             |
 | `PUT /api/quizzes/:id/draft/questions`            | Thay toàn bộ tập `{questionId, revisionId}` theo thứ tự; thêm/bỏ/reorder trong một workflow | `200` draft             |
 | `POST /api/quizzes/:id/preview`                   | Projection quản lý, không tạo attempt                                                       | `200` preview           |
 | `POST /api/quizzes/:id/publish`                   | Publish draft, đổi published pointer nguyên tử                                              | `200` managed Quiz      |
 
 
-Endpoint mở draft mới, hold/republish/delete/restore/share/revoke/clone chỉ thêm sau khi các contract G-01/G-02/G-04
-được chốt. Không đăng ký wildcard proxy để coi những route chưa duyệt là được hỗ trợ.
+Draft tiếp theo mở khi update/replace. Lifecycle/share/revoke/clone đã triển khai theo G-01/G-02/G-04; Gateway allowlist từng method/path, không dùng wildcard.
 
 ### Chapter và người học
 
@@ -360,8 +353,8 @@ kiểm string/Markdown. Numeric/string/count/page limits phải có giá trị s
 - Chapter mutation: quyền `course:update` + owner Course (hoặc ADMIN), Chapter phải thuộc đúng
 Course trên URL và Quiz được dùng theo policy. Không chỉ kiểm owner của Quiz.
 - Attempt/result/completion: principal.userId luôn là scope; ADMIN không bypass owner attempt.
-- Candidate permission để review G-05: nhóm `question:*` cho create/read-managed/update và
-lifecycle được duyệt; nhóm `quiz:*` cho create/read-managed/update/publish và lifecycle.
+- Permission theo catalog: `question:{create,read-managed,update,share,clone,delete,restore}` và
+`quiz:{create,read-managed,update,publish,hold,republish,share,clone,delete,restore}`.
 Không thêm wildcard thật vào token hoặc gán quyền mới chưa được catalog duyệt.
 - Phục hồi owner checks ở **mọi** mutation Problem/TestCase/Course/Harness và managed list/detail
 khi chuyển vai trò Learning; chỉ sửa role guard là thiếu và có thể mở quyền chéo LECTURER.
@@ -509,3 +502,10 @@ mới nào được duyệt bởi draft này.
 > Plan này giải thích HOW dự kiến của LRN-009. Khi spec được Approved với quyết định khác,
 > phải sửa plan/tasks theo spec trước code, không dùng plan để mở rộng WHAT.
 
+
+## Kết quả triển khai 2026-11-11
+
+Đã có 3 aggregate, inbound ports/use cases, 3 repositories, readers, HTTP/Swagger, 2 migration,
+Course links và Gateway routes. Không thêm dependency, queue hoặc service. Readiness/version updates
+được trả ở preview. Logging hiện dùng request/status Gateway và lỗi Quiz đã lọc, chưa có log duration
+riêng cho từng use case; không log đáp án hay payload. Chi tiết bằng chứng/gate ở worked và tasks.
