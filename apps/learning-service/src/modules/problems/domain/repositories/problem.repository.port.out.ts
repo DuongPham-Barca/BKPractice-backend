@@ -13,6 +13,7 @@ export interface ProblemListFilter {
 }
 
 export interface ManagedProblemListFilter {
+  readonly createdBy?: string;
   readonly includeDeleted: boolean;
   readonly createdBy?: string;
   readonly page: number;

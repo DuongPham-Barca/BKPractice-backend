@@ -1,4 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+export class CourseQuizSummaryDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() title!: string;
+}
 
 class PageMetaDto {
   @ApiProperty() total!: number;
@@ -20,6 +24,7 @@ export class CourseChapterResponseDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() title!: string;
   @ApiProperty({ nullable: true, type: String }) description!: string | null;
+  @ApiProperty({ type: [CourseQuizSummaryDto] }) quizzes?: CourseQuizSummaryDto[];
   @ApiProperty({ type: [ProblemSummaryResponseDto] }) problems!: ProblemSummaryResponseDto[];
 }
 
@@ -57,6 +62,7 @@ export class ManagedChapterResponseDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() title!: string;
   @ApiProperty({ nullable: true, type: String }) description!: string | null;
+  @ApiProperty({ type: [CourseQuizSummaryDto] }) quizzes?: CourseQuizSummaryDto[];
   @ApiProperty({ type: [ManagedProblemResponseDto] }) problems!: ManagedProblemResponseDto[];
 }
 

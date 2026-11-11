@@ -1,3 +1,4 @@
+import { Lrn008SelfStudy1700000010000 } from '@learning/database/migrations/1700000010000-Lrn008SelfStudy';
 import { DataSource } from 'typeorm';
 
 import {
@@ -397,14 +398,21 @@ describeIntegration('CourseTypeOrmRepository (real PostgreSQL)', () => {
         expect(row?.exists).toBeNull();
       }
 
-      await dataSource.undoLastMigration(); // LRN-009 history
-      await dataSource.undoLastMigration(); // LRN-008 retired tables
-      const [restored] = await dataSource.query<Array<{ exists: string | null }>>(
-        'SELECT to_regclass($1) AS "exists"',
-        ['classes'],
-      );
-      expect(restored?.exists).toBe('classes');
-      await dataSource.runMigrations();
+      const queryRunner = dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        const migration = new Lrn008SelfStudy1700000010000();
+        await migration.down(queryRunner);
+        const restored = (await queryRunner.query('SELECT to_regclass($1) AS "exists"', [
+          'classes',
+        ])) as Array<{ exists: string | null }>;
+        expect(restored[0]?.exists).toBe('classes');
+        await migration.up(queryRunner);
+      } finally {
+        await queryRunner.rollbackTransaction();
+        await queryRunner.release();
+      }
 
       expect((await repository.findById(course.id.value))?.status).toBe('PUBLISHED');
       expect((await repository.findById(course.id.value))?.chapters[0]!.problemRefs).toHaveLength(
