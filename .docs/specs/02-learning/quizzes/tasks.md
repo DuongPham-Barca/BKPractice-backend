@@ -3,7 +3,7 @@
 ## Trạng thái và cách dùng
 
 **Draft for review — chưa bắt đầu implementation**, ngày `2026-11-11`.
-Nguồn: [spec 1.0, Approved](./spec.md) và [plan draft](./plan.md), được lập theo yêu cầu chủ sở hữu.
+Nguồn: [spec 1.2, Approved](./spec.md) và [plan draft](./plan.md), được lập theo yêu cầu chủ sở hữu.
 
 - Follow lần lượt T001–T060; không làm task code trước khi T001–T007 đóng và spec Approved.
 - Mọi task bắt đầu chưa hoàn thành. Chỉ đánh dấu `[x]` khi có đầu ra và bằng chứng kiểm chứng.
@@ -14,14 +14,20 @@ Nguồn: [spec 1.0, Approved](./spec.md) và [plan draft](./plan.md), được l
 
 ## Chặng 0 — Chốt yêu cầu và contract
 
-- [ ] **LRN-009-T001 — Khảo sát baseline trước code.**
+- [x] **LRN-009-T001 — Khảo sát baseline trước code.**
       Đầu ra: Git status, spec/plan/kiến trúc, source hiện tại và scripts; ghi baseline các lỗi đã có,
       không coi kết quả kiểm tra trong worked cũ là kết quả lần này. Giữ nguyên thay đổi không liên quan.
       **Phụ thuộc:** Không. **Truy vết:** quy trình SDD, plan G-07.
+      **Bằng chứng 2026-11-11:** [Preflight implementation](../../../worked/learning/quizzes/2026-11-11-quiz-implementation-preflight.md).
+      Build Learning và 2 suite/6 test quyền qua; lint/typecheck còn lỗi baseline Identity.
+      Mục này chỉ xác nhận khảo sát xong, không đóng Q-001–Q-008 hoặc cho phép bỏ qua G-07.
 - [ ] **LRN-009-T002 — Chốt chia sẻ và tiện ích.**
-      Đầu ra: quyết định Q-001/Q-002 trong spec: phạm vi xem/dùng/sửa, thu hồi chia sẻ, clone/import/ôn.
-      Kiểm chứng: mỗi nhánh có allow/deny và phạm vi rõ; không tự thêm sharing/public hoặc import.
+      Đầu ra: Q-001 riêng tư/chia sẻ có kiểm soát; chốt scope người nhận/thu hồi và Q-002 về clone/import/ôn.
+      Kiểm chứng: người nhận chỉ dùng/clone theo grant, không sửa gốc; không tự mở cho toàn bộ LECTURER.
       **Phụ thuộc:** T001. **Truy vết:** FR-005–007, Q-001/002, G-01/02.
+      **Cập nhật mới nhất 2026-11-11:** Chính sách dùng chung toàn bộ đã được thay bằng riêng tư
+      mặc định/chia sẻ theo từng LECTURER do owner cấp/thu hồi; dùng hoặc clone, không sửa gốc.
+      Tác động thu hồi lên nội dung đã dùng và Q-002 còn mở.
 - [ ] **LRN-009-T003 — Chốt đơn vị hoàn thành.**
       Đầu ra: Q-003/Q-004: theo Quiz hay revision, áp dụng giữa nhiều Chapter/Course, có đổi Progress
       hoặc gating không. Kiểm chứng: ví dụ đạt bản cũ rồi đổi đề có kết quả xác định.
@@ -127,7 +133,7 @@ Nguồn: [spec 1.0, Approved](./spec.md) và [plan draft](./plan.md), được l
       nguyên tử và replay an toàn. Kiểm câu hợp lệ/sai, mass assignment, lỗi commit và request trùng.
       **Phụ thuộc:** T012, T024. **Truy vết:** FR-002–004/006, SR-001/002, AC-002/004/006/024.
 - [ ] **LRN-009-T026 — ReviseQuestion và scope chia sẻ.**
-      Đầu ra: owner/ADMIN tạo revision mới; policy xem/dùng/share/revoke theo quyết định thật, không
+      Đầu ra: owner/ADMIN tạo revision mới; người được chia sẻ chỉ xem/dùng/clone theo scope, không
       đổi published references. Kiểm owner A/B, ADMIN và người chỉ được quyền sử dụng.
       **Phụ thuộc:** T025. **Truy vết:** FR-002/007/012, AC-002/007/011.
 - [ ] **LRN-009-T027 — Search/filter/detail/usage.**
@@ -246,10 +252,10 @@ Nguồn: [spec 1.0, Approved](./spec.md) và [plan draft](./plan.md), được l
       Đầu ra: Problem/TestCase/Harness/Course/Progress và role migration còn đúng; query batch, scope trước
       count, pool một connection, index query thực tế. Không thay Progress denominator ngoài quyết định G-03.
       **Phụ thuộc:** T050, T051. **Truy vết:** FR-001/002/005/013/015/023, AC-002/005/012/014/021.
-- [ ] **LRN-009-T053 — Tiện ích có điều kiện, không tự thêm scope.**
-      Nếu Q-002 chọn clone/import/ôn: tách task chi tiết và FR/AC được duyệt trước triển khai; kiểm
-      ownership, scope, lỗi từng dòng và điểm cũ nếu liên quan. Nếu không chọn, ghi N/A kèm quyết định.
-      **Phụ thuộc:** T007, T052. **Truy vết:** Q-002; không có FR mới mặc nhiên từ task này.
+- [ ] **LRN-009-T053 — Nhân bản và tiện ích có điều kiện.**
+      Tách workflow clone câu/Quiz theo FR-026 sau khi scope/cách sao chép tham chiếu được chốt:
+      ID/owner mới, không sửa gốc, không clone qua ID đoán được. Import/ôn chỉ thêm nếu Q-002 duyệt.
+      **Phụ thuộc:** T007, T052. **Truy vết:** FR-026, AC-026, Q-001/Q-002.
 
 ## Chặng 9 — Gate chất lượng và bàn giao
 
@@ -324,6 +330,7 @@ và T060 là đối chiếu cuối; không đợi T050 mới viết các test c�
 | FR-023 | T003, T043                         | T050, T052; AC-021     |
 | FR-024 | T042, T043, T044                   | T049, T050; AC-022     |
 | FR-025 | T004, T043, T044                   | T050; AC-023           |
+| FR-026 | T002, T053 | T051, T053; AC-026 |
 
 | Security | Task kiểm chứng              | AC             |
 | -------- | ---------------------------- | -------------- |
