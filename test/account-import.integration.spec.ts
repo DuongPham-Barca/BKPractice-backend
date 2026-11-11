@@ -140,15 +140,13 @@ databaseTests('Account import — real Gateway, Auth and PostgreSQL', () => {
       adminId,
     ]);
     access = (
-      await identity
-        .get(AuthTokenIssuer)
-        .issueNewFamily({
-          userId: adminId,
-          studentId: null,
-          email: 'admin@test.invalid',
-          status: 'ACTIVE',
-          roles: ['ADMIN'],
-        })
+      await identity.get(AuthTokenIssuer).issueNewFamily({
+        userId: adminId,
+        studentId: null,
+        email: 'admin@test.invalid',
+        status: 'ACTIVE',
+        roles: ['ADMIN'],
+      })
     ).accessToken;
   });
 
@@ -233,12 +231,12 @@ databaseTests('Account import — real Gateway, Auth and PostgreSQL', () => {
     ).toBe(400);
     const student = users.find((user) => user.studentId === '001234')!;
     const context = await new TypeormProfileAccountContext(database).findAccount(student.id);
-    expect(context?.officialName).toBe('Nguyễn An');
+    expect(context?.displayName).toBe('Nguyễn An');
     const profiles = new TypeormProfileRepository(database);
-    await profiles.loadOrCreate(student.id, context!.officialName);
+    await profiles.loadOrCreate(student.id, context!.displayName);
     await profiles.update(
       student.id,
-      context!.officialName,
+      context!.displayName,
       { displayName: 'My chosen name' },
       false,
     );
@@ -345,7 +343,7 @@ databaseTests('Account import — real Gateway, Auth and PostgreSQL', () => {
     const shared: PreparedImportAccount = {
       row: 2,
       studentId: 'shared',
-      officialName: 'Shared',
+      displayName: 'Shared',
       email: 'shared@school.edu',
       role: RoleName.Student,
       passwordHash,
@@ -380,7 +378,7 @@ databaseTests('Account import — real Gateway, Auth and PostgreSQL', () => {
           {
             row: 2,
             studentId: 'rollback',
-            officialName: 'Rollback',
+            displayName: 'Rollback',
             email: 'rollback@school.edu',
             role: RoleName.Student,
             passwordHash,

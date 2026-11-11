@@ -58,7 +58,7 @@ jobs:
           target: ${{ matrix.target }}
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/duongpham-barca/bkpractice-${{ matrix.image }}:${{ github.sha }}
+          tags: ghcr.io/quocdung23/bkpractice-${{ matrix.image }}:${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
