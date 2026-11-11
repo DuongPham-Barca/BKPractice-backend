@@ -1,7 +1,7 @@
 # 2026-11-11 — Public Swagger setup and frontend API guide
 
 - Author: Codex, on request of the repository owner.
-- Scope: Add deployable Swagger configuration templates and a frontend integration guide. No backend source, migration, dependency, or live VPS configuration was changed in this workspace.
+- Scope: Add deployable Swagger configuration templates and a frontend integration guide. No backend source, migration, or dependency was changed. The owner applied the templates to the production VPS on 2026-11-12; Claude Code finished the verification and this entry.
 
 ## Spec and plan
 
@@ -72,16 +72,36 @@ rejected by the backend.
 
 ## Verification
 
-- Commands run and their results: pending final local syntax and Compose
-  checks; record outcomes before finishing this entry.
-- Not verified: live VPS Compose merge, Nginx reload, external browser access,
-  and Swagger “Try it out”. They require applying the templates to the VPS.
+- Local syntax: `node --check docker/swagger/swagger-initializer.js`,
+  `sh -n docker/swagger/99-install-initializer.sh` and
+  `pnpm exec prettier --check` on the changed files all passed.
+- Local containers: `swaggerapi/swagger-ui:v5.34.1` with the overlay mounts,
+  behind `nginx:1.27-alpine` with the snippet included. `nginx -t` passed;
+  `/docs` returned 308 to `/docs/`; `/docs/` returned 200; the served
+  `swagger-initializer.js` was the custom one; a browser showed the Identity,
+  Learning and Submission selector. The JSON routes returned 502 locally
+  because no services were running.
+- VPS, applied by the owner: files installed under `/srv/bkpractice/swagger`
+  and `/etc/nginx/snippets`, overlay applied, `include` added to the `8443`
+  server, `nginx -t` passed and Nginx reloaded. `curl` on the VPS returned
+  200 for `/docs/` and the three JSON documents.
+- External check from a machine outside the VPS: `/docs` returned 308;
+  `/docs/`, the initializer and the three JSON documents returned 200. The
+  OpenAPI 3.0.0 documents list 23 (Identity), 36 (Learning) and 4
+  (Submission) paths, all under `/api/` except `/health`, with no internal
+  routes. Ports `3101`, `3102`, `3103` and `3105` timed out from the
+  Internet. Through the Gateway, `/health` returned 200 and `/api/auth/me`
+  without a cookie returned 401.
+- Not verified: logging in and running a state-changing “Try it out” request
+  in a browser.
 
 ## Remaining
 
-- Not done: copy these files to the VPS, apply the Compose overlay, include
-  the Nginx snippet in the existing `8443` server, and verify `/docs/` from
-  outside the VPS.
+- Optional: log in on `/docs/` and run one “Try it out” request to confirm the
+  cookie and CSRF flow in a browser.
+- Every later `docker compose` command on the VPS must pass both
+  `-f /srv/bkpractice/compose.yml` and
+  `-f /srv/bkpractice/swagger/compose.swagger.yml`; otherwise the loopback
+  bindings are dropped and Swagger stops working.
 - Risks: the public page exposes API schemas and its “Try it out” actions
-  operate on production data. The three application containers are recreated
-  once when the loopback ports are added.
+  operate on production data.
