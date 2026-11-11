@@ -31,3 +31,4 @@ A feature implementation still follows the Approved `spec.md` and the reviewed `
 - [Identity implementation plan](identity/README.md): smaller execution plans for Authentication, Profile and RBAC, linked to their Approved specs, plans and task checklists.
 
 - [Learning — Progress cá nhân](learning/progress/personal-progress.md): ba API đọc, quy tắc visibility, test cách ly và vận hành retry/DLQ.
+- [Learning — Quiz và ngân hàng câu hỏi](../../specs/02-learning/quizzes/plan.md): plan draft LRN-009, schema/phiên bản/API/phân quyền và [60 task theo chặng](../../specs/02-learning/quizzes/tasks.md). Spec còn Proposed; gates cần đóng trước implementation.
