@@ -9,11 +9,15 @@ import {
   type UserManagementRepository,
 } from '@/modules/users/application';
 import { TypeormUserManagementRepository } from '@/modules/users/infrastructure/persistence';
-import { StudentRosterController, UserManagementController } from '@/modules/users/presentation';
+import {
+  QuizShareRecipientController,
+  StudentRosterController,
+  UserManagementController,
+} from '@/modules/users/presentation';
 
 @Module({
   imports: [AuthModule],
-  controllers: [UserManagementController, StudentRosterController],
+  controllers: [UserManagementController, StudentRosterController, QuizShareRecipientController],
   providers: [
     TypeormUserManagementRepository,
     { provide: USER_MANAGEMENT_REPOSITORY, useExisting: TypeormUserManagementRepository },

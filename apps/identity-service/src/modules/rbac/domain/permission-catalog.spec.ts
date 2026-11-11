@@ -3,7 +3,7 @@ import { RoleName, rbacPermissionCatalog, validatePermissionCode } from '@/modul
 describe('RBAC permission catalog', () => {
   it('contains the approved codes and unique role-permission mappings', () => {
     const codes = rbacPermissionCatalog.map(({ code }) => code);
-    expect(new Set(codes).size).toBe(22);
+    expect(new Set(codes).size).toBe(39);
     expect(new Set(rbacPermissionCatalog.map(({ code, role }) => `${role}:${code}`)).size).toBe(
       rbacPermissionCatalog.length,
     );
@@ -25,6 +25,23 @@ describe('RBAC permission catalog', () => {
       'course:republish',
       'course:delete',
       'course:restore',
+      'question:create',
+      'question:read-managed',
+      'question:update',
+      'question:share',
+      'question:clone',
+      'question:delete',
+      'question:restore',
+      'quiz:create',
+      'quiz:read-managed',
+      'quiz:update',
+      'quiz:publish',
+      'quiz:hold',
+      'quiz:republish',
+      'quiz:share',
+      'quiz:clone',
+      'quiz:delete',
+      'quiz:restore',
     ];
     const approved: Record<RoleName, string[]> = {
       [RoleName.Student]: [],
@@ -40,7 +57,7 @@ describe('RBAC permission catalog', () => {
       ],
     };
 
-    expect(rbacPermissionCatalog).toHaveLength(38);
+    expect(rbacPermissionCatalog).toHaveLength(72);
     for (const role of Object.values(RoleName)) {
       expect(
         rbacPermissionCatalog
