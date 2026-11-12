@@ -89,3 +89,5 @@ các mục N/A dưới đây không phải việc còn chờ triển khai.
       hold/delete/detach/republish/revision và fail sau pass. Suite PostgreSQL skip khi thiếu URL test.
 - [x] **LRN-006-T041 — Verify/bàn giao.** Unit liên quan 55/55 và HTTP Course 39/39 qua, ESLint phần đổi qua,
       `build:learning` qua; typecheck chỉ còn baseline Identity `officialName`; worked entry được ghi.
+- [x] **LRN-006-T042 — Tích hợp report sau rebase.** Course report dùng cùng projection Problem/Quiz
+      và tính Quiz hoàn thành từ attempt `FINISHED` có `passed=true`; typecheck/build và regression qua.

@@ -29,7 +29,6 @@ export class ListManagedCoursesUseCase implements IListManagedCoursesPortIn {
     const result = await this.repository.listManaged({
       createdBy: principal.roles.includes('ADMIN') ? undefined : principal.userId,
       includeDeleted,
-      createdBy: principal.roles.includes('ADMIN') ? undefined : principal.userId,
       page,
       limit,
       search,

@@ -26,6 +26,10 @@ export interface LocalCourseReportReader {
     userIds: readonly string[],
     problemIds: readonly string[],
   ): Promise<ReadonlyMap<string, ReadonlyMap<string, Date>>>;
+  loadCompletedQuizzes(
+    userIds: readonly string[],
+    quizIds: readonly string[],
+  ): Promise<ReadonlyMap<string, ReadonlyMap<string, Date>>>;
 }
 export interface RemoteCourseReportReader {
   loadStudents(page: number, limit: number): Promise<StudentRosterPage>;

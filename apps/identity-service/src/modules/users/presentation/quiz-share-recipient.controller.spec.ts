@@ -23,7 +23,10 @@ describe('Quiz share recipient internal HTTP contract', () => {
   const repository: jest.Mocked<UserManagementRepository> = {
     list: jest.fn(),
     find: jest.fn().mockResolvedValue(user),
+    create: jest.fn(),
+    setStatus: jest.fn(),
     softDelete: jest.fn(),
+    listStudents: jest.fn(),
   };
   let app: INestApplication;
   let base: string;
@@ -31,7 +34,14 @@ describe('Quiz share recipient internal HTTP contract', () => {
     const module = await Test.createTestingModule({
       controllers: [QuizShareRecipientController],
       providers: [
-        { provide: UserManagementUseCases, useValue: new UserManagementUseCases(repository) },
+        {
+          provide: UserManagementUseCases,
+          useValue: new UserManagementUseCases(repository, {
+            hash: jest.fn(),
+            verify: jest.fn(),
+            verifyDummy: jest.fn(),
+          }),
+        },
         {
           provide: ConfigService,
           useValue: new ConfigService({ INTERNAL_SERVICE_SECRET: credential }),
