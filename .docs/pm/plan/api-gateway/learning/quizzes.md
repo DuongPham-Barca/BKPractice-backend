@@ -2,6 +2,7 @@
 
 Gateway mở allowlist method/path tường minh cho `/api/question-bank/questions`, `/api/quizzes`,
 `/api/quiz-attempts` và các link `/api/courses/:id/chapters/:chapterId/quizzes`.
+`PUT /api/question-bank/questions/:id/visibility` cập nhật visibility câu hỏi.
 Các route cụ thể theo [Quiz API](../../learning/quizzes/README.md) và [Course links](../../learning/courses/quizzes.md).
 Không thêm wildcard, không proxy `/internal/users/:id/roles`.
 

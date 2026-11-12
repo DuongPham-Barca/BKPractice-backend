@@ -1,6 +1,6 @@
 # Quiz và ngân hàng câu hỏi — backend MVP
 
-Nguồn sản phẩm: [LRN-009 1.3 Approved](../../../../specs/02-learning/quizzes/spec.md).
+Nguồn sản phẩm: [LRN-009 1.5 Approved](../../../../specs/02-learning/quizzes/spec.md).
 Theo dõi triển khai: [tasks](../../../../specs/02-learning/quizzes/tasks.md).
 
 ## Luồng soạn nội dung
@@ -28,17 +28,23 @@ Option ID có thể được cung cấp dưới dạng UUID; nếu bỏ qua serv
 ## Quyền sử dụng và chia sẻ
 
 LECTURER cần permission tương ứng và chỉ sửa nội dung mình tạo; ADMIN có permission sửa mọi nội dung.
-Câu/Quiz mới riêng tư. `PUT /api/question-bank/questions/:id/shares` và
+Câu hỏi mới dùng chung cho LECTURER theo mặc định. Request có thể đặt `isPrivate: true` để giữ
+riêng tư; câu private chỉ owner/ADMIN và các lecturer được cấp mới xem/dùng được. Câu hỏi chung
+không cấp quyền sửa gốc; lecturer khác clone thành bản private để chỉnh sửa. Quiz mới vẫn riêng tư.
+Owner hoặc ADMIN có thể đổi trạng thái bằng `PUT /api/question-bank/questions/:id/visibility`
+với body `{ "isPrivate": true }` hoặc `false`.
+`PUT /api/question-bank/questions/:id/shares` và
 `PUT /api/quizzes/:id/shares` nhận `{ "userId": "<lecturer-uuid>", "enabled": true }`;
 `false` thu hồi. Xác minh người nhận qua [Identity](../../identity/users/quiz-share-recipient.md).
 Response quản lý có `sharedWith` cho owner/ADMIN; người nhận không thấy danh sách các người nhận khác.
 
-Grant cho phép dùng/clone, không sửa gốc. Publish không tự chia sẻ cho mọi lecturer. Recipient chỉ
+Grant câu hỏi áp dụng cho câu private; grant cho phép dùng/clone, không sửa gốc. Publish Quiz không
+tự chia sẻ cho mọi lecturer. Recipient chỉ
 nhìn phiên bản Quiz đã publish, không thấy draft của chủ sở hữu. Thu hồi chặn chọn/clone mới và
 publish draft dùng nguồn đó, giữ Quiz đã publish, bản clone và lịch sử. Preview draft sau thu hồi
 không trả nội dung/đáp án nguồn bị thu hồi; `readiness` chỉ rõ `QUESTION_UNAVAILABLE:<id>`.
 
-`POST .../:id/clone` nhận `Idempotency-Key` trong header, trả bản mới riêng tư của người thực hiện. Clone Quiz
+`POST .../:id/clone` nhận `Idempotency-Key` trong header, trả bản câu mới riêng tư của người thực hiện. Clone Quiz
 sao chép sâu các phiên bản câu được chọn thành câu riêng; sửa bản sao không tác động bản gốc.
 
 ## Ngân hàng, tìm kiếm và giới hạn
@@ -59,16 +65,16 @@ renderer an toàn theo contract nội dung hiện hành.
 
 ## Luồng mobile
 
-| Request | Kết quả |
-| --- | --- |
-| `GET /api/quizzes/:id` | Giới thiệu Quiz khi có liên kết Course PUBLISHED chưa xoá; không có đáp án |
-| `POST /api/quizzes/:id/attempts` | Bắt đầu hoặc trả lại lượt IN_PROGRESS hiện có |
-| `GET /api/quiz-attempts/:id` | Tiếp tục chính lượt của người gọi; feedback chỉ cho câu đã trả lời |
-| `PUT /api/quiz-attempts/:id/answers/:questionId` | `{selectedOptionId}` → đúng/sai, đáp án đúng, giải thích câu đó |
-| `POST /api/quiz-attempts/:id/finish` | Chỉ khi đã trả lời đủ; trả tổng kết |
-| `GET /api/quiz-attempts/:id/result` | Review lượt FINISHED của chính người gọi |
-| `GET /api/quiz-attempts/me?quizId=<uuid>&page=1&limit=20` | Lịch sử cá nhân |
-| `GET /api/quizzes/:id/completion/me` | Đã hoàn thành, điểm tốt nhất, revision đạt đầu tiên |
+| Request                                                   | Kết quả                                                                    |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `GET /api/quizzes/:id`                                    | Giới thiệu Quiz khi có liên kết Course PUBLISHED chưa xoá; không có đáp án |
+| `POST /api/quizzes/:id/attempts`                          | Bắt đầu hoặc trả lại lượt IN_PROGRESS hiện có                              |
+| `GET /api/quiz-attempts/:id`                              | Tiếp tục chính lượt của người gọi; feedback chỉ cho câu đã trả lời         |
+| `PUT /api/quiz-attempts/:id/answers/:questionId`          | `{selectedOptionId}` → đúng/sai, đáp án đúng, giải thích câu đó            |
+| `POST /api/quiz-attempts/:id/finish`                      | Chỉ khi đã trả lời đủ; trả tổng kết                                        |
+| `GET /api/quiz-attempts/:id/result`                       | Review lượt FINISHED của chính người gọi                                   |
+| `GET /api/quiz-attempts/me?quizId=<uuid>&page=1&limit=20` | Lịch sử cá nhân                                                            |
+| `GET /api/quizzes/:id/completion/me`                      | Đã hoàn thành, điểm tốt nhất, revision đạt đầu tiên                        |
 
 Start/finish không nhận điểm hay userId; body không có trường nghiệp vụ. Answer nhận duy nhất
 option ID. Câu chưa trả lời không có `isCorrect`, đáp án đúng hay giải thích. Lựa chọn đầu tiên
