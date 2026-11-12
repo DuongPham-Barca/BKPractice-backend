@@ -41,6 +41,7 @@ export class CreateQuestionUseCase implements ICreateQuestionPortIn {
         command.clientRequestId,
         hash,
         toQuestionContent(command),
+        command.isPrivate ?? false,
       );
       await this.questions.save(q);
       return q;

@@ -16,7 +16,7 @@ export class GetBankQuestionUseCase implements IGetBankQuestionPortIn {
     this.authorization.requirePermission(p, 'question:read-managed');
     const q = await this.questions.find(id);
     if (!q) throw new QuizError('NOT_FOUND', 'Question not found');
-    this.authorization.requireUse(p, q.state, q.sharedWith);
+    this.authorization.requireQuestionUse(p, q.state, q.sharedWith);
     return toManagedQuestion(q, p);
   }
 }

@@ -6,6 +6,7 @@ export class BankQuestionEntity {
   @PrimaryColumn({ name: 'id', type: 'uuid' }) id!: string;
   @Column({ name: 'created_by', type: 'uuid' }) createdBy!: string;
   @Column({ name: 'current_revision_id', type: 'uuid' }) currentRevisionId!: string;
+  @Column({ name: 'is_private', type: 'boolean', default: false }) isPrivate!: boolean;
   @Column({ name: 'client_request_id', type: 'uuid' }) clientRequestId!: string;
   @Column({ name: 'request_hash', type: 'text' }) requestHash!: string;
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true }) deletedAt!: Date | null;

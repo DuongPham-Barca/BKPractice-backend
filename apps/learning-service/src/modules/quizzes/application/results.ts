@@ -11,6 +11,7 @@ export function toManagedQuestion(q: Question, p: Principal) {
     id: q.state.id,
     createdBy: q.state.createdBy,
     deletedAt: q.state.deletedAt,
+    isPrivate: q.state.isPrivate,
     sharedWith: p.roles.includes('ADMIN') || q.state.createdBy === p.userId ? q.sharedWith : null,
     revision: q.revision,
   };

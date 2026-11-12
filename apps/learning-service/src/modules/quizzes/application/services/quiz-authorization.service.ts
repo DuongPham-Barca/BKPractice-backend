@@ -22,4 +22,18 @@ export class QuizAuthorizationService {
     )
       throw new QuizError('NOT_FOUND', 'Content not available');
   }
+  requireQuestionUse(
+    p: Principal,
+    root: ContentRoot & { isPrivate: boolean },
+    sharedWith: string[],
+  ): void {
+    if (
+      root.deletedAt ||
+      (!p.roles.includes('ADMIN') &&
+        root.createdBy !== p.userId &&
+        root.isPrivate &&
+        !sharedWith.includes(p.userId))
+    )
+      throw new QuizError('NOT_FOUND', 'Question not available');
+  }
 }

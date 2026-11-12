@@ -25,6 +25,7 @@ export * from './restore-question.port.in';
 export * from './restore-quiz.port.in';
 export * from './revise-question.port.in';
 export * from './share-question.port.in';
+export * from './set-question-visibility.port.in';
 export * from './share-quiz.port.in';
 export * from './start-quiz-attempt.port.in';
 export * from './update-quiz-draft.port.in';

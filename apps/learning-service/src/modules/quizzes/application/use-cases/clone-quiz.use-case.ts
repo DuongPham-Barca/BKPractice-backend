@@ -52,13 +52,14 @@ export class CloneQuizUseCase implements ICloneQuizPortIn {
         if (!rev.publishedAt) {
           const original = await this.questions.find(r.questionId, true);
           if (!original) throw new QuizError('NOT_FOUND', 'Question unavailable');
-          this.authorization.requireUse(p, original.state, original.sharedWith);
+          this.authorization.requireQuestionUse(p, original.state, original.sharedWith);
         }
         const question = Question.create(
           p.userId,
           randomUUID(),
           hashCommand({ clone: q.state.id, questionId: r.questionId }),
           { ...r, options: r.options.map((o) => ({ ...o, id: randomUUID() })) },
+          true,
         );
         await this.questions.save(question);
         items.push({ questionId: question.state.id, questionRevisionId: question.revision.id });

@@ -8,9 +8,9 @@
 ## Trạng thái và cách dùng
 
 **Hoàn tất**, ngày `2026-11-11`.
-Nguồn: [spec 1.4, Approved](./spec.md) và [plan đã duyệt](./plan.md), được lập theo yêu cầu chủ sở hữu.
+Nguồn: [spec 1.5, Approved](./spec.md) và [plan đã duyệt](./plan.md), được lập theo yêu cầu chủ sở hữu.
 
-- Follow lần lượt T001–T061; không làm task code trước khi T001–T007 đóng và spec Approved.
+- Follow lần lượt T001–T062; không làm task code trước khi T001–T007 đóng và spec Approved.
 - Mọi task bắt đầu chưa hoàn thành. Chỉ đánh dấu `[x]` khi có đầu ra và bằng chứng kiểm chứng.
 - Task phụ thuộc câu hỏi chưa chốt phải để mở; không dùng mặc định của code để trả lời sản phẩm.
 - Khi gặp quyết định khác draft, cập nhật spec/plan/tasks trước khi sửa nguồn tương ứng.
@@ -25,14 +25,15 @@ Nguồn: [spec 1.4, Approved](./spec.md) và [plan đã duyệt](./plan.md), đ�
       **Phụ thuộc:** Không. **Truy vết:** quy trình SDD, plan G-07.
       **Bằng chứng 2026-11-11:** preflight ghi trong [worked entry](../../../worked/learning/quizzes/2026-11-11-quiz-implementation.md)
       (mục Verification): build Learning và 2 suite/6 test quyền qua; lint/typecheck còn lỗi baseline Identity.
-      Mục này chỉ xác nhận khảo sát xong, không đóng Q-001–Q-008 hoặc cho phép bỏ qua G-07.
+      Mục này lưu khảo sát baseline; quyết định Q-001–Q-008 và G-07 đã được ghi nhận trong các
+      amendment spec 1.3–1.5, không lấy mặc định implementation làm quyết định sản phẩm.
 - [x] **LRN-009-T002 — Chốt chia sẻ và tiện ích.**
       Đầu ra: Q-001 riêng tư/chia sẻ có kiểm soát; chốt scope người nhận/thu hồi và Q-002 về clone/import/ôn.
-      Kiểm chứng: người nhận chỉ dùng/clone theo grant, không sửa gốc; không tự mở cho toàn bộ LECTURER.
+      Kiểm chứng: theo quyết định hiện hành 1.5, câu dùng chung cho LECTURER; câu private dùng grant;
+      không sửa gốc và clone thành bản riêng.
       **Phụ thuộc:** T001. **Truy vết:** FR-005–007, Q-001/002, G-01/02.
-      **Cập nhật mới nhất 2026-11-11:** Chính sách dùng chung toàn bộ đã được thay bằng riêng tư
-      mặc định/chia sẻ theo từng LECTURER do owner cấp/thu hồi; dùng hoặc clone, không sửa gốc.
-      Tác động thu hồi lên nội dung đã dùng và Q-002 còn mở.
+      **Cập nhật mới nhất 2026-11-12:** Q-001 được điều chỉnh ở spec 1.5: câu bank dùng chung mặc
+      định, có thể đặt private và cấp grant; Quiz vẫn private; clone câu là bản riêng tư.
 - [x] **LRN-009-T003 — Chốt đơn vị hoàn thành.**
       Đầu ra: Q-003/Q-004: theo Quiz hay revision, áp dụng giữa nhiều Chapter/Course, có đổi Progress
       hoặc gating không. Kiểm chứng: ví dụ đạt bản cũ rồi đổi đề có kết quả xác định.
@@ -440,6 +441,15 @@ Nguồn: [spec 1.4, Approved](./spec.md) và [plan đã duyệt](./plan.md), đ�
       **Truy vết:** Q-007, API contract. **Bằng chứng:** implementation source/docs cập nhật;
       kiểm thử chưa chạy.
 
+- [ ] **LRN-009-T062 — Ngân hàng câu hỏi dùng chung theo mặc định.**
+      Đầu ra: câu hỏi mới mặc định hiển thị cho LECTURER; cho phép đặt/chuyển câu private; list/get/use
+      kiểm tra visibility; chỉ owner/ADMIN sửa gốc; clone câu và clone Quiz tạo câu riêng tư; thêm
+      migration `is_private` với default false; route Gateway cho visibility; cập nhật Swagger và hướng dẫn module. Quiz grant
+      không thay đổi. **Phụ thuộc:** chủ sở hữu duyệt LRN-009 1.5. **Truy vết:** FR-002/005/007/026,
+      Q-001, SR-001/004. **Bằng chứng:** `SetQuestionVisibilityUseCase`, bank query scope,
+      `requireQuestionUse`, migration `1700000012000`, Gateway allowlist and Swagger. Build and lint
+      changed files pass; automated tests not run.
+
 ## Không áp dụng trong phạm vi hiện tại
 
 - **Messaging / outbox / DLQ:** N/A theo FR-001 và Đầu ra spec; HTTP chấm từng câu, không thêm event.
@@ -483,7 +493,7 @@ và T060 là đối chiếu cuối; không đợi T050 mới viết các test c�
 | FR-023 | T003, T043                         | T050, T052; AC-021     |
 | FR-024 | T042, T043, T044                   | T049, T050; AC-022     |
 | FR-025 | T004, T043, T044                   | T050; AC-023           |
-| FR-026 | T002, T053 | T051, T053; AC-026 |
+| FR-026 | T002, T053                         | T051, T053; AC-026     |
 
 | Security | Task kiểm chứng              | AC             |
 | -------- | ---------------------------- | -------------- |

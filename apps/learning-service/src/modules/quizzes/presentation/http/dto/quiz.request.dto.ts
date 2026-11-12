@@ -55,7 +55,15 @@ export class QuestionInputDto {
   @IsUUID(undefined, { each: true })
   tagIds: string[] = [];
 }
-export class CreateQuestionDto extends QuestionInputDto {}
+export class CreateQuestionDto extends QuestionInputDto {
+  @ApiPropertyOptional({
+    default: false,
+    description: 'Private questions are visible only to their owner, ADMIN, and granted lecturers.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isPrivate = false;
+}
 export class CreateQuizDto {
   @ApiProperty({ maxLength: 200 }) @IsString() @Length(1, 200) title!: string;
   @ApiPropertyOptional({ maxLength: 20000, nullable: true })
@@ -87,6 +95,13 @@ export class SelectQuestionsDto {
 export class ShareDto {
   @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() userId!: string;
   @ApiProperty() @IsBoolean() enabled!: boolean;
+}
+export class QuestionVisibilityDto {
+  @ApiProperty({
+    description: 'true limits use to owner/admin/granted lecturers; false shares with lecturers.',
+  })
+  @IsBoolean()
+  isPrivate!: boolean;
 }
 export class AnswerDto {
   @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() selectedOptionId!: string;

@@ -36,7 +36,7 @@ export class ReplaceQuizQuestionsUseCase implements IReplaceQuizQuestionsPortIn 
           )
         )
           throw new QuizError('INVALID', 'Invalid question revision');
-        this.authorization.requireUse(p, question.state, question.sharedWith);
+        this.authorization.requireQuestionUse(p, question.state, question.sharedWith);
       }
       q.replace(items);
       await this.quizzes.save(q);

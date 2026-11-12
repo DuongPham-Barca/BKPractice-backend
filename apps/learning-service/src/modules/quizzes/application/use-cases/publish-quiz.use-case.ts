@@ -29,7 +29,7 @@ export class PublishQuizUseCase implements IPublishQuizPortIn {
       )) {
         const question = await this.questions.find(item.questionId, true);
         if (!question) throw new QuizError('INVALID', 'Question unavailable');
-        this.authorization.requireUse(p, question.state, question.sharedWith);
+        this.authorization.requireQuestionUse(p, question.state, question.sharedWith);
       }
       q.publish();
       await this.quizzes.save(q);

@@ -45,7 +45,7 @@ export class PreviewQuizUseCase implements IPreviewQuizPortIn {
       let usable = false;
       if (source) {
         try {
-          this.authorization.requireUse(p, source.state, source.sharedWith);
+          this.authorization.requireQuestionUse(p, source.state, source.sharedWith);
           usable = true;
         } catch (error) {
           if (!(error instanceof QuizError)) throw error;

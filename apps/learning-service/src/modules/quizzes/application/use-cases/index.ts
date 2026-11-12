@@ -25,6 +25,7 @@ export * from './restore-question.use-case';
 export * from './restore-quiz.use-case';
 export * from './revise-question.use-case';
 export * from './share-question.use-case';
+export * from './set-question-visibility.use-case';
 export * from './share-quiz.use-case';
 export * from './start-quiz-attempt.use-case';
 export * from './update-quiz-draft.use-case';

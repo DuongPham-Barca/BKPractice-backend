@@ -84,7 +84,7 @@ export class QuestionTypeOrmRepository extends QuestionRepository {
       .where('q.deleted_at IS NULL');
     if (!p.roles.includes('ADMIN'))
       qb.andWhere(
-        '(q.created_by=:uid OR EXISTS(SELECT 1 FROM quiz_question_grants g WHERE g.question_id=q.id AND g.user_id=:uid))',
+        '(q.created_by=:uid OR q.is_private=false OR EXISTS(SELECT 1 FROM quiz_question_grants g WHERE g.question_id=q.id AND g.user_id=:uid))',
         { uid: p.userId },
       );
     if (query.q)

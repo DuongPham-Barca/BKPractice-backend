@@ -68,6 +68,11 @@ export class QuestionRevisionDto {
 }
 export class ManagedQuestionDto {
   @ApiProperty({
+    description:
+      'Whether this question is visible only to its owner, ADMIN, and granted lecturers.',
+  })
+  isPrivate!: boolean;
+  @ApiProperty({
     type: [String],
     nullable: true,
     description: 'Grant recipients, visible only to owner/ADMIN.',

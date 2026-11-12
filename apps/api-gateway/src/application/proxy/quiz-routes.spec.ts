@@ -45,6 +45,7 @@ describe('Quiz Gateway contract', () => {
     ['GET', '/api/question-bank/questions/id/usage'],
     ['POST', '/api/question-bank/questions/id/revisions'],
     ['PUT', '/api/question-bank/questions/id/shares'],
+    ['PUT', '/api/question-bank/questions/id/visibility'],
     ['POST', '/api/question-bank/questions/id/clone'],
     ['DELETE', '/api/question-bank/questions/id'],
     ['POST', '/api/question-bank/questions/id/restore'],

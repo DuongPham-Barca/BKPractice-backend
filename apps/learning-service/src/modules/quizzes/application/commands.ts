@@ -9,6 +9,7 @@ export interface QuestionInput {
 }
 export interface CreateQuestionCommand extends QuestionInput {
   clientRequestId: string;
+  isPrivate?: boolean;
 }
 export interface CreateQuizCommand {
   title: string;

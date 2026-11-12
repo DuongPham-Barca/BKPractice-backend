@@ -37,6 +37,7 @@ export interface ContentRoot {
 }
 export interface QuestionState extends ContentRoot {
   currentRevisionId: string;
+  isPrivate: boolean;
 }
 export interface QuizState extends ContentRoot {
   status: QuizStatus;
@@ -146,7 +147,13 @@ export class Question {
     public revision: QuestionRevision,
     readonly sharedWith: string[] = [],
   ) {}
-  static create(owner: string, requestId: string, hash: string, input: QuestionContent): Question {
+  static create(
+    owner: string,
+    requestId: string,
+    hash: string,
+    input: QuestionContent,
+    isPrivate = false,
+  ): Question {
     validateQuestion(input);
     const id = randomUUID();
     const now = new Date();
@@ -156,6 +163,7 @@ export class Question {
         id,
         createdBy: owner,
         currentRevisionId: rev.id,
+        isPrivate,
         deletedAt: null,
         clientRequestId: requestId,
         requestHash: hash,
@@ -172,6 +180,10 @@ export class Question {
   restore(): void {
     if (!this.state.deletedAt) throw new QuizError('CONFLICT', 'Question is not deleted');
     this.state.deletedAt = null;
+    this.state.updatedAt = new Date();
+  }
+  setPrivate(isPrivate: boolean): void {
+    this.state.isPrivate = isPrivate;
     this.state.updatedAt = new Date();
   }
   revise(input: QuestionContent): void {

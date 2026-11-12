@@ -142,19 +142,14 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     const r = await call<QuestionView>(
       'POST',
       '/api/question-bank/questions',
-      input(),
+      { ...input(), isPrivate: true },
       idempotencyHeaders(),
     );
     expect(r.status).toBe(201);
     return r.body;
   }
   async function createQuiz(questions: QuestionView[]) {
-    let r = await call<QuizView>(
-      'POST',
-      '/api/quizzes',
-      { title: 'Loops' },
-      idempotencyHeaders(),
-    );
+    let r = await call<QuizView>('POST', '/api/quizzes', { title: 'Loops' }, idempotencyHeaders());
     expect(r.status).toBe(201);
     r = await call<QuizView>('PUT', `/api/quizzes/${r.body.id}/draft/questions`, {
       items: questions.map((q) => ({ questionId: q.id, revisionId: q.revision.id })),
@@ -319,8 +314,7 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
           { ...command, content: 'different' },
           requestHeaders,
         )
-      )
-        .status,
+      ).status,
     ).toBe(409);
     const rows = await source.query<{ count: string }[]>(
       'SELECT count(*) FROM quiz_bank_questions WHERE client_request_id=$1',
@@ -442,14 +436,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
         .status,
     ).toBe(200);
     expect(
-      (
-        await call(
-          'POST',
-          `/api/quizzes/${f.quiz.id}/clone`,
-          undefined,
-          idempotencyHeaders(other),
-        )
-      ).status,
+      (await call('POST', `/api/quizzes/${f.quiz.id}/clone`, undefined, idempotencyHeaders(other)))
+        .status,
     ).toBe(404);
     expect(
       (await call('GET', `/api/quizzes/managed/${copy.body.id}`, undefined, headers(other))).status,

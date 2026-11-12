@@ -48,6 +48,8 @@ import {
   type IReviseQuestionPortIn,
   SHARE_QUESTION_PORT_IN,
   type IShareQuestionPortIn,
+  SET_QUESTION_VISIBILITY_PORT_IN,
+  type ISetQuestionVisibilityPortIn,
 } from '@/modules/quizzes/application/ports/in';
 import type { Principal } from '@/modules/quizzes/domain';
 import { IdempotencyKey } from '@/modules/quizzes/presentation/http/decorators';
@@ -58,6 +60,7 @@ import {
   QuestionInputDto,
   QuizPageQueryDto,
   QuizUsageDto,
+  QuestionVisibilityDto,
   ShareDto,
 } from '@/modules/quizzes/presentation/http/dto';
 import { QuizExceptionFilter } from '@/modules/quizzes/presentation/http/quiz-exception.filter';
@@ -82,6 +85,8 @@ export class BankQuestionsController {
     private readonly listQuestionUsage: IListQuestionUsagePortIn,
     @Inject(REVISE_QUESTION_PORT_IN) private readonly reviseQuestion: IReviseQuestionPortIn,
     @Inject(SHARE_QUESTION_PORT_IN) private readonly shareQuestion: IShareQuestionPortIn,
+    @Inject(SET_QUESTION_VISIBILITY_PORT_IN)
+    private readonly setQuestionVisibility: ISetQuestionVisibilityPortIn,
     @Inject(CLONE_QUESTION_PORT_IN) private readonly cloneQuestion: ICloneQuestionPortIn,
     @Inject(DELETE_QUESTION_PORT_IN) private readonly deleteQuestion: IDeleteQuestionPortIn,
     @Inject(RESTORE_QUESTION_PORT_IN) private readonly restoreQuestion: IRestoreQuestionPortIn,
@@ -90,7 +95,7 @@ export class BankQuestionsController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'ListBankQuestions',
-    description: 'Requires management role, action permission and ownership/sharing scope.',
+    description: 'Lists shared questions and private questions available to the caller.',
   })
   @ApiOkResponse({ type: BankQuestionPageDto })
   listBankQuestionsRequest(@TrustedPrincipal() p: Principal, @Query() query: QuizPageQueryDto) {
@@ -100,7 +105,7 @@ export class BankQuestionsController {
   @HttpCode(201)
   @ApiOperation({
     summary: 'CreateQuestion',
-    description: 'Requires management role, action permission and ownership/sharing scope.',
+    description: 'Creates a shared question by default; set isPrivate=true to restrict its use.',
   })
   @ApiHeader({
     name: 'Idempotency-Key',
@@ -120,6 +125,7 @@ export class BankQuestionsController {
       difficulty: body.difficulty,
       topicIds: body.topicIds,
       tagIds: body.tagIds,
+      isPrivate: body.isPrivate,
       clientRequestId: idempotencyKey.toLowerCase(),
     });
   }
@@ -173,6 +179,20 @@ export class BankQuestionsController {
     @Body() body: ShareDto,
   ) {
     return this.shareQuestion.execute(p, id.toLowerCase(), body);
+  }
+  @Put(':id/visibility')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'SetQuestionVisibility',
+    description: 'Owner or ADMIN can make a question shared with lecturers or private.',
+  })
+  @ApiOkResponse({ type: ManagedQuestionDto })
+  setQuestionVisibilityRequest(
+    @TrustedPrincipal() p: Principal,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: QuestionVisibilityDto,
+  ) {
+    return this.setQuestionVisibility.execute(p, id.toLowerCase(), body.isPrivate);
   }
   @Post(':id/clone')
   @HttpCode(201)

@@ -35,11 +35,17 @@ export class CloneQuestionUseCase implements ICloneQuestionPortIn {
       }
       const source = await this.questions.find(id, true);
       if (!source) throw new QuizError('NOT_FOUND', 'Question not found');
-      this.authorization.requireUse(p, source.state, source.sharedWith);
-      const copy = Question.create(p.userId, clientRequestId, hash, {
-        ...source.revision,
-        options: source.revision.options.map((o) => ({ ...o, id: randomUUID() })),
-      });
+      this.authorization.requireQuestionUse(p, source.state, source.sharedWith);
+      const copy = Question.create(
+        p.userId,
+        clientRequestId,
+        hash,
+        {
+          ...source.revision,
+          options: source.revision.options.map((o) => ({ ...o, id: randomUUID() })),
+        },
+        true,
+      );
       await this.questions.save(copy);
       return copy;
     });

@@ -7,6 +7,7 @@ export const learningRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ['GET', /^\/api\/question-bank\/questions\/[^/]+\/usage\/?$/],
   ['POST', /^\/api\/question-bank\/questions\/[^/]+\/revisions\/?$/],
   ['PUT', /^\/api\/question-bank\/questions\/[^/]+\/shares\/?$/],
+  ['PUT', /^\/api\/question-bank\/questions\/[^/]+\/visibility\/?$/],
   ['POST', /^\/api\/question-bank\/questions\/[^/]+\/clone\/?$/],
   ['DELETE', /^\/api\/question-bank\/questions\/[^/]+\/?$/],
   ['POST', /^\/api\/question-bank\/questions\/[^/]+\/restore\/?$/],
