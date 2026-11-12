@@ -1,36 +1,38 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { ANSWER_QUIZ_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/answer-quiz-question.port.in';
-import { CLONE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/clone-question.port.in';
-import { CLONE_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/clone-quiz.port.in';
-import { CREATE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/create-question.port.in';
-import { CREATE_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/create-quiz.port.in';
-import { DELETE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/delete-question.port.in';
-import { DELETE_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/delete-quiz.port.in';
-import { FINISH_QUIZ_ATTEMPT_PORT_IN } from '@/modules/quizzes/application/ports/in/finish-quiz-attempt.port.in';
-import { GET_BANK_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/get-bank-question.port.in';
-import { GET_MANAGED_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/get-managed-quiz.port.in';
-import { GET_MY_QUIZ_ATTEMPT_PORT_IN } from '@/modules/quizzes/application/ports/in/get-my-quiz-attempt.port.in';
-import { GET_MY_QUIZ_COMPLETION_PORT_IN } from '@/modules/quizzes/application/ports/in/get-my-quiz-completion.port.in';
-import { GET_MY_QUIZ_RESULT_PORT_IN } from '@/modules/quizzes/application/ports/in/get-my-quiz-result.port.in';
-import { GET_PUBLISHED_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/get-published-quiz.port.in';
-import { HOLD_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/hold-quiz.port.in';
-import { LIST_BANK_QUESTIONS_PORT_IN } from '@/modules/quizzes/application/ports/in/list-bank-questions.port.in';
-import { LIST_MANAGED_QUIZZES_PORT_IN } from '@/modules/quizzes/application/ports/in/list-managed-quizzes.port.in';
-import { LIST_MY_QUIZ_ATTEMPTS_PORT_IN } from '@/modules/quizzes/application/ports/in/list-my-quiz-attempts.port.in';
-import { LIST_QUESTION_USAGE_PORT_IN } from '@/modules/quizzes/application/ports/in/list-question-usage.port.in';
-import { PREVIEW_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/preview-quiz.port.in';
-import { PUBLISH_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/publish-quiz.port.in';
-import { REPLACE_QUIZ_QUESTIONS_PORT_IN } from '@/modules/quizzes/application/ports/in/replace-quiz-questions.port.in';
-import { REPUBLISH_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/republish-quiz.port.in';
-import { RESTORE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/restore-question.port.in';
-import { RESTORE_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/restore-quiz.port.in';
-import { REVISE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/revise-question.port.in';
-import { SHARE_QUESTION_PORT_IN } from '@/modules/quizzes/application/ports/in/share-question.port.in';
-import { SHARE_QUIZ_PORT_IN } from '@/modules/quizzes/application/ports/in/share-quiz.port.in';
-import { START_QUIZ_ATTEMPT_PORT_IN } from '@/modules/quizzes/application/ports/in/start-quiz-attempt.port.in';
-import { UPDATE_QUIZ_DRAFT_PORT_IN } from '@/modules/quizzes/application/ports/in/update-quiz-draft.port.in';
+import {
+  ANSWER_QUIZ_QUESTION_PORT_IN,
+  CLONE_QUESTION_PORT_IN,
+  CLONE_QUIZ_PORT_IN,
+  CREATE_QUESTION_PORT_IN,
+  CREATE_QUIZ_PORT_IN,
+  DELETE_QUESTION_PORT_IN,
+  DELETE_QUIZ_PORT_IN,
+  FINISH_QUIZ_ATTEMPT_PORT_IN,
+  GET_BANK_QUESTION_PORT_IN,
+  GET_MANAGED_QUIZ_PORT_IN,
+  GET_MY_QUIZ_ATTEMPT_PORT_IN,
+  GET_MY_QUIZ_COMPLETION_PORT_IN,
+  GET_MY_QUIZ_RESULT_PORT_IN,
+  GET_PUBLISHED_QUIZ_PORT_IN,
+  HOLD_QUIZ_PORT_IN,
+  LIST_BANK_QUESTIONS_PORT_IN,
+  LIST_MANAGED_QUIZZES_PORT_IN,
+  LIST_MY_QUIZ_ATTEMPTS_PORT_IN,
+  LIST_QUESTION_USAGE_PORT_IN,
+  PREVIEW_QUIZ_PORT_IN,
+  PUBLISH_QUIZ_PORT_IN,
+  REPLACE_QUIZ_QUESTIONS_PORT_IN,
+  REPUBLISH_QUIZ_PORT_IN,
+  RESTORE_QUESTION_PORT_IN,
+  RESTORE_QUIZ_PORT_IN,
+  REVISE_QUESTION_PORT_IN,
+  SHARE_QUESTION_PORT_IN,
+  SHARE_QUIZ_PORT_IN,
+  START_QUIZ_ATTEMPT_PORT_IN,
+  UPDATE_QUIZ_DRAFT_PORT_IN,
+} from '@/modules/quizzes/application/ports/in';
 import {
   BankTaxonomyReader,
   QuestionRepository,
@@ -41,45 +43,43 @@ import {
   ShareRecipientReader,
 } from '@/modules/quizzes/application/ports/out';
 import { QuizAuthorizationService } from '@/modules/quizzes/application/services';
-import { AnswerQuizQuestionUseCase } from '@/modules/quizzes/application/use-cases/answer-quiz-question.use-case';
-import { CloneQuestionUseCase } from '@/modules/quizzes/application/use-cases/clone-question.use-case';
-import { CloneQuizUseCase } from '@/modules/quizzes/application/use-cases/clone-quiz.use-case';
-import { CreateQuestionUseCase } from '@/modules/quizzes/application/use-cases/create-question.use-case';
-import { CreateQuizUseCase } from '@/modules/quizzes/application/use-cases/create-quiz.use-case';
-import { DeleteQuestionUseCase } from '@/modules/quizzes/application/use-cases/delete-question.use-case';
-import { DeleteQuizUseCase } from '@/modules/quizzes/application/use-cases/delete-quiz.use-case';
-import { FinishQuizAttemptUseCase } from '@/modules/quizzes/application/use-cases/finish-quiz-attempt.use-case';
-import { GetBankQuestionUseCase } from '@/modules/quizzes/application/use-cases/get-bank-question.use-case';
-import { GetManagedQuizUseCase } from '@/modules/quizzes/application/use-cases/get-managed-quiz.use-case';
-import { GetMyQuizAttemptUseCase } from '@/modules/quizzes/application/use-cases/get-my-quiz-attempt.use-case';
-import { GetMyQuizCompletionUseCase } from '@/modules/quizzes/application/use-cases/get-my-quiz-completion.use-case';
-import { GetMyQuizResultUseCase } from '@/modules/quizzes/application/use-cases/get-my-quiz-result.use-case';
-import { GetPublishedQuizUseCase } from '@/modules/quizzes/application/use-cases/get-published-quiz.use-case';
-import { HoldQuizUseCase } from '@/modules/quizzes/application/use-cases/hold-quiz.use-case';
-import { ListBankQuestionsUseCase } from '@/modules/quizzes/application/use-cases/list-bank-questions.use-case';
-import { ListManagedQuizzesUseCase } from '@/modules/quizzes/application/use-cases/list-managed-quizzes.use-case';
-import { ListMyQuizAttemptsUseCase } from '@/modules/quizzes/application/use-cases/list-my-quiz-attempts.use-case';
-import { ListQuestionUsageUseCase } from '@/modules/quizzes/application/use-cases/list-question-usage.use-case';
-import { PreviewQuizUseCase } from '@/modules/quizzes/application/use-cases/preview-quiz.use-case';
-import { PublishQuizUseCase } from '@/modules/quizzes/application/use-cases/publish-quiz.use-case';
-import { ReplaceQuizQuestionsUseCase } from '@/modules/quizzes/application/use-cases/replace-quiz-questions.use-case';
-import { RepublishQuizUseCase } from '@/modules/quizzes/application/use-cases/republish-quiz.use-case';
-import { RestoreQuestionUseCase } from '@/modules/quizzes/application/use-cases/restore-question.use-case';
-import { RestoreQuizUseCase } from '@/modules/quizzes/application/use-cases/restore-quiz.use-case';
-import { ReviseQuestionUseCase } from '@/modules/quizzes/application/use-cases/revise-question.use-case';
-import { ShareQuestionUseCase } from '@/modules/quizzes/application/use-cases/share-question.use-case';
-import { ShareQuizUseCase } from '@/modules/quizzes/application/use-cases/share-quiz.use-case';
-import { StartQuizAttemptUseCase } from '@/modules/quizzes/application/use-cases/start-quiz-attempt.use-case';
-import { UpdateQuizDraftUseCase } from '@/modules/quizzes/application/use-cases/update-quiz-draft.use-case';
+import {
+  AnswerQuizQuestionUseCase,
+  CloneQuestionUseCase,
+  CloneQuizUseCase,
+  CreateQuestionUseCase,
+  CreateQuizUseCase,
+  DeleteQuestionUseCase,
+  DeleteQuizUseCase,
+  FinishQuizAttemptUseCase,
+  GetBankQuestionUseCase,
+  GetManagedQuizUseCase,
+  GetMyQuizAttemptUseCase,
+  GetMyQuizCompletionUseCase,
+  GetMyQuizResultUseCase,
+  GetPublishedQuizUseCase,
+  HoldQuizUseCase,
+  ListBankQuestionsUseCase,
+  ListManagedQuizzesUseCase,
+  ListMyQuizAttemptsUseCase,
+  ListQuestionUsageUseCase,
+  PreviewQuizUseCase,
+  PublishQuizUseCase,
+  ReplaceQuizQuestionsUseCase,
+  RepublishQuizUseCase,
+  RestoreQuestionUseCase,
+  RestoreQuizUseCase,
+  ReviseQuestionUseCase,
+  ShareQuestionUseCase,
+  ShareQuizUseCase,
+  StartQuizAttemptUseCase,
+  UpdateQuizDraftUseCase,
+} from '@/modules/quizzes/application/use-cases';
 import {
   AttemptTypeOrmRepository,
-  QuestionTypeOrmRepository,
-  QuizTransactionContext,
-  QuizTypeOrmRepository,
-} from '@/modules/quizzes/infrastructure/persistence';
-import {
   BankQuestionEntity,
   BankQuestionRevisionEntity,
+  QuestionTypeOrmRepository,
   QuestionGrantEntity,
   QuizAnswerEntity,
   QuizAttemptEntity,
@@ -87,7 +87,9 @@ import {
   QuizGrantEntity,
   QuizItemEntity,
   QuizRevisionEntity,
-} from '@/modules/quizzes/infrastructure/persistence/quiz.entities';
+  QuizTransactionContext,
+  QuizTypeOrmRepository,
+} from '@/modules/quizzes/infrastructure/persistence';
 import {
   BankTaxonomyTypeOrmReader,
   QuizCourseTypeOrmReader,

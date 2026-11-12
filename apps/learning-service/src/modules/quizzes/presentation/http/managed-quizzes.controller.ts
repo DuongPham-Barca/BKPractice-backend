@@ -20,6 +20,7 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -32,66 +33,40 @@ import { TrustedPrincipalGuard } from '@/modules/problems/presentation/http/guar
 import {
   CLONE_QUIZ_PORT_IN,
   type ICloneQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/clone-quiz.port.in';
-import {
   CREATE_QUIZ_PORT_IN,
   type ICreateQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/create-quiz.port.in';
-import {
   DELETE_QUIZ_PORT_IN,
   type IDeleteQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/delete-quiz.port.in';
-import {
   GET_MANAGED_QUIZ_PORT_IN,
   type IGetManagedQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/get-managed-quiz.port.in';
-import {
   HOLD_QUIZ_PORT_IN,
   type IHoldQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/hold-quiz.port.in';
-import {
   LIST_MANAGED_QUIZZES_PORT_IN,
   type IListManagedQuizzesPortIn,
-} from '@/modules/quizzes/application/ports/in/list-managed-quizzes.port.in';
-import {
   PREVIEW_QUIZ_PORT_IN,
   type IPreviewQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/preview-quiz.port.in';
-import {
   PUBLISH_QUIZ_PORT_IN,
   type IPublishQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/publish-quiz.port.in';
-import {
   REPLACE_QUIZ_QUESTIONS_PORT_IN,
   type IReplaceQuizQuestionsPortIn,
-} from '@/modules/quizzes/application/ports/in/replace-quiz-questions.port.in';
-import {
   REPUBLISH_QUIZ_PORT_IN,
   type IRepublishQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/republish-quiz.port.in';
-import {
   RESTORE_QUIZ_PORT_IN,
   type IRestoreQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/restore-quiz.port.in';
-import {
   SHARE_QUIZ_PORT_IN,
   type IShareQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/share-quiz.port.in';
-import {
   UPDATE_QUIZ_DRAFT_PORT_IN,
   type IUpdateQuizDraftPortIn,
-} from '@/modules/quizzes/application/ports/in/update-quiz-draft.port.in';
+} from '@/modules/quizzes/application/ports/in';
 import type { Principal } from '@/modules/quizzes/domain';
-import { EmptyQuizBodyDto } from '@/modules/quizzes/presentation/http/dto';
-import {
-  ManagedQuizDto,
-  ManagedQuizPageDto,
-  QuizPreviewDto,
-} from '@/modules/quizzes/presentation/http/dto';
+import { IdempotencyKey } from '@/modules/quizzes/presentation/http/decorators';
 import {
   CreateQuizDto,
+  EmptyQuizBodyDto,
+  ManagedQuizDto,
+  ManagedQuizPageDto,
   QuizPageQueryDto,
-  RequestIdDto,
+  QuizPreviewDto,
   SelectQuestionsDto,
   ShareDto,
   UpdateQuizDto,
@@ -152,12 +127,21 @@ export class ManagedQuizzesController {
     summary: 'CreateQuiz',
     description: 'Requires management role, action permission and ownership/sharing scope.',
   })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: true,
+    description: 'UUID reused only when retrying the same create operation.',
+  })
   @ApiCreatedResponse({ type: ManagedQuizDto })
-  createQuizRequest(@TrustedPrincipal() p: Principal, @Body() body: CreateQuizDto) {
+  createQuizRequest(
+    @TrustedPrincipal() p: Principal,
+    @IdempotencyKey(new ParseUUIDPipe()) idempotencyKey: string,
+    @Body() body: CreateQuizDto,
+  ) {
     return this.createQuiz.execute(p, {
       title: body.title,
       description: body.description,
-      clientRequestId: body.clientRequestId,
+      clientRequestId: idempotencyKey.toLowerCase(),
     });
   }
   @Patch(':id/draft')
@@ -240,13 +224,18 @@ export class ManagedQuizzesController {
     summary: 'CloneQuiz',
     description: 'Requires management role, action permission and ownership/sharing scope.',
   })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: true,
+    description: 'UUID reused only when retrying the same clone operation.',
+  })
   @ApiCreatedResponse({ type: ManagedQuizDto })
   cloneQuizRequest(
     @TrustedPrincipal() p: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: RequestIdDto,
+    @IdempotencyKey(new ParseUUIDPipe()) idempotencyKey: string,
   ) {
-    return this.cloneQuiz.execute(p, id.toLowerCase(), body.clientRequestId);
+    return this.cloneQuiz.execute(p, id.toLowerCase(), idempotencyKey.toLowerCase());
   }
   @Post(':id/hold')
   @HttpCode(200)

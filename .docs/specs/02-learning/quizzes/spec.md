@@ -4,7 +4,8 @@
 
 Approved
 
-Phiên bản `1.3`, toàn bộ phương án MVP được chủ sở hữu phê duyệt ngày `2026-11-11`.
+Phiên bản `1.4`, toàn bộ phương án MVP được chủ sở hữu phê duyệt ngày `2026-11-11`; hợp đồng
+Idempotency-Key được chủ sở hữu duyệt ngày `2026-11-12`.
 Phiên bản `1.0` đã được phê duyệt cùng ngày. Chủ sở hữu yêu cầu viết spec riêng
 sau khi thống nhất hướng Quiz cho mobile và ngân hàng câu hỏi. Các quyết định đã xác nhận được ghi
 riêng bên dưới; nguyên tắc Q-001 đã được cập nhật, các chi tiết chia sẻ và Q-002 tới Q-008 tại mục **Câu hỏi mở** vẫn phải được chốt trước khi
@@ -432,7 +433,7 @@ Chủ sở hữu phê duyệt toàn bộ gói MVP trong hội thoại ngày 2026
 | Q-004 | Hoàn thành theo user + Quiz ở mọi Chapter/Course; không đổi % Progress Course hay mở khoá. |
 | Q-005 | Chỉ học qua Course PUBLISHED chưa xoá. Quiz DRAFT/PUBLISHED/ON_HOLD và xoá mềm; sửa qua draft mới. Câu ngân hàng không có publish riêng. Hide/delete chặn lượt mới, cho tiếp tục lượt cũ. |
 | Q-006 | Không giới hạn thời gian/số lượt; một IN_PROGRESS/user/Quiz, start lặp trả lượt hiện có. First answer tính điểm; trả lời đủ rồi finish tường minh; same-answer replay cả sau finish. |
-| Q-007 | Title 200; content/description/explanation 20.000 ký tự; option 5.000; 2–6 options/câu; 50 câu/Quiz; 50 Quiz/Chapter; page/limit mặc định 1/20, tối đa 100. clientRequestId UUID cho create/clone; cùng ID khác payload 409. Permission question/quiz theo hành động, LECTURER/ADMIN; STUDENT không quản lý. |
+| Q-007 | Title 200; content/description/explanation 20.000 ký tự; option 5.000; 2–6 options/câu; 50 câu/Quiz; 50 Quiz/Chapter; page/limit mặc định 1/20, tối đa 100. API create/clone nhận UUID qua header `Idempotency-Key`; cùng key/payload trả cùng resource, cùng key khác payload trả 409. Không nhận key trong body. Permission question/quiz theo hành động, LECTURER/ADMIN; STUDENT không quản lý. |
 | Q-008 | Tái dùng Topic/Tag và EASY/MEDIUM/HARD hiện có trong Learning qua own read port. |
 
 Plan/tasks được chủ sở hữu cho phép triển khai cùng gói này. Chính sách LECTURER owner/ADMIN
@@ -447,6 +448,7 @@ mọi nội dung thay ADMIN-only của LRN-008; Class/Enrollment/Assignment vẫ
 | 2026-11-11 | 1.0       | Chủ sở hữu phê duyệt           | Chuyển LRN-009 sang `Approved`. Q-001 tới Q-008 vẫn là gate phải chốt trước khi triển khai hành vi liên quan; các spec/kiến trúc phụ thuộc chưa được sửa trong đợt này.                                       |
 | 2026-11-11 | 1.1 | Chủ sở hữu xác nhận, Codex ghi nhận | Đóng Q-001: ngân hàng câu hỏi dùng chung cho LECTURER; Quiz đã publish dùng chung; quyền sửa gốc vẫn chỉ người tạo và ADMIN. Các câu hỏi khác giữ nguyên. |
 | 2026-11-11 | 1.2 | Chủ sở hữu điều chỉnh, Codex ghi nhận | Thay chính sách 1.1 bằng riêng tư mặc định, chia sẻ có kiểm soát; dùng/nhân bản nhưng không sửa gốc. Thêm FR-026/AC-026 cho bản sao độc lập; scope/thu hồi chia sẻ còn cần chốt. |
+| 2026-11-12 | 1.4 | Chủ sở hữu xác nhận | Chuyển idempotency key của API create/clone từ body sang header `Idempotency-Key`; giữ nguyên chống retry trùng và lưu trữ trên root hiện có, không thêm bảng. |
 
 
 > `spec.md` mô tả CÁI GÌ. Bảng/cột, endpoint, class, port, migration và thứ tự triển khai thuộc
@@ -456,3 +458,9 @@ mọi nội dung thay ADMIN-only của LRN-008; Class/Enrollment/Assignment vẫ
 ## Phê duyệt triển khai 1.3
 
 2026-11-11 — Chủ sở hữu: “approved tất cả cho tôi”. Giữ Approved; chưa coi implementation là Verified.
+
+## Phê duyệt hợp đồng Idempotency-Key 1.4
+
+2026-11-12 — Chủ sở hữu yêu cầu chuyển key của API create/clone sang header `Idempotency-Key`.
+Giữ UUID và semantics retry hiện có; body không còn chứa key. Key/hash tiếp tục lưu trên root
+Question/Quiz, không tạo bảng mới.

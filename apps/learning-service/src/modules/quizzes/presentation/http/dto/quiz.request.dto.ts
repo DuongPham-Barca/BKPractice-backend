@@ -55,9 +55,7 @@ export class QuestionInputDto {
   @IsUUID(undefined, { each: true })
   tagIds: string[] = [];
 }
-export class CreateQuestionDto extends QuestionInputDto {
-  @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() clientRequestId!: string;
-}
+export class CreateQuestionDto extends QuestionInputDto {}
 export class CreateQuizDto {
   @ApiProperty({ maxLength: 200 }) @IsString() @Length(1, 200) title!: string;
   @ApiPropertyOptional({ maxLength: 20000, nullable: true })
@@ -65,7 +63,6 @@ export class CreateQuizDto {
   @IsString()
   @MaxLength(20000)
   description: string | null = null;
-  @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() clientRequestId!: string;
 }
 export class UpdateQuizDto {
   @ApiPropertyOptional({ maxLength: 200 }) @IsOptional() @IsString() @Length(1, 200) title?: string;
@@ -90,9 +87,6 @@ export class SelectQuestionsDto {
 export class ShareDto {
   @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() userId!: string;
   @ApiProperty() @IsBoolean() enabled!: boolean;
-}
-export class RequestIdDto {
-  @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() clientRequestId!: string;
 }
 export class AnswerDto {
   @ApiProperty({ format: 'uuid' }) @Transform(normalizeUuid) @IsUUID() selectedOptionId!: string;

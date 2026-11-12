@@ -19,8 +19,10 @@ Tạo ngay trong bộ chọn là hai thao tác riêng. Nếu bước tạo câu 
 client giữ ID đã nhận và thử chọn lại; không xoá bù hoặc tạo câu lần nữa. Replace danh sách là
 nguyên tử: một item sai khiến toàn bộ danh sách không được thay.
 
-Tạo/clone câu và Quiz nhận `clientRequestId` UUID. Retry cùng ID/payload trả lại cùng resource;
-đổi payload với cùng ID trả 409. Hash lưu payload tạo ban đầu, không đổi theo lần sửa nội dung.
+Tạo/clone câu và Quiz nhận UUID qua header `Idempotency-Key`; body chỉ chứa dữ liệu nghiệp vụ.
+Retry cùng key/payload trả lại cùng resource; đổi payload với cùng key trả 409. Hash lưu payload tạo
+ban đầu, không đổi theo lần sửa nội dung. Key/hash lưu trên root Question/Quiz hiện có, không cần
+bảng idempotency riêng.
 Option ID có thể được cung cấp dưới dạng UUID; nếu bỏ qua server tạo ID mới cho revision đó.
 
 ## Quyền sử dụng và chia sẻ
@@ -36,7 +38,7 @@ nhìn phiên bản Quiz đã publish, không thấy draft của chủ sở hữu
 publish draft dùng nguồn đó, giữ Quiz đã publish, bản clone và lịch sử. Preview draft sau thu hồi
 không trả nội dung/đáp án nguồn bị thu hồi; `readiness` chỉ rõ `QUESTION_UNAVAILABLE:<id>`.
 
-`POST .../:id/clone` nhận `clientRequestId`, trả bản mới riêng tư của người thực hiện. Clone Quiz
+`POST .../:id/clone` nhận `Idempotency-Key` trong header, trả bản mới riêng tư của người thực hiện. Clone Quiz
 sao chép sâu các phiên bản câu được chọn thành câu riêng; sửa bản sao không tác động bản gốc.
 
 ## Ngân hàng, tìm kiếm và giới hạn

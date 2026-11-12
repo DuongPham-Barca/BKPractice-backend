@@ -2,7 +2,8 @@
 
 ## Trạng thái
 
-**Reviewed và được phép triển khai**, ngày `2026-11-11`, theo phê duyệt toàn bộ MVP/spec 1.3.
+**Reviewed và được phép triển khai**, ngày `2026-11-11`, theo phê duyệt toàn bộ MVP/spec 1.3 và
+hợp đồng header đã được chủ sở hữu duyệt ngày `2026-11-12`.
 Code backend đã triển khai; kết quả kiểm chứng và giới hạn hiện hành ở [tasks](./tasks.md),
 [worked](../../../worked/learning/quizzes/2026-11-11-quiz-implementation.md) và
 [hướng dẫn vận hành](../../../pm/plan/learning/quizzes/README.md).
@@ -10,7 +11,7 @@ Không tự chuyển spec sang Verified khi quality gate toàn repo còn baselin
 
 ## Đặc tả liên quan
 
-- Nguồn: [LRN-009 — Quiz và ngân hàng câu hỏi](./spec.md), 1.3, `Approved`, 2026-11-11.
+- Nguồn: [LRN-009 — Quiz và ngân hàng câu hỏi](./spec.md), 1.4, `Approved`, 2026-11-12.
 - Checklist: [tasks.md](./tasks.md). Mỗi task có đầu ra, kiểm chứng, phụ thuộc và truy vết.
 - Phụ thuộc: [LRN-003](../courses/spec.md), [LRN-006](../progress/spec.md),
 [LRN-008](../self-study/spec.md), [Identity RBAC](../../01-identity/rbac/spec.md).
@@ -159,9 +160,11 @@ Thiết kế hai bước có thể quan sát: tạo câu trong ngân hàng rồi
 Mỗi bước trả ID/kết quả rõ ràng; nếu bước gắn thất bại, câu vẫn tồn tại và UI có thể chọn lại.
 Không báo tạo câu thất bại khi thực tế đã lưu, không xoá bù câu ngân hàng đang được dùng nơi khác.
 
-Theo G-05, đề xuất `clientRequestId` UUID và hash payload ban đầu cho tạo câu/Quiz. Unique theo
-người tạo và loại thao tác: retry cùng ID/hash trả lại ID đã tạo, hash khác trả `409`. Hash
-không được tính lại từ nội dung hiện hành sau khi người dùng đã sửa câu. Không log payload.
+Theo G-05, API nhận UUID qua header `Idempotency-Key` cho create/clone và hash payload ban đầu
+cho tạo câu/Quiz. Learning truyền key vào use case; key/hash được lưu trên root hiện có, unique theo
+người tạo: retry cùng key/hash trả lại ID đã tạo, hash khác trả `409`. Hash không được tính lại từ
+nội dung hiện hành sau khi người dùng đã sửa câu. Không log payload. Gateway chuyển tiếp header
+request nên không cần thay đổi; body create/clone không chứa key và không có bảng/migration riêng.
 
 ## Lưu trữ
 

@@ -19,6 +19,7 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -31,50 +32,32 @@ import { TrustedPrincipalGuard } from '@/modules/problems/presentation/http/guar
 import {
   CLONE_QUESTION_PORT_IN,
   type ICloneQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/clone-question.port.in';
-import {
   CREATE_QUESTION_PORT_IN,
   type ICreateQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/create-question.port.in';
-import {
   DELETE_QUESTION_PORT_IN,
   type IDeleteQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/delete-question.port.in';
-import {
   GET_BANK_QUESTION_PORT_IN,
   type IGetBankQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/get-bank-question.port.in';
-import {
   LIST_BANK_QUESTIONS_PORT_IN,
   type IListBankQuestionsPortIn,
-} from '@/modules/quizzes/application/ports/in/list-bank-questions.port.in';
-import {
   LIST_QUESTION_USAGE_PORT_IN,
   type IListQuestionUsagePortIn,
-} from '@/modules/quizzes/application/ports/in/list-question-usage.port.in';
-import {
   RESTORE_QUESTION_PORT_IN,
   type IRestoreQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/restore-question.port.in';
-import {
   REVISE_QUESTION_PORT_IN,
   type IReviseQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/revise-question.port.in';
-import {
   SHARE_QUESTION_PORT_IN,
   type IShareQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/share-question.port.in';
+} from '@/modules/quizzes/application/ports/in';
 import type { Principal } from '@/modules/quizzes/domain';
+import { IdempotencyKey } from '@/modules/quizzes/presentation/http/decorators';
 import {
   BankQuestionPageDto,
-  ManagedQuestionDto,
-  QuizUsageDto,
-} from '@/modules/quizzes/presentation/http/dto';
-import {
   CreateQuestionDto,
+  ManagedQuestionDto,
   QuestionInputDto,
   QuizPageQueryDto,
-  RequestIdDto,
+  QuizUsageDto,
   ShareDto,
 } from '@/modules/quizzes/presentation/http/dto';
 import { QuizExceptionFilter } from '@/modules/quizzes/presentation/http/quiz-exception.filter';
@@ -119,8 +102,17 @@ export class BankQuestionsController {
     summary: 'CreateQuestion',
     description: 'Requires management role, action permission and ownership/sharing scope.',
   })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: true,
+    description: 'UUID reused only when retrying the same create operation.',
+  })
   @ApiCreatedResponse({ type: ManagedQuestionDto })
-  createQuestionRequest(@TrustedPrincipal() p: Principal, @Body() body: CreateQuestionDto) {
+  createQuestionRequest(
+    @TrustedPrincipal() p: Principal,
+    @IdempotencyKey(new ParseUUIDPipe()) idempotencyKey: string,
+    @Body() body: CreateQuestionDto,
+  ) {
     return this.createQuestion.execute(p, {
       content: body.content,
       explanation: body.explanation,
@@ -128,7 +120,7 @@ export class BankQuestionsController {
       difficulty: body.difficulty,
       topicIds: body.topicIds,
       tagIds: body.tagIds,
-      clientRequestId: body.clientRequestId,
+      clientRequestId: idempotencyKey.toLowerCase(),
     });
   }
   @Get(':id')
@@ -188,13 +180,18 @@ export class BankQuestionsController {
     summary: 'CloneQuestion',
     description: 'Requires management role, action permission and ownership/sharing scope.',
   })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: true,
+    description: 'UUID reused only when retrying the same clone operation.',
+  })
   @ApiCreatedResponse({ type: ManagedQuestionDto })
   cloneQuestionRequest(
     @TrustedPrincipal() p: Principal,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: RequestIdDto,
+    @IdempotencyKey(new ParseUUIDPipe()) idempotencyKey: string,
   ) {
-    return this.cloneQuestion.execute(p, id.toLowerCase(), body.clientRequestId);
+    return this.cloneQuestion.execute(p, id.toLowerCase(), idempotencyKey.toLowerCase());
   }
   @Delete(':id')
   @HttpCode(200)

@@ -30,41 +30,27 @@ import { TrustedPrincipalGuard } from '@/modules/problems/presentation/http/guar
 import {
   ANSWER_QUIZ_QUESTION_PORT_IN,
   type IAnswerQuizQuestionPortIn,
-} from '@/modules/quizzes/application/ports/in/answer-quiz-question.port.in';
-import {
   FINISH_QUIZ_ATTEMPT_PORT_IN,
   type IFinishQuizAttemptPortIn,
-} from '@/modules/quizzes/application/ports/in/finish-quiz-attempt.port.in';
-import {
   GET_MY_QUIZ_ATTEMPT_PORT_IN,
   type IGetMyQuizAttemptPortIn,
-} from '@/modules/quizzes/application/ports/in/get-my-quiz-attempt.port.in';
-import {
   GET_MY_QUIZ_COMPLETION_PORT_IN,
   type IGetMyQuizCompletionPortIn,
-} from '@/modules/quizzes/application/ports/in/get-my-quiz-completion.port.in';
-import {
   GET_MY_QUIZ_RESULT_PORT_IN,
   type IGetMyQuizResultPortIn,
-} from '@/modules/quizzes/application/ports/in/get-my-quiz-result.port.in';
-import {
   GET_PUBLISHED_QUIZ_PORT_IN,
   type IGetPublishedQuizPortIn,
-} from '@/modules/quizzes/application/ports/in/get-published-quiz.port.in';
-import {
   LIST_MY_QUIZ_ATTEMPTS_PORT_IN,
   type IListMyQuizAttemptsPortIn,
-} from '@/modules/quizzes/application/ports/in/list-my-quiz-attempts.port.in';
-import {
   START_QUIZ_ATTEMPT_PORT_IN,
   type IStartQuizAttemptPortIn,
-} from '@/modules/quizzes/application/ports/in/start-quiz-attempt.port.in';
+} from '@/modules/quizzes/application/ports/in';
 import type { Principal } from '@/modules/quizzes/domain';
-import { EmptyQuizBodyDto } from '@/modules/quizzes/presentation/http/dto';
 import {
   AnswerDto,
   AttemptPageDto,
   CompletionDto,
+  EmptyQuizBodyDto,
   LearnerAttemptDto,
   QuizFeedbackDto,
   QuizIntroDto,

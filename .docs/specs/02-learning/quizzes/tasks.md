@@ -8,9 +8,9 @@
 ## Trạng thái và cách dùng
 
 **Hoàn tất**, ngày `2026-11-11`.
-Nguồn: [spec 1.3, Approved](./spec.md) và [plan đã duyệt](./plan.md), được lập theo yêu cầu chủ sở hữu.
+Nguồn: [spec 1.4, Approved](./spec.md) và [plan đã duyệt](./plan.md), được lập theo yêu cầu chủ sở hữu.
 
-- Follow lần lượt T001–T060; không làm task code trước khi T001–T007 đóng và spec Approved.
+- Follow lần lượt T001–T061; không làm task code trước khi T001–T007 đóng và spec Approved.
 - Mọi task bắt đầu chưa hoàn thành. Chỉ đánh dấu `[x]` khi có đầu ra và bằng chứng kiểm chứng.
 - Task phụ thuộc câu hỏi chưa chốt phải để mở; không dùng mặc định của code để trả lời sản phẩm.
 - Khi gặp quyết định khác draft, cập nhật spec/plan/tasks trước khi sửa nguồn tương ứng.
@@ -432,6 +432,13 @@ Nguồn: [spec 1.3, Approved](./spec.md) và [plan đã duyệt](./plan.md), đ�
       **Phụ thuộc:** T059. **Truy vết:** toàn bộ spec và quy trình SDD.
       **Bằng chứng:** checklist này đối chiếu từng task với source/tests 2026-11-11; worked entry bàn giao
       đầy đủ; spec giữ `Approved` (không tự Verified); gate baseline còn lỗi Identity ghi rõ ở T054–T056.
+
+- [ ] **LRN-009-T061 — Chuyển idempotency key sang HTTP header.**
+      Đầu ra: create/clone Question và Quiz nhận UUID từ `Idempotency-Key`; body không có key;
+      giữ replay/conflict semantics và các cột trên root, không thêm bảng/migration. Cập nhật
+      Swagger, contract fixtures và tài liệu. **Phụ thuộc:** chủ sở hữu duyệt LRN-009 1.4.
+      **Truy vết:** Q-007, API contract. **Bằng chứng:** implementation source/docs cập nhật;
+      kiểm thử chưa chạy.
 
 ## Không áp dụng trong phạm vi hiện tại
 

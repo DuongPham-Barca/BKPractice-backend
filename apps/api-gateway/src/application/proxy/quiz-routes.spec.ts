@@ -26,6 +26,7 @@ describe('Quiz Gateway contract', () => {
       originalUrl: path,
       headers: {
         authorization: 'Bearer verified',
+        'idempotency-key': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
         'x-internal-service-secret': 'untrusted',
         cookie: 'private-cookie',
       },
@@ -79,7 +80,10 @@ describe('Quiz Gateway contract', () => {
       expect.objectContaining({
         method,
         url: 'http://learning.test' + path + '?page=2',
-        headers: { authorization: 'Bearer verified' },
+        headers: {
+          authorization: 'Bearer verified',
+          'idempotency-key': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        },
         data: f.request.body as unknown,
       }),
     );

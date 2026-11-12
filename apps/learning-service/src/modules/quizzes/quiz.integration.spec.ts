@@ -64,9 +64,11 @@ function headers(id: string = owner, role = 'LECTURER'): Record<string, string> 
     'x-auth-permissions': role === 'STUDENT' ? '' : permissions.join(','),
   };
 }
+function idempotencyHeaders(id: string = owner, role = 'LECTURER', key = randomUUID()) {
+  return { ...headers(id, role), 'idempotency-key': key };
+}
 function input() {
   return {
-    clientRequestId: randomUUID(),
     content: 'Which loop runs at least once?',
     explanation: 'do...while checks the condition after execution.',
     difficulty: 'EASY',
@@ -137,15 +139,22 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     return { status: res.status, body: parsed as T };
   }
   async function createQuestion() {
-    const r = await call<QuestionView>('POST', '/api/question-bank/questions', input());
+    const r = await call<QuestionView>(
+      'POST',
+      '/api/question-bank/questions',
+      input(),
+      idempotencyHeaders(),
+    );
     expect(r.status).toBe(201);
     return r.body;
   }
   async function createQuiz(questions: QuestionView[]) {
-    let r = await call<QuizView>('POST', '/api/quizzes', {
-      title: 'Loops',
-      clientRequestId: randomUUID(),
-    });
+    let r = await call<QuizView>(
+      'POST',
+      '/api/quizzes',
+      { title: 'Loops' },
+      idempotencyHeaders(),
+    );
     expect(r.status).toBe(201);
     r = await call<QuizView>('PUT', `/api/quizzes/${r.body.id}/draft/questions`, {
       items: questions.map((q) => ({ questionId: q.id, revisionId: q.revision.id })),
@@ -251,10 +260,12 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
         )
       ).status,
     ).toBe(201);
-    const privateQuiz = await call<QuizView>('POST', '/api/quizzes', {
-      title: 'Private',
-      clientRequestId: randomUUID(),
-    });
+    const privateQuiz = await call<QuizView>(
+      'POST',
+      '/api/quizzes',
+      { title: 'Private' },
+      idempotencyHeaders(),
+    );
     expect(
       (
         await call(
@@ -273,21 +284,47 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
       ).status,
     ).toBe(401);
     expect(
-      (await call('POST', '/api/question-bank/questions', { ...input(), createdBy: other })).status,
+      (
+        await call(
+          'POST',
+          '/api/question-bank/questions',
+          { ...input(), createdBy: other },
+          idempotencyHeaders(),
+        )
+      ).status,
     ).toBe(400);
   });
   it('replays creates and rejects another payload with the same request id', async () => {
     const command = input();
-    const first = await call<QuestionView>('POST', '/api/question-bank/questions', command);
-    const replay = await call<QuestionView>('POST', '/api/question-bank/questions', { ...command });
+    const key = randomUUID();
+    const requestHeaders = idempotencyHeaders(owner, 'LECTURER', key);
+    const first = await call<QuestionView>(
+      'POST',
+      '/api/question-bank/questions',
+      command,
+      requestHeaders,
+    );
+    const replay = await call<QuestionView>(
+      'POST',
+      '/api/question-bank/questions',
+      { ...command },
+      requestHeaders,
+    );
     expect(replay.body.id).toBe(first.body.id);
     expect(
-      (await call('POST', '/api/question-bank/questions', { ...command, content: 'different' }))
+      (
+        await call(
+          'POST',
+          '/api/question-bank/questions',
+          { ...command, content: 'different' },
+          requestHeaders,
+        )
+      )
         .status,
     ).toBe(409);
     const rows = await source.query<{ count: string }[]>(
       'SELECT count(*) FROM quiz_bank_questions WHERE client_request_id=$1',
-      [command.clientRequestId],
+      [key],
     );
     expect(rows[0]!.count).toBe('1');
   });
@@ -320,8 +357,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     const cloned = await call<QuestionView>(
       'POST',
       `/api/question-bank/questions/${q.id}/clone`,
-      { clientRequestId: randomUUID() },
-      headers(other),
+      undefined,
+      idempotencyHeaders(other),
     );
     expect(cloned.status).toBe(201);
     expect(cloned.body.createdBy).toBe(other);
@@ -329,8 +366,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     const draft = await call<QuizView>(
       'POST',
       '/api/quizzes',
-      { title: 'Shared draft', clientRequestId: randomUUID() },
-      headers(other),
+      { title: 'Shared draft' },
+      idempotencyHeaders(other),
     );
     expect(
       (
@@ -359,8 +396,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
         await call(
           'POST',
           `/api/question-bank/questions/${q.id}/clone`,
-          { clientRequestId: randomUUID() },
-          headers(other),
+          undefined,
+          idempotencyHeaders(other),
         )
       ).status,
     ).toBe(404);
@@ -392,8 +429,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     const copy = await call<QuizView>(
       'POST',
       `/api/quizzes/${f.quiz.id}/clone`,
-      { clientRequestId: randomUUID() },
-      headers(other),
+      undefined,
+      idempotencyHeaders(other),
     );
     expect(copy.status).toBe(201);
     expect(copy.body.createdBy).toBe(other);
@@ -409,8 +446,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
         await call(
           'POST',
           `/api/quizzes/${f.quiz.id}/clone`,
-          { clientRequestId: randomUUID() },
-          headers(other),
+          undefined,
+          idempotencyHeaders(other),
         )
       ).status,
     ).toBe(404);
@@ -636,8 +673,8 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     const draft = await call<QuizView>(
       'POST',
       '/api/quizzes',
-      { title: 'Preview updates', clientRequestId: randomUUID() },
-      headers(other),
+      { title: 'Preview updates' },
+      idempotencyHeaders(other),
     );
     await call(
       'PUT',
@@ -681,10 +718,12 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
   });
   it('scopes and filters before pagination and reads Quiz/attempt lists in full', async () => {
     const marker = randomUUID();
-    const q = await call<QuestionView>('POST', '/api/question-bank/questions', {
-      ...input(),
-      content: marker,
-    });
+    const q = await call<QuestionView>(
+      'POST',
+      '/api/question-bank/questions',
+      { ...input(), content: marker },
+      idempotencyHeaders(),
+    );
     const path = '/api/question-bank/questions?q=' + marker + '&limit=1';
     const empty = await call<{ total: number; items: unknown[] }>(
       'GET',
@@ -747,6 +786,18 @@ describeIntegration('LRN-009 full flow and persistence (isolated PostgreSQL)', (
     expect(JSON.stringify(schemas.LearnerOptionDto)).not.toContain('isCorrect');
     expect(JSON.stringify(schemas.LearnerQuestionDto)).not.toContain('explanation');
     expect(JSON.stringify(schemas.ManagedOptionDto)).toContain('isCorrect');
+    expect(JSON.stringify(schemas.CreateQuestionDto)).not.toContain('clientRequestId');
+    expect(document.paths['/api/question-bank/questions']?.post?.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'Idempotency-Key', in: 'header', required: true }),
+      ]),
+    );
+    expect(JSON.stringify(schemas.CreateQuizDto)).not.toContain('clientRequestId');
+    expect(document.paths['/api/quizzes']?.post?.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'Idempotency-Key', in: 'header', required: true }),
+      ]),
+    );
     expect(document.paths['/api/quizzes/{id}/publish']?.post?.responses['200']).toBeDefined();
   });
   it('waits on an actual PostgreSQL root lock and permits only one competing first choice', async () => {
