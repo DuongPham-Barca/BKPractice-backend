@@ -43,6 +43,7 @@ export const learningRoutes: ReadonlyArray<readonly [string, RegExp]> = [
   ['GET', /^\/api\/progress\/me\/problems\/?$/],
   ['GET', /^\/api\/progress\/me\/problems\/status\/?$/],
   ['GET', /^\/api\/progress\/me\/courses\/[^/]+\/?$/],
+  ['GET', /^\/api\/progress\/courses\/[^/]+\/students\/?$/],
   ['GET', /^\/api\/recommendations\/?$/],
 ];
 export const learningPrefixes = [

@@ -395,6 +395,7 @@ describe('Learning route transport', () => {
     ['GET', '/api/progress/me/problems'],
     ['GET', '/api/progress/me/problems/status'],
     ['GET', '/api/progress/me/courses/courseId-1'],
+    ['GET', '/api/progress/courses/courseId-1/students'],
     ['GET', '/api/recommendations'],
   ];
   const config = new ConfigService({

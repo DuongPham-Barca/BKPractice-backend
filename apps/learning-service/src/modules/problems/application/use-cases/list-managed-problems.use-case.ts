@@ -38,6 +38,7 @@ export class ListManagedProblemsUseCase implements IListManagedProblemsPortIn {
     const normalizedLimit = normalizeLimit(limit);
     const result = await this.repository.listManaged({
       includeDeleted,
+      createdBy: principal.roles.includes('ADMIN') ? undefined : principal.userId,
       page: normalizedPage,
       limit: normalizedLimit,
     });

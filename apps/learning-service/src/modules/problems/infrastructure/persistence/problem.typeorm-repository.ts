@@ -479,8 +479,11 @@ function applyManagedFilters(
   query: SelectQueryBuilder<ProblemEntity>,
   filter: ManagedProblemListFilter,
 ): SelectQueryBuilder<ProblemEntity> {
+  if (filter.createdBy) {
+    query.andWhere('p.createdBy = :createdBy', { createdBy: filter.createdBy });
+  }
   if (!filter.includeDeleted) {
-    query.where('p.deletedAt IS NULL');
+    query.andWhere('p.deletedAt IS NULL');
   }
 
   return query;

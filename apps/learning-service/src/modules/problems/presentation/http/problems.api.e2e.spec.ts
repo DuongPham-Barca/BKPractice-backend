@@ -85,6 +85,26 @@ describe('Problems API end-to-end contract', () => {
     expect(response.status).toBe(403);
   });
 
+  it('lets a Lecturer create and manage only own Problems while Admin can manage all', async () => {
+    const lecturerA = { ...adminHeaders(ADMIN_A_ID), 'x-auth-roles': 'LECTURER' };
+    const lecturerB = { ...adminHeaders(ADMIN_B_ID), 'x-auth-roles': 'LECTURER' };
+    const created = await post('/api/problems', createProblemPayload(), lecturerA);
+    expect(created.status).toBe(201);
+    const id = text(created.body.id);
+    const ownList = await send('/api/problems/managed', { headers: lecturerA });
+    const otherList = await send('/api/problems/managed', { headers: lecturerB });
+    expect(ownList.body.total).toBe(1);
+    expect(otherList.body.total).toBe(0);
+    expect((await send(`/api/problems/managed/${id}`, { headers: lecturerB })).status).toBe(403);
+    expect((await patch(`/api/problems/${id}`, { title: 'Wrong edit' }, lecturerB)).status).toBe(
+      403,
+    );
+    expect(
+      (await patch(`/api/problems/${id}`, { title: 'Admin edit' }, adminHeaders(ADMIN_B_ID)))
+        .status,
+    ).toBe(200);
+  });
+
   it('keeps drafts out of public surfaces while the owner can manage them', async () => {
     const id = await createDraft();
 

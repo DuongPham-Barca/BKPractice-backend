@@ -14,6 +14,7 @@ export interface ProblemListFilter {
 
 export interface ManagedProblemListFilter {
   readonly includeDeleted: boolean;
+  readonly createdBy?: string;
   readonly page: number;
   readonly limit: number;
 }

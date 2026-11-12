@@ -24,9 +24,13 @@ export function requireAdmin(principal: AuthorizationPrincipal): void {
   }
 }
 
-export function requireAssignableRole(role: RoleName): void {
+export function requireAssignableRole(
+  principal: AuthorizationPrincipal,
+  userId: string,
+  role: RoleName,
+): void {
   if (!isRoleName(role)) throw new RbacFailure('invalid_role');
-  if (role === RoleName.Admin) throw new RbacFailure('forbidden');
+  if (role === RoleName.Admin && principal.userId === userId) throw new RbacFailure('forbidden');
 }
 
 export function requireRevocableRole(
@@ -35,9 +39,16 @@ export function requireRevocableRole(
   role: RoleName,
 ): void {
   if (!isRoleName(role)) throw new RbacFailure('invalid_role');
-  if (role === RoleName.Admin && principal.userId !== userId) {
+  if (role === RoleName.Admin && principal.userId === userId) {
     throw new RbacFailure('forbidden');
   }
+}
+
+export function requireRoleChangeReason(value: string): string {
+  const reason = typeof value === 'string' ? value.trim() : '';
+  if (!reason || reason.length > 500 || /\p{Cc}/u.test(reason))
+    throw new RbacFailure('invalid_role');
+  return reason;
 }
 
 export function requireAnotherAdmin(adminCount: number): void {

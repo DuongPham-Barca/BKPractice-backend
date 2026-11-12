@@ -1,5 +1,7 @@
 # ID-003 Kiểm soát truy cập theo vai trò (RBAC)
 
+> **SRS v3 (2026-11-08):** [ID-009](../account-administration/spec.md) thay thế các câu cấm Admin cấp/thu hồi ADMIN cho người khác và bổ sung lý do/audit cho thay đổi role. [LRN-009](../../02-learning/srs-v3-lecturer/spec.md) thay thế chính sách LRN-008 về quyền nội dung của LECTURER. Các quy tắc RBAC khác vẫn áp dụng.
+
 ## Trạng thái
 
 Approved — phạm vi 0.5 seed riêng và user–role giữ baseline, theo yêu cầu triển khai của chủ sở hữu ngày 2026-10-25; không mở CRUD/catalog động hoặc bootstrap account Admin.

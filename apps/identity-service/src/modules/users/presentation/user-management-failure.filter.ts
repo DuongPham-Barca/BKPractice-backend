@@ -14,6 +14,7 @@ export class UserManagementFailureFilter implements ExceptionFilter {
       invalid: [400, 'Invalid user request'],
       not_found: [404, 'User unavailable'],
       forbidden: [403, 'Forbidden'],
+      conflict: [409, 'Account conflict'],
     } as const;
     const [statusCode, message] = responses[error.code];
     const requestId = request.header('x-request-id');
@@ -21,8 +22,10 @@ export class UserManagementFailureFilter implements ExceptionFilter {
       operation: request.method,
       outcome: error.code,
       actorId: request.principal?.userId,
-      requestId: requestId && /^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(requestId)
-        ? requestId : undefined,
+      requestId:
+        requestId && /^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$/.test(requestId)
+          ? requestId
+          : undefined,
     });
     host.switchToHttp().getResponse<Response>().status(statusCode).json({ statusCode, message });
   }

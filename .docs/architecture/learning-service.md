@@ -16,6 +16,8 @@ bounded context. They must not be split into a Problem Service or Recommendation
 
 LRN-008 (2026-11-07) chuyển Learning sang tự học: `ADMIN` quản lý nội dung, mọi `ADMIN` có thể quản lý nội dung của nhau; Class, Enrollment và Assignment không còn thuộc sản phẩm Learning.
 
+LRN-009 theo SRS v3 (2026-11-08) phục hồi quyền quản lý nội dung cho `LECTURER` trên nội dung họ tạo, giữ `ADMIN` quản lý tất cả, và thêm báo cáo Course cho Giảng viên. Class, Enrollment và Assignment vẫn không thuộc sản phẩm; Quiz tạm giữ. Learning đọc roster và số lượt nộp qua port/HTTP nội bộ, không truy cập DB Identity hoặc Submission.
+
 ## The hexagon
 
 ```text

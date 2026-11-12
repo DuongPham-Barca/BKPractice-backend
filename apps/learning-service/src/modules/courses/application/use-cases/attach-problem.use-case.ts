@@ -44,14 +44,17 @@ export class AttachProblemUseCase implements IAttachProblemPortIn {
     return this.transactionRunner.run(async () => {
       const course = await this.repository.loadForUpdate(courseId);
       if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(principal, course.createdBy.value);
       const problem = (await this.catalog.findByIds([problemId.value])).get(problemId.value);
       // Không phân biệt "không tồn tại" với "không được phép" (SR-003, AC-008).
       const attachable = this.attachPolicy.isAttachable(
-        problem && {
-          problemId: problem.id,
-          publishStatus: problem.publishStatus,
-          isDeleted: problem.isDeleted,
-        },
+        problem && (principal.roles.includes('ADMIN') || problem.createdBy === principal.userId)
+          ? {
+              problemId: problem.id,
+              publishStatus: problem.publishStatus,
+              isDeleted: problem.isDeleted,
+            }
+          : undefined,
       );
       if (!attachable) throw new ProblemNotAttachableError('Problem is not attachable');
       course.addProblemToChapter(chapterId, problemId, now, position);

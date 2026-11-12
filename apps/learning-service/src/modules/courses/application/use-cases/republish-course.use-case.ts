@@ -32,6 +32,7 @@ export class RepublishCourseUseCase implements IRepublishCoursePortIn {
     return this.transactionRunner.run(async () => {
       const course = await this.repository.loadForUpdate(courseId);
       if (!course) throw new CourseNotFoundError('Course not found');
+      this.authorization.requireOwnership(principal, course.createdBy.value);
       if (!course.isOnHold)
         throw new InvalidCourseState(
           'status',
