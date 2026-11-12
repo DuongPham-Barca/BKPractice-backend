@@ -2,6 +2,10 @@
 > này với source/tests. Kết quả verification, giới hạn còn lại và rủi ro ghi ở
 > [worked entry](../../../worked/learning/quizzes/2026-11-11-quiz-implementation.md). Quality gate
 > toàn repo còn lỗi baseline ngoài phạm vi LRN-009 (ghi rõ ở T054–T057).
+>
+> **Amendment 1.6 Approved 2026-11-12:** các bằng chứng lịch sử ghi “Progress không đổi” được thay
+> bởi T063–T069 bên dưới. Completion user + Quiz giữ nguyên; Course Progress nay tính Quiz theo
+> LRN-006 1.1 mà không thêm migration.
 
 # LRN-009 — Checklist triển khai Quiz và ngân hàng câu hỏi
 
@@ -117,7 +121,8 @@ Nguồn: [spec 1.5, Approved](./spec.md) và [plan đã duyệt](./plan.md), đ�
       `correct × 100 >= total × 90` (worked entry How the feature works).
 - [x] **LRN-009-T016 — Liên kết Quiz trong Course aggregate.**
       Đầu ra: Chapter quizRefs, attach/detach/reorder với giới hạn đã chốt; duy nhất theo Chapter,
-      cho phép Quiz ở nhiều Chapter/Course. Kiểm chứng problemRefs và readiness Problem giữ đúng spec.
+      cho phép Quiz ở nhiều Chapter/Course. Kiểm chứng problemRefs không đổi; readiness Learning Item
+      được amendment T063/T064 mở rộng cho Problem hoặc Quiz.
       **Phụ thuộc:** T007. **Truy vết:** FR-013/014, AC-012/013.
       **Bằng chứng:** `courses/domain/course.aggregate.ts`, `value-objects/chapter.ts`;
       `course.aggregate.spec.ts` "keeps Quiz order separate, permits reuse across chapters and
@@ -449,6 +454,11 @@ Nguồn: [spec 1.5, Approved](./spec.md) và [plan đã duyệt](./plan.md), đ�
       Q-001, SR-001/004. **Bằng chứng:** `SetQuestionVisibilityUseCase`, bank query scope,
       `requireQuestionUse`, migration `1700000012000`, Gateway allowlist and Swagger. Build and lint
       changed files pass; automated tests not run.
+
+- [x] **LRN-009-T063 — Quiz completion cho Course Progress.** Export/read contract hẹp qua bảng
+      attempt hiện có: pass một lần hoàn thành theo user + Quiz, giữ qua fail sau và revision mới.
+- [x] **LRN-009-T064 — Visibility regression.** Progress loại Quiz ON_HOLD/xoá/gỡ link và tự tính lại
+      completion cũ khi Quiz được publish/restore/gắn lại; không event và không migration.
 
 ## Không áp dụng trong phạm vi hiện tại
 

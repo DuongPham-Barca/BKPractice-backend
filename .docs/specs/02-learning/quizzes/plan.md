@@ -32,7 +32,7 @@ Không tự chuyển spec sang Verified khi quality gate toàn repo còn baselin
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | G-01 / Q-001     | Câu hỏi dùng chung mặc định cho LECTURER; có thể tạo riêng tư hoặc đổi visibility với grant cá nhân. Clone là bản riêng tư; chỉ owner/ADMIN sửa gốc. Quiz vẫn private/grant như hiện tại. |
 | G-02 / Q-002     | Search/filter, bulk pick, create-in-picker, deep clone; không import/AI/ôn riêng.                                                                                                         |
-| G-03 / Q-003–004 | Completion user + Quiz, giữ qua revisions và mọi Chapter/Course; Progress vẫn Problem-only.                                                                                               |
+| G-03 / Q-003–004 | Completion user + Quiz, giữ qua revisions và mọi Chapter/Course; LRN-006 1.1 tính mỗi Quiz hiển thị là một Learning Item.                                                                 |
 | G-04 / Q-005–006 | Học qua Course published; immutable revisions; một active attempt, first answer, finish tường minh, unlimited time/retries. Hide/delete cho tiếp tục lượt cũ.                             |
 | G-05 / Q-007–008 | Limits/title/taxonomy/pagination/idempotency theo bảng Q của spec 1.3; permission riêng theo hành động.                                                                                   |
 | G-06             | Amendment lecturer-owner/admin-all đã đồng bộ vào LRN-008, Problems/TestCases/Courses, RBAC và architecture.                                                                              |
@@ -78,17 +78,17 @@ infrastructure ── implements ──→ application/domain ports
 
 Khảo sát ngày 2026-11-11, không có `.codegraph/`; dùng đọc nguồn và tìm kiếm trực tiếp.
 
-| Loại     | Điểm chạm thực tế                                                                                     | Hành động dự kiến                                                                          |
-| -------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| REUSE    | Problems `TrustedPrincipal`/guard, TransactionRunner, Markdown validation; shared transaction storage | Tái dùng boundary có sẵn, không sao chép principal/transaction business service            |
-| MODIFY   | `modules/courses/domain/course.aggregate.ts`, `domain/value-objects/chapter.ts`                       | Thêm Quiz reference và thao tác attach/detach/reorder trong Chapter                        |
-| MODIFY   | Courses entity/mapper/repository, `course-view.assembler.ts`, results/DTO/controllers/module/tokens   | Lưu và trả Quiz theo đúng visibility, giữ nguyên `problems` và thứ tự hiện có              |
-| MODIFY   | Problems/Courses authorization, managed list/detail/mutation use cases và repository filters          | LECTURER owner, ADMIN toàn bộ; truyền owner thật từ dữ liệu, không chỉ thêm role vào guard |
-| MODIFY   | `modules/learning.entities.ts`, `learning-service.module.ts`, TypeScript/Jest aliases                 | Đăng ký entity/module/DI và entry point runtime/migration                                  |
-| MODIFY   | Identity `modules/rbac/domain/permission-catalog.ts`, seeder nếu cần, migration mới                   | Cấp Learning cho LECTURER và ADMIN, thêm quyền Quiz theo G-05                              |
-| MODIFY   | Gateway `application/proxy/gateway-proxy.constants.ts` và test                                        | Allowlist route Quiz/ngân hàng/attempt/Chapter mới, giữ lọc header và auth hiện hành       |
-| CREATE   | `modules/quizzes/`, migration Learning/Identity mới và test                                           | Không tạo folder/layer không có nhiệm vụ thực                                              |
-| PRESERVE | Progress reader/calculator, accepted-submission consumer, Problem judge-package                       | Không đổi công thức Progress hoặc luồng Judge nếu G-03 chưa duyệt thay đổi tương ứng       |
+| Loại   | Điểm chạm thực tế                                                                                     | Hành động dự kiến                                                                          |
+| ------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| REUSE  | Problems `TrustedPrincipal`/guard, TransactionRunner, Markdown validation; shared transaction storage | Tái dùng boundary có sẵn, không sao chép principal/transaction business service            |
+| MODIFY | `modules/courses/domain/course.aggregate.ts`, `domain/value-objects/chapter.ts`                       | Thêm Quiz reference và thao tác attach/detach/reorder trong Chapter                        |
+| MODIFY | Courses entity/mapper/repository, `course-view.assembler.ts`, results/DTO/controllers/module/tokens   | Lưu và trả Quiz theo đúng visibility, giữ nguyên `problems` và thứ tự hiện có              |
+| MODIFY | Problems/Courses authorization, managed list/detail/mutation use cases và repository filters          | LECTURER owner, ADMIN toàn bộ; truyền owner thật từ dữ liệu, không chỉ thêm role vào guard |
+| MODIFY | `modules/learning.entities.ts`, `learning-service.module.ts`, TypeScript/Jest aliases                 | Đăng ký entity/module/DI và entry point runtime/migration                                  |
+| MODIFY | Identity `modules/rbac/domain/permission-catalog.ts`, seeder nếu cần, migration mới                   | Cấp Learning cho LECTURER và ADMIN, thêm quyền Quiz theo G-05                              |
+| MODIFY | Gateway `application/proxy/gateway-proxy.constants.ts` và test                                        | Allowlist route Quiz/ngân hàng/attempt/Chapter mới, giữ lọc header và auth hiện hành       |
+| CREATE | `modules/quizzes/`, migration Learning/Identity mới và test                                           | Không tạo folder/layer không có nhiệm vụ thực                                              |
+| MODIFY | Progress Course reader/calculator/DTO/test                                                            | Gộp Problem đã giải và Quiz đã pass theo LRN-006 1.1; không đổi consumer Problem/Judge     |
 
 Hiện Identity catalog chỉ map Learning sang ADMIN, và migration
 `1700000000009-LearningSelfStudyPermissions.ts` đã gỡ quyền Learning của LECTURER. Cần migration
@@ -235,7 +235,8 @@ Quiz chỉ vì một workflow Problem cũ chưa load chúng; cập nhật cả m
 ## Thay đổi cơ sở dữ liệu
 
 - Thêm tám bảng dự kiến, indexes/constraints và entity registration sau khi gates đóng.
-- Không đổi bảng Problem/TestCase hoặc dữ liệu Progress vì thêm Quiz.
+- Không đổi bảng Problem/TestCase và không thêm bảng Progress; tiến độ Course đọc trực tiếp
+  `progress` và `quiz_attempts` hiện có.
 - Identity thêm permission/mapping bằng migration riêng, không dùng FK xuyên database.
 - Các thay đổi state/sharing/taxonomy/active-attempt chỉ chốt DDL sau khi có quyết định gate.
 - Migration mới thêm `quiz_bank_questions.is_private` với default false để câu hiện có thành câu
@@ -387,7 +388,7 @@ replay, không chấm lại.
 | PostgreSQL thật       | FK/unique/check, migration up/down/up, immutable preservation, one-connection transaction, race/retry/rollback            | AC-003/006/009/011/012/013/018/019 |
 | HTTP/Nest + SQL       | full author → publish → attach → learn → feedback → finish → history; hidden/private lookup và DTO                        | AC-005/008/012/014–017/020–025     |
 | Gateway               | exact route/method, auth/session, strip fake/internal header, transport status, unavailable/timeout, không business logic | AC-001/002/024/025                 |
-| Regression            | Role change Problem/TestCase/Harness/Course; Course problem order/readiness; Progress counts và consumer không đổi        | FR-002/013/015, G-06               |
+| Regression            | Problem/TestCase/Harness/Course; readiness Problem-only/Quiz-only/mixed; Progress tính Quiz, consumer Problem không đổi   | FR-002/013/015, G-03/G-06          |
 
 Thiết kế concurrent tests với barrier/transactions thật, không chỉ gọi tuần tự Promise mock.
 Bao gồm same/different answer, finish twice, answer vs finish, rollback trước commit, mất
@@ -460,7 +461,8 @@ Domain không phụ thuộc framework. Application chỉ dùng own domain/ports 
 port đã có. Entity, EntityManager, SQL và JSONB chỉ ở infrastructure; controller là inbound
 adapter. Cùng Learning database cho phép FK nội bộ và own read projection, không cho phép import
 entity/write repository module khác. User references không FK Identity. Judge không có nghiệp
-vụ Quiz, Gateway không tính điểm, Progress không bị mở rộng ngầm. Không có ngoại lệ kiến trúc
+vụ Quiz, Gateway không tính điểm; Progress chỉ đọc completion Quiz qua port/reader trong Learning.
+Không có ngoại lệ kiến trúc
 mới nào được duyệt bởi draft này.
 
 > Plan này giải thích HOW dự kiến của LRN-009. Khi spec được Approved với quyết định khác,

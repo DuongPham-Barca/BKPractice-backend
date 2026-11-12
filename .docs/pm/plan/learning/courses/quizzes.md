@@ -15,5 +15,6 @@ sửa title, Chapter hoặc Problem. Không gọi write repository Quizzes.
 
 CourseQuizCatalog đọc projection qua adapter; Quizzes không import ngược CoursesModule. Learner
 Course chỉ trả summary `{id,title}` của Quiz published chưa xoá, không có đáp án. Managed summary
-có thêm status. Giới hạn và thứ tự Problem, readiness publish Course và % Progress theo Problem
-không đổi. Xem [luồng Quiz](../quizzes/README.md) cho chính sách attempt/version/thu hồi.
+có thêm status. Course readiness chấp nhận ít nhất một Problem hoặc Quiz published chưa xoá và trả
+`PUBLISHED_CONTENT_REQUIRED` nếu không còn nội dung khả dụng. Progress tính mỗi Problem/Quiz hiển thị
+là một Learning Item. Xem [luồng Quiz](../quizzes/README.md) cho chính sách attempt/version/thu hồi.

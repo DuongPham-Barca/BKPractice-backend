@@ -4,7 +4,8 @@
 
 Approved
 
-Phiên bản `1.5`, toàn bộ phương án MVP được chủ sở hữu phê duyệt ngày `2026-11-11`; hợp đồng
+Phiên bản `1.6`; amendment Progress/Course được chủ sở hữu phê duyệt ngày `2026-11-12`. Toàn bộ
+phương án MVP 1.5 được chủ sở hữu phê duyệt ngày `2026-11-11`; hợp đồng
 Idempotency-Key được chủ sở hữu duyệt ngày `2026-11-12`; ngân hàng câu hỏi dùng chung theo mặc
 định được chủ sở hữu xác nhận ngày `2026-11-12`.
 Phiên bản `1.0` đã được phê duyệt cùng ngày. Các quyết định chia sẻ Q-001 tới Q-008 được ghi ở
@@ -67,8 +68,8 @@ chọn nhiều câu, sắp xếp, xuất bản, liên kết Chapter, làm từng
   cầu mới; không tự sửa các tài liệu Approved hoặc khẳng định code hiện tại đã hỗ trợ.
 - LRN-003 cần bổ sung liên kết và hiển thị Quiz trong Chapter. Giới hạn 50 Problem/Chapter hiện
   có không mặc nhiên là giới hạn Quiz hoặc tổng số nội dung trong Chapter.
-- LRN-006 hiện tính tiến độ Course theo Problem. Chưa được tự đưa Quiz vào mẫu số tiến độ hoặc
-  đặt điều kiện mở khoá Chapter; xem Q-004.
+- LRN-006 1.1 tính mỗi Quiz hiển thị là một Learning Item: hoàn thành khi user có lượt pass ít nhất
+  90%, giữ completion theo user + Quiz qua revision. Quiz không đặt điều kiện mở khoá Chapter.
 - Không khôi phục Class, Enrollment, Assignment hoặc vai trò giảng viên theo mô hình lớp học.
 
 ## Yêu cầu chức năng
@@ -242,8 +243,8 @@ chọn/câu, kích thước bộ chọn và phân trang chờ Q-007; không coi 
 - Trước trả lời: nội dung và lựa chọn của đề được phép học, không có đáp án/giải thích chưa mở.
 - Sau trả lời: lựa chọn đã ghi nhận, đúng/sai, đáp án đúng, giải thích của câu đó và tiến độ lượt.
 - Tổng kết/lịch sử: dữ liệu FR-024/025, đủ phân biệt kết thúc lượt với hoàn thành Quiz.
-- Không có event RabbitMQ, Socket.IO hay luồng Judge bắt buộc trong bản đề xuất. Nếu cần tích
-  hợp Progress bằng event phải đặc tả riêng trước khi thêm contract.
+- Không có event RabbitMQ, Socket.IO hay luồng Judge bắt buộc. Progress đọc trực tiếp completion
+  Quiz đã lưu trong Learning; không thêm event hoặc contract liên service.
 
 ## Tình huống lỗi
 
@@ -377,7 +378,7 @@ chốt trong quyết định dưới đây và amendment 1.5.
   [Database strategy](../../00-system/database-strategy.md): Learning sở hữu dữ liệu, không
   truy cập DB Identity; userId/createdBy là định danh bên ngoài.
 - [LRN-003 Course](../courses/spec.md): mở rộng liên kết/hiển thị Chapter và kiểm quyền Course.
-- [LRN-006 Progress](../progress/spec.md): hợp đồng tiến độ hiện hành; Q-004 chưa mở rộng nó.
+- [LRN-006 Progress](../progress/spec.md): amendment 1.1 tính Quiz pass vào tiến độ Course.
 - [LRN-008 Self-study](../self-study/spec.md): cần bản sửa đổi chính sách LECTURER/ADMIN trước
   triển khai; chưa sửa file Approved trong đợt này.
 - [ID-001 Authentication](../../01-identity/authentication/spec.md),
@@ -397,7 +398,7 @@ Chủ sở hữu phê duyệt toàn bộ gói MVP trong hội thoại ngày 2026
 | Q-001 | Câu hỏi ngân hàng dùng chung cho LECTURER theo mặc định; lúc tạo hoặc sau đó có thể đặt riêng tư. Owner/ADMIN cấp/thu hồi grant cho câu riêng tư. Mọi LECTURER được dùng câu chung; người dùng chỉ sửa bản clone riêng tư, không sửa gốc. Quiz vẫn riêng tư và chia sẻ có kiểm soát. Thu hồi câu riêng tư chặn dùng/clone/publish mới; giữ Quiz đã publish, bản sao và attempt cũ.                 |
 | Q-002 | Tìm/lọc, chọn nhiều, tạo tại chỗ, clone câu/Quiz. Clone Quiz sao chép toàn bộ câu ở phiên bản được chia sẻ thành câu riêng của người clone. Không import Excel/CSV hoặc chế độ ôn riêng.                                                                                                                                                                                                           |
 | Q-003 | Giữ lịch sử và dấu hoàn thành khi đổi phiên bản; hiển thị phiên bản đạt.                                                                                                                                                                                                                                                                                                                           |
-| Q-004 | Hoàn thành theo user + Quiz ở mọi Chapter/Course; không đổi % Progress Course hay mở khoá.                                                                                                                                                                                                                                                                                                         |
+| Q-004 | Hoàn thành theo user + Quiz ở mọi Chapter/Course, giữ qua revision và được tính một đơn vị trong Progress Course theo LRN-006 1.1; không mở khoá Chapter.                                                                                                                                                                                                                                          |
 | Q-005 | Chỉ học qua Course PUBLISHED chưa xoá. Quiz DRAFT/PUBLISHED/ON_HOLD và xoá mềm; sửa qua draft mới. Câu ngân hàng không có publish riêng. Hide/delete chặn lượt mới, cho tiếp tục lượt cũ.                                                                                                                                                                                                          |
 | Q-006 | Không giới hạn thời gian/số lượt; một IN_PROGRESS/user/Quiz, start lặp trả lượt hiện có. First answer tính điểm; trả lời đủ rồi finish tường minh; same-answer replay cả sau finish.                                                                                                                                                                                                               |
 | Q-007 | Title 200; content/description/explanation 20.000 ký tự; option 5.000; 2–6 options/câu; 50 câu/Quiz; 50 Quiz/Chapter; page/limit mặc định 1/20, tối đa 100. API create/clone nhận UUID qua header `Idempotency-Key`; cùng key/payload trả cùng resource, cùng key khác payload trả 409. Không nhận key trong body. Permission question/quiz theo hành động, LECTURER/ADMIN; STUDENT không quản lý. |
