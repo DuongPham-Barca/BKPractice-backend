@@ -70,7 +70,7 @@ export class ReadinessResponseDto {
   @ApiProperty() ready!: boolean;
   @ApiProperty({
     type: [String],
-    description: 'TITLE_REQUIRED, CHAPTER_REQUIRED, PUBLISHED_PROBLEM_REQUIRED',
+    description: 'TITLE_REQUIRED, CHAPTER_REQUIRED, PUBLISHED_CONTENT_REQUIRED',
   })
   issues!: string[];
 }

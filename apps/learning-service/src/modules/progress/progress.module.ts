@@ -28,6 +28,7 @@ import {
 import {
   CourseStructureTypeOrmReader,
   PublishedProblemTypeOrmFilter,
+  QuizCompletionTypeOrmReader,
 } from '@/modules/progress/infrastructure/readers';
 import { LocalCourseReportReaderAdapter } from '@/modules/progress/infrastructure/reports/local-course-report.reader';
 import { RemoteCourseReportReaderAdapter } from '@/modules/progress/infrastructure/reports/remote-course-report.reader';
@@ -40,6 +41,7 @@ import {
   PROGRESS_TRANSACTION_RUNNER,
   COURSE_STRUCTURE_READER,
   PUBLISHED_PROBLEM_FILTER,
+  QUIZ_COMPLETION_READER,
 } from '@/modules/progress/progress.tokens';
 @Module({
   imports: [TypeOrmModule.forFeature([Progress, ProgressEventReceipt])],
@@ -59,6 +61,7 @@ import {
     { provide: REMOTE_COURSE_REPORT_READER, useExisting: RemoteCourseReportReaderAdapter },
     CourseStructureTypeOrmReader,
     PublishedProblemTypeOrmFilter,
+    QuizCompletionTypeOrmReader,
     GetMyCourseProgressUseCase,
     GetMySolvedStatusUseCase,
     ListMySolvedProblemsUseCase,
@@ -70,6 +73,7 @@ import {
     { provide: PROGRESS_TRANSACTION_RUNNER, useExisting: ProgressTransactionRunner },
     { provide: COURSE_STRUCTURE_READER, useExisting: CourseStructureTypeOrmReader },
     { provide: PUBLISHED_PROBLEM_FILTER, useExisting: PublishedProblemTypeOrmFilter },
+    { provide: QUIZ_COMPLETION_READER, useExisting: QuizCompletionTypeOrmReader },
   ],
 })
 export class ProgressModule {}

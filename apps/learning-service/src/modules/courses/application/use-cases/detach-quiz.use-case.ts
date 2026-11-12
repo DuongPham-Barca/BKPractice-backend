@@ -3,11 +3,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CourseNotFoundError } from '@/modules/courses/application/errors';
 import type { Principal } from '@/modules/courses/application/models';
 import type { IDetachQuizPortIn } from '@/modules/courses/application/ports/in/detach-quiz.port.in';
-import type { CourseQuizCatalog } from '@/modules/courses/application/ports/out';
-import { COURSE_QUIZ_CATALOG } from '@/modules/courses/application/ports/out';
 import type { ManagedCourseResult } from '@/modules/courses/application/results';
 import {
   CourseAuthorizationService,
+  CoursePublishReadinessService,
   CourseViewAssembler,
 } from '@/modules/courses/application/services';
 import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
@@ -21,7 +20,7 @@ export class DetachQuizUseCase implements IDetachQuizPortIn {
     private readonly views: CourseViewAssembler,
     @Inject(COURSE_REPOSITORY) private readonly repository: CourseRepository,
     @Inject(COURSE_TRANSACTION_RUNNER) private readonly tx: TransactionRunner,
-    @Inject(COURSE_QUIZ_CATALOG) private readonly catalog: CourseQuizCatalog,
+    private readonly readiness: CoursePublishReadinessService,
   ) {}
   async execute(
     p: Principal,
@@ -35,6 +34,7 @@ export class DetachQuizUseCase implements IDetachQuizPortIn {
       if (!course) throw new CourseNotFoundError('Course not found');
       this.authorization.requireOwner(p, course.createdBy.value);
       course.detachQuiz(ChapterId.from(chapterId), quizId);
+      if (course.isPublished) await this.readiness.assertReady(course);
       await this.repository.save(course);
       return this.views.toManaged(course);
     });
