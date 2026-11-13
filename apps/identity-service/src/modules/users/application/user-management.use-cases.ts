@@ -17,6 +17,13 @@ export class UserManagementUseCases {
     private readonly passwords: PasswordHasher,
   ) {}
 
+  async getQuizShareRecipient(userId: string): Promise<{ userId: string; roles: string[] } | null> {
+    const user = await this.users.find(userId);
+    return user && !user.deletedAt && user.status === 'ACTIVE'
+      ? { userId: user.userId, roles: user.roles }
+      : null;
+  }
+
   async listUsers(
     principal: AuthorizationPrincipal,
     page: number,

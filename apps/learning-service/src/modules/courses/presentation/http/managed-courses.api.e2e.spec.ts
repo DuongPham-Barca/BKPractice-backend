@@ -25,6 +25,7 @@ import {
   UPDATE_CHAPTER_PORT_IN,
   UPDATE_COURSE_PORT_IN,
 } from '@/modules/courses/application/ports/in';
+import { COURSE_QUIZ_CATALOG } from '@/modules/courses/application/ports/out';
 import {
   CourseAuthorizationService,
   CoursePublishReadinessService,
@@ -63,6 +64,7 @@ import { courseWithProblem } from '@/modules/courses/testing';
 import {
   ALL_COURSE_PERMISSIONS,
   FakeProblemCatalog,
+  FakeQuizCatalog,
   InlineTransactionRunner,
   InMemoryCourseRepository,
   OTHER_ID,
@@ -111,10 +113,12 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
   let baseUrl: string;
   let repository: InMemoryCourseRepository;
   let catalog: FakeProblemCatalog;
+  let quizCatalog: FakeQuizCatalog;
 
   beforeAll(async () => {
     repository = new InMemoryCourseRepository();
     catalog = new FakeProblemCatalog();
+    quizCatalog = new FakeQuizCatalog();
     const moduleRef = await Test.createTestingModule({
       controllers: [ManagedCoursesController, ManagedChaptersController, PublicCoursesController],
       providers: [
@@ -143,6 +147,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
         ListPublishedCoursesUseCase,
         { provide: COURSE_REPOSITORY, useValue: repository },
         { provide: COURSE_PROBLEM_CATALOG, useValue: catalog },
+        { provide: COURSE_QUIZ_CATALOG, useValue: quizCatalog },
         { provide: COURSE_TRANSACTION_RUNNER, useValue: new InlineTransactionRunner() },
         { provide: CREATE_COURSE_PORT_IN, useExisting: CreateCourseUseCase },
         { provide: UPDATE_COURSE_PORT_IN, useExisting: UpdateCourseUseCase },
@@ -187,6 +192,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
     repository.saveCount = 0;
     repository.hardDeleted = [];
     catalog.problems.clear();
+    quizCatalog.quizzes.clear();
     catalog.setProblem(PROBLEM_ID, { title: 'Hello World', slug: 'hello-world' });
   });
 
@@ -397,7 +403,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
         status: 'DRAFT',
         createdBy: OWNER_ID,
         deletedAt: null,
-        readiness: { ready: false, issues: ['PUBLISHED_PROBLEM_REQUIRED'] },
+        readiness: { ready: false, issues: ['PUBLISHED_CONTENT_REQUIRED'] },
       });
       expect(asList(asList(res.body.chapters)[0]!.problems)[0]).toMatchObject({
         problemId: PROBLEM_ID,
@@ -750,7 +756,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
       const res = await call('POST', `/api/courses/${id}/publish`);
 
       expect(res.status).toBe(400);
-      expect(res.body.issues).toEqual(['PUBLISHED_PROBLEM_REQUIRED']);
+      expect(res.body.issues).toEqual(['PUBLISHED_CONTENT_REQUIRED']);
     });
 
     it("allows another ADMIN's draft but still rejects an unknown problem", async () => {
@@ -812,7 +818,7 @@ describe('Courses API (18 routes of the LRN-003 plan)', () => {
       );
 
       expect(res.status).toBe(400);
-      expect(res.body.issues).toEqual(['PUBLISHED_PROBLEM_REQUIRED']);
+      expect(res.body.issues).toEqual(['PUBLISHED_CONTENT_REQUIRED']);
       const stored = await call('GET', `/api/courses/managed/${id}`);
       expect(asList(asList(stored.body.chapters)[0]!.problems)).toHaveLength(1);
     });

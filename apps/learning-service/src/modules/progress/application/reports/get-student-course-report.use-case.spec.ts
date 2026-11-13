@@ -17,6 +17,7 @@ const courseId = '00000000-0000-4000-8000-000000000005';
 const chapterId = '00000000-0000-4000-8000-000000000006';
 const visibleProblem = '00000000-0000-4000-8000-000000000007';
 const hiddenProblem = '00000000-0000-4000-8000-000000000008';
+const visibleQuiz = '00000000-0000-4000-8000-000000000009';
 const principal = (role: string, userId = ownerId) => ({
   userId,
   roles: [role],
@@ -29,11 +30,12 @@ function fixture() {
       courseId,
       createdBy: ownerId,
       submissionProblemIds: [visibleProblem, hiddenProblem],
-      chapters: [{ chapterId, problemIds: [visibleProblem] }],
+      chapters: [{ chapterId, items: [{ type: 'PROBLEM', itemId: visibleProblem }] }],
     }),
     loadSolved: jest
       .fn()
       .mockResolvedValue(new Map([[firstStudent, new Map([[visibleProblem, new Date()]])]])),
+    loadCompletedQuizzes: jest.fn().mockResolvedValue(new Map()),
   };
   const remote: jest.Mocked<RemoteCourseReportReader> = {
     loadStudents: jest.fn().mockResolvedValue({
@@ -96,7 +98,7 @@ describe('GetStudentCourseReportUseCase', () => {
       courseId,
       createdBy: ownerId,
       submissionProblemIds: [hiddenProblem],
-      chapters: [{ chapterId, problemIds: [] }],
+      chapters: [{ chapterId, items: [] }],
     });
     const result = await report.execute(principal('ADMIN', otherId), courseId, 1, 20);
     expect(result.items[0]).toEqual(
@@ -106,6 +108,32 @@ describe('GetStudentCourseReportUseCase', () => {
         total: 0,
         status: 'Chưa có bài tập',
       }),
+    );
+  });
+
+  it('counts a passed Quiz as a completed course Learning Item', async () => {
+    const { local, report } = fixture();
+    local.loadCourse.mockResolvedValue({
+      courseId,
+      createdBy: ownerId,
+      submissionProblemIds: [],
+      chapters: [{ chapterId, items: [{ type: 'QUIZ', itemId: visibleQuiz }] }],
+    });
+    local.loadCompletedQuizzes.mockResolvedValue(
+      new Map([[firstStudent, new Map([[visibleQuiz, new Date()]])]]),
+    );
+    const result = await report.execute(principal('LECTURER'), courseId, 1, 20);
+    expect(result.items[0]).toEqual(
+      expect.objectContaining({
+        completed: 1,
+        total: 1,
+        status: 'Hoàn thành',
+        chapters: [{ chapterId, completed: 1, total: 1 }],
+      }),
+    );
+    expect(local.loadCompletedQuizzes).toHaveBeenCalledWith(
+      [firstStudent, secondStudent],
+      [visibleQuiz],
     );
   });
 

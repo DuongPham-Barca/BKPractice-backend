@@ -8,6 +8,7 @@ import { Lrn003CourseManagement1700000008000 } from '@learning/database/migratio
 import { Lrn003CourseConstraints1700000009000 } from '@learning/database/migrations/1700000009000-Lrn003CourseConstraints';
 import { Lrn008SelfStudy1700000010000 } from '@learning/database/migrations/1700000010000-Lrn008SelfStudy';
 import { Lrn009CourseProblemHistory1700000011000 } from '@learning/database/migrations/1700000011000-Lrn009CourseProblemHistory';
+import { Lrn009QuizQuestionBank1700000011000 } from '@learning/database/migrations/1700000011000-Lrn009QuizQuestionBank';
 import { learningEntities } from '@learning/modules/learning.entities';
 import type { DataSource, DataSourceOptions } from 'typeorm';
 
@@ -22,6 +23,7 @@ export const ALL_LEARNING_MIGRATIONS = [
   Lrn003CourseConstraints1700000009000,
   Lrn008SelfStudy1700000010000,
   Lrn009CourseProblemHistory1700000011000,
+  Lrn009QuizQuestionBank1700000011000,
 ];
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;

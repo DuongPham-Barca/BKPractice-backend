@@ -8,8 +8,8 @@ import type { IUpdateCoursePortIn } from '@/modules/courses/application/ports/in
 import type { ManagedCourseResult } from '@/modules/courses/application/results';
 import {
   CourseAuthorizationService,
-  CourseViewAssembler,
   CoursePublishReadinessService,
+  CourseViewAssembler,
 } from '@/modules/courses/application/services';
 import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
 import type { CourseRepository } from '@/modules/courses/domain/repositories';

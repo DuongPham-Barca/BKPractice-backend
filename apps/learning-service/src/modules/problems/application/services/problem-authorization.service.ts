@@ -40,6 +40,7 @@ export class ProblemAuthorizationService {
 
   private requireManager(principal: Principal): void {
     if (!principal.roles.includes(ADMIN_ROLE) && !principal.roles.includes(LECTURER_ROLE)) {
+    
       throw new ForbiddenError();
     }
   }

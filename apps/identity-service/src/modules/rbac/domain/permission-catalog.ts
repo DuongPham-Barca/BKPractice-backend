@@ -17,6 +17,23 @@ const learningContentPermissionCodes = [
   'course:republish',
   'course:delete',
   'course:restore',
+  'question:create',
+  'question:read-managed',
+  'question:update',
+  'question:share',
+  'question:clone',
+  'question:delete',
+  'question:restore',
+  'quiz:create',
+  'quiz:read-managed',
+  'quiz:update',
+  'quiz:publish',
+  'quiz:hold',
+  'quiz:republish',
+  'quiz:share',
+  'quiz:clone',
+  'quiz:delete',
+  'quiz:restore',
 ];
 
 const adminPermissionCodes = [
@@ -30,6 +47,6 @@ const adminPermissionCodes = [
 ];
 
 export const rbacPermissionCatalog = [
-  ...adminPermissionCodes.map((code) => ({ code, role: RoleName.Admin })),
   ...learningContentPermissionCodes.map((code) => ({ code, role: RoleName.Lecturer })),
+  ...adminPermissionCodes.map((code) => ({ code, role: RoleName.Admin })),
 ];

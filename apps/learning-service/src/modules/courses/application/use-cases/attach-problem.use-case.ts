@@ -14,9 +14,9 @@ import {
   CourseViewAssembler,
 } from '@/modules/courses/application/services';
 import {
+  COURSE_PROBLEM_CATALOG,
   COURSE_REPOSITORY,
   COURSE_TRANSACTION_RUNNER,
-  COURSE_PROBLEM_CATALOG,
 } from '@/modules/courses/course.tokens';
 import type { CourseRepository } from '@/modules/courses/domain/repositories';
 import { ProblemAttachPolicy } from '@/modules/courses/domain/services';

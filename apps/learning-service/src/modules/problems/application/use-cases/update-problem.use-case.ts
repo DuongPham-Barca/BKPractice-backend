@@ -1,8 +1,8 @@
 import type { UpdateProblemCommand } from '@learning/modules/problems/application/command/update-problem.command';
 import { ProblemNotFoundError } from '@learning/modules/problems/application/errors/problem-not-found.error';
 import { PublishNotReadyError } from '@learning/modules/problems/application/errors/publish-not-ready.error';
-import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { UnknownReference } from '@learning/modules/problems/application/errors/unknown-reference.error';
+import { UnknownReferenceError } from '@learning/modules/problems/application/errors/unknown-reference.error';
 import type { Principal } from '@learning/modules/problems/application/models/principal';
 import type { IUpdateProblemPortIn } from '@learning/modules/problems/application/ports/in/update-problem.port.in';
 import type { TopicTagReader } from '@learning/modules/problems/application/ports/out/topic-tag-reader.port.out';

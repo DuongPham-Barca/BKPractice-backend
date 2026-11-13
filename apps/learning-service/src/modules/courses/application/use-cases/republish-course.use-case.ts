@@ -7,8 +7,8 @@ import type { IRepublishCoursePortIn } from '@/modules/courses/application/ports
 import type { ManagedCourseResult } from '@/modules/courses/application/results';
 import {
   CourseAuthorizationService,
-  CourseViewAssembler,
   CoursePublishReadinessService,
+  CourseViewAssembler,
 } from '@/modules/courses/application/services';
 import { COURSE_REPOSITORY, COURSE_TRANSACTION_RUNNER } from '@/modules/courses/course.tokens';
 import { InvalidCourseState } from '@/modules/courses/domain/errors';

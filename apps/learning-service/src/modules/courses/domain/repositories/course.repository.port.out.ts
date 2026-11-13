@@ -7,8 +7,8 @@ export interface CourseListFilter {
 }
 
 export interface ManagedCourseListFilter {
-  readonly includeDeleted: boolean;
   readonly createdBy?: string;
+  readonly includeDeleted: boolean;
   readonly search?: string;
   readonly page: number;
   readonly limit: number;
